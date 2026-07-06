@@ -1,0 +1,32 @@
+# =============================================================================
+# Controle360 — stub mínimo de configuração do Supabase CLI
+# =============================================================================
+# Este arquivo existe só para deixar `supabase/` reconhecível como projeto
+# Supabase local (ex.: `supabase functions serve` sabe onde procurar). Os
+# valores reais de URL/keys do projeto vivem no painel do Supabase e são
+# preenchidos pelo orquestrador em `src/api.js` (ver docs/backend.md) — não
+# aqui.
+#
+# Este projeto NÃO usa `supabase start` (stack local via Docker) neste
+# momento: a aplicação do schema e o deploy da função são feitos pelo
+# orquestrador via MCP (apply_migration / deploy_edge_function) direto no
+# projeto remoto. Ver supabase/README.md.
+
+project_id = "controle360"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+
+[functions.create-seller]
+verify_jwt = true
+# verify_jwt = true (padrão): o gateway do Supabase já exige um JWT válido no
+# header Authorization antes de invocar a função — primeira camada de defesa.
+# A função ainda faz sua PRÓPRIA checagem (ver index.ts) para confirmar que
+# esse JWT pertence a um admin ativo, porque verify_jwt só garante "token
+# válido de algum usuário autenticado", não "é admin". As duas camadas juntas
+# é que implementam a regra do contrato.

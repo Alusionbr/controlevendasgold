@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <p class="eyebrow">Conta com login · dados sincronizados na nuvem</p>
+      <h1>Controle360 <span>Multi</span></h1>
+      <p>Estoque, ficha técnica, custo de produto, vendas, pedidos, tarefas e consignados — com admin e vendedores em contas separadas.</p>
+    </div>
+    <div class="header-actions" id="headerActions" hidden>
+      <button id="btnExport" class="secondary">Baixar Excel</button>
+      <button id="btnDataTab" class="ghost">Backup e exportação</button>
+      <button id="btnLogout" class="ghost">Sair</button>
+    </div>
+  </header>
+
+  <div id="authRoot"></div>
+
+  <main class="app-shell" id="appShell" hidden>
+    <section class="business-bar" aria-label="Negócio ativo">
+      <div>
+        <label for="activeBusiness">Negócio ativo</label>
+        <select id="activeBusiness"></select>
+      </div>
+      <button id="btnNewBusiness">Novo negócio</button>
+      <button id="btnReset" class="danger ghost">Zerar dados locais</button>
+    </section>
+
+    <section id="dashboard" class="dashboard"></section>
+
+    <nav class="tabs" aria-label="Módulos do sistema">
+      <button class="tab-button active" data-tab="negocios">Negócios</button>
+      <button class="tab-button" data-tab="produtos">Produtos</button>
+      <button class="tab-button" data-tab="clientes">Clientes</button>
+      <button class="tab-button" data-tab="fornecedores">Fornecedores</button>
+      <button class="tab-button" data-tab="compras">Compras</button>
+      <button class="tab-button" data-tab="fichas">Fichas e custos</button>
+      <button class="tab-button" data-tab="producao">Produção</button>
+      <button class="tab-button" data-tab="vendas">Vendas</button>
+      <button class="tab-button" data-tab="pedidos">Pedidos</button>
+      <button class="tab-button" data-tab="consignado">Consignado</button>
+      <button class="tab-button" data-tab="estoque">Meu estoque</button>
+      <button class="tab-button" data-tab="tarefas">Tarefas</button>
+      <button class="tab-button" data-tab="relatorios">Relatórios</button>
+      <button class="tab-button" data-tab="vendedores">Vendedores</button>
+      <button class="tab-button" data-tab="precos">Preços</button>
+      <button class="tab-button" data-tab="aprovacoes">Aprovações</button>
+      <button class="tab-button" data-tab="calculadora">Calculadora</button>
+      <button class="tab-button" data-tab="metas">Metas</button>
+      <button class="tab-button" data-tab="ajuda">Ajuda</button>
+      <button class="tab-button" data-tab="dados">Dados</button>
+    </nav>
+
+    <section id="view" class="view"></section>
+  </main>
+
+  <template id="emptyStateTemplate">
+    <div class="empty-state">
+      <strong>Nenhum registro ainda.</strong>
+      <span>Cadastre os itens necessários para começar. O sistema não vem com exemplos preenchidos.</span>
+    </div>
+  </template>
+
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+  <script src="src/utils.js"></script>
+  <script src="src/api.js"></script>
+  <script src="src/state.js"></script>
+  <script src="src/calculations.js"></script>
+  <script src="src/ui.js"></script>
+  <script src="src/auth.js"></script>
+  <script src="src/pricing.js"></script>
+  <script src="src/returns.js"></script>
+  <script src="src/sellerStock.js"></script>
+  <script src="src/calculator.js"></script>
+  <script src="src/goals.js"></script>
+  <script src="src/sellerHelp.js"></script>
+  <script src="src/xlsx-lite.js"></script>
+  <script src="src/exportImport.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
