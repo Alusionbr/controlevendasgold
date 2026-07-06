@@ -1,0 +1,800 @@
+/* Controle360 Multi — interface operacional.
+   Direção: ferramenta de trabalho calma e legível, mobile-first (a maioria dos
+   vendedores usa no celular). Um único acento de cor para ação e dinheiro,
+   números tabulares alinhados como assinatura (estoque e valores sempre
+   "batem" coluna a coluna). Paleta configurável por tema — ver seção
+   "Temas" logo abaixo do :root. */
+
+:root {
+  /* ---- Valores fixos (não variam por tema) ---- */
+  --danger: #b3261e;
+  --danger-soft: #fbe7e6;
+  --danger-deep: #8f1e17;
+  --success: #1f7a45;
+  --success-soft: #e3f3ea;
+  --warning: #9a5a08;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --num: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- Temas ----------
+   Contrato para quem for ligar o seletor de tema (ver nota no relatório):
+   - atributo: data-theme="ouro" | data-theme="classico" no <html> (ou <body>).
+   - sem o atributo, o tema padrão é "ouro" (direção atual do produto).
+   - trocar o atributo repinta o app inteiro: botões, badges, aba ativa,
+     anéis de foco, cabeçalhos de coluna do kanban e barras de destaque
+     usam só variáveis, não cores fixas. */
+
+:root,
+:root[data-theme="ouro"] {
+  --bg: #f5efe1;
+  --surface: #ffffff;
+  --surface-soft: #faf5e8;
+  --ink: #241d10;
+  --text: #2b2417;
+  --muted: #79705d;
+  --line: #e7dec7;
+  --line-strong: #d8c9a2;
+
+  /* estrutura/"chrome": ouro pede tinta escura (quase preto/marrom) para contraste */
+  --brand: #241d10;
+  --brand-deep: #140f09;
+  --brand-soft: #efe3c5;
+  --brand-border-soft: #e2d3a4;
+  --brand-soft-hover: #e8dcae;
+
+  /* acento principal: ouro/dourado — botões, aba ativa, foco, destaques */
+  --accent: #c9a227;
+  --accent-deep: #8a6a12;
+  --accent-soft: #f7ecc9;
+  --accent-ink: #7a5e0a;
+  --accent-border-soft: #ecd9a0;
+  --accent-contrast: #241d10;
+
+  --header-eyebrow: #e7cf8f;
+  --header-subtitle: #ddc998;
+  --ink-contrast: #f7f0df;
+  --ink-contrast-soft: #ecdfb8;
+  --bg-glow: rgba(120, 94, 20, 0.14);
+
+  --focus-ring: rgba(184, 138, 20, 0.5);
+  --focus-ring-soft: rgba(184, 138, 20, 0.18);
+
+  --shadow: 0 12px 30px rgba(30, 22, 6, 0.16);
+  --shadow-sm: 0 4px 14px rgba(30, 22, 6, 0.12);
+}
+
+:root[data-theme="classico"] {
+  --bg: #eef2f1;
+  --surface: #ffffff;
+  --surface-soft: #f6f8f7;
+  --ink: #14302f;
+  --text: #1f2d2c;
+  --muted: #5d6f6d;
+  --line: #d8e1df;
+  --line-strong: #c2cfcc;
+
+  --brand: #0f6b62;
+  --brand-deep: #0c4f49;
+  --brand-soft: #e4efed;
+  --brand-border-soft: #bfe0db;
+  --brand-soft-hover: #d2e8e4;
+
+  --accent: #c9610c;
+  --accent-deep: #b3550a;
+  --accent-soft: #fbeede;
+  --accent-ink: #7a4406;
+  --accent-border-soft: #f0d4b3;
+  --accent-contrast: #ffffff;
+
+  --header-eyebrow: #a9dcd5;
+  --header-subtitle: #c4e7e2;
+  --ink-contrast: #eafaf7;
+  --ink-contrast-soft: #d8efea;
+  --bg-glow: rgba(15, 107, 98, 0.1);
+
+  --focus-ring: rgba(201, 97, 12, 0.45);
+  --focus-ring-soft: rgba(201, 97, 12, 0.16);
+
+  --shadow: 0 12px 30px rgba(12, 60, 56, 0.1);
+  --shadow-sm: 0 4px 14px rgba(12, 60, 56, 0.07);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background:
+    radial-gradient(1200px 480px at 100% -10%, var(--bg-glow), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+h1, h2, h3 { line-height: 1.18; margin: 0; color: var(--ink); letter-spacing: -0.01em; }
+p { margin: 0; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---------- Botões ---------- */
+/* min-height ~44px em qualquer largura: alvo de toque confortável no celular. */
+button {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  padding: 0.7rem 1.05rem;
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 650;
+  letter-spacing: 0.005em;
+  transition: transform 0.04s ease, background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+button:hover { background: var(--accent-deep); }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+button.secondary {
+  background: var(--brand);
+  color: #fff;
+}
+button.secondary:hover { background: var(--brand-deep); }
+
+button.ghost {
+  background: transparent;
+  color: var(--brand-deep);
+  border-color: var(--line-strong);
+}
+button.ghost:hover { background: var(--brand-soft); border-color: var(--brand); }
+
+button.danger { background: var(--danger); color: #fff; }
+button.danger:hover { background: var(--danger-deep); }
+button.danger.ghost { background: transparent; color: var(--danger); border-color: var(--danger-soft); }
+button.danger.ghost:hover { background: var(--danger-soft); }
+
+button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; min-height: 36px; }
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- Cabeçalho ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1.1rem clamp(1rem, 4vw, 2.4rem);
+  background: linear-gradient(180deg, var(--brand-deep), var(--brand));
+  color: var(--ink-contrast);
+  box-shadow: var(--shadow-sm);
+}
+.app-header .brand p { color: var(--header-subtitle); max-width: 60ch; }
+.app-header h1 {
+  color: #ffffff;
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+  font-weight: 760;
+  margin: 0.15rem 0 0.25rem;
+}
+.app-header h1 span { color: var(--accent-soft); font-weight: 760; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--header-eyebrow) !important;
+}
+.header-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; width: 100%; }
+.header-actions button { flex: 1 1 160px; }
+.app-header button.secondary { background: var(--accent); color: var(--accent-contrast); }
+.app-header button.secondary:hover { background: var(--accent-deep); }
+.app-header button.ghost { color: var(--ink-contrast); border-color: rgba(255, 255, 255, 0.35); }
+.app-header button.ghost:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255,255,255,0.6); }
+
+/* Desktop: cabeçalho volta a ser uma única linha, texto à esquerda e ações à direita. */
+@media (min-width: 721px) {
+  .app-header { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+  .header-actions { width: auto; flex-wrap: nowrap; }
+  .header-actions button { flex: 0 0 auto; }
+}
+
+/* ---------- Estrutura ---------- */
+.app-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 1.8rem) clamp(0.8rem, 4vw, 2.4rem) 4rem;
+}
+
+.business-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+.business-bar > div { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 240px; min-width: 0; }
+.business-bar label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
+.business-bar select { min-width: 200px; }
+.business-bar button { flex: 1 1 auto; }
+
+@media (max-width: 480px) {
+  .business-bar select { min-width: 0; width: 100%; }
+  .business-bar button { width: 100%; }
+}
+
+/* ---------- Dashboard ---------- */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+  margin: 1.1rem 0;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.metric-card span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.metric-card strong { font-size: 1.5rem; font-weight: 720; font-variant-numeric: tabular-nums; font-family: var(--num); color: var(--ink); }
+
+@media (max-width: 400px) {
+  .dashboard { grid-template-columns: 1fr; }
+}
+
+/* ---------- Abas ---------- */
+/* Nota de correção: .tabs NÃO fica sticky (era `position: sticky; top: 0`
+   igual ao .app-header, que também é sticky top:0 — dois elementos presos
+   no mesmo topo se sobrepõem, e o cabeçalho (z-index maior) acaba cobrindo
+   as abas assim que a rolagem prende os dois ao mesmo tempo). Sem medir a
+   altura real do cabeçalho (variável: 1 ou 2 linhas conforme a largura) não
+   dá para travar as abas exatamente abaixo dele só com CSS, então a rolagem
+   normal é o comportamento seguro. Mais abas virão (Vendedores, Aprovações,
+   Metas, Ajuda, Calculadora...), por isso a barra rola horizontalmente e
+   nunca quebra o layout. */
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  margin: 1.1rem 0 1.2rem;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  box-shadow: var(--shadow-sm);
+}
+.tabs::-webkit-scrollbar { height: 6px; }
+.tabs::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+.tab-button {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 0.6rem 1rem;
+  min-height: 44px;
+  border-radius: 999px;
+  font-weight: 650;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
+.tab-button.active { background: var(--accent); color: var(--accent-contrast); }
+
+/* ---------- Seções ---------- */
+.view { display: block; }
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+.section-head h2 { font-size: 1.3rem; font-weight: 720; }
+.section-head p { color: var(--muted); margin-top: 0.25rem; max-width: 72ch; }
+
+@media (min-width: 721px) {
+  .section-head { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+}
+
+/* ---------- Formulários ---------- */
+.grid-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.15rem;
+  margin-bottom: 1.4rem;
+  box-shadow: var(--shadow-sm);
+}
+.grid-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  font-weight: 650;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+.grid-form label.full { grid-column: 1 / -1; }
+.grid-form label span {
+  font-weight: 500;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.grid-form button[type="submit"] {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0.78rem 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 481px) {
+  .grid-form button[type="submit"] { width: auto; }
+}
+
+input, select, textarea {
+  width: 100%;
+  background: var(--surface-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.7rem;
+  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--focus-ring-soft);
+}
+textarea { min-height: 76px; resize: vertical; }
+input[type="number"] { font-variant-numeric: tabular-nums; font-family: var(--num); }
+
+/* ---------- Tabelas ---------- */
+/* Estratégia mobile: rolagem horizontal dentro de .table-wrap (sem exigir
+   mudança de marcação em src/ui.js) + primeira coluna fixada (sticky) para
+   manter a identificação da linha (nome/id) visível enquanto o resto da
+   tabela rola por baixo. Sombras de rolagem (gradiente) sinalizam que há
+   mais colunas fora da tela. */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  background-image:
+    linear-gradient(to right, var(--surface) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(to left, var(--surface) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(to right, rgba(20, 16, 8, 0.12), rgba(20, 16, 8, 0) 100%),
+    linear-gradient(to left, rgba(20, 16, 8, 0.12), rgba(20, 16, 8, 0) 100%);
+  background-repeat: no-repeat;
+  background-size: 24px 100%, 24px 100%, 10px 100%, 10px 100%;
+  background-position: left, right, left, right;
+  background-attachment: local, local, scroll, scroll;
+}
+table { width: 100%; border-collapse: collapse; min-width: 540px; }
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: var(--surface-soft);
+  padding: 0.7rem 0.85rem;
+  border-bottom: 2px solid var(--line);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: 0.92rem;
+}
+tbody tr:nth-child(even) td { background: rgba(15, 107, 98, 0.025); }
+tbody tr:hover td { background: var(--brand-soft); }
+tbody td strong { font-variant-numeric: tabular-nums; font-family: var(--num); font-weight: 650; }
+table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* Primeira coluna fixa (nome/id) ao rolar na horizontal — só entra em jogo
+   em telas estreitas, onde a tabela realmente precisa rolar. */
+@media (max-width: 720px) {
+  .table-wrap table th:first-child,
+  .table-wrap table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface);
+    box-shadow: 1px 0 0 var(--line);
+  }
+  .table-wrap table thead th:first-child { z-index: 3; }
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  white-space: nowrap;
+}
+.badge.ok { background: var(--success-soft); color: var(--success); }
+.badge.warn { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* ---------- Avisos ---------- */
+.notice {
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  margin-bottom: 1rem;
+}
+.notice.warning { background: var(--accent-soft); border-color: var(--accent-border-soft); color: var(--accent-ink); }
+.notice.info { background: var(--brand-soft); border-color: var(--brand-border-soft); color: var(--brand-deep); }
+.notice.success { background: var(--success-soft); border-color: #c2e4cf; color: var(--success); }
+.notice.error { background: var(--danger-soft); border-color: #f0c5c2; color: var(--danger); }
+
+/* ---------- Estado vazio ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+  padding: 2rem 1.4rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.empty-state strong { color: var(--ink); font-size: 1.02rem; }
+
+/* ---------- Cartões e colunas ---------- */
+.panel-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  box-shadow: var(--shadow-sm);
+  margin-top: 1.1rem;
+}
+.panel-card h3 { font-size: 1rem; margin-bottom: 0.75rem; }
+.three-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.three-columns .panel-card { margin-top: 0; }
+
+/* ---------- Caixa de custo ---------- */
+.cost-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.cost-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cost-item span { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+.cost-item strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; font-family: var(--num); color: var(--ink); }
+
+/* ---------- Kanban ---------- */
+.kanban {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
+  gap: 0.8rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+}
+.kanban-column {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.7rem;
+  min-height: 120px;
+}
+.kanban-column h3 { font-size: 0.86rem; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.kanban-dropzone { display: flex; flex-direction: column; gap: 0.55rem; min-height: 40px; border-radius: var(--radius-sm); }
+.kanban-column.drag-over { outline: 2px dashed var(--accent); outline-offset: 2px; background: var(--accent-soft); }
+.kanban-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.8rem;
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.kanban-card:active { cursor: grabbing; }
+.kanban-card strong { font-size: 0.95rem; color: var(--ink); }
+.kanban-card p { font-size: 0.82rem; color: var(--muted); }
+.kanban-card .actions { margin-top: 0.3rem; display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+@media (max-width: 480px) {
+  .kanban { grid-auto-columns: minmax(78vw, 1fr); }
+}
+
+/* ---------- Hub de backup / exportação ---------- */
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.export-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.export-card.highlight { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm); }
+.export-card-head { display: flex; align-items: center; gap: 0.5rem; }
+.export-card-head h3 { font-size: 1.05rem; }
+.export-card p { font-size: 0.88rem; color: var(--muted); }
+.export-tag {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: var(--brand-deep);
+  background: var(--brand-soft);
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+}
+.export-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; align-items: center; margin-top: auto; }
+.export-actions.wrap { gap: 0.45rem; }
+.hint-inline { font-size: 0.68rem; font-weight: 600; color: var(--muted); opacity: 0.85; }
+
+/* Botão de arquivo (input file estilizado) */
+.file-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--brand-deep);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1.05rem;
+  min-height: 44px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.file-button:hover { background: var(--brand-soft); border-color: var(--brand); }
+.file-button input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Toasts ---------- */
+.toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: 1.3rem;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  pointer-events: none;
+  width: min(92vw, 460px);
+}
+.toast {
+  pointer-events: auto;
+  background: var(--ink);
+  color: var(--ink-contrast);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  max-width: 100%;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--success); color: #fff; }
+.toast.error { background: var(--danger); color: #fff; }
+
+pre {
+  background: var(--ink);
+  color: var(--ink-contrast-soft);
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow: auto;
+  font-size: 0.8rem;
+  max-height: 360px;
+}
+
+/* ---------- Ajuda contextual (ícone ⓘ + balão explicativo) ---------- */
+/* Linha de rótulo: texto do campo + ícone de ajuda na mesma linha. */
+.grid-form label > .field-label,
+.stack-form label > .field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.34rem;
+  font-weight: 650;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+
+/* Ícone "ⓘ" clicável/hover. tabindex torna acessível ao toque no celular.
+   O seletor [data-tip] eleva a especificidade para vencer regras de span
+   herdadas (ex.: .metric-card span em maiúsculas, hints esmaecidos). */
+.help[data-tip] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--brand-border-soft);
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 0.66rem;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: help;
+  user-select: none;
+  vertical-align: middle;
+}
+.help[data-tip]:hover { background: var(--brand-soft-hover); }
+.help[data-tip]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Ajuda usada dentro de um título de métrica do painel. */
+.metric-card .help[data-tip] { margin-left: 0.35rem; }
+
+/* Balão único, posicionado por JS em coordenadas fixas (não é cortado por
+   nenhum contêiner e fica sempre dentro da tela). */
+.help-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  max-width: 280px;
+  background: var(--ink);
+  color: var(--ink-contrast);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-style: normal;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(3px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.help-tip.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+/* ---------- Responsivo (telas ~360px+) ---------- */
+/* Base do arquivo já é mobile-first nas seções acima (dashboard, tabs,
+   grid-form, tabelas, kanban, business-bar); os blocos abaixo cobrem ajustes
+   finos que só fazem sentido em telas bem estreitas ou bem largas. */
+@media (max-width: 720px) {
+  table { min-width: 460px; }
+  .help-tip { max-width: min(280px, calc(100vw - 24px)); }
+}
+
+@media (max-width: 360px) {
+  .app-shell { padding-left: 0.7rem; padding-right: 0.7rem; }
+  .metric-card strong { font-size: 1.3rem; }
+  table { min-width: 400px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Tela de login (src/auth.js) ---------- */
+.auth-screen {
+  max-width: 380px;
+  margin: 3rem auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.4rem;
+  box-shadow: var(--shadow-sm);
+}
+.auth-title { color: var(--accent-deep); font-size: 1.5rem; margin-bottom: 0.3rem; }
+.auth-subtitle { color: var(--muted); margin: 0 0 1.1rem; font-size: 0.92rem; }
+
+/* ---------- Calculadora (src/calculator.js) ---------- */
+.calculator-page { display: flex; flex-direction: column; gap: 1rem; }
+.calculator-card { max-width: 340px; margin-left: auto; margin-right: auto; }
+.calc-display {
+  background: var(--ink);
+  color: var(--ink-contrast);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0.75rem;
+  text-align: right;
+}
+.calc-expression { font-size: 0.8rem; color: var(--ink-contrast-soft); min-height: 1.1em; }
+.calc-value { font-size: 2rem; font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 700; }
+.calc-keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.calc-key {
+  padding: 0.75rem 0;
+  border-radius: var(--radius-sm);
+  font-size: 1.05rem;
+  font-family: var(--num);
+}
+.calc-key.span2 { grid-column: span 2; }
+.calc-field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.7rem; font-size: 0.9rem; }
+.calc-field label { color: var(--muted); font-size: 0.8rem; }
+.calc-field input {
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+.calc-tool h3 { display: flex; align-items: center; gap: 0.4rem; }
