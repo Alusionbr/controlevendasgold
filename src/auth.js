@@ -376,7 +376,7 @@
             <input name="name" required placeholder="Nome do vendedor">
           </label>
           <label>E-mail
-            <input type="email" name="email" required autocomplete="off" placeholder="vendedor@exemplo.com">
+            <input type="email" name="email" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vendedor@exemplo.com">
           </label>
           <label>Senha provisória
             <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
@@ -458,9 +458,14 @@
         if (!api() || typeof api().createSeller !== 'function') {
           throw new Error('Serviço de vendedores indisponível no momento.');
         }
-        await api().createSeller({ email, password, name });
+        const created = await api().createSeller({ email, password, name });
         form.reset();
         await loadSellers();
+        // Confirmação explícita do e-mail que ficou gravado: o navegador pode
+        // ter alterado o que foi digitado (autopreenchimento/sugestão de
+        // domínio), então mostramos de volta o valor que o servidor realmente
+        // salvou, não o que o admin digitou.
+        alert(`Vendedor criado. Login: ${(created && created.email) || email} / senha provisória informada.`);
       } catch (error) {
         showError(mapCreateSellerError(error));
       } finally {

@@ -174,6 +174,7 @@ Deno.serve(async (req: Request) => {
     id: newUserId,
     role: 'vendedor',
     name,
+    email,
     business_id: callerProfile.business_id,
     active: true,
   });

@@ -332,14 +332,12 @@
     };
   }
 
-  // NOTA/gap conhecido: `profiles` não tem coluna de e-mail (o e-mail vive em
-  // auth.users, que não é exposto via PostgREST para anon/authenticated).
-  // `email` volta null aqui — src/auth.js já trata isso com fallback '—' na
-  // tabela de vendedores. Ver relatório do agente para sugestão de correção
-  // futura (denormalizar e-mail em profiles a partir da edge function).
+  // `profiles.email` é preenchido pela Edge Function create-seller no momento
+  // do cadastro (migração 0006) — cópia do e-mail real gravado em auth.users,
+  // que não é exposto via PostgREST para anon/authenticated.
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
-    return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: null }));
+    return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: row.email || null }));
   }
 
   // ---------------------------------------------------------------------

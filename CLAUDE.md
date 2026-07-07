@@ -538,3 +538,18 @@ login, e `signOut()` no botão "Sair" do cabeçalho).
   da tela e voltar no próximo refresh". Falta decidir: dar ao vendedor
   permissão de excluir os próprios registros pendentes, ou esconder o botão
   "Excluir" para o papel vendedor nessas telas.
+- **Resolvido (produção)**: admin criava vendedor e a tela "Vendedores"
+  sempre mostrava "—" no e-mail (`listSellers()` nunca buscava e-mail —
+  `auth.users` não é exposto via PostgREST). Sem conseguir conferir o e-mail
+  salvo, o admin não percebia quando o autopreenchimento do navegador
+  alterava o que foi digitado no formulário, e depois não tinha como saber
+  qual e-mail usar para logar como aquele vendedor (relatado: "senha
+  inválida" — na real o e-mail salvo era diferente do que o admin achava
+  que tinha digitado). Corrigido: migração `0006_profiles_email.sql`
+  denormaliza `profiles.email` (RLS de `profiles` já restringe a leitura ao
+  próprio admin do negócio ou ao próprio usuário — nenhuma policy nova
+  necessária); `create-seller` agora grava esse e-mail; `listSellers()`
+  retorna o valor real; formulário de criação ganhou
+  `autocapitalize/autocorrect/spellcheck` desligados (reduz sugestão de
+  domínio do navegador) e um alerta pós-criação confirmando o e-mail exato
+  que ficou salvo no servidor (não o que foi digitado).
