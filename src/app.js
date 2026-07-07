@@ -10,7 +10,6 @@
     view: document.getElementById('view'),
     dashboard: document.getElementById('dashboard'),
     activeBusiness: document.getElementById('activeBusiness'),
-    btnNewBusiness: document.getElementById('btnNewBusiness'),
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
     btnReset: document.getElementById('btnReset'),
@@ -265,39 +264,34 @@
     }
   }
 
+  // Cada conta admin já vem vinculada a exatamente um negócio (provisionado
+  // manualmente no backend — ver docs/backend.md, seção "Gaps"). Não existe
+  // policy de INSERT/DELETE para `businesses`, só UPDATE do próprio negócio;
+  // esta tela edita os dados do negócio já vinculado, não cria nem exclui.
   function renderBusinesses() {
-    const rows = state().businesses.map((business) => [
-      U.escapeHtml(business.name),
-      U.escapeHtml(business.segment || '—'),
-      `${U.number(business.defaultTargetMargin)}%`,
-      `${U.number(business.defaultFeePercent)}%`,
-      U.escapeHtml(business.notes || '—'),
-      `<div class="actions">
-        ${UI.actionButton('select-business', business.id, 'Selecionar')}
-        ${UI.actionButton('delete-business', business.id, 'Excluir', 'danger')}
-      </div>`,
-    ]);
-
-    return UI.section('Negócios', 'Crie áreas separadas para essência aromática, marmita, revenda, consignado ou qualquer outro negócio.', `
+    const business = S.activeBusiness();
+    if (!business) {
+      return UI.formNotice('Sua conta ainda não está vinculada a um negócio. Fale com o administrador do sistema.', 'warning');
+    }
+    return UI.section('Negócios', 'Dados do seu negócio. Cada conta já vem vinculada a um único negócio — não é possível criar outro por aqui.', `
       <form id="businessForm" class="grid-form">
         <label>Nome do negócio
-          <input name="name" required placeholder="Ex.: Essências / Marmitas / Revenda">
+          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: Essências / Marmitas / Revenda">
         </label>
         <label>Segmento
-          <select name="segment">${UI.optionList(state().settings.businessSegments, '', 'Escolha')}</select>
+          <select name="segment">${UI.optionList(state().settings.businessSegments, business.segment || '', 'Escolha')}</select>
         </label>
         <label>${UI.fieldLabel('Margem desejada padrão (%)', 'margemDesejada')}
-          <input name="defaultTargetMargin" type="number" step="0.01" value="50">
+          <input name="defaultTargetMargin" type="number" step="0.01" value="${U.escapeHtml(business.defaultTargetMargin ?? 50)}">
         </label>
         <label>${UI.fieldLabel('Taxas padrão de venda (%)', 'taxasPadrao')}
-          <input name="defaultFeePercent" type="number" step="0.01" value="0">
+          <input name="defaultFeePercent" type="number" step="0.01" value="${U.escapeHtml(business.defaultFeePercent ?? 0)}">
         </label>
-        <label class="full">Observações
-          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades..."></textarea>
+        <label class="wide">Observações
+          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
         </label>
-        <button type="submit">Cadastrar negócio</button>
+        <button type="submit">Salvar negócio</button>
       </form>
-      ${UI.table(['Nome', 'Segmento', 'Margem padrão', 'Taxas padrão', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -868,15 +862,16 @@
     `);
   }
 
-  async function addBusiness(data) {
-    const business = await S.addGlobal('businesses', {
+  async function updateBusiness(data) {
+    const business = S.activeBusiness();
+    if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
+    await S.update('businesses', business.id, {
       name: data.name.trim(),
       segment: data.segment,
       defaultTargetMargin: U.number(data.defaultTargetMargin),
       defaultFeePercent: U.number(data.defaultFeePercent),
       notes: data.notes || '',
     });
-    S.setActiveBusiness(business.id);
   }
 
   async function addProduct(data) {
@@ -1145,7 +1140,7 @@
     try {
       const data = U.formData(form);
       const handlers = {
-        businessForm: addBusiness,
+        businessForm: updateBusiness,
         productForm: addProduct,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
@@ -1173,12 +1168,6 @@
     const { action, id } = button.dataset;
     try {
       switch (action) {
-        case 'select-business':
-          S.setActiveBusiness(id);
-          break;
-        case 'delete-business':
-          if (confirm('Excluir este negócio e todos os dados vinculados a ele?')) await deleteBusinessCascade(id);
-          break;
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
@@ -1212,24 +1201,6 @@
     } catch (error) {
       alert(error.message);
     }
-  }
-
-  // ATENÇÃO (gap conhecido, ver docs/backend.md §8 e resumo do integrador):
-  // `supabase/migrations/0001_init.sql` não tem policy de DELETE/INSERT para
-  // `businesses` (bootstrap é manual, via service role) — por isso esta
-  // função só limpa o espelho local (cache), sem chamar a API. O registro
-  // volta a aparecer no próximo `S.refresh()`, porque o servidor continua
-  // sendo dono da verdade. Não chamamos `S.remove('businesses', ...)` aqui de
-  // propósito: chamaria a API e sempre retornaria 403/permissão negada.
-  async function deleteBusinessCascade(businessId) {
-    const keys = ['products', 'clients', 'suppliers', 'purchases', 'stockMovements', 'recipes', 'productions', 'sales', 'orders', 'consignments', 'consignmentEvents', 'tasks'];
-    const next = state();
-    keys.forEach((key) => {
-      next[key] = next[key].filter((item) => item.businessId !== businessId);
-    });
-    next.businesses = next.businesses.filter((business) => business.id !== businessId);
-    if (next.activeBusinessId === businessId) next.activeBusinessId = next.businesses[0]?.id || null;
-    S.replaceState(next);
   }
 
   async function convertOrderToSale(orderId) {
@@ -1468,7 +1439,6 @@
     bindHelpTips();
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
-    els.btnNewBusiness.addEventListener('click', () => setTab('negocios'));
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     els.btnReset.addEventListener('click', () => {

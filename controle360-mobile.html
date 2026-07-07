@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-RjDvp3jGzbGrRmgFqPwS6mShvLaK6zRfuyNGl9Ohnw0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-hntGsTrPOVZJiVGb28x7TSrsDwFRkO3WJz6wI1risfM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1006,7 +1006,6 @@ pre {
         <label for="activeBusiness">Negócio ativo</label>
         <select id="activeBusiness"></select>
       </div>
-      <button id="btnNewBusiness">Novo negócio</button>
       <button id="btnReset" class="danger ghost">Zerar dados locais</button>
     </section>
 
@@ -6453,7 +6452,6 @@ pre {
     view: document.getElementById('view'),
     dashboard: document.getElementById('dashboard'),
     activeBusiness: document.getElementById('activeBusiness'),
-    btnNewBusiness: document.getElementById('btnNewBusiness'),
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
     btnReset: document.getElementById('btnReset'),
@@ -6708,39 +6706,34 @@ pre {
     }
   }
 
+  // Cada conta admin já vem vinculada a exatamente um negócio (provisionado
+  // manualmente no backend — ver docs/backend.md, seção "Gaps"). Não existe
+  // policy de INSERT/DELETE para `businesses`, só UPDATE do próprio negócio;
+  // esta tela edita os dados do negócio já vinculado, não cria nem exclui.
   function renderBusinesses() {
-    const rows = state().businesses.map((business) => [
-      U.escapeHtml(business.name),
-      U.escapeHtml(business.segment || '—'),
-      `${U.number(business.defaultTargetMargin)}%`,
-      `${U.number(business.defaultFeePercent)}%`,
-      U.escapeHtml(business.notes || '—'),
-      `<div class="actions">
-        ${UI.actionButton('select-business', business.id, 'Selecionar')}
-        ${UI.actionButton('delete-business', business.id, 'Excluir', 'danger')}
-      </div>`,
-    ]);
-
-    return UI.section('Negócios', 'Crie áreas separadas para essência aromática, marmita, revenda, consignado ou qualquer outro negócio.', `
+    const business = S.activeBusiness();
+    if (!business) {
+      return UI.formNotice('Sua conta ainda não está vinculada a um negócio. Fale com o administrador do sistema.', 'warning');
+    }
+    return UI.section('Negócios', 'Dados do seu negócio. Cada conta já vem vinculada a um único negócio — não é possível criar outro por aqui.', `
       <form id="businessForm" class="grid-form">
         <label>Nome do negócio
-          <input name="name" required placeholder="Ex.: Essências / Marmitas / Revenda">
+          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: Essências / Marmitas / Revenda">
         </label>
         <label>Segmento
-          <select name="segment">${UI.optionList(state().settings.businessSegments, '', 'Escolha')}</select>
+          <select name="segment">${UI.optionList(state().settings.businessSegments, business.segment || '', 'Escolha')}</select>
         </label>
         <label>${UI.fieldLabel('Margem desejada padrão (%)', 'margemDesejada')}
-          <input name="defaultTargetMargin" type="number" step="0.01" value="50">
+          <input name="defaultTargetMargin" type="number" step="0.01" value="${U.escapeHtml(business.defaultTargetMargin ?? 50)}">
         </label>
         <label>${UI.fieldLabel('Taxas padrão de venda (%)', 'taxasPadrao')}
-          <input name="defaultFeePercent" type="number" step="0.01" value="0">
+          <input name="defaultFeePercent" type="number" step="0.01" value="${U.escapeHtml(business.defaultFeePercent ?? 0)}">
         </label>
-        <label class="full">Observações
-          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades..."></textarea>
+        <label class="wide">Observações
+          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
         </label>
-        <button type="submit">Cadastrar negócio</button>
+        <button type="submit">Salvar negócio</button>
       </form>
-      ${UI.table(['Nome', 'Segmento', 'Margem padrão', 'Taxas padrão', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -7311,15 +7304,16 @@ pre {
     `);
   }
 
-  async function addBusiness(data) {
-    const business = await S.addGlobal('businesses', {
+  async function updateBusiness(data) {
+    const business = S.activeBusiness();
+    if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
+    await S.update('businesses', business.id, {
       name: data.name.trim(),
       segment: data.segment,
       defaultTargetMargin: U.number(data.defaultTargetMargin),
       defaultFeePercent: U.number(data.defaultFeePercent),
       notes: data.notes || '',
     });
-    S.setActiveBusiness(business.id);
   }
 
   async function addProduct(data) {
@@ -7588,7 +7582,7 @@ pre {
     try {
       const data = U.formData(form);
       const handlers = {
-        businessForm: addBusiness,
+        businessForm: updateBusiness,
         productForm: addProduct,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
@@ -7616,12 +7610,6 @@ pre {
     const { action, id } = button.dataset;
     try {
       switch (action) {
-        case 'select-business':
-          S.setActiveBusiness(id);
-          break;
-        case 'delete-business':
-          if (confirm('Excluir este negócio e todos os dados vinculados a ele?')) await deleteBusinessCascade(id);
-          break;
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
@@ -7655,24 +7643,6 @@ pre {
     } catch (error) {
       alert(error.message);
     }
-  }
-
-  // ATENÇÃO (gap conhecido, ver docs/backend.md §8 e resumo do integrador):
-  // `supabase/migrations/0001_init.sql` não tem policy de DELETE/INSERT para
-  // `businesses` (bootstrap é manual, via service role) — por isso esta
-  // função só limpa o espelho local (cache), sem chamar a API. O registro
-  // volta a aparecer no próximo `S.refresh()`, porque o servidor continua
-  // sendo dono da verdade. Não chamamos `S.remove('businesses', ...)` aqui de
-  // propósito: chamaria a API e sempre retornaria 403/permissão negada.
-  async function deleteBusinessCascade(businessId) {
-    const keys = ['products', 'clients', 'suppliers', 'purchases', 'stockMovements', 'recipes', 'productions', 'sales', 'orders', 'consignments', 'consignmentEvents', 'tasks'];
-    const next = state();
-    keys.forEach((key) => {
-      next[key] = next[key].filter((item) => item.businessId !== businessId);
-    });
-    next.businesses = next.businesses.filter((business) => business.id !== businessId);
-    if (next.activeBusinessId === businessId) next.activeBusinessId = next.businesses[0]?.id || null;
-    S.replaceState(next);
   }
 
   async function convertOrderToSale(orderId) {
@@ -7911,7 +7881,6 @@ pre {
     bindHelpTips();
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
-    els.btnNewBusiness.addEventListener('click', () => setTab('negocios'));
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     els.btnReset.addEventListener('click', () => {
