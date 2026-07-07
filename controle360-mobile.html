@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-hntGsTrPOVZJiVGb28x7TSrsDwFRkO3WJz6wI1risfM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-knCBGiUyvj7k+xw+RFatFQZcgTnWkx5OxzHpTH7X0Fk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -6751,7 +6751,10 @@ pre {
         cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
-        `<div class="actions">${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}</div>`,
+        `<div class="actions">
+          ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
+          ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
+        </div>`,
       ];
     });
 
@@ -7613,6 +7616,9 @@ pre {
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
+        case 'adjust-stock':
+          await adjustStock(id);
+          break;
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
@@ -7728,6 +7734,34 @@ pre {
     if (amount > open) throw new Error('Valor pago maior que o valor em aberto.');
     await S.update('consignments', item.id, { amountPaid: U.number(item.amountPaid) + amount });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'pagamento', date: U.today(), quantity: 0, amount });
+  }
+
+  // Correção de contagem/perda fora dos fluxos normais (compra, produção,
+  // venda, consignado): sempre gera stockMovements com type 'ajuste_manual'
+  // e motivo obrigatório, nunca muda o estoque em silêncio (ver CLAUDE.md,
+  // regra "Estoque nunca deve ser alterado sem movimentação").
+  async function adjustStock(productId) {
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(product.currentStock, product.unit)}`);
+    if (newQtyText === null) return;
+    const newQty = U.number(newQtyText);
+    if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
+    const diff = newQty - U.number(product.currentStock);
+    if (diff === 0) return;
+    const reason = prompt('Motivo do ajuste (obrigatório):');
+    if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
+    const unitCost = U.number(product.avgCost);
+    await S.update('products', product.id, { currentStock: newQty });
+    await S.recordMovement({
+      date: U.today(),
+      type: 'ajuste_manual',
+      productId: product.id,
+      quantity: diff,
+      unitCost,
+      totalCost: diff * unitCost,
+      notes: reason.trim(),
+    });
   }
 
   function handleCostPreview(event) {

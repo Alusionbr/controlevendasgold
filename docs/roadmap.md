@@ -16,27 +16,31 @@ Multiusuário com Supabase Auth + Postgres + RLS (papéis admin/vendedor);
 5. Estoque próprio do vendedor -> consignado, e aprovação de pedidos.
 6. Metas de vendas semanais/mensais com premiação.
 7. Calculadora e central de ajuda do vendedor.
+8. Aba Negócios virou edição do negócio já vinculado à conta (nome,
+   segmento, margens padrão) em vez de criar/excluir — não há policy de
+   INSERT/DELETE para `businesses` (bootstrap é manual, 1 negócio por conta).
+9. Ajuste manual de estoque (produto físico), com motivo obrigatório,
+   gerando `stock_movements` tipo `ajuste_manual`.
 
 ## Pendências abertas desta integração (ver CLAUDE.md para detalhes)
 
-1. Deploy da Edge Function `create-seller` (bloqueada por permissão).
-2. Decidir o futuro da aba Negócios (criar/excluir negócio não tem policy
-   de INSERT/DELETE no backend atual — bootstrap é manual).
+1. Deploy da Edge Function `create-seller` (bloqueada por permissão) —
+   confirmar se já está publicada no projeto Supabase em uso antes de
+   liberar a criação de vendedores pela aba Vendedores.
 
 ## Próxima versão recomendada
 
 1. Botão de edição para produtos, clientes, fornecedores, pedidos e tarefas.
-2. Ajuste manual de estoque com motivo obrigatório.
-3. Venda com múltiplos itens.
-4. Pedido com múltiplos itens.
-5. Relatório financeiro simples:
+2. Venda com múltiplos itens.
+3. Pedido com múltiplos itens.
+4. Relatório financeiro simples:
    - a receber;
    - a pagar;
    - lucro por período;
    - margem por produto.
-6. Exportação CSV.
-7. Filtro por data.
-8. Busca nas tabelas.
+5. Exportação CSV.
+6. Filtro por data.
+7. Busca nas tabelas.
 
 ## Versão profissional local
 

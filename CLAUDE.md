@@ -248,7 +248,8 @@ Não implemente recursos novos diretamente em `app.js` sem avaliar se a lógica 
 Prioridade alta:
 
 1. Edição de registros com trilha de auditoria.
-2. Ajuste manual de estoque com motivo obrigatório.
+2. ~~Ajuste manual de estoque com motivo obrigatório.~~ Feito: aba Produtos,
+   ação "Ajustar estoque" → `stock_movements` tipo `ajuste_manual`.
 3. Multi-item por venda e pedido.
 4. Relatório de contas a receber e a pagar.
 5. Impressão/geração de etiqueta ou lista de separação.
@@ -500,9 +501,10 @@ login, e `signOut()` no botão "Sair" do cabeçalho).
 
 - A Edge Function `create-seller` ainda não foi implantada (falha de
   permissão do orquestrador) — a tela "Vendedores" chama normalmente e vai
-  mostrar erro até o deploy acontecer.
-- A tabela `businesses` não tem policy de INSERT/DELETE para usuários
-  autenticados (bootstrap é manual, via service role) — os botões "Novo
-  negócio" e "Excluir negócio" da aba Negócios não funcionam contra o
-  backend real nesta versão multiusuário; avaliar se a aba Negócios deve
-  virar somente leitura/edição ou ser removida.
+  mostrar erro até o deploy acontecer. Confirmar se já foi publicada no
+  projeto Supabase em uso antes de anunciar a criação de vendedores como
+  disponível.
+- **Resolvido**: a tabela `businesses` não tem policy de INSERT/DELETE para
+  usuários autenticados (bootstrap é manual, via service role, 1 negócio por
+  conta) — a aba Negócios virou edição do negócio já vinculado (nome,
+  segmento, margens padrão), sem criar/excluir.

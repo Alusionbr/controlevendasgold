@@ -309,7 +309,10 @@
         cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
-        `<div class="actions">${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}</div>`,
+        `<div class="actions">
+          ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
+          ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
+        </div>`,
       ];
     });
 
@@ -1171,6 +1174,9 @@
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
+        case 'adjust-stock':
+          await adjustStock(id);
+          break;
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
@@ -1286,6 +1292,34 @@
     if (amount > open) throw new Error('Valor pago maior que o valor em aberto.');
     await S.update('consignments', item.id, { amountPaid: U.number(item.amountPaid) + amount });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'pagamento', date: U.today(), quantity: 0, amount });
+  }
+
+  // Correção de contagem/perda fora dos fluxos normais (compra, produção,
+  // venda, consignado): sempre gera stockMovements com type 'ajuste_manual'
+  // e motivo obrigatório, nunca muda o estoque em silêncio (ver CLAUDE.md,
+  // regra "Estoque nunca deve ser alterado sem movimentação").
+  async function adjustStock(productId) {
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(product.currentStock, product.unit)}`);
+    if (newQtyText === null) return;
+    const newQty = U.number(newQtyText);
+    if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
+    const diff = newQty - U.number(product.currentStock);
+    if (diff === 0) return;
+    const reason = prompt('Motivo do ajuste (obrigatório):');
+    if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
+    const unitCost = U.number(product.avgCost);
+    await S.update('products', product.id, { currentStock: newQty });
+    await S.recordMovement({
+      date: U.today(),
+      type: 'ajuste_manual',
+      productId: product.id,
+      quantity: diff,
+      unitCost,
+      totalCost: diff * unitCost,
+      notes: reason.trim(),
+    });
   }
 
   function handleCostPreview(event) {
