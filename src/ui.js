@@ -144,6 +144,19 @@
     `;
   }
 
+  // Arrastar com o mouse (draggable) não funciona em telas touch, então cada
+  // cartão também tem um select "mover para" como alternativa — ver
+  // app.js handleKanbanMove().
+  function kanbanMoveSelect(card, statuses) {
+    const options = statuses.map((status) => `<option value="${escapeHtml(status.value)}" ${status.value === card.status ? 'selected' : ''}>${escapeHtml(status.label)}</option>`).join('');
+    return `
+      <label class="kanban-move">
+        <span>Mover para</span>
+        <select data-kanban-move data-card-id="${escapeHtml(card.id)}">${options}</select>
+      </label>
+    `;
+  }
+
   function kanban({ statuses, cards, type }) {
     return `<div class="kanban" data-kanban-type="${escapeHtml(type)}">
       ${statuses.map((status) => {
@@ -157,6 +170,7 @@
                   <strong>${escapeHtml(card.title)}</strong>
                   ${card.subtitle ? `<p>${escapeHtml(card.subtitle)}</p>` : ''}
                   ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
+                  ${kanbanMoveSelect(card, statuses)}
                   <div class="actions">${card.actions || ''}</div>
                 </article>
               `).join('')}

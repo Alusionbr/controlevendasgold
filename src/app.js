@@ -656,7 +656,7 @@
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartões entre as colunas.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartões entre as colunas ou use o campo "Mover para" no celular.', `
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -748,7 +748,7 @@
       detail: task.notes || '',
       actions: UI.actionButton('delete-task', task.id, 'Excluir', 'danger'),
     }));
-    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas. Use para compras, produção, cobrança, despachos e revisão.', `
+    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produção, cobrança, despachos e revisão.', `
       <form id="taskForm" class="grid-form">
         <label>Tarefa
           <input name="title" required placeholder="Ex.: Comprar vidros / cobrar cliente / despachar pedido">
@@ -1363,6 +1363,24 @@
     renderAll();
   }
 
+  // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
+  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
+  // ver UI.kanban() em src/ui.js.
+  async function handleKanbanMove(event) {
+    const select = event.target.closest('[data-kanban-move]');
+    if (!select) return;
+    const board = select.closest('[data-kanban-type]');
+    if (!board) return;
+    const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    const cardId = select.dataset.cardId;
+    try {
+      await S.update(collection, cardId, { status: select.value });
+    } catch (error) {
+      alert(error.message);
+    }
+    renderAll();
+  }
+
   // ---------- Ajuda contextual (balão do ícone "ⓘ") ----------
   let tipEl = null;
   function ensureTip() {
@@ -1483,6 +1501,7 @@
     document.addEventListener('dragover', handleKanbanDragOver);
     document.addEventListener('dragleave', handleKanbanDragLeave);
     document.addEventListener('drop', handleKanbanDrop);
+    document.addEventListener('change', handleKanbanMove);
   }
 
   function handleDataActions(event) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-RjDvp3jGzbGrRmgFqPwS6mShvLaK6zRfuyNGl9Ohnw0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -173,9 +173,12 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 
 /* ---------- Cabeçalho ---------- */
+/* Sticky só a partir do desktop (ver media query abaixo): no celular o
+   cabeçalho fica alto (marca empilhada + botões de ação em largura total —
+   Baixar Excel/Backup e exportação/Sair), e travá-lo no topo cobriria boa
+   parte da tela o tempo todo durante a rolagem. */
 .app-header {
-  position: sticky;
-  top: 0;
+  position: static;
   z-index: 30;
   display: flex;
   flex-direction: column;
@@ -202,15 +205,17 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   color: var(--header-eyebrow) !important;
 }
 .header-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; width: 100%; }
+.header-actions[hidden] { display: none; }
 .header-actions button { flex: 1 1 160px; }
 .app-header button.secondary { background: var(--accent); color: var(--accent-contrast); }
 .app-header button.secondary:hover { background: var(--accent-deep); }
 .app-header button.ghost { color: var(--ink-contrast); border-color: rgba(255, 255, 255, 0.35); }
 .app-header button.ghost:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255,255,255,0.6); }
 
-/* Desktop: cabeçalho volta a ser uma única linha, texto à esquerda e ações à direita. */
+/* Desktop: cabeçalho volta a ser uma única linha, texto à esquerda e ações à
+   direita, e cabe travado no topo (sticky) sem atrapalhar o conteúdo. */
 @media (min-width: 721px) {
-  .app-header { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+  .app-header { position: sticky; top: 0; flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
   .header-actions { width: auto; flex-wrap: nowrap; }
   .header-actions button { flex: 0 0 auto; }
 }
@@ -273,7 +278,11 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .metric-card strong { font-size: 1.5rem; font-weight: 720; font-variant-numeric: tabular-nums; font-family: var(--num); color: var(--ink); }
 
 @media (max-width: 400px) {
-  .dashboard { grid-template-columns: 1fr; }
+  /* 2 colunas em vez de empilhar tudo: no celular a rolagem até o conteúdo
+     das abas fica bem mais curta com 6 métricas em 3 linhas em vez de 6. */
+  .dashboard { grid-template-columns: repeat(2, 1fr); gap: 0.55rem; }
+  .metric-card { padding: 0.8rem 0.85rem; }
+  .metric-card strong { font-size: 1.15rem; }
 }
 
 /* ---------- Abas ---------- */
@@ -350,7 +359,8 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   font-size: 0.86rem;
   color: var(--ink);
 }
-.grid-form label.full { grid-column: 1 / -1; }
+.grid-form label.full,
+.grid-form label.wide { grid-column: 1 / -1; }
 .grid-form label span {
   font-weight: 500;
   font-size: 0.76rem;
@@ -366,6 +376,38 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 @media (min-width: 481px) {
   .grid-form button[type="submit"] { width: auto; }
 }
+
+/* Formulário empilhado (uma coluna): usado em painéis menores (ficha
+   técnica, simulador de custo, devolução/desperdício) em vez do grid de
+   múltiplas colunas do .grid-form. */
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.stack-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  font-weight: 650;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+.stack-form button[type="submit"] { width: 100%; }
+@media (min-width: 481px) {
+  .stack-form button[type="submit"] { width: auto; align-self: flex-start; }
+}
+
+/* Duas colunas lado a lado (Fichas técnicas, Preços) — empilha em telas
+   estreitas, igual ao .three-columns já usado em Relatórios. */
+.two-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  align-items: start;
+}
+.two-columns .panel-card { margin-top: 0; }
 
 input, select, textarea {
   width: 100%;
@@ -566,8 +608,141 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .kanban-card p { font-size: 0.82rem; color: var(--muted); }
 .kanban-card .actions { margin-top: 0.3rem; display: flex; gap: 0.35rem; flex-wrap: wrap; }
 
+/* Alternativa ao arrastar-e-soltar: toque/arrastar HTML5 não funciona em
+   telas touch, então todo cartão também tem um select para mudar de coluna
+   (ver ui.js kanban() e app.js handleKanbanMove). */
+.kanban-move {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--muted);
+}
+.kanban-move select {
+  min-height: 38px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
 @media (max-width: 480px) {
   .kanban { grid-auto-columns: minmax(78vw, 1fr); }
+}
+
+/* ---------- Devolução/Desperdício (src/returns.js) ---------- */
+.returns-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.returns-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.returns-form {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+.returns-form h4 { font-size: 0.92rem; color: var(--ink); margin: 0; }
+.returns-hint { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
+/* ---------- Preços (src/pricing.js) ---------- */
+.pricing-hint { font-size: 0.85rem; color: var(--muted); margin: 0.4rem 0 0; }
+
+/* ---------- Central de ajuda do vendedor (src/sellerHelp.js) ---------- */
+.help-onboarding, .help-tips-panel, .help-faq-panel { margin-top: 1.1rem; }
+
+.help-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.help-step { display: flex; gap: 0.75rem; align-items: flex-start; }
+.help-step-number {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.help-step-body strong { display: block; color: var(--ink); margin-bottom: 0.15rem; }
+.help-step-body p { color: var(--muted); font-size: 0.9rem; }
+
+.tip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.7rem;
+}
+.tip-card {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+}
+.tip-card strong { display: block; color: var(--ink); margin-bottom: 0.2rem; }
+.tip-card p { color: var(--muted); font-size: 0.88rem; margin: 0; }
+
+.help-search { margin-bottom: 0.9rem; }
+.help-search input { max-width: 420px; }
+
+.accordion { display: flex; flex-direction: column; gap: 0.5rem; }
+.accordion-item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface-soft);
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  text-align: left;
+  padding: 0.8rem 1rem;
+  font-weight: 650;
+}
+.accordion-trigger:hover { background: var(--brand-soft); }
+.accordion-icon {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--accent-deep);
+  transition: transform 0.15s ease;
+}
+.accordion-item.open .accordion-icon { transform: rotate(45deg); }
+.accordion-panel { padding: 0.2rem 1rem 0.9rem; color: var(--muted); font-size: 0.92rem; }
+@media (prefers-reduced-motion: reduce) {
+  .accordion-icon { transition: none; }
 }
 
 /* ---------- Hub de backup / exportação ---------- */
@@ -754,7 +929,7 @@ pre {
 
 @media (max-width: 360px) {
   .app-shell { padding-left: 0.7rem; padding-right: 0.7rem; }
-  .metric-card strong { font-size: 1.3rem; }
+  .metric-card strong { font-size: 1.05rem; }
   table { min-width: 400px; }
 }
 
@@ -2309,6 +2484,19 @@ pre {
     `;
   }
 
+  // Arrastar com o mouse (draggable) não funciona em telas touch, então cada
+  // cartão também tem um select "mover para" como alternativa — ver
+  // app.js handleKanbanMove().
+  function kanbanMoveSelect(card, statuses) {
+    const options = statuses.map((status) => `<option value="${escapeHtml(status.value)}" ${status.value === card.status ? 'selected' : ''}>${escapeHtml(status.label)}</option>`).join('');
+    return `
+      <label class="kanban-move">
+        <span>Mover para</span>
+        <select data-kanban-move data-card-id="${escapeHtml(card.id)}">${options}</select>
+      </label>
+    `;
+  }
+
   function kanban({ statuses, cards, type }) {
     return `<div class="kanban" data-kanban-type="${escapeHtml(type)}">
       ${statuses.map((status) => {
@@ -2322,6 +2510,7 @@ pre {
                   <strong>${escapeHtml(card.title)}</strong>
                   ${card.subtitle ? `<p>${escapeHtml(card.subtitle)}</p>` : ''}
                   ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
+                  ${kanbanMoveSelect(card, statuses)}
                   <div class="actions">${card.actions || ''}</div>
                 </article>
               `).join('')}
@@ -6910,7 +7099,7 @@ pre {
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartões entre as colunas.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartões entre as colunas ou use o campo "Mover para" no celular.', `
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -7002,7 +7191,7 @@ pre {
       detail: task.notes || '',
       actions: UI.actionButton('delete-task', task.id, 'Excluir', 'danger'),
     }));
-    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas. Use para compras, produção, cobrança, despachos e revisão.', `
+    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produção, cobrança, despachos e revisão.', `
       <form id="taskForm" class="grid-form">
         <label>Tarefa
           <input name="title" required placeholder="Ex.: Comprar vidros / cobrar cliente / despachar pedido">
@@ -7617,6 +7806,24 @@ pre {
     renderAll();
   }
 
+  // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
+  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
+  // ver UI.kanban() em src/ui.js.
+  async function handleKanbanMove(event) {
+    const select = event.target.closest('[data-kanban-move]');
+    if (!select) return;
+    const board = select.closest('[data-kanban-type]');
+    if (!board) return;
+    const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    const cardId = select.dataset.cardId;
+    try {
+      await S.update(collection, cardId, { status: select.value });
+    } catch (error) {
+      alert(error.message);
+    }
+    renderAll();
+  }
+
   // ---------- Ajuda contextual (balão do ícone "ⓘ") ----------
   let tipEl = null;
   function ensureTip() {
@@ -7737,6 +7944,7 @@ pre {
     document.addEventListener('dragover', handleKanbanDragOver);
     document.addEventListener('dragleave', handleKanbanDragLeave);
     document.addEventListener('drop', handleKanbanDrop);
+    document.addEventListener('change', handleKanbanMove);
   }
 
   function handleDataActions(event) {
