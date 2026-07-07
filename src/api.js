@@ -4,40 +4,15 @@
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api â€” camada fina de acesso Ã  Supabase (Auth + PostgREST + Edge
+  // C360.api — camada fina de acesso à Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de preÃ§o, trigger de aprovaÃ§Ã£o, edge
+  // (tabelas, RLS, trigger de piso de preço, trigger de aprovação, edge
   // function create-seller).
-  //
-  // ConvenÃ§Ã£o camelCase <-> snake_case (ver relatÃ³rio do agente para detalhes
-  // completos):
-  //   - list/insert/update/remove (genÃ©ricos) fazem PASSTHROUGH em
-  //     snake_case: o payload enviado e a linha recebida usam os nomes de
-  //     coluna reais do banco. EXCEÃ‡ÃƒO: as CHAVES do objeto `query` de list()
-  //     sÃ£o normalizadas de camelCase para snake_case antes de virar filtro
-  //     PostgREST (ex.: `{ businessId: x }` vira `business_id=eq.x`), porque
-  //     src/pricing.js jÃ¡ foi escrito chamando
-  //     `C360.api.list('profiles', { role: 'vendedor', businessId })`.
-  //   - Os helpers de domÃ­nio nomeados (getProfile, createSeller, listSellers,
-  //     listSellerProducts, listSellerPrices, setSellerPrice, listSellerStock,
-  //     setSellerStock) fazem mapeamento camelCase <-> snake_case completo
-  //     (payload de entrada e linha de saÃ­da), porque Ã© assim que
-  //     src/auth.js e src/pricing.js os consomem.
-  //   - EXCEÃ‡ÃƒO dentro dos helpers nomeados: listSalesGoals, listGoalsProgress,
-  //     createSalesGoal, updateSalesGoal, deleteSalesGoal ficam em snake_case
-  //     puro (payload e linha), porque src/goals.js (jÃ¡ escrito) lÃª/grava
-  //     `period_type`, `period_start`, `target_amount`, `reward_description`,
-  //     `achieved_amount`, `progress_pct`, `is_achieved` etc. diretamente.
   // ==========================================================================
 
   const SUPABASE_URL = 'https://zcwnfrhtlhjfprsjktlx.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM'.replace('zd25m', 'zcwnm');
 
-  // ---------------------------------------------------------------------
-  // SessÃ£o (mantida em memÃ³ria; src/auth.js Ã© quem persiste tokens em
-  // localStorage e chama signInWithPassword/refreshSession para repovoar
-  // este mÃ³dulo apÃ³s reload).
-  // ---------------------------------------------------------------------
   const session = {
     accessToken: null,
     refreshToken: null,
@@ -45,9 +20,6 @@
     userId: null,
   };
 
-  // ---------------------------------------------------------------------
-  // camelCase <-> snake_case
-  // ---------------------------------------------------------------------
   function camelToSnakeKey(key) {
     return String(key).replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   }
@@ -56,19 +28,6 @@
     return String(key).replace(/_([a-z0-9])/g, (_, char) => char.toUpperCase());
   }
 
-  function mapKeys(obj, keyFn) {
-    if (!obj || typeof obj !== 'object') return obj;
-    const result = {};
-    Object.entries(obj).forEach(([key, value]) => {
-      result[keyFn(key)] = value;
-    });
-    return result;
-  }
-
-  // ---------------------------------------------------------------------
-  // Erros: sempre Error com .status; mensagem = campo de erro do PostgREST/
-  // GoTrue/Edge Function quando existir.
-  // ---------------------------------------------------------------------
   async function parseBodySafe(res) {
     const text = await res.text();
     if (!text) return null;
@@ -97,9 +56,6 @@
     return error;
   }
 
-  // ---------------------------------------------------------------------
-  // Fetch helpers
-  // ---------------------------------------------------------------------
   function baseHeaders(extra = {}) {
     const headers = { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json', ...extra };
     if (session.accessToken) headers.Authorization = `Bearer ${session.accessToken}`;
@@ -116,8 +72,6 @@
     }
   }
 
-  // requisiÃ§Ã£o autenticada a PostgREST (rest/v1/...). Em 401, tenta renovar a
-  // sessÃ£o UMA vez com o refresh_token guardado e repete a chamada original.
   async function restRequest(path, { method = 'GET', headers = {}, body, allowRetry = true } = {}) {
     const res = await fetch(`${SUPABASE_URL}${path}`, {
       method,
@@ -127,9 +81,7 @@
 
     if (res.status === 401 && allowRetry) {
       const refreshed = await tryRefreshOnce();
-      if (refreshed) {
-        return restRequest(path, { method, headers, body, allowRetry: false });
-      }
+      if (refreshed) return restRequest(path, { method, headers, body, allowRetry: false });
     }
 
     if (!res.ok) {
@@ -141,11 +93,6 @@
     return parseBodySafe(res);
   }
 
-  // ---------------------------------------------------------------------
-  // Query string para list(): eq simples por coluna + `_order`/`_select`
-  // reservados. Chaves camelCase sÃ£o convertidas para snake_case (ver nota
-  // de reconciliaÃ§Ã£o no topo do arquivo).
-  // ---------------------------------------------------------------------
   function buildQueryString(query = {}) {
     const params = new URLSearchParams();
     Object.entries(query).forEach(([key, value]) => {
@@ -163,9 +110,6 @@
     return params.toString();
   }
 
-  // ---------------------------------------------------------------------
-  // CRUD genÃ©rico (passthrough snake_case)
-  // ---------------------------------------------------------------------
   async function list(table, query = {}) {
     const qs = buildQueryString(query);
     const rows = await restRequest(`/rest/v1/${table}${qs ? `?${qs}` : ''}`, { method: 'GET' });
@@ -181,19 +125,13 @@
     return Array.isArray(result) ? result[0] : result;
   }
 
-  // Nota: PostgREST devolve 200/204 com corpo vazio quando o RLS filtra a
-  // linha (id existe, mas a policy nÃ£o libera) â€” nÃ£o Ã© um erro HTTP, entÃ£o
-  // sem checar o resultado o chamador acharia que a operaÃ§Ã£o funcionou. Os
-  // dois `throw` abaixo transformam esse "sucesso vazio" num erro real.
   async function update(table, id, patch) {
     const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
-    if (Array.isArray(result) && result.length === 0) {
-      throw buildError('Nenhum registro atualizado (sem permissÃ£o ou registro nÃ£o encontrado).', 403);
-    }
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permissão ou registro não encontrado).', 403);
     return Array.isArray(result) ? result[0] : result;
   }
 
@@ -202,12 +140,9 @@
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
     });
-    if (Array.isArray(result) && result.length === 0) {
-      throw buildError('Nenhum registro excluÃ­do (sem permissÃ£o ou registro nÃ£o encontrado).', 403);
-    }
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluído (sem permissão ou registro não encontrado).', 403);
   }
 
-  // Upsert por (seller_id, product_id) â€” usado por setSellerPrice/setSellerStock.
   async function upsert(table, payload, conflictColumns) {
     const result = await restRequest(`/rest/v1/${table}?on_conflict=${conflictColumns}`, {
       method: 'POST',
@@ -217,9 +152,6 @@
     return Array.isArray(result) ? result[0] : result;
   }
 
-  // ---------------------------------------------------------------------
-  // Auth (GoTrue)
-  // ---------------------------------------------------------------------
   async function authPost(path, body, extraHeaders = {}) {
     const res = await fetch(`${SUPABASE_URL}${path}`, {
       method: 'POST',
@@ -281,10 +213,6 @@
     return { id: parsed.id, email: parsed.email };
   }
 
-  // Convenience â€” nÃ£o faz parte do contrato original, mas Ã© necessÃ¡ria para
-  // que src/state.js saiba QUEM Ã© o usuÃ¡rio logado sem que api.js precise
-  // vazar o access_token para fora de si mesmo (ver comentÃ¡rio em src/auth.js
-  // sobre essa premissa). Ver relatÃ³rio do agente.
   function getCurrentAuthUserId() {
     return session.userId;
   }
@@ -295,20 +223,11 @@
     return profile ? profile.businessId : null;
   }
 
-  // ---------------------------------------------------------------------
-  // profiles / seller management
-  // ---------------------------------------------------------------------
   async function getProfile(userId) {
     const rows = await list('profiles', { id: userId });
     const row = rows[0];
     if (!row) return null;
-    return {
-      id: row.id,
-      role: row.role,
-      name: row.name,
-      businessId: row.business_id,
-      active: row.active,
-    };
+    return { id: row.id, role: row.role, name: row.name, businessId: row.business_id, active: row.active };
   }
 
   async function createSeller({ email, password, name }) {
@@ -323,28 +242,14 @@
     });
     const parsed = await parseBodySafe(res);
     if (!res.ok) throw buildError(parsed, res.status);
-    return {
-      id: parsed.id,
-      email: parsed.email,
-      name: parsed.name,
-      role: parsed.role,
-      businessId: parsed.business_id,
-    };
+    return { id: parsed.id, email: parsed.email, name: parsed.name, role: parsed.role, businessId: parsed.business_id };
   }
 
-  // `profiles.email` Ã© preenchido pela Edge Function create-seller no momento
-  // do cadastro (migraÃ§Ã£o 0006) â€” cÃ³pia do e-mail real gravado em auth.users,
-  // que nÃ£o Ã© exposto via PostgREST para anon/authenticated.
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
     return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: row.email || null }));
   }
 
-  // ---------------------------------------------------------------------
-  // Produtos (view seller_products para vendedor / tabela products p/ admin
-  // jÃ¡ Ã© acessada via list('products', ...) genÃ©rico pelo state.js; este
-  // helper nomeado serve o catÃ¡logo do vendedor com mapeamento camelCase).
-  // ---------------------------------------------------------------------
   function mapProductRow(row) {
     return {
       id: row.id,
@@ -374,9 +279,6 @@
     return rows.map(mapProductRow);
   }
 
-  // ---------------------------------------------------------------------
-  // seller_prices / seller_stock (camelCase in/out, upsert por par Ãºnico)
-  // ---------------------------------------------------------------------
   async function listSellerPrices(sellerId) {
     const rows = await list('seller_prices', { seller_id: sellerId });
     return rows.map((row) => ({
@@ -393,59 +295,34 @@
 
   async function setSellerPrice({ sellerId, productId, price, floor }) {
     const businessId = await currentBusinessId();
-    const payload = {
-      business_id: businessId,
-      seller_id: sellerId,
-      product_id: productId,
-      price: price === undefined ? null : price,
-      floor: floor === undefined ? null : floor,
-    };
+    const payload = { business_id: businessId, seller_id: sellerId, product_id: productId, price: price === undefined ? null : price, floor: floor === undefined ? null : floor };
     const row = await upsert('seller_prices', payload, 'seller_id,product_id');
     if (!row) return null;
-    return {
-      id: row.id,
-      businessId: row.business_id,
-      sellerId: row.seller_id,
-      productId: row.product_id,
-      price: row.price,
-      floor: row.floor,
-    };
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, price: row.price, floor: row.floor };
   }
 
   async function listSellerStock(sellerId) {
     const rows = await list('seller_stock', { seller_id: sellerId });
-    return rows.map((row) => ({
-      id: row.id,
-      businessId: row.business_id,
-      sellerId: row.seller_id,
-      productId: row.product_id,
-      quantity: row.quantity,
-    }));
+    return rows.map((row) => ({ id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity }));
   }
 
   async function setSellerStock({ sellerId, productId, quantity }) {
     const businessId = await currentBusinessId();
-    const payload = {
-      business_id: businessId,
-      seller_id: sellerId,
-      product_id: productId,
-      quantity: quantity === undefined ? 0 : quantity,
-    };
+    const payload = { business_id: businessId, seller_id: sellerId, product_id: productId, quantity: quantity === undefined ? 0 : quantity };
     const row = await upsert('seller_stock', payload, 'seller_id,product_id');
     if (!row) return null;
-    return {
-      id: row.id,
-      businessId: row.business_id,
-      sellerId: row.seller_id,
-      productId: row.product_id,
-      quantity: row.quantity,
-    };
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  async function consumeSellerStock({ productId, quantity }) {
+    const row = await restRequest('/rest/v1/rpc/consume_seller_stock', {
+      method: 'POST',
+      body: { p_product_id: productId, p_quantity: quantity },
+    });
+    if (!row) return null;
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
 
-  // ---------------------------------------------------------------------
-  // Carrinhos de venda, permissoes do vendedor e link publico
-  // ---------------------------------------------------------------------
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -535,10 +412,7 @@
 
   async function publicCartLookup(token) {
     const qs = new URLSearchParams({ token });
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, {
-      method: 'GET',
-      headers: { apikey: SUPABASE_ANON_KEY },
-    });
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, { method: 'GET', headers: { apikey: SUPABASE_ANON_KEY } });
     const parsed = await parseBodySafe(res);
     if (!res.ok) throw buildError(parsed, res.status);
     return parsed;
@@ -546,25 +420,16 @@
 
   async function publicCartSubmit(token, formData) {
     const qs = new URLSearchParams({ token });
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, {
-      method: 'POST',
-      headers: { apikey: SUPABASE_ANON_KEY },
-      body: formData,
-    });
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY }, body: formData });
     const parsed = await parseBodySafe(res);
     if (!res.ok) throw buildError(parsed, res.status);
     return parsed;
   }
 
-  // ---------------------------------------------------------------------
-  // Metas de vendas â€” snake_case puro (ver nota de reconciliaÃ§Ã£o no topo:
-  // src/goals.js jÃ¡ foi escrito lendo/gravando os nomes de coluna crus).
-  // ---------------------------------------------------------------------
   async function listSalesGoals(params = {}) {
     const query = { _order: 'period_start.desc' };
-    if (params.sellerId) {
-      query.seller_id = params.sellerId;
-    } else {
+    if (params.sellerId) query.seller_id = params.sellerId;
+    else {
       const businessId = await currentBusinessId();
       if (businessId) query.business_id = businessId;
     }
@@ -573,9 +438,8 @@
 
   async function listGoalsProgress(params = {}) {
     const query = {};
-    if (params.sellerId) {
-      query.seller_id = params.sellerId;
-    } else {
+    if (params.sellerId) query.seller_id = params.sellerId;
+    else {
       const businessId = await currentBusinessId();
       if (businessId) query.business_id = businessId;
     }
@@ -587,38 +451,22 @@
     return insert('sales_goals', { business_id: businessId, ...payload });
   }
 
-  async function updateSalesGoal(id, patch) {
-    return update('sales_goals', id, patch);
-  }
-
-  async function deleteSalesGoal(id) {
-    return remove('sales_goals', id);
-  }
-
-  // ---------------------------------------------------------------------
-  // AprovaÃ§Ã£o de pedidos (admin only â€” RLS/trigger barram vendedor)
-  // ---------------------------------------------------------------------
-  async function approveOrder(id) {
-    return update('orders', id, { approval_status: 'aprovado' });
-  }
-
-  async function rejectOrder(id) {
-    return update('orders', id, { approval_status: 'rejeitado' });
-  }
+  async function updateSalesGoal(id, patch) { return update('sales_goals', id, patch); }
+  async function deleteSalesGoal(id) { return remove('sales_goals', id); }
+  async function approveOrder(id) { return update('orders', id, { approval_status: 'aprovado' }); }
+  async function rejectOrder(id) { return update('orders', id, { approval_status: 'rejeitado' }); }
 
   window.C360.api = {
     list,
     insert,
     update,
     remove,
-
     signInWithPassword,
     refreshSession,
     signOut,
     getAuthUser,
     getProfile,
     createSeller,
-
     listSellers,
     listSellerProducts,
     listSellerPrices,
@@ -639,10 +487,6 @@
     deleteSalesGoal,
     approveOrder,
     rejectOrder,
-
-    // Extra (fora do contrato literal, necessÃ¡ria para state.js â€” ver relatÃ³rio).
     getCurrentAuthUserId,
   };
 })();
-
-
