@@ -181,20 +181,30 @@
     return Array.isArray(result) ? result[0] : result;
   }
 
+  // Nota: PostgREST devolve 200/204 com corpo vazio quando o RLS filtra a
+  // linha (id existe, mas a policy não libera) — não é um erro HTTP, então
+  // sem checar o resultado o chamador acharia que a operação funcionou. Os
+  // dois `throw` abaixo transformam esse "sucesso vazio" num erro real.
   async function update(table, id, patch) {
     const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
+    if (Array.isArray(result) && result.length === 0) {
+      throw buildError('Nenhum registro atualizado (sem permissão ou registro não encontrado).', 403);
+    }
     return Array.isArray(result) ? result[0] : result;
   }
 
   async function remove(table, id) {
-    await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
       method: 'DELETE',
-      headers: { Prefer: 'return=minimal' },
+      headers: { Prefer: 'return=representation' },
     });
+    if (Array.isArray(result) && result.length === 0) {
+      throw buildError('Nenhum registro excluído (sem permissão ou registro não encontrado).', 403);
+    }
   }
 
   // Upsert por (seller_id, product_id) — usado por setSellerPrice/setSellerStock.

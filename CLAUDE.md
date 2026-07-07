@@ -499,12 +499,42 @@ login, e `signOut()` no botão "Sair" do cabeçalho).
 
 ### Pendências conhecidas (não travam a integração, mas exigem decisão do time)
 
-- A Edge Function `create-seller` ainda não foi implantada (falha de
-  permissão do orquestrador) — a tela "Vendedores" chama normalmente e vai
-  mostrar erro até o deploy acontecer. Confirmar se já foi publicada no
-  projeto Supabase em uso antes de anunciar a criação de vendedores como
-  disponível.
+- **Resolvido**: a Edge Function `create-seller` está implantada (`ACTIVE`
+  no projeto Supabase em uso) e testada de ponta a ponta (login funciona
+  imediatamente após a criação, sem confirmação de e-mail pendente).
 - **Resolvido**: a tabela `businesses` não tem policy de INSERT/DELETE para
   usuários autenticados (bootstrap é manual, via service role, 1 negócio por
   conta) — a aba Negócios virou edição do negócio já vinculado (nome,
   segmento, margens padrão), sem criar/excluir.
+- **Resolvido (QA)**: `addPurchase`/`addSale`/`addOrder`/`taskForm` enviavam
+  string vazia (`''`) em vez de `null` para colunas `uuid`/`date` opcionais
+  (`supplierId`, `clientId`, `originId`, `dueDate`, `convertedSaleId`) quando
+  o campo ficava em branco. O Postgres rejeita `''` num `uuid`/`date` com
+  `invalid input syntax` — isso fazia **todo pedido** falhar (o código sempre
+  mandava `convertedSaleId: ''`) e qualquer venda/compra/tarefa sem
+  cliente/fornecedor/prazo selecionado também falhar. Corrigido em
+  `src/app.js` para usar `|| null`.
+- **Resolvido (QA)**: vendedor que lançava venda manual (aba Vendas) ou dava
+  baixa em pedido (`convertOrderToSale`) de um produto **físico** (não
+  serviço) criava a linha em `sales` e só depois descobria, via erro de RLS,
+  que não tem permissão de alterar `products.current_stock` nem inserir
+  `stock_movements` tipo `saida_venda` — resultado: venda órfã sem
+  movimentação, e uma mensagem de erro técnica ilegível. `addSale()` agora
+  barra essa combinação antes de criar a venda, com mensagem clara apontando
+  para "Meu estoque" (fluxo correto: vira consignado).
+- **Resolvido (QA)**: `sellFromOwnStock` (venda do estoque próprio do
+  vendedor) sempre gravava `consignments.cost_at_send = null`, porque o
+  vendedor não tem acesso a `products.avg_cost` (RLS) — isso corrompia
+  CMV/margem desse tipo de venda nos relatórios do admin. Nova migração
+  `0005_fix_seller_consignment_cost.sql` adiciona um trigger
+  `SECURITY DEFINER` que preenche `cost_at_send` no servidor a partir do
+  custo médio real do produto, sem expor esse dado ao cliente.
+- **Achado (QA), não corrigido — decisão de produto pendente**: `S.update`/
+  `S.remove` agora lançam erro quando o RLS filtra a linha (0 resultados em
+  vez de sucesso silencioso — ver `src/api.js`). Isso expôs que os botões
+  "Excluir" de `orders`/`clients`/`consignments`, quando clicados por um
+  vendedor, sempre falhavam silenciosamente antes (a policy de DELETE
+  dessas tabelas é só para admin) — agora aparece um erro em vez de "sumir
+  da tela e voltar no próximo refresh". Falta decidir: dar ao vendedor
+  permissão de excluir os próprios registros pendentes, ou esconder o botão
+  "Excluir" para o papel vendedor nessas telas.

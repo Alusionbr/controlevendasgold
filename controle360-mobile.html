@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-3Sb/Vq6r18VVzV5L0F/inRRfy8U2ETiIBi0PC/o/aiU=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-knCBGiUyvj7k+xw+RFatFQZcgTnWkx5OxzHpTH7X0Fk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-uBHlpAz2+qLa3Cdx0M6KycdlAkr8o3SKjuTKG+eNc2Y=' 'sha256-FoiS6/9yMbx1NARsv6XS6W4wJ0Vgohg/l1hZQrgXfo0=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-AVYY9DEsZaLZTWb0RlqYfg1Yfh7rN81/AgUc6NVfwws=' 'sha256-clIQVlBIrtNjYkDsp4Ruv8pvdeSnKi8R4EoEyouT9ZY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-NlExaaMJ7NlRFXX1vMZc04KIwBT8CgsucMOcnnR98oU=' 'sha256-wPhD18Zx24s+D/URKU+XksOVfZp8SnxABarVzAOAZiM=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-tt4yRLySwxkvaD3ehKTzw2OkHtPlfodOQTAJI0X7/ao=' 'sha256-njtDVvm9kZtRbNS0uyYOV59XGIz1nk/d7ayzbmb3+uo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1339,20 +1339,30 @@ pre {
     return Array.isArray(result) ? result[0] : result;
   }
 
+  // Nota: PostgREST devolve 200/204 com corpo vazio quando o RLS filtra a
+  // linha (id existe, mas a policy não libera) — não é um erro HTTP, então
+  // sem checar o resultado o chamador acharia que a operação funcionou. Os
+  // dois `throw` abaixo transformam esse "sucesso vazio" num erro real.
   async function update(table, id, patch) {
     const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
+    if (Array.isArray(result) && result.length === 0) {
+      throw buildError('Nenhum registro atualizado (sem permissão ou registro não encontrado).', 403);
+    }
     return Array.isArray(result) ? result[0] : result;
   }
 
   async function remove(table, id) {
-    await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
       method: 'DELETE',
-      headers: { Prefer: 'return=minimal' },
+      headers: { Prefer: 'return=representation' },
     });
+    if (Array.isArray(result) && result.length === 0) {
+      throw buildError('Nenhum registro excluído (sem permissão ou registro não encontrado).', 403);
+    }
   }
 
   // Upsert por (seller_id, product_id) — usado por setSellerPrice/setSellerStock.
@@ -7353,7 +7363,7 @@ pre {
     });
     await S.add('purchases', {
       date: data.date,
-      supplierId: data.supplierId || '',
+      supplierId: data.supplierId || null,
       productId: product.id,
       quantity,
       totalCost,
@@ -7471,6 +7481,18 @@ pre {
     U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
     if (!product) throw new Error('Produto não encontrado.');
+    // Vendedor não tem permissão (RLS) para dar baixa no estoque central nem
+    // registrar stock_movements do tipo saida_venda — só admin controla o
+    // estoque central. Produto físico vendido por vendedor precisa vir do
+    // próprio estoque (aba "Meu estoque", vira consignado), não desta venda
+    // direta. Barrar aqui evita criar a venda e falhar depois no meio do
+    // fluxo (registro de venda órfão, sem baixa de estoque).
+    if (!options.skipStockMovement && product.type !== 'servico') {
+      const currentUser = S.getCurrentUser();
+      if (currentUser && currentUser.role === 'vendedor') {
+        throw new Error('Vendedores vendem produtos físicos pela aba "Meu estoque" (vira consignado). Aqui você só pode lançar vendas de serviços.');
+      }
+    }
     const quantity = U.number(data.quantity);
     if (product.type !== 'servico' && U.number(product.currentStock) < quantity && !options.skipStockCheck) {
       throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
@@ -7487,7 +7509,7 @@ pre {
     const sale = await S.add('sales', {
       date: data.date,
       channel: data.channel || 'Direto',
-      clientId: data.clientId || '',
+      clientId: data.clientId || null,
       productId: product.id,
       quantity,
       unitPrice: U.number(data.unitPrice),
@@ -7498,7 +7520,7 @@ pre {
       ...math,
       notes: data.notes || '',
       origin: options.origin || 'manual',
-      originId: options.originId || '',
+      originId: options.originId || null,
     });
 
     if (product.type !== 'servico' && !options.skipStockMovement) {
@@ -7529,14 +7551,14 @@ pre {
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.unitPrice, 'Preço unitário');
     await S.add('orders', {
-      clientId: data.clientId || '',
+      clientId: data.clientId || null,
       productId: data.productId,
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
-      dueDate: data.dueDate || '',
+      dueDate: data.dueDate || null,
       status: data.status || 'pendente',
       notes: data.notes || '',
-      convertedSaleId: '',
+      convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
     });
   }
@@ -7595,7 +7617,7 @@ pre {
         saleForm: submitSale,
         orderForm: addOrder,
         consignmentForm: addConsignment,
-        taskForm: (d) => S.add('tasks', { title: d.title.trim(), dueDate: d.dueDate || '', status: d.status || 'a_fazer', notes: d.notes || '' }),
+        taskForm: (d) => S.add('tasks', { title: d.title.trim(), dueDate: d.dueDate || null, status: d.status || 'a_fazer', notes: d.notes || '' }),
       };
       const handler = handlers[form.id];
       if (!handler) return;

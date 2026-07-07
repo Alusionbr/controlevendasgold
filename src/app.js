@@ -911,7 +911,7 @@
     });
     await S.add('purchases', {
       date: data.date,
-      supplierId: data.supplierId || '',
+      supplierId: data.supplierId || null,
       productId: product.id,
       quantity,
       totalCost,
@@ -1029,6 +1029,18 @@
     U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
     if (!product) throw new Error('Produto não encontrado.');
+    // Vendedor não tem permissão (RLS) para dar baixa no estoque central nem
+    // registrar stock_movements do tipo saida_venda — só admin controla o
+    // estoque central. Produto físico vendido por vendedor precisa vir do
+    // próprio estoque (aba "Meu estoque", vira consignado), não desta venda
+    // direta. Barrar aqui evita criar a venda e falhar depois no meio do
+    // fluxo (registro de venda órfão, sem baixa de estoque).
+    if (!options.skipStockMovement && product.type !== 'servico') {
+      const currentUser = S.getCurrentUser();
+      if (currentUser && currentUser.role === 'vendedor') {
+        throw new Error('Vendedores vendem produtos físicos pela aba "Meu estoque" (vira consignado). Aqui você só pode lançar vendas de serviços.');
+      }
+    }
     const quantity = U.number(data.quantity);
     if (product.type !== 'servico' && U.number(product.currentStock) < quantity && !options.skipStockCheck) {
       throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
@@ -1045,7 +1057,7 @@
     const sale = await S.add('sales', {
       date: data.date,
       channel: data.channel || 'Direto',
-      clientId: data.clientId || '',
+      clientId: data.clientId || null,
       productId: product.id,
       quantity,
       unitPrice: U.number(data.unitPrice),
@@ -1056,7 +1068,7 @@
       ...math,
       notes: data.notes || '',
       origin: options.origin || 'manual',
-      originId: options.originId || '',
+      originId: options.originId || null,
     });
 
     if (product.type !== 'servico' && !options.skipStockMovement) {
@@ -1087,14 +1099,14 @@
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.unitPrice, 'Preço unitário');
     await S.add('orders', {
-      clientId: data.clientId || '',
+      clientId: data.clientId || null,
       productId: data.productId,
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
-      dueDate: data.dueDate || '',
+      dueDate: data.dueDate || null,
       status: data.status || 'pendente',
       notes: data.notes || '',
-      convertedSaleId: '',
+      convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
     });
   }
@@ -1153,7 +1165,7 @@
         saleForm: submitSale,
         orderForm: addOrder,
         consignmentForm: addConsignment,
-        taskForm: (d) => S.add('tasks', { title: d.title.trim(), dueDate: d.dueDate || '', status: d.status || 'a_fazer', notes: d.notes || '' }),
+        taskForm: (d) => S.add('tasks', { title: d.title.trim(), dueDate: d.dueDate || null, status: d.status || 'a_fazer', notes: d.notes || '' }),
       };
       const handler = handlers[form.id];
       if (!handler) return;
