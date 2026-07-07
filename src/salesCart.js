@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
@@ -81,8 +81,14 @@
     ].join('');
     const paymentOptions = [
       '<option value="avista">A vista</option>',
-      allowConsignment && draft.source === 'seller_stock' ? '<option value="consignado">Consignado</option>' : '',
+      allowConsignment ? '<option value="consignado">Consignado</option>' : '',
     ].join('');
+    const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
+      ? `<label>Vendedor consignado
+          <select name="targetSellerId" required>${UI.optionList(sellers, draft.targetSellerId || '', sellers.length ? 'Selecione o vendedor' : 'Nenhum vendedor ativo')}</select>
+        </label>`
+      : '';
     const rows = draft.items.map((item, index) => {
       const product = productById(item.productId);
       return [
@@ -110,6 +116,7 @@
             <label>Pagamento
               <select name="paymentMode">${paymentOptions}</select>
             </label>
+            ${sellerTargetField}
             <label>Validade do link
               <select name="expiresHours">
                 <option value="24">24 horas</option>
@@ -247,6 +254,7 @@
       source: 'seller_stock',
       paymentMode: 'avista',
       expiresHours: '48',
+      targetSellerId: '',
       notes: '',
       items: [],
       lastLink: '',
@@ -258,6 +266,7 @@
     function paint() {
       container.innerHTML = [
         renderBuilder(draft, feedback),
+        renderAdminSettings(settingsFeedback),
         renderAdminApprovals(approvalFeedback),
         renderCarts(),
       ].join('');
@@ -265,6 +274,7 @@
       if (config) {
         config.source.value = draft.source;
         config.paymentMode.value = draft.paymentMode;
+        if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
         config.expiresHours.value = draft.expiresHours;
       }
     }
@@ -276,8 +286,10 @@
       draft.source = data.source || 'seller_stock';
       draft.paymentMode = data.paymentMode || 'avista';
       draft.expiresHours = data.expiresHours || '48';
+      draft.targetSellerId = data.targetSellerId || draft.targetSellerId || '';
       draft.notes = data.notes || '';
-      if (draft.source === 'admin_stock') draft.paymentMode = 'avista';
+      if (isAdmin() && draft.paymentMode === 'consignado') draft.source = 'admin_stock';
+      if (!isAdmin()) draft.targetSellerId = '';
     }
 
     async function createCart(status) {
@@ -285,7 +297,7 @@
       if (!currentUser) throw new Error('Entre na sua conta antes de criar carrinho.');
       const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
       const cart = await S().add('saleCarts', {
-        sellerId: currentUser.id,
+        sellerId: isAdmin() && draft.targetSellerId ? draft.targetSellerId : currentUser.id,
         source: draft.source,
         paymentMode: draft.paymentMode,
         status,
@@ -300,6 +312,82 @@
           productId: item.productId,
           quantity: U.number(item.quantity),
           unitPrice: U.number(item.unitPrice),
+        });
+      }
+      await S().refresh();
+      return cart;
+    }
+
+    async function addToSellerStock(sellerId, productId, quantity) {
+      const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
+      const nextQuantity = U.number(current?.quantity) + U.number(quantity);
+      if (current) {
+        await S().update('sellerStock', current.id, { quantity: nextQuantity });
+      } else {
+        await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
+      }
+    }
+
+    async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, cartId, note }) {
+      const product = productById(productId);
+      const qty = U.number(quantity);
+      if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
+      if (product.type === 'servico') throw new Error('Servico nao pode ser enviado em consignado.');
+      if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para consignar.`);
+
+      await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
+      await S().recordMovement({
+        date: U.today(),
+        type: 'saida_envio_consignado',
+        productId: product.id,
+        quantity: -qty,
+        unitCost: U.number(product.avgCost),
+        totalCost: -(qty * U.number(product.avgCost)),
+        notes: note || `Consignado ao vendedor ${sellerName(sellerId)} via carrinho ${cartId}`,
+      });
+      await addToSellerStock(sellerId, product.id, qty);
+      const consignment = await S().add('consignments', {
+        sellerId,
+        clientId: null,
+        productId: product.id,
+        quantitySent: qty,
+        quantitySold: 0,
+        quantityReturned: 0,
+        unitPrice,
+        costAtSend: U.number(product.avgCost),
+        amountPaid: 0,
+        status: 'com_cliente',
+        date: U.today(),
+        notes: `Consignado ao vendedor via carrinho ${cartId}`,
+      });
+      if (consignment && consignment.id) {
+        await S().add('consignmentEvents', {
+          consignmentId: consignment.id,
+          type: 'envio',
+          date: U.today(),
+          quantity: qty,
+          amount: 0,
+        });
+      }
+    }
+
+    async function createAdminSellerConsignment() {
+      if (!isAdmin()) throw new Error('Somente o administrador pode enviar consignado ao vendedor por aqui.');
+      if (!draft.targetSellerId) throw new Error('Selecione o vendedor que recebera o consignado.');
+      if (!draft.items.length) throw new Error('Adicione pelo menos um item ao carrinho.');
+      draft.source = 'admin_stock';
+      draft.paymentMode = 'consignado';
+      const targetSellerId = draft.targetSellerId;
+      const cart = await createCart('converted');
+      for (const item of draft.items) {
+        // eslint-disable-next-line no-await-in-loop
+        await transferAdminStockToSeller({
+          sellerId: targetSellerId,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          cartId: cart.id,
         });
       }
       await S().refresh();
@@ -361,19 +449,31 @@
           rejectionReason: qty < U.number(item.quantity) ? (note || 'Quantidade nao liberada pelo admin.') : null,
         });
         if (qty > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          await S().add('orders', {
-            sellerId: cart.sellerId,
-            clientId: cart.clientId || null,
-            productId: item.productId,
-            quantity: qty,
-            unitPrice: item.unitPrice,
-            dueDate: null,
-            status: 'pendente',
-            notes: `Liberado pelo carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
-            convertedSaleId: null,
-            approvalStatus: 'aprovado',
-          });
+          if (cart.paymentMode === 'consignado') {
+            // eslint-disable-next-line no-await-in-loop
+            await transferAdminStockToSeller({
+              sellerId: cart.sellerId,
+              productId: item.productId,
+              quantity: qty,
+              unitPrice: item.unitPrice,
+              cartId: cart.id,
+              note: `Consignado aprovado para ${sellerName(cart.sellerId)} via carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
+            });
+          } else {
+            // eslint-disable-next-line no-await-in-loop
+            await S().add('orders', {
+              sellerId: cart.sellerId,
+              clientId: cart.clientId || null,
+              productId: item.productId,
+              quantity: qty,
+              unitPrice: item.unitPrice,
+              dueDate: null,
+              status: 'pendente',
+              notes: `Liberado pelo carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
+              convertedSaleId: null,
+              approvalStatus: 'aprovado',
+            });
+          }
         }
       }
       const status = approvedAny ? (rejectedAny ? 'partially_approved' : 'approved') : 'rejected';
@@ -392,7 +492,32 @@
       }
     });
 
-    container.addEventListener('submit', (event) => {
+    container.addEventListener('submit', async (event) => {
+      const settingsForm = event.target.closest('[data-seller-settings-form]');
+      if (settingsForm) {
+        event.preventDefault();
+        try {
+          const sellerId = settingsForm.dataset.sellerId;
+          const current = settingForSeller(sellerId);
+          const payload = {
+            sellerId,
+            allowAdminStockSales: !!settingsForm.elements.allowAdminStockSales.checked,
+            allowConsignment: !!settingsForm.elements.allowConsignment.checked,
+            allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
+            maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          await S().refresh();
+          settingsFeedback = { message: 'Permissoes salvas.', type: 'success' };
+        } catch (error) {
+          settingsFeedback = { message: error.message, type: 'danger' };
+        }
+        paint();
+        if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
+
       const form = event.target.closest('[data-cart-add-item]');
       if (!form) return;
       event.preventDefault();
@@ -422,11 +547,18 @@
           draft.items = [];
           draft.lastLink = '';
         } else if (action === 'save-cart') {
-          const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
-          await createCart(status);
-          draft.items = [];
-          draft.lastLink = '';
-          feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
+          if (isAdmin() && draft.paymentMode === 'consignado') {
+            await createAdminSellerConsignment();
+            draft.items = [];
+            draft.lastLink = '';
+            feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
+          } else {
+            const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
+            await createCart(status);
+            draft.items = [];
+            draft.lastLink = '';
+            feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
+          }
         } else if (action === 'share-cart') {
           const cart = await createCart('shared');
           draft.items = [];
@@ -520,7 +652,3 @@
 
   window.C360.salesCart = { mount, mountPublic };
 })();
-
-
-
-

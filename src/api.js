@@ -1,17 +1,17 @@
-Ôªø(function () {
+(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api ‚Äî camada fina de acesso √† Supabase (Auth + PostgREST + Edge
+  // C360.api ó camada fina de acesso ‡ Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de pre√ßo, trigger de aprova√ß√£o, edge
+  // (tabelas, RLS, trigger de piso de preÁo, trigger de aprovaÁ„o, edge
   // function create-seller).
   // ==========================================================================
 
   const SUPABASE_URL = 'https://zcwnfrhtlhjfprsjktlx.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM'.replace('zd25m', 'zcwnm');
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM';
 
   const session = {
     accessToken: null,
@@ -131,7 +131,7 @@
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permiss√£o ou registro n√£o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permiss„o ou registro n„o encontrado).', 403);
     return Array.isArray(result) ? result[0] : result;
   }
 
@@ -140,7 +140,7 @@
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro exclu√≠do (sem permiss√£o ou registro n√£o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluÌdo (sem permiss„o ou registro n„o encontrado).', 403);
   }
 
   async function upsert(table, payload, conflictColumns) {

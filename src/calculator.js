@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   'use strict';
 
   // MÃ³dulo "Calculadora" (aba Calculadora).
@@ -18,6 +18,8 @@
   window.C360 = window.C360 || {};
   const U = window.C360.utils;
   const UI = window.C360.ui;
+  const S = window.C360.state;
+  const Calc = window.C360.calc;
 
   const OPERATORS = ['+', '-', 'Ã—', 'Ã·'];
 
@@ -35,7 +37,51 @@
     return `
       <div class="calculator-page">
         ${renderStandardCalculator()}
+        ${renderQuickSale()}
         ${renderBusinessTools()}
+      </div>
+    `;
+  }
+
+  function state() { return S.getState(); }
+  function currentUser() { return S.getCurrentUser(); }
+  function isAdmin() { return S.isAdmin(); }
+  function productById(id) { return (state().products || []).find((item) => String(item.id) === String(id)) || null; }
+  function sellerPriceForProduct(productId) {
+    return (state().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
+  }
+
+  function quickSaleProductOptions() {
+    const products = (state().products || []).filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
+    return UI.optionList(products.map((product) => ({
+      id: product.id,
+      name: `${product.name} - ${U.money(product.defaultPrice || product.salePrice || 0)}`,
+    })), '', 'Produto');
+  }
+
+  function renderQuickSale() {
+    return `
+      <div class="panel-card calc-quick-sale" data-calc-sale-root>
+        <h3>Venda rapida</h3>
+        <form class="grid-form compact-form" data-calc-sale-add>
+          <label>Produto
+            <select name="productId" required>${quickSaleProductOptions()}</select>
+          </label>
+          <label>Qtd.
+            <input name="quantity" type="number" min="0.001" step="0.001" required>
+          </label>
+          <label>Preco unitario
+            <input name="unitPrice" type="number" min="0.01" step="0.01" required>
+          </label>
+          <button type="submit">Adicionar</button>
+        </form>
+        <div data-calc-sale-feedback></div>
+        <div data-calc-sale-items></div>
+        <div class="cart-total"><span>Total</span><strong data-calc-sale-total>${U.money(0)}</strong></div>
+        <div class="actions">
+          <button type="button" data-calc-sale-save disabled>Salvar venda</button>
+          <button type="button" class="ghost" data-calc-sale-clear>Limpar</button>
+        </div>
       </div>
     `;
   }
@@ -165,10 +211,217 @@
   function mount(container) {
     if (!container) return;
     wireStandardCalculator(container);
+    wireQuickSale(container);
     wireMargemTool(container);
     wireMarkupTool(container);
     wireDescontoTool(container);
     wireMargemAlvoTool(container);
+  }
+
+  async function saveCalculatorSaleItems(items) {
+    const user = currentUser();
+    if (!user) throw new Error('Entre na sua conta antes de vender.');
+    if (!items.length) throw new Error('Adicione pelo menos um item.');
+
+    for (const item of items) {
+      const product = productById(item.productId);
+      const quantity = U.number(item.quantity);
+      const unitPrice = U.number(item.unitPrice);
+      if (!product) throw new Error('Produto nao encontrado.');
+      if (quantity <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      if (unitPrice <= 0) throw new Error('Preco unitario precisa ser maior que zero.');
+
+      if (user.role === 'vendedor' && Calc.resolveSellerPrice && Calc.validatePriceFloor) {
+        const sellerPrice = sellerPriceForProduct(product.id);
+        const { floor } = Calc.resolveSellerPrice({ product, sellerPrice });
+        const floorCheck = Calc.validatePriceFloor({ unitPrice, floor });
+        if (!floorCheck.ok) throw new Error(floorCheck.message);
+      }
+
+      const unitCost = U.number(product.avgCost);
+      const math = Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
+
+      if (user.role === 'vendedor' && product.type !== 'servico') {
+        const stockRow = (state().sellerStock || []).find((row) => String(row.sellerId) === String(user.id) && String(row.productId) === String(product.id));
+        if (!stockRow || U.number(stockRow.quantity) < quantity) {
+          throw new Error(`${product.name} nao tem estoque proprio suficiente.`);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await window.C360.api.consumeSellerStock({ productId: product.id, quantity });
+        // eslint-disable-next-line no-await-in-loop
+        const sale = await S.add('sales', {
+          date: U.today(),
+          channel: 'Calculadora',
+          clientId: null,
+          productId: product.id,
+          quantity,
+          unitPrice,
+          discount: 0,
+          fixedFees: 0,
+          feePercent: 0,
+          unitCost,
+          ...math,
+          notes: 'Venda rapida pela calculadora',
+          origin: 'calculadora',
+          originId: null,
+        });
+        // eslint-disable-next-line no-await-in-loop
+        const consignment = await S.add('consignments', {
+          sellerId: user.id,
+          clientId: null,
+          productId: product.id,
+          quantitySent: quantity,
+          quantitySold: quantity,
+          quantityReturned: 0,
+          unitPrice,
+          costAtSend: unitCost,
+          amountPaid: 0,
+          status: 'com_cliente',
+          date: U.today(),
+          notes: `Venda calculadora ${sale.id}`,
+        });
+        if (consignment && consignment.id) {
+          // eslint-disable-next-line no-await-in-loop
+          await S.add('consignmentEvents', {
+            consignmentId: consignment.id,
+            type: 'venda_cliente',
+            date: U.today(),
+            quantity,
+            amount: quantity * unitPrice,
+          });
+        }
+      } else {
+        if (product.type !== 'servico' && U.number(product.currentStock) < quantity) {
+          throw new Error(`${product.name} nao tem estoque suficiente.`);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await S.add('sales', {
+          date: U.today(),
+          channel: 'Calculadora',
+          clientId: null,
+          productId: product.id,
+          quantity,
+          unitPrice,
+          discount: 0,
+          fixedFees: 0,
+          feePercent: 0,
+          unitCost,
+          ...math,
+          notes: 'Venda rapida pela calculadora',
+          origin: 'calculadora',
+          originId: null,
+        });
+        if (isAdmin() && product.type !== 'servico') {
+          // eslint-disable-next-line no-await-in-loop
+          await S.update('products', product.id, { currentStock: U.number(product.currentStock) - quantity });
+          // eslint-disable-next-line no-await-in-loop
+          await S.recordMovement({
+            date: U.today(),
+            type: 'saida_venda',
+            productId: product.id,
+            quantity: -quantity,
+            unitCost,
+            totalCost: -(quantity * unitCost),
+            notes: 'Venda rapida pela calculadora',
+          });
+        }
+      }
+    }
+    await S.refresh();
+  }
+
+  function wireQuickSale(container) {
+    const root = container.querySelector('[data-calc-sale-root]');
+    if (!root) return;
+    const form = root.querySelector('[data-calc-sale-add]');
+    const itemsEl = root.querySelector('[data-calc-sale-items]');
+    const totalEl = root.querySelector('[data-calc-sale-total]');
+    const feedbackEl = root.querySelector('[data-calc-sale-feedback]');
+    const saveButton = root.querySelector('[data-calc-sale-save]');
+    const clearButton = root.querySelector('[data-calc-sale-clear]');
+    const items = [];
+
+    function setFeedback(message, type = 'info') {
+      feedbackEl.innerHTML = message ? UI.formNotice(message, type) : '';
+    }
+
+    function suggestedPrice(product) {
+      if (!product) return 0;
+      if (currentUser()?.role === 'vendedor' && Calc.resolveSellerPrice) {
+        return Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceForProduct(product.id) }).price;
+      }
+      return product.defaultPrice || product.salePrice || 0;
+    }
+
+    function renderItems() {
+      const rows = items.map((item, index) => {
+        const product = productById(item.productId);
+        return [
+          U.escapeHtml(product ? product.name : 'Produto'),
+          U.qty(item.quantity, product?.unit),
+          UI.moneyCell(item.unitPrice),
+          UI.moneyCell(U.number(item.quantity) * U.number(item.unitPrice)),
+          `<button type="button" class="small danger" data-calc-sale-remove="${index}">Remover</button>`,
+        ];
+      });
+      itemsEl.innerHTML = UI.table(['Produto', 'Qtd.', 'Unitario', 'Total', ''], rows, 'Nenhum item na venda.');
+      totalEl.textContent = U.money(items.reduce((sum, item) => sum + U.number(item.quantity) * U.number(item.unitPrice), 0));
+      saveButton.disabled = items.length === 0;
+    }
+
+    form.addEventListener('change', (event) => {
+      if (event.target.name !== 'productId') return;
+      const product = productById(event.target.value);
+      if (product && form.elements.unitPrice && !form.elements.unitPrice.dataset.touched) {
+        form.elements.unitPrice.value = suggestedPrice(product);
+      }
+    });
+    form.elements.unitPrice?.addEventListener('input', (event) => { event.target.dataset.touched = '1'; });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const data = U.formData(form);
+      const product = productById(data.productId);
+      if (!product) return;
+      items.push({
+        productId: data.productId,
+        quantity: U.number(data.quantity),
+        unitPrice: U.number(data.unitPrice || suggestedPrice(product)),
+      });
+      form.reset();
+      if (form.elements.unitPrice) delete form.elements.unitPrice.dataset.touched;
+      setFeedback('');
+      renderItems();
+    });
+
+    itemsEl.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-calc-sale-remove]');
+      if (!button) return;
+      items.splice(Number(button.dataset.calcSaleRemove), 1);
+      renderItems();
+    });
+
+    clearButton.addEventListener('click', () => {
+      items.splice(0, items.length);
+      setFeedback('');
+      renderItems();
+    });
+
+    saveButton.addEventListener('click', async () => {
+      saveButton.disabled = true;
+      try {
+        await saveCalculatorSaleItems(items);
+        items.splice(0, items.length);
+        setFeedback('Venda salva e estoque atualizado.', 'success');
+        renderItems();
+        if (window.C360.app && typeof window.C360.app.refresh === 'function') window.C360.app.refresh();
+      } catch (error) {
+        setFeedback(error.message, 'danger');
+        saveButton.disabled = items.length === 0;
+      }
+    });
+
+    renderItems();
   }
 
   function wireStandardCalculator(container) {
@@ -488,7 +741,7 @@
     button.type = 'button';
     button.className = 'calc-fab';
     button.setAttribute('aria-label', 'Abrir calculadora');
-    button.textContent = '=';
+    button.textContent = 'R$';
 
     const panel = document.createElement('section');
     panel.id = 'calcFloatingPanel';
