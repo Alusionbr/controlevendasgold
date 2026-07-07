@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
@@ -6,30 +6,35 @@
   const S = window.C360.state;
   const XLSX = window.C360.xlsx;
 
-  // Rótulos das colunas em português. As planilhas são legíveis para humanos,
-  // mas continuam reversíveis na importação porque cada rótulo aponta de volta
-  // para a chave técnica do dado.
+  // RÃ³tulos das colunas em portuguÃªs. As planilhas sÃ£o legÃ­veis para humanos,
+  // mas continuam reversÃ­veis na importaÃ§Ã£o porque cada rÃ³tulo aponta de volta
+  // para a chave tÃ©cnica do dado.
   const LABELS = {
-    id: 'ID', businessId: 'ID do negócio', name: 'Nome', segment: 'Segmento',
-    defaultTargetMargin: 'Margem padrão (%)', defaultFeePercent: 'Taxas padrão (%)',
-    notes: 'Observações', createdAt: 'Criado em', updatedAt: 'Atualizado em',
-    type: 'Tipo', unit: 'Unidade', currentStock: 'Estoque atual', avgCost: 'Custo médio',
-    salePrice: 'Preço de venda', minStock: 'Estoque mínimo',
-    laborCostPerUnit: 'Mão de obra por unidade', overheadCostPerUnit: 'Custo fixo por unidade',
-    lossPercent: 'Perda técnica (%)', targetMarginPercent: 'Margem desejada (%)',
+    id: 'ID', businessId: 'ID do negÃ³cio', name: 'Nome', segment: 'Segmento',
+    defaultTargetMargin: 'Margem padrÃ£o (%)', defaultFeePercent: 'Taxas padrÃ£o (%)',
+    notes: 'ObservaÃ§Ãµes', createdAt: 'Criado em', updatedAt: 'Atualizado em',
+    type: 'Tipo', unit: 'Unidade', currentStock: 'Estoque atual', avgCost: 'Custo mÃ©dio',
+    salePrice: 'PreÃ§o de venda', minStock: 'Estoque mÃ­nimo',
+    laborCostPerUnit: 'MÃ£o de obra por unidade', overheadCostPerUnit: 'Custo fixo por unidade',
+    lossPercent: 'Perda tÃ©cnica (%)', targetMarginPercent: 'Margem desejada (%)',
     taxFeePercent: 'Taxas sobre venda (%)', phone: 'Telefone', date: 'Data',
     supplierId: 'ID do fornecedor', productId: 'ID do produto', quantity: 'Quantidade',
-    totalCost: 'Custo total', unitCost: 'Custo unitário',
+    totalCost: 'Custo total', unitCost: 'Custo unitÃ¡rio',
     finalProductId: 'ID do produto final', inputProductId: 'ID do insumo',
     quantityPerUnit: 'Qtd. por unidade', channel: 'Canal', clientId: 'ID do cliente',
-    unitPrice: 'Preço unitário', discount: 'Desconto', fixedFees: 'Taxa fixa',
+    unitPrice: 'PreÃ§o unitÃ¡rio', discount: 'Desconto', fixedFees: 'Taxa fixa',
     feePercent: 'Taxa (%)', grossRevenue: 'Receita bruta', percentFees: 'Taxas percentuais',
-    netRevenue: 'Receita líquida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
+    netRevenue: 'Receita lÃ­quida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
     origin: 'Origem', originId: 'ID de origem', dueDate: 'Prazo / entrega', status: 'Status',
     convertedSaleId: 'ID da venda gerada', quantitySent: 'Qtd. enviada',
     quantitySold: 'Qtd. vendida', quantityReturned: 'Qtd. devolvida',
     amountPaid: 'Valor pago', costAtSend: 'Custo no envio',
-    consignmentId: 'ID da consignação', amount: 'Valor', title: 'Título',
+    consignmentId: 'ID da consignaÃ§Ã£o', amount: 'Valor', title: 'TÃ­tulo',
+    sellerId: 'ID do vendedor', source: 'Origem do estoque', paymentMode: 'Pagamento', publicToken: 'Token publico',
+    publicExpiresAt: 'Expira em', submittedAt: 'Enviado em', approvedAt: 'Aprovado em', approvedBy: 'Aprovado por',
+    paymentProofPath: 'Comprovante', customerName: 'Cliente', customerPhone: 'Telefone do cliente', customerNotes: 'Obs. do cliente',
+    cartId: 'ID do carrinho', approvedQuantity: 'Qtd. aprovada', rejectionReason: 'Motivo rejeicao',
+    allowAdminStockSales: 'Pode estoque admin', allowConsignment: 'Pode consignado', allowPublicCartLinks: 'Pode link publico', maxDiscountPercent: 'Desconto maximo (%)',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -38,26 +43,29 @@
     'taxFeePercent', 'quantity', 'totalCost', 'unitCost', 'quantityPerUnit', 'unitPrice',
     'discount', 'fixedFees', 'feePercent', 'grossRevenue', 'percentFees', 'netRevenue',
     'cogs', 'grossProfit', 'margin', 'quantitySent', 'quantitySold', 'quantityReturned',
-    'amountPaid', 'costAtSend', 'amount',
+    'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
   ]);
 
-  const DATE_KEYS = new Set(['date', 'dueDate']);
+  const DATE_KEYS = new Set(['date', 'dueDate', 'publicExpiresAt', 'submittedAt', 'approvedAt']);
 
-  // Coleção -> nome da aba + ordem de colunas.
+  // ColeÃ§Ã£o -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
-    { key: 'businesses', sheet: 'Negócios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'businesses', sheet: 'NegÃ³cios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'clients', sheet: 'Clientes', fields: ['id', 'businessId', 'name', 'phone', 'type', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'suppliers', sheet: 'Fornecedores', fields: ['id', 'businessId', 'name', 'phone', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'date', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
-    { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
-    { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'stockMovements', sheet: 'MovimentaÃ§Ãµes', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
+    { key: 'recipes', sheet: 'Fichas tÃ©cnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
+    { key: 'productions', sheet: 'ProduÃ§Ã£o', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'sellerSettings', sheet: 'Permissoes vendedores', fields: ['id', 'businessId', 'sellerId', 'allowAdminStockSales', 'allowConsignment', 'allowPublicCartLinks', 'maxDiscountPercent', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'saleCartItems', sheet: 'Itens carrinho', fields: ['id', 'cartId', 'businessId', 'productId', 'quantity', 'unitPrice', 'approvedQuantity', 'rejectionReason', 'createdAt', 'updatedAt'] },
   ];
 
   const BACKUP_SHEET = 'Backup_NAO_EDITAR';
@@ -111,31 +119,31 @@
     if (app && typeof app.refresh === 'function') app.refresh();
   }
 
-  // TODO(integrador): quando existir login com papéis (admin/vendedor), este
-  // backup Excel exporta TODO o negócio (todas as coleções, todos os
+  // TODO(integrador): quando existir login com papÃ©is (admin/vendedor), este
+  // backup Excel exporta TODO o negÃ³cio (todas as coleÃ§Ãµes, todos os
   // registros). Antes de montar `sheets`, se currentUser.role === 'vendedor',
-  // filtrar cada coleção relevante (clients, sales, orders, consignments,
-  // consignmentEvents e qualquer outra com dono por vendedor) para manter só
-  // os registros com seller_id === currentUser.id — um vendedor nunca deve
-  // conseguir baixar o backup completo dos outros vendedores/do negócio todo.
-  // Coleções sem dono individual (businesses, products, suppliers, recipes,
+  // filtrar cada coleÃ§Ã£o relevante (clients, sales, orders, consignments,
+  // consignmentEvents e qualquer outra com dono por vendedor) para manter sÃ³
+  // os registros com seller_id === currentUser.id â€” um vendedor nunca deve
+  // conseguir baixar o backup completo dos outros vendedores/do negÃ³cio todo.
+  // ColeÃ§Ãµes sem dono individual (businesses, products, suppliers, recipes,
   // etc.) provavelmente continuam completas mesmo para vendedor; confirmar
-  // com a regra de negócio quando o papel existir.
+  // com a regra de negÃ³cio quando o papel existir.
   //
-  // Nota sobre injeção de fórmula (ver csvField() abaixo, seção CSV): este
-  // motor .xlsx (src/xlsx-lite.js, função sheetXml) escreve toda string como
-  // célula tipada `t="inlineStr"` (texto explícito no XML da planilha), nunca
-  // como fórmula (`<f>`). Excel/Sheets respeitam esse tipo ao abrir um .xlsx
-  // de verdade e não reinterpretam o conteúdo como fórmula — diferente de CSV
-  // puro, que não carrega tipo de célula. Por isso o backup Excel não precisa
-  // do mesmo prefixo de apóstrofo aplicado no CSV.
+  // Nota sobre injeÃ§Ã£o de fÃ³rmula (ver csvField() abaixo, seÃ§Ã£o CSV): este
+  // motor .xlsx (src/xlsx-lite.js, funÃ§Ã£o sheetXml) escreve toda string como
+  // cÃ©lula tipada `t="inlineStr"` (texto explÃ­cito no XML da planilha), nunca
+  // como fÃ³rmula (`<f>`). Excel/Sheets respeitam esse tipo ao abrir um .xlsx
+  // de verdade e nÃ£o reinterpretam o conteÃºdo como fÃ³rmula â€” diferente de CSV
+  // puro, que nÃ£o carrega tipo de cÃ©lula. Por isso o backup Excel nÃ£o precisa
+  // do mesmo prefixo de apÃ³strofo aplicado no CSV.
   // ---------- Exportar Excel (backup completo) ----------
   function exportXlsx() {
     const state = S.getState();
     const sheets = [];
 
     const summary = [
-      ['Controle360 Multi — backup completo'],
+      ['Controle360 Multi â€” backup completo'],
       ['Gerado em', new Date().toLocaleString('pt-BR')],
       [''],
       ['Aba', 'Registros'],
@@ -145,7 +153,7 @@
     });
     summary.push(['']);
     summary.push(['Como reimportar: use "Importar Excel" na aba Dados.']);
-    summary.push(['Pode editar as abas de dados. Não apague a aba ' + BACKUP_SHEET + '.']);
+    summary.push(['Pode editar as abas de dados. NÃ£o apague a aba ' + BACKUP_SHEET + '.']);
     sheets.push({ name: 'Resumo', rows: summary });
 
     COLLECTIONS.forEach((collection) => {
@@ -168,7 +176,7 @@
     sheets.push({
       name: BACKUP_SHEET,
       rows: [
-        ['Não edite esta aba. Ela guarda configurações para restaurar o backup.'],
+        ['NÃ£o edite esta aba. Ela guarda configuraÃ§Ãµes para restaurar o backup.'],
         [BACKUP_MARKER, JSON.stringify(config)],
       ],
     });
@@ -185,7 +193,7 @@
       map[deburr(label(key))] = key;
       map[deburr(key)] = key;
     });
-    // Também aceita rótulos de chaves que não estão na ordem padrão.
+    // TambÃ©m aceita rÃ³tulos de chaves que nÃ£o estÃ£o na ordem padrÃ£o.
     Object.keys(LABELS).forEach((key) => {
       if (!(deburr(label(key)) in map)) map[deburr(label(key))] = key;
     });
@@ -258,7 +266,7 @@
             if (config.meta) next.meta = config.meta;
             if (config.activeBusinessId) next.activeBusinessId = config.activeBusinessId;
           } catch (error) {
-            /* configuração ilegível: mantém a atual */
+            /* configuraÃ§Ã£o ilegÃ­vel: mantÃ©m a atual */
           }
         }
       }
@@ -275,22 +283,22 @@
       refresh();
       notify('Planilha importada com sucesso.', 'success');
     } catch (error) {
-      notify('Não foi possível importar: ' + error.message, 'error');
-      window.alert('Não foi possível importar: ' + error.message);
+      notify('NÃ£o foi possÃ­vel importar: ' + error.message, 'error');
+      window.alert('NÃ£o foi possÃ­vel importar: ' + error.message);
     }
   }
 
-  // ---------- CSV por módulo ----------
-  // Proteção contra injeção de fórmula (CSV/Excel formula injection): um
-  // cliente chamado "=HYPERLINK(...)" ou "+SUM(...)" pode virar fórmula viva
-  // quando o CSV é aberto no Excel/Sheets, porque CSV não tem tipo de célula
-  // — o programa decide na hora se o texto "parece" fórmula. Mitigação padrão
-  // (OWASP): se o campo (depois de tirar espaços nas pontas) começa com
-  // = + - @, prefixar com um apóstrofo antes de aplicar a citação normal.
-  // Só se aplica a valores de TEXTO: campos numéricos de verdade (NUMERIC_KEYS,
-  // já convertidos para Number em cellValue) não passam por aqui — um custo
-  // negativo como -45.5 continua sendo número, não texto, então não corre
-  // risco de virar fórmula e não deve ganhar apóstrofo.
+  // ---------- CSV por mÃ³dulo ----------
+  // ProteÃ§Ã£o contra injeÃ§Ã£o de fÃ³rmula (CSV/Excel formula injection): um
+  // cliente chamado "=HYPERLINK(...)" ou "+SUM(...)" pode virar fÃ³rmula viva
+  // quando o CSV Ã© aberto no Excel/Sheets, porque CSV nÃ£o tem tipo de cÃ©lula
+  // â€” o programa decide na hora se o texto "parece" fÃ³rmula. MitigaÃ§Ã£o padrÃ£o
+  // (OWASP): se o campo (depois de tirar espaÃ§os nas pontas) comeÃ§a com
+  // = + - @, prefixar com um apÃ³strofo antes de aplicar a citaÃ§Ã£o normal.
+  // SÃ³ se aplica a valores de TEXTO: campos numÃ©ricos de verdade (NUMERIC_KEYS,
+  // jÃ¡ convertidos para Number em cellValue) nÃ£o passam por aqui â€” um custo
+  // negativo como -45.5 continua sendo nÃºmero, nÃ£o texto, entÃ£o nÃ£o corre
+  // risco de virar fÃ³rmula e nÃ£o deve ganhar apÃ³strofo.
   function csvField(value) {
     const isRealNumber = typeof value === 'number';
     let text = String(value ?? '');
@@ -301,13 +309,13 @@
     return text;
   }
 
-  // TODO(integrador): este CSV por módulo já filtra por negócio ativo
-  // (activeBusinessId), mas não por vendedor. Quando currentUser.role ===
-  // 'vendedor' existir, adicionar aqui um segundo filtro — depois do filtro
-  // de activeBusinessId e antes de montar `fields`/`lines` — restringindo
-  // `records` a `record.seller_id === currentUser.id` para as coleções que
-  // pertencem a um vendedor específico: clients, sales, orders, consignments
-  // (e consignmentEvents, que é filho de consignments). Um vendedor não pode
+  // TODO(integrador): este CSV por mÃ³dulo jÃ¡ filtra por negÃ³cio ativo
+  // (activeBusinessId), mas nÃ£o por vendedor. Quando currentUser.role ===
+  // 'vendedor' existir, adicionar aqui um segundo filtro â€” depois do filtro
+  // de activeBusinessId e antes de montar `fields`/`lines` â€” restringindo
+  // `records` a `record.seller_id === currentUser.id` para as coleÃ§Ãµes que
+  // pertencem a um vendedor especÃ­fico: clients, sales, orders, consignments
+  // (e consignmentEvents, que Ã© filho de consignments). Um vendedor nÃ£o pode
   // exportar CSV de clientes/vendas/pedidos/consignados de outro vendedor.
   function exportCsv(collectionKey) {
     const collection = COLLECTIONS.find((item) => item.key === collectionKey);
@@ -327,13 +335,13 @@
     notify(`CSV de ${collection.sheet} exportado.`, 'success');
   }
 
-  // TODO(integrador): exportJson() serializa S.getState() inteiro — todas as
-  // coleções, de todos os negócios, sem filtro nenhum (é o backup bruto).
+  // TODO(integrador): exportJson() serializa S.getState() inteiro â€” todas as
+  // coleÃ§Ãµes, de todos os negÃ³cios, sem filtro nenhum (Ã© o backup bruto).
   // Quando currentUser.role === 'vendedor' existir, este backup completo
   // provavelmente deve ficar bloqueado para vendedor (ou passar por um clone
   // do estado com clients/sales/orders/consignments/consignmentEvents
-  // filtrados por seller_id === currentUser.id antes do JSON.stringify) —
-  // decidir com a regra de negócio se vendedor tem acesso a este botão.
+  // filtrados por seller_id === currentUser.id antes do JSON.stringify) â€”
+  // decidir com a regra de negÃ³cio se vendedor tem acesso a este botÃ£o.
   // ---------- JSON ----------
   function exportJson() {
     U.downloadText(`controle360-backup-${U.today()}.json`, JSON.stringify(S.getState(), null, 2));
@@ -350,8 +358,8 @@
         refresh();
         notify('Backup JSON importado.', 'success');
       } catch (error) {
-        notify('Backup inválido: ' + error.message, 'error');
-        window.alert('Backup inválido: ' + error.message);
+        notify('Backup invÃ¡lido: ' + error.message, 'error');
+        window.alert('Backup invÃ¡lido: ' + error.message);
       }
     };
     reader.readAsText(file);
@@ -366,3 +374,4 @@
     importJson,
   };
 })();
+

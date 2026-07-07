@@ -1,31 +1,31 @@
-(function () {
+﻿(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api — camada fina de acesso à Supabase (Auth + PostgREST + Edge
+  // C360.api â€” camada fina de acesso Ã  Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de preço, trigger de aprovação, edge
+  // (tabelas, RLS, trigger de piso de preÃ§o, trigger de aprovaÃ§Ã£o, edge
   // function create-seller).
   //
-  // Convenção camelCase <-> snake_case (ver relatório do agente para detalhes
+  // ConvenÃ§Ã£o camelCase <-> snake_case (ver relatÃ³rio do agente para detalhes
   // completos):
-  //   - list/insert/update/remove (genéricos) fazem PASSTHROUGH em
+  //   - list/insert/update/remove (genÃ©ricos) fazem PASSTHROUGH em
   //     snake_case: o payload enviado e a linha recebida usam os nomes de
-  //     coluna reais do banco. EXCEÇÃO: as CHAVES do objeto `query` de list()
-  //     são normalizadas de camelCase para snake_case antes de virar filtro
+  //     coluna reais do banco. EXCEÃ‡ÃƒO: as CHAVES do objeto `query` de list()
+  //     sÃ£o normalizadas de camelCase para snake_case antes de virar filtro
   //     PostgREST (ex.: `{ businessId: x }` vira `business_id=eq.x`), porque
-  //     src/pricing.js já foi escrito chamando
+  //     src/pricing.js jÃ¡ foi escrito chamando
   //     `C360.api.list('profiles', { role: 'vendedor', businessId })`.
-  //   - Os helpers de domínio nomeados (getProfile, createSeller, listSellers,
+  //   - Os helpers de domÃ­nio nomeados (getProfile, createSeller, listSellers,
   //     listSellerProducts, listSellerPrices, setSellerPrice, listSellerStock,
   //     setSellerStock) fazem mapeamento camelCase <-> snake_case completo
-  //     (payload de entrada e linha de saída), porque é assim que
+  //     (payload de entrada e linha de saÃ­da), porque Ã© assim que
   //     src/auth.js e src/pricing.js os consomem.
-  //   - EXCEÇÃO dentro dos helpers nomeados: listSalesGoals, listGoalsProgress,
+  //   - EXCEÃ‡ÃƒO dentro dos helpers nomeados: listSalesGoals, listGoalsProgress,
   //     createSalesGoal, updateSalesGoal, deleteSalesGoal ficam em snake_case
-  //     puro (payload e linha), porque src/goals.js (já escrito) lê/grava
+  //     puro (payload e linha), porque src/goals.js (jÃ¡ escrito) lÃª/grava
   //     `period_type`, `period_start`, `target_amount`, `reward_description`,
   //     `achieved_amount`, `progress_pct`, `is_achieved` etc. diretamente.
   // ==========================================================================
@@ -34,9 +34,9 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM';
 
   // ---------------------------------------------------------------------
-  // Sessão (mantida em memória; src/auth.js é quem persiste tokens em
+  // SessÃ£o (mantida em memÃ³ria; src/auth.js Ã© quem persiste tokens em
   // localStorage e chama signInWithPassword/refreshSession para repovoar
-  // este módulo após reload).
+  // este mÃ³dulo apÃ³s reload).
   // ---------------------------------------------------------------------
   const session = {
     accessToken: null,
@@ -116,8 +116,8 @@
     }
   }
 
-  // requisição autenticada a PostgREST (rest/v1/...). Em 401, tenta renovar a
-  // sessão UMA vez com o refresh_token guardado e repete a chamada original.
+  // requisiÃ§Ã£o autenticada a PostgREST (rest/v1/...). Em 401, tenta renovar a
+  // sessÃ£o UMA vez com o refresh_token guardado e repete a chamada original.
   async function restRequest(path, { method = 'GET', headers = {}, body, allowRetry = true } = {}) {
     const res = await fetch(`${SUPABASE_URL}${path}`, {
       method,
@@ -143,8 +143,8 @@
 
   // ---------------------------------------------------------------------
   // Query string para list(): eq simples por coluna + `_order`/`_select`
-  // reservados. Chaves camelCase são convertidas para snake_case (ver nota
-  // de reconciliação no topo do arquivo).
+  // reservados. Chaves camelCase sÃ£o convertidas para snake_case (ver nota
+  // de reconciliaÃ§Ã£o no topo do arquivo).
   // ---------------------------------------------------------------------
   function buildQueryString(query = {}) {
     const params = new URLSearchParams();
@@ -164,7 +164,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // CRUD genérico (passthrough snake_case)
+  // CRUD genÃ©rico (passthrough snake_case)
   // ---------------------------------------------------------------------
   async function list(table, query = {}) {
     const qs = buildQueryString(query);
@@ -182,8 +182,8 @@
   }
 
   // Nota: PostgREST devolve 200/204 com corpo vazio quando o RLS filtra a
-  // linha (id existe, mas a policy não libera) — não é um erro HTTP, então
-  // sem checar o resultado o chamador acharia que a operação funcionou. Os
+  // linha (id existe, mas a policy nÃ£o libera) â€” nÃ£o Ã© um erro HTTP, entÃ£o
+  // sem checar o resultado o chamador acharia que a operaÃ§Ã£o funcionou. Os
   // dois `throw` abaixo transformam esse "sucesso vazio" num erro real.
   async function update(table, id, patch) {
     const result = await restRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
@@ -192,7 +192,7 @@
       body: patch,
     });
     if (Array.isArray(result) && result.length === 0) {
-      throw buildError('Nenhum registro atualizado (sem permissão ou registro não encontrado).', 403);
+      throw buildError('Nenhum registro atualizado (sem permissÃ£o ou registro nÃ£o encontrado).', 403);
     }
     return Array.isArray(result) ? result[0] : result;
   }
@@ -203,11 +203,11 @@
       headers: { Prefer: 'return=representation' },
     });
     if (Array.isArray(result) && result.length === 0) {
-      throw buildError('Nenhum registro excluído (sem permissão ou registro não encontrado).', 403);
+      throw buildError('Nenhum registro excluÃ­do (sem permissÃ£o ou registro nÃ£o encontrado).', 403);
     }
   }
 
-  // Upsert por (seller_id, product_id) — usado por setSellerPrice/setSellerStock.
+  // Upsert por (seller_id, product_id) â€” usado por setSellerPrice/setSellerStock.
   async function upsert(table, payload, conflictColumns) {
     const result = await restRequest(`/rest/v1/${table}?on_conflict=${conflictColumns}`, {
       method: 'POST',
@@ -281,10 +281,10 @@
     return { id: parsed.id, email: parsed.email };
   }
 
-  // Convenience — não faz parte do contrato original, mas é necessária para
-  // que src/state.js saiba QUEM é o usuário logado sem que api.js precise
-  // vazar o access_token para fora de si mesmo (ver comentário em src/auth.js
-  // sobre essa premissa). Ver relatório do agente.
+  // Convenience â€” nÃ£o faz parte do contrato original, mas Ã© necessÃ¡ria para
+  // que src/state.js saiba QUEM Ã© o usuÃ¡rio logado sem que api.js precise
+  // vazar o access_token para fora de si mesmo (ver comentÃ¡rio em src/auth.js
+  // sobre essa premissa). Ver relatÃ³rio do agente.
   function getCurrentAuthUserId() {
     return session.userId;
   }
@@ -332,9 +332,9 @@
     };
   }
 
-  // `profiles.email` é preenchido pela Edge Function create-seller no momento
-  // do cadastro (migração 0006) — cópia do e-mail real gravado em auth.users,
-  // que não é exposto via PostgREST para anon/authenticated.
+  // `profiles.email` Ã© preenchido pela Edge Function create-seller no momento
+  // do cadastro (migraÃ§Ã£o 0006) â€” cÃ³pia do e-mail real gravado em auth.users,
+  // que nÃ£o Ã© exposto via PostgREST para anon/authenticated.
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
     return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: row.email || null }));
@@ -342,8 +342,8 @@
 
   // ---------------------------------------------------------------------
   // Produtos (view seller_products para vendedor / tabela products p/ admin
-  // já é acessada via list('products', ...) genérico pelo state.js; este
-  // helper nomeado serve o catálogo do vendedor com mapeamento camelCase).
+  // jÃ¡ Ã© acessada via list('products', ...) genÃ©rico pelo state.js; este
+  // helper nomeado serve o catÃ¡logo do vendedor com mapeamento camelCase).
   // ---------------------------------------------------------------------
   function mapProductRow(row) {
     return {
@@ -375,7 +375,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // seller_prices / seller_stock (camelCase in/out, upsert por par único)
+  // seller_prices / seller_stock (camelCase in/out, upsert por par Ãºnico)
   // ---------------------------------------------------------------------
   async function listSellerPrices(sellerId) {
     const rows = await list('seller_prices', { seller_id: sellerId });
@@ -442,9 +442,123 @@
     };
   }
 
+
   // ---------------------------------------------------------------------
-  // Metas de vendas — snake_case puro (ver nota de reconciliação no topo:
-  // src/goals.js já foi escrito lendo/gravando os nomes de coluna crus).
+  // Carrinhos de venda, permissoes do vendedor e link publico
+  // ---------------------------------------------------------------------
+  async function listSellerSettings(params = {}) {
+    const query = {};
+    if (params.sellerId) query.seller_id = params.sellerId;
+    else {
+      const businessId = await currentBusinessId();
+      if (businessId) query.business_id = businessId;
+    }
+    const rows = await list('seller_settings', query);
+    return rows.map((row) => ({
+      id: row.id,
+      businessId: row.business_id,
+      sellerId: row.seller_id,
+      allowAdminStockSales: row.allow_admin_stock_sales,
+      allowConsignment: row.allow_consignment,
+      allowPublicCartLinks: row.allow_public_cart_links,
+      maxDiscountPercent: row.max_discount_percent,
+      notes: row.notes,
+    }));
+  }
+
+  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, notes }) {
+    const businessId = await currentBusinessId();
+    const payload = {
+      business_id: businessId,
+      seller_id: sellerId,
+      allow_admin_stock_sales: !!allowAdminStockSales,
+      allow_consignment: !!allowConsignment,
+      allow_public_cart_links: allowPublicCartLinks !== false,
+      max_discount_percent: maxDiscountPercent === undefined ? 0 : maxDiscountPercent,
+      notes: notes || null,
+    };
+    const row = await upsert('seller_settings', payload, 'seller_id');
+    if (!row) return null;
+    return {
+      id: row.id,
+      businessId: row.business_id,
+      sellerId: row.seller_id,
+      allowAdminStockSales: row.allow_admin_stock_sales,
+      allowConsignment: row.allow_consignment,
+      allowPublicCartLinks: row.allow_public_cart_links,
+      maxDiscountPercent: row.max_discount_percent,
+      notes: row.notes,
+    };
+  }
+
+  async function listSaleCarts(query = {}) {
+    const rows = await list('sale_carts', { _order: 'created_at.desc', ...query });
+    return rows.map((row) => ({
+      id: row.id,
+      businessId: row.business_id,
+      sellerId: row.seller_id,
+      clientId: row.client_id,
+      source: row.source,
+      paymentMode: row.payment_mode,
+      status: row.status,
+      channel: row.channel,
+      customerName: row.customer_name,
+      customerPhone: row.customer_phone,
+      customerNotes: row.customer_notes,
+      publicToken: row.public_token,
+      publicExpiresAt: row.public_expires_at,
+      submittedAt: row.submitted_at,
+      approvedAt: row.approved_at,
+      approvedBy: row.approved_by,
+      paymentProofPath: row.payment_proof_path,
+      notes: row.notes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async function listSaleCartItems(query = {}) {
+    const rows = await list('sale_cart_items', query);
+    return rows.map((row) => ({
+      id: row.id,
+      cartId: row.cart_id,
+      businessId: row.business_id,
+      productId: row.product_id,
+      quantity: row.quantity,
+      unitPrice: row.unit_price,
+      approvedQuantity: row.approved_quantity,
+      rejectionReason: row.rejection_reason,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async function publicCartLookup(token) {
+    const qs = new URLSearchParams({ token });
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, {
+      method: 'GET',
+      headers: { apikey: SUPABASE_ANON_KEY },
+    });
+    const parsed = await parseBodySafe(res);
+    if (!res.ok) throw buildError(parsed, res.status);
+    return parsed;
+  }
+
+  async function publicCartSubmit(token, formData) {
+    const qs = new URLSearchParams({ token });
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/public-cart?${qs.toString()}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY },
+      body: formData,
+    });
+    const parsed = await parseBodySafe(res);
+    if (!res.ok) throw buildError(parsed, res.status);
+    return parsed;
+  }
+
+  // ---------------------------------------------------------------------
+  // Metas de vendas â€” snake_case puro (ver nota de reconciliaÃ§Ã£o no topo:
+  // src/goals.js jÃ¡ foi escrito lendo/gravando os nomes de coluna crus).
   // ---------------------------------------------------------------------
   async function listSalesGoals(params = {}) {
     const query = { _order: 'period_start.desc' };
@@ -482,7 +596,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // Aprovação de pedidos (admin only — RLS/trigger barram vendedor)
+  // AprovaÃ§Ã£o de pedidos (admin only â€” RLS/trigger barram vendedor)
   // ---------------------------------------------------------------------
   async function approveOrder(id) {
     return update('orders', id, { approval_status: 'aprovado' });
@@ -511,6 +625,13 @@
     setSellerPrice,
     listSellerStock,
     setSellerStock,
+    consumeSellerStock,
+    listSellerSettings,
+    setSellerSettings,
+    listSaleCarts,
+    listSaleCartItems,
+    publicCartLookup,
+    publicCartSubmit,
     listSalesGoals,
     listGoalsProgress,
     createSalesGoal,
@@ -519,7 +640,9 @@
     approveOrder,
     rejectOrder,
 
-    // Extra (fora do contrato literal, necessária para state.js — ver relatório).
+    // Extra (fora do contrato literal, necessÃ¡ria para state.js â€” ver relatÃ³rio).
     getCurrentAuthUserId,
   };
 })();
+
+

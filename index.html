@@ -1,22 +1,22 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
-  <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
+  <title>Controle360 Multi â€” Estoque, CMV, ProduÃ§Ã£o, Vendas e Consignados</title>
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
-      <p class="eyebrow">Conta com login · dados sincronizados na nuvem</p>
+      <p class="eyebrow">Conta com login Â· dados sincronizados na nuvem</p>
       <h1>Controle360 <span>Multi</span></h1>
-      <p>Estoque, ficha técnica, custo de produto, vendas, pedidos, tarefas e consignados — com admin e vendedores em contas separadas.</p>
+      <p>Estoque, ficha tÃ©cnica, custo de produto, vendas, pedidos, tarefas e consignados â€” com admin e vendedores em contas separadas.</p>
     </div>
     <div class="header-actions" id="headerActions" hidden>
       <button id="btnExport" class="secondary">Baixar Excel</button>
-      <button id="btnDataTab" class="ghost">Backup e exportação</button>
+      <button id="btnDataTab" class="ghost">Backup e exportaÃ§Ã£o</button>
       <button id="btnLogout" class="ghost">Sair</button>
     </div>
   </header>
@@ -24,9 +24,9 @@
   <div id="authRoot"></div>
 
   <main class="app-shell" id="appShell" hidden>
-    <section class="business-bar" aria-label="Negócio ativo">
+    <section class="business-bar" aria-label="NegÃ³cio ativo">
       <div>
-        <label for="activeBusiness">Negócio ativo</label>
+        <label for="activeBusiness">NegÃ³cio ativo</label>
         <select id="activeBusiness"></select>
       </div>
       <button id="btnReset" class="danger ghost">Zerar dados locais</button>
@@ -34,23 +34,23 @@
 
     <section id="dashboard" class="dashboard"></section>
 
-    <nav class="tabs" aria-label="Módulos do sistema">
-      <button class="tab-button active" data-tab="negocios">Negócios</button>
+    <nav class="tabs" aria-label="MÃ³dulos do sistema">
+      <button class="tab-button active" data-tab="negocios">NegÃ³cios</button>
       <button class="tab-button" data-tab="produtos">Produtos</button>
       <button class="tab-button" data-tab="clientes">Clientes</button>
       <button class="tab-button" data-tab="fornecedores">Fornecedores</button>
       <button class="tab-button" data-tab="compras">Compras</button>
       <button class="tab-button" data-tab="fichas">Fichas e custos</button>
-      <button class="tab-button" data-tab="producao">Produção</button>
+      <button class="tab-button" data-tab="producao">ProduÃ§Ã£o</button>
       <button class="tab-button" data-tab="vendas">Vendas</button>
       <button class="tab-button" data-tab="pedidos">Pedidos</button>
       <button class="tab-button" data-tab="consignado">Consignado</button>
       <button class="tab-button" data-tab="estoque">Meu estoque</button>
       <button class="tab-button" data-tab="tarefas">Tarefas</button>
-      <button class="tab-button" data-tab="relatorios">Relatórios</button>
+      <button class="tab-button" data-tab="relatorios">RelatÃ³rios</button>
       <button class="tab-button" data-tab="vendedores">Vendedores</button>
-      <button class="tab-button" data-tab="precos">Preços</button>
-      <button class="tab-button" data-tab="aprovacoes">Aprovações</button>
+      <button class="tab-button" data-tab="precos">PreÃ§os</button>
+      <button class="tab-button" data-tab="aprovacoes">AprovaÃ§Ãµes</button>
       <button class="tab-button" data-tab="calculadora">Calculadora</button>
       <button class="tab-button" data-tab="metas">Metas</button>
       <button class="tab-button" data-tab="ajuda">Ajuda</button>
@@ -63,7 +63,7 @@
   <template id="emptyStateTemplate">
     <div class="empty-state">
       <strong>Nenhum registro ainda.</strong>
-      <span>Cadastre os itens necessários para começar. O sistema não vem com exemplos preenchidos.</span>
+      <span>Cadastre os itens necessÃ¡rios para comeÃ§ar. O sistema nÃ£o vem com exemplos preenchidos.</span>
     </div>
   </template>
 
@@ -78,7 +78,7 @@
   <script src="src/pricing.js"></script>
   <script src="src/returns.js"></script>
   <script src="src/sellerStock.js"></script>
-  <script src="src/calculator.js"></script>
+  <script src="src/calculator.js"></script>`r`n  <script src="src/salesCart.js"></script>
   <script src="src/goals.js"></script>
   <script src="src/sellerHelp.js"></script>
   <script src="src/xlsx-lite.js"></script>
@@ -86,3 +86,4 @@
   <script src="src/app.js"></script>
 </body>
 </html>
+

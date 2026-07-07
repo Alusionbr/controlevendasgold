@@ -75,3 +75,20 @@ Multiusuário com Supabase Auth + Postgres + RLS (papéis admin/vendedor);
 5. Interface revisada (cabeçalho fixo, abas roláveis, cartões, avisos/toasts).
 
 Itens ainda abertos do roadmap original seguem válidos (edição de registros com auditoria, ajuste manual de estoque, multi-item, contas a pagar/receber, IndexedDB).
+
+## Atualizacao carrinho de vendas
+
+Implementado na base local e no schema Supabase:
+
+1. Carrinho de vendas com multiplos itens na aba Vendas.
+2. Origem do estoque por carrinho: estoque proprio do vendedor ou estoque do administrador.
+3. Permissoes por vendedor para estoque do admin, consignado e link publico.
+4. Aprovacao parcial pelo admin: quantidade nao liberada fica rejeitada.
+5. Link publico expiravel para pagamento a vista.
+6. Bucket privado `payment-proofs` para comprovantes de pagamento.
+7. Calculadora flutuante acessivel no app.
+8. Dashboard inicial com filtro de periodo, mostrando vendas do mes por padrao.
+
+Pendente para ativacao completa do link publico:
+
+1. Publicar a Edge Function `public-cart` no Supabase apos aprovacao explicita, pois ela cria um endpoint publico sem login que usa service role no servidor para salvar comprovantes com seguranca.

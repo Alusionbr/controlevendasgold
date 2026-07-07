@@ -614,3 +614,19 @@ Erro devolvido pelo PostgREST quando o preço fica abaixo do piso:
 - **`origin_id` em `sales` não tem FK** — pode apontar tanto para `orders`
   quanto `consignments`, então é `uuid` solto sem `references`. Mesma
   decisão do modelo local (`modelo-dados.md` já tratava assim).
+
+---
+
+## Carrinho publico e comprovantes
+
+A integracao de carrinho usa:
+
+- `seller_settings`: permissao por vendedor para estoque do admin, consignado e link publico.
+- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao.
+- `sale_cart_items`: itens do carrinho, quantidade solicitada e quantidade aprovada pelo admin.
+- `payment-proofs`: bucket privado do Supabase Storage para imagens/PDFs de comprovante.
+- `public.public_cart_lookup(token uuid)`: RPC publica que so retorna carrinhos `avista`, compartilhados e nao expirados.
+- `public.consume_seller_stock(product_id, quantity)`: RPC autenticada para baixar estoque proprio do vendedor sem permitir update livre em `seller_stock`.
+- Edge Function `public-cart`: endpoint previsto para cliente sem login consultar/enviar carrinho e comprovante. Precisa ser publicada no projeto antes do link publico aceitar envio de comprovante.
+
+Carrinho publico nao permite consignado. Se a origem for `admin_stock`, o envio vira `pending_approval`; se for `seller_stock`, vira `submitted` para o vendedor revisar/baixar estoque proprio.
