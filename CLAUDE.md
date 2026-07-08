@@ -607,7 +607,13 @@ nestas áreas). Fases 1–3 implementadas:
   orders), devoluções pendentes, desperdício por período (agrupado por
   mês), brindes por responsável, estoque em trânsito.
 
-**Pendente**: Fase 6 (revisão de segurança Supabase — RLS/índices/advisors
-após aplicar as migrations). Migrations `0010`, `0011` e `0012` foram
-escritas mas podem não ter sido aplicadas ainda — conferir com
-`mcp__Supabase__list_migrations` antes de assumir que já rodaram.
+- **Fase 6 (revisão de segurança Supabase)**: migrations `0010`-`0012`
+  aplicadas no projeto Supabase em uso (`zcwnfrhtlhjfprsjktlx`), confirmadas
+  via `mcp__Supabase__list_migrations`. `get_advisors` (security +
+  performance) rodado depois: nenhum achado novo além do mesmo padrão já
+  presente nas tabelas anteriores (RLS `_all_admin` + `_select_seller`,
+  triggers `SECURITY DEFINER` como `enforce_order_approval_lock`). Migration
+  `0013_phase6_performance_indexes.sql` corrige os índices de FK faltando e
+  troca `auth.uid()` por `(select auth.uid())` nas policies de vendedor das
+  3 tabelas novas — não mexeu nas tabelas antigas (fora do escopo desta
+  fase, mesma limitação já documentada). Replicação v1 (Fases 1-6) concluída.
