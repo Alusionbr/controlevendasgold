@@ -469,7 +469,7 @@ essas informações aqui — só resumir o que muda no comportamento do app.
 |---|---|---|
 | Vendedores | admin | `src/auth.js` (`renderSellers`/`mountSellers`) |
 | Preços | admin | `src/pricing.js` |
-| Aprovações | admin | `src/sellerStock.js` (`mountApprovals` + `mountGrantStock`) |
+| Aprovações | admin | `src/salesCart.js` (`mountApprovals`, reposição em carrinhos) + `src/sellerStock.js` (`mountGrantStock`, concessão direta de estoque) |
 | Meu estoque | vendedor | `src/sellerStock.js` (`mountMyStock`) |
 | Calculadora | admin + vendedor | `src/calculator.js` |
 | Metas | admin + vendedor | `src/goals.js` (`mountAdmin`/`mountSeller` conforme o papel) |

@@ -634,7 +634,7 @@ Erro devolvido pelo PostgREST quando o preço fica abaixo do piso:
 A integracao de carrinho usa:
 
 - `seller_settings`: permissao por vendedor para estoque do admin, consignado e link publico. Ganhou `stock_adjustment_credits integer default 0` (migração `0009`) — admin incrementa em 1 para liberar um acerto de estoque; o RPC `seller_adjust_own_stock` zera de novo depois de usado.
-- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao. `payment_mode` aceita `avista` | `consignado` | `parcial` (migração `0009` adicionou `parcial`).
+- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao. `payment_mode` aceita `avista` | `consignado` | `parcial` (migração `0009` adicionou `parcial`). `paid_initial_amount numeric not null default 0` (migração `0010`) guarda quanto foi pago no ato do pedido: igual ao total no `avista`, `0` no `consignado`, e o valor informado pelo vendedor no `parcial` — usado na aprovação (`C360.salesCart.approveCart`) para calcular o que fica devendo sobre a quantidade **aprovada**, não a solicitada (docs/replication-v1/03-fase2-reposicao-carrinhos.md).
 - `sale_cart_items`: itens do carrinho, quantidade solicitada e quantidade aprovada pelo admin.
 - `seller_stock_adjustments` (NOVA, migração `0009`): trilha de auditoria dos acertos de estoque próprio feitos pelo vendedor — `business_id, seller_id, product_id, previous_quantity, new_quantity, reason, created_at`. Admin lê tudo do próprio negócio; vendedor só as próprias linhas. Só é escrita pelo RPC abaixo (sem policy de INSERT direta).
 - `payment-proofs`: bucket privado do Supabase Storage para imagens/PDFs de comprovante.

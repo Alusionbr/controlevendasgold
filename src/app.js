@@ -408,14 +408,17 @@
         }
         break;
       case 'aprovacoes':
+        // Reposição padronizada em carrinhos (docs/replication-v1/01-decisoes-de-produto.md,
+        // Decisão 2): a aprovação vive só aqui agora, via C360.salesCart —
+        // o antigo caminho binário de `orders` (C360.sellerStock.mountApprovals)
+        // foi aposentado da navegação. "Conceder estoque direto" continua
+        // sendo uma ferramenta separada (não é aprovação de pedido).
         els.view.innerHTML = '<div id="approvalsPanel"></div><div id="grantStockPanel"></div>';
-        if (window.C360.sellerStock) {
-          if (typeof window.C360.sellerStock.mountApprovals === 'function') {
-            window.C360.sellerStock.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
-          }
-          if (typeof window.C360.sellerStock.mountGrantStock === 'function') {
-            window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
-          }
+        if (window.C360.salesCart && typeof window.C360.salesCart.mountApprovals === 'function') {
+          window.C360.salesCart.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
+        }
+        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
+          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
       case 'estoque':
