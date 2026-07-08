@@ -127,3 +127,34 @@ Resultado: os próximos cadastros ficam vinculados ao negócio ativo.
 1. Admin cria meta semanal/mensal por vendedor na aba **Metas**, com
    premiação opcional.
 2. Vendedor acompanha o próprio progresso na mesma aba (só leitura).
+
+## Fluxo 13 — Carrinho de produtos (Vendas e Pedidos)
+
+1. Nas abas **Vendas** e **Pedidos** (admin e vendedor), o mesmo carrinho
+   (`src/salesCart.js`) fica disponível no topo da tela — é o mesmo
+   rascunho independente de qual das duas abas você está vendo.
+2. Para cada item, escolha produto, quantidade e preço unitário e clique em
+   "Adicionar item".
+3. Antes de salvar, defina: origem do estoque (próprio do vendedor ou do
+   administrador), canal, tipo de venda (à vista/parcial/consignado) e,
+   opcionalmente, o nome do cliente.
+4. "Salvar pedido": se a origem for estoque do administrador, vira pedido
+   `pendente_aprovacao` (aparece para o admin aprovar/ajustar quantidades em
+   "Aprovações de carrinho"); se for estoque próprio, o vendedor confirma a
+   baixa em "Baixar estoque próprio" na lista de carrinhos.
+5. "Gerar link": cria um link público (só para pagamento à vista) que o
+   cliente final abre sem login para confirmar o pedido e anexar
+   comprovante.
+
+## Fluxo 14 — Status do pedido e acerto de estoque (só admin decide)
+
+1. Todo pedido criado (por admin ou vendedor) nasce com status `pendente` —
+   o sistema não permite escolher outro status inicial.
+2. Só o administrador arrasta o cartão do pedido no Kanban, usa "Mover
+   para" ou clica em "Baixar venda"/"Excluir". Para o vendedor, o cartão do
+   pedido aparece travado (sem arrastar, sem esses botões).
+3. Se um vendedor antigo tem estoque próprio sem registro correto, o admin
+   clica em "Liberar 1 acerto de estoque" (painel de permissões, abas
+   Vendas/Pedidos). O vendedor então vê, em **Meu estoque**, a seção
+   "Acerto de estoque" para corrigir a quantidade de um produto com motivo
+   obrigatório — usa o crédito uma única vez.

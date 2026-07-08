@@ -230,6 +230,7 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow-sm);
 }
+.business-bar[hidden] { display: none; }
 .business-bar > div { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 240px; min-width: 0; }
 .business-bar label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
 .business-bar select { min-width: 200px; }
@@ -1122,6 +1123,14 @@ pre {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
+}
+.seller-permission-stock-adjust {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
 }
 .dashboard-period-card { gap: 0.5rem; }
 .dashboard-period-fields {

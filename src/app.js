@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   'use strict';
 
   const U = window.C360.utils;
@@ -31,8 +31,8 @@
 
   // ---------------------------------------------------------------------
   // Visibilidade de abas por papel (defesa em profundidade: a RLS do banco
-  // jÃ¡ bloqueia o acesso real, isto sÃ³ evita que a interface ofereÃ§a botÃµes
-  // que dariam erro de permissÃ£o para um vendedor).
+  // já bloqueia o acesso real, isto só evita que a interface ofereça botões
+  // que dariam erro de permissão para um vendedor).
   // ---------------------------------------------------------------------
   const TAB_ROLES = {
     negocios: ['admin'],
@@ -108,7 +108,7 @@
   function supplierById(id) { return state().suppliers.find((supplier) => supplier.id === id) || null; }
 
   function activeBusinessRequiredHtml() {
-    return UI.formNotice('Cadastre ou selecione um negÃ³cio ativo para usar este mÃ³dulo.', 'warning');
+    return UI.formNotice('Cadastre ou selecione um negócio ativo para usar este módulo.', 'warning');
   }
 
   function renderAll() {
@@ -119,7 +119,7 @@
 
   function renderBusinessSelector() {
     const businesses = state().businesses;
-    els.activeBusiness.innerHTML = UI.optionList(businesses, state().activeBusinessId, businesses.length ? 'Selecione' : 'Nenhum negÃ³cio cadastrado');
+    els.activeBusiness.innerHTML = UI.optionList(businesses, state().activeBusinessId, businesses.length ? 'Selecione' : 'Nenhum negócio cadastrado');
     els.activeBusiness.disabled = businesses.length === 0;
   }
 
@@ -156,7 +156,7 @@
     renderTab();
   }
 
-  // Abas "clÃ¡ssicas": a funÃ§Ã£o devolve uma string HTML, que Ã© jogada em
+  // Abas "clássicas": a função devolve uma string HTML, que é jogada em
   // els.view.innerHTML e usa o delegador global de cliques/submits (handleClick/
   // handleSubmit) definido mais abaixo neste arquivo.
   const LEGACY_RENDERERS = {
@@ -175,10 +175,10 @@
     dados: renderData,
   };
 
-  // Abas "modulares": vÃªm de src/auth.js, src/pricing.js, src/sellerStock.js,
-  // src/calculator.js, src/goals.js, src/sellerHelp.js â€” cada uma gerencia seu
-  // prÃ³prio HTML e listeners escopados a um container (padrÃ£o mount/refresh),
-  // em vez de usar o delegador global. NÃ£o presumimos qual mÃ³dulo carregou
+  // Abas "modulares": vêm de src/auth.js, src/pricing.js, src/sellerStock.js,
+  // src/calculator.js, src/goals.js, src/sellerHelp.js — cada uma gerencia seu
+  // próprio HTML e listeners escopados a um container (padrão mount/refresh),
+  // em vez de usar o delegador global. Não presumimos qual módulo carregou
   // primeiro: acessamos window.C360.<modulo> no momento do mount.
   function renderTab() {
     if (!tabAllowed(activeTab)) {
@@ -189,6 +189,7 @@
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      if (activeTab === 'pedidos') mountOrdersCartPanel();
       return;
     }
     mountModuleTab(activeTab);
@@ -231,7 +232,7 @@
           els.view.innerHTML = window.C360.calculator.render();
           window.C360.calculator.mount(els.view);
         } else {
-          els.view.innerHTML = UI.formNotice('Calculadora indisponÃ­vel.', 'warning');
+          els.view.innerHTML = UI.formNotice('Calculadora indisponível.', 'warning');
         }
         break;
       case 'metas':
@@ -256,10 +257,11 @@
     }
   }
 
-  // Painel de devoluÃ§Ã£o/desperdÃ­cio (src/returns.js) para a venda cujo id estÃ¡
-  // em `openReturnsSaleId`, aberto/fechado pelo botÃ£o "DevoluÃ§Ã£o/DesperdÃ­cio"
+  // Painel de devolução/desperdício (src/returns.js) para a venda cujo id está
+  // em `openReturnsSaleId`, aberto/fechado pelo botão "Devolução/Desperdício"
   // na tabela de vendas (ver handleClick, case 'toggle-returns').
   function mountSalesExtras() {
+    mountSalesCartPanel('salesCartPanel');
     const container = document.getElementById('returnsPanel');
     if (!container) return;
     if (!openReturnsSaleId) {
@@ -282,33 +284,49 @@
     }
   }
 
-  // Cada conta admin jÃ¡ vem vinculada a exatamente um negÃ³cio (provisionado
-  // manualmente no backend â€” ver docs/backend.md, seÃ§Ã£o "Gaps"). NÃ£o existe
-  // policy de INSERT/DELETE para `businesses`, sÃ³ UPDATE do prÃ³prio negÃ³cio;
-  // esta tela edita os dados do negÃ³cio jÃ¡ vinculado, nÃ£o cria nem exclui.
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js - quando a origem
+  // escolhida e "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovacao do admin). O rascunho do carrinho e compartilhado
+  // com a aba Vendas (ver comentario de persistentDraft em salesCart.js).
+  function mountOrdersCartPanel() {
+    mountSalesCartPanel('ordersCartPanel');
+  }
+
+  function mountSalesCartPanel(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (window.C360.salesCart && typeof window.C360.salesCart.mount === 'function') {
+      window.C360.salesCart.mount(container, { onDone: renderAll });
+    }
+  }
+
+  // Cada conta admin já vem vinculada a exatamente um negócio (provisionado
+  // manualmente no backend — ver docs/backend.md, seção "Gaps"). Não existe
+  // policy de INSERT/DELETE para `businesses`, só UPDATE do próprio negócio;
+  // esta tela edita os dados do negócio já vinculado, não cria nem exclui.
   function renderBusinesses() {
     const business = S.activeBusiness();
     if (!business) {
-      return UI.formNotice('Sua conta ainda nÃ£o estÃ¡ vinculada a um negÃ³cio. Fale com o administrador do sistema.', 'warning');
+      return UI.formNotice('Sua conta ainda não está vinculada a um negócio. Fale com o administrador do sistema.', 'warning');
     }
-    return UI.section('NegÃ³cios', 'Dados do seu negÃ³cio. Cada conta jÃ¡ vem vinculada a um Ãºnico negÃ³cio â€” nÃ£o Ã© possÃ­vel criar outro por aqui.', `
+    return UI.section('Negócios', 'Dados do seu negócio. Cada conta já vem vinculada a um único negócio — não é possível criar outro por aqui.', `
       <form id="businessForm" class="grid-form">
-        <label>Nome do negÃ³cio
-          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: EssÃªncias / Marmitas / Revenda">
+        <label>Nome do negócio
+          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: Essências / Marmitas / Revenda">
         </label>
         <label>Segmento
           <select name="segment">${UI.optionList(state().settings.businessSegments, business.segment || '', 'Escolha')}</select>
         </label>
-        <label>${UI.fieldLabel('Margem desejada padrÃ£o (%)', 'margemDesejada')}
+        <label>${UI.fieldLabel('Margem desejada padrão (%)', 'margemDesejada')}
           <input name="defaultTargetMargin" type="number" step="0.01" value="${U.escapeHtml(business.defaultTargetMargin ?? 50)}">
         </label>
-        <label>${UI.fieldLabel('Taxas padrÃ£o de venda (%)', 'taxasPadrao')}
+        <label>${UI.fieldLabel('Taxas padrão de venda (%)', 'taxasPadrao')}
           <input name="defaultFeePercent" type="number" step="0.01" value="${U.escapeHtml(business.defaultFeePercent ?? 0)}">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <textarea name="notes" placeholder="Regras prÃ³prias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
+        <label class="wide">Observações
+          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
         </label>
-        <button type="submit">Salvar negÃ³cio</button>
+        <button type="submit">Salvar negócio</button>
       </form>
     `);
   }
@@ -324,7 +342,7 @@
         U.escapeHtml(product.unit),
         UI.stockCell(product),
         UI.moneyCell(product.avgCost),
-        cost ? UI.moneyCell(cost.totalCostPerUnit) : 'â€”',
+        cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
         `<div class="actions">
@@ -334,10 +352,10 @@
       ];
     });
 
-    return UI.section('Produtos, insumos e embalagens', 'Cadastre matÃ©ria-prima, vidro, rÃ³tulo, caixa, produto final, kit, mercadoria ou serviÃ§o. NÃ£o hÃ¡ dados modelo preenchidos.', `
+    return UI.section('Produtos, insumos e embalagens', 'Cadastre matéria-prima, vidro, rótulo, caixa, produto final, kit, mercadoria ou serviço. Não há dados modelo preenchidos.', `
       <form id="productForm" class="grid-form">
         <label>Nome
-          <input name="name" required placeholder="Ex.: Vidro Ã¢mbar 100 ml / RÃ³tulo / EssÃªncia pronta">
+          <input name="name" required placeholder="Ex.: Vidro âmbar 100 ml / Rótulo / Essência pronta">
         </label>
         <label>${UI.fieldLabel('Tipo', 'tipoProduto')}
           <select name="type" required>${UI.optionList(state().settings.productTypes, '', 'Tipo')}</select>
@@ -348,39 +366,39 @@
         <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}
           <input name="currentStock" type="number" step="0.001" value="0">
         </label>
-        <label>${UI.fieldLabel('Custo mÃ©dio inicial', 'custoMedioInicial')}
+        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}
           <input name="avgCost" type="number" step="0.0001" value="0">
         </label>
-        <label>${UI.fieldLabel('PreÃ§o de venda manual', 'precoVendaManual')}
+        <label>${UI.fieldLabel('Preço de venda manual', 'precoVendaManual')}
           <input name="salePrice" type="number" step="0.01" value="0">
-          <span>Opcional. Se deixar 0, use o preÃ§o sugerido no mÃ³dulo Fichas e custos.</span>
+          <span>Opcional. Se deixar 0, use o preço sugerido no módulo Fichas e custos.</span>
         </label>
-        <label>${UI.fieldLabel('Estoque mÃ­nimo', 'estoqueMinimo')}
+        <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}
           <input name="minStock" type="number" step="0.001" value="0">
         </label>
-        <label>${UI.fieldLabel('MÃ£o de obra por unidade', 'maoDeObra')}
+        <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}
           <input name="laborCostPerUnit" type="number" step="0.01" value="0">
         </label>
         <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}
           <input name="overheadCostPerUnit" type="number" step="0.01" value="0">
         </label>
-        <label>${UI.fieldLabel('Perda tÃ©cnica (%)', 'perdaTecnica')}
+        <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}
           <input name="lossPercent" type="number" step="0.01" value="0">
         </label>
         <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}
           <input name="targetMarginPercent" type="number" step="0.01" value="">
-          <span>Se vazio, usa a margem padrÃ£o do negÃ³cio.</span>
+          <span>Se vazio, usa a margem padrão do negócio.</span>
         </label>
         <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}
           <input name="taxFeePercent" type="number" step="0.01" value="">
-          <span>Marketplace, cartÃ£o ou taxa estimada.</span>
+          <span>Marketplace, cartão ou taxa estimada.</span>
         </label>
-        <label class="full">ObservaÃ§Ãµes
-          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produÃ§Ã£o..."></textarea>
+        <label class="full">Observações
+          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea>
         </label>
         <button type="submit">Cadastrar produto</button>
       </form>
-      ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo mÃ©dio', 'Custo ficha', 'PreÃ§o manual', 'Margem', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
     `);
   }
 
@@ -392,9 +410,9 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const rows = currentClients().map((client) => [
       U.escapeHtml(client.name),
-      U.escapeHtml(client.phone || 'â€”'),
+      U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
-      U.escapeHtml(client.notes || 'â€”'),
+      U.escapeHtml(client.notes || '—'),
       `<div class="actions">${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
@@ -412,12 +430,12 @@
             <option value="ambos">Ambos</option>
           </select>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="EndereÃ§o, regra de pagamento, etc.">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Endereço, regra de pagamento, etc.">
         </label>
         <button type="submit">Cadastrar cliente</button>
       </form>
-      ${UI.table(['Nome', 'Telefone', 'Tipo', 'ObservaÃ§Ãµes', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Nome', 'Telefone', 'Tipo', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -425,11 +443,11 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const rows = currentSuppliers().map((supplier) => [
       U.escapeHtml(supplier.name),
-      U.escapeHtml(supplier.phone || 'â€”'),
-      U.escapeHtml(supplier.notes || 'â€”'),
+      U.escapeHtml(supplier.phone || '—'),
+      U.escapeHtml(supplier.notes || '—'),
       `<div class="actions">${UI.actionButton('delete-supplier', supplier.id, 'Excluir', 'danger')}</div>`,
     ]);
-    return UI.section('Fornecedores', 'Fornecedores alimentam as compras e ajudam a rastrear custo de matÃ©ria-prima e embalagem.', `
+    return UI.section('Fornecedores', 'Fornecedores alimentam as compras e ajudam a rastrear custo de matéria-prima e embalagem.', `
       <form id="supplierForm" class="grid-form">
         <label>Nome
           <input name="name" required placeholder="Fornecedor">
@@ -437,12 +455,12 @@
         <label>Telefone / contato
           <input name="phone" placeholder="Opcional">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="Prazo, desconto, pedido mÃ­nimo...">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Prazo, desconto, pedido mínimo...">
         </label>
         <button type="submit">Cadastrar fornecedor</button>
       </form>
-      ${UI.table(['Nome', 'Contato', 'ObservaÃ§Ãµes', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Nome', 'Contato', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -455,15 +473,15 @@
       const supplier = supplierById(purchase.supplierId);
       return [
         U.escapeHtml(purchase.date),
-        U.escapeHtml(supplier?.name || 'â€”'),
+        U.escapeHtml(supplier?.name || '—'),
         UI.productName(product),
         U.qty(purchase.quantity, product?.unit),
         UI.moneyCell(purchase.totalCost),
         UI.moneyCell(purchase.unitCost),
-        U.escapeHtml(purchase.notes || 'â€”'),
+        U.escapeHtml(purchase.notes || '—'),
       ];
     });
-    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo mÃ©dio ponderado automaticamente.', `
+    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo médio ponderado automaticamente.', `
       <form id="purchaseForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -480,12 +498,12 @@
         <label>${UI.fieldLabel('Valor total da compra', 'valorTotalCompra')}
           <input name="totalCost" type="number" step="0.01" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Nota, lote, forma de pagamento...">
         </label>
-        <button type="submit">LanÃ§ar compra</button>
+        <button type="submit">Lançar compra</button>
       </form>
-      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitÃ¡rio', 'Obs.'], rows)}
+      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Obs.'], rows)}
     `);
   }
 
@@ -507,42 +525,42 @@
       ];
     });
 
-    return UI.section('Fichas tÃ©cnicas e cÃ¡lculo de custo', 'Monte a composiÃ§Ã£o do produto: matÃ©ria-prima, vidro, rÃ³tulo, caixa, embalagem e custos rateados. O sistema calcula custo e preÃ§o sugerido.', `
+    return UI.section('Fichas técnicas e cálculo de custo', 'Monte a composição do produto: matéria-prima, vidro, rótulo, caixa, embalagem e custos rateados. O sistema calcula custo e preço sugerido.', `
       <div class="two-columns">
         <div class="panel-card">
-          <h3>Adicionar item Ã  ficha ${UI.help('fichaTecnica')}</h3>
+          <h3>Adicionar item à ficha ${UI.help('fichaTecnica')}</h3>
           <form id="recipeForm" class="stack-form">
             <label>Produto final / kit
               <select name="finalProductId" required>${UI.optionList(finalProducts, '', 'Produto final')}</select>
             </label>
-            <label>MatÃ©ria-prima ou embalagem
+            <label>Matéria-prima ou embalagem
               <select name="inputProductId" required>${UI.optionList(inputProducts, '', 'Insumo/embalagem')}</select>
             </label>
             <label>${UI.fieldLabel('Quantidade usada por unidade final', 'qtdPorUnidade')}
               <input name="quantityPerUnit" type="number" step="0.0001" required placeholder="Ex.: 100 ml, 1 un, 0.05 kg">
             </label>
-            <button type="submit">Adicionar Ã  ficha</button>
+            <button type="submit">Adicionar à ficha</button>
           </form>
-          <div class="notice">Para essÃªncia aromÃ¡tica, cadastre cada item separadamente: base/fragrÃ¢ncia, vidro, vÃ¡lvula/tampa, rÃ³tulo, caixa e lacre. Depois vincule tudo aqui.</div>
+          <div class="notice">Para essência aromática, cadastre cada item separadamente: base/fragrância, vidro, válvula/tampa, rótulo, caixa e lacre. Depois vincule tudo aqui.</div>
         </div>
         <div class="panel-card">
-          <h3>Simulador rÃ¡pido</h3>
+          <h3>Simulador rápido</h3>
           <form id="costPreviewForm" class="stack-form">
             <label>Produto para calcular
               <select name="finalProductId">${UI.optionList(finalProducts, selectedFinalId, 'Produto final')}</select>
             </label>
             <button type="submit">Calcular</button>
           </form>
-          <div id="costPreview">${selectedCost ? renderCostPreview(selectedCost) : UI.formNotice('Cadastre um produto final/kit e sua ficha tÃ©cnica para calcular.', 'warning')}</div>
+          <div id="costPreview">${selectedCost ? renderCostPreview(selectedCost) : UI.formNotice('Cadastre um produto final/kit e sua ficha técnica para calcular.', 'warning')}</div>
         </div>
       </div>
       <h3>Itens cadastrados nas fichas</h3>
-      ${UI.table(['Produto final', 'Insumo/embalagem', 'Qtd. por unidade', 'Custo na ficha', 'AÃ§Ãµes'], recipeRows)}
+      ${UI.table(['Produto final', 'Insumo/embalagem', 'Qtd. por unidade', 'Custo na ficha', 'Ações'], recipeRows)}
     `);
   }
 
   function renderCostPreview(cost) {
-    if (!cost.finalProduct) return UI.formNotice('Produto nÃ£o encontrado.', 'danger');
+    if (!cost.finalProduct) return UI.formNotice('Produto não encontrado.', 'danger');
     const rows = cost.items.map((item) => [
       UI.productName(item.input),
       U.qty(item.quantityPerUnit, item.input?.unit),
@@ -553,10 +571,10 @@
       ${UI.costBox(cost)}
       <div class="notice">
         Produto: <strong>${U.escapeHtml(cost.finalProduct.name)}</strong><br>
-        Margem desejada: <strong>${(cost.targetMarginPercent * 100).toFixed(2)}%</strong> Â· Taxas: <strong>${(cost.taxFeePercent * 100).toFixed(2)}%</strong><br>
-        Lucro bruto estimado no preÃ§o escolhido: <strong>${U.money(cost.grossProfitAtSelectedPrice)}</strong> Â· Margem real: <strong>${(cost.marginAtSelectedPrice * 100).toFixed(2)}%</strong>
+        Margem desejada: <strong>${(cost.targetMarginPercent * 100).toFixed(2)}%</strong> · Taxas: <strong>${(cost.taxFeePercent * 100).toFixed(2)}%</strong><br>
+        Lucro bruto estimado no preço escolhido: <strong>${U.money(cost.grossProfitAtSelectedPrice)}</strong> · Margem real: <strong>${(cost.marginAtSelectedPrice * 100).toFixed(2)}%</strong>
       </div>
-      ${UI.table(['Item', 'Qtd.', 'Custo mÃ©dio', 'Custo por unidade final'], rows, 'Nenhum item na ficha ainda.')}
+      ${UI.table(['Item', 'Qtd.', 'Custo médio', 'Custo por unidade final'], rows, 'Nenhum item na ficha ainda.')}
     `;
   }
 
@@ -571,10 +589,10 @@
         U.qty(prod.quantity, product?.unit),
         UI.moneyCell(prod.totalCost),
         UI.moneyCell(prod.unitCost),
-        U.escapeHtml(prod.notes || 'â€”'),
+        U.escapeHtml(prod.notes || '—'),
       ];
     });
-    return UI.section('ProduÃ§Ã£o', 'ProduÃ§Ã£o consome a ficha tÃ©cnica, baixa insumos/embalagens e dÃ¡ entrada no produto final com custo calculado.', `
+    return UI.section('Produção', 'Produção consome a ficha técnica, baixa insumos/embalagens e dá entrada no produto final com custo calculado.', `
       <form id="productionForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -585,12 +603,12 @@
         <label>${UI.fieldLabel('Quantidade produzida', 'qtdProduzida')}
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="Lote, produÃ§Ã£o, perdas reais...">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Lote, produção, perdas reais...">
         </label>
-        <button type="submit">LanÃ§ar produÃ§Ã£o</button>
+        <button type="submit">Lançar produção</button>
       </form>
-      ${UI.table(['Data', 'Produto', 'Qtd.', 'Custo total', 'Custo unitÃ¡rio', 'Obs.'], rows)}
+      ${UI.table(['Data', 'Produto', 'Qtd.', 'Custo total', 'Custo unitário', 'Obs.'], rows)}
     `);
   }
 
@@ -603,18 +621,19 @@
       const isReturnOrScrap = sale.quantity < 0 || !!sale.parentSaleId;
       return [
         U.escapeHtml(sale.date),
-        U.escapeHtml(sale.channel || 'â€”'),
-        U.escapeHtml(client?.name || 'â€”'),
+        U.escapeHtml(sale.channel || '—'),
+        U.escapeHtml(client?.name || '—'),
         UI.productName(product),
         U.qty(sale.quantity, product?.unit),
         UI.moneyCell(sale.netRevenue),
         UI.moneyCell(sale.cogs),
         UI.moneyCell(sale.grossProfit),
         `${(U.number(sale.margin) * 100).toFixed(2)}%`,
-        isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
+        isReturnOrScrap ? '—' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'Devolução/Desperdício')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
+      <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -631,7 +650,7 @@
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label>PreÃ§o unitÃ¡rio
+        <label>Preço unitário
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
         <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
@@ -643,13 +662,13 @@
         <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
           <input name="feePercent" type="number" step="0.01" value="0">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda</button>
+        <button type="submit">Lancar venda rapida (1 produto)</button>
       </form>
-      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
       <div id="returnsPanel"></div>
     `, 'cmv');
   }
@@ -658,20 +677,25 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const statuses = state().settings.orderStatuses;
+    const isAdminUser = S.isAdmin();
     const cards = currentOrders().map((order) => {
       const client = clientById(order.clientId);
       const product = productById(order.productId);
+      const dispatchAction = order.convertedSaleId
+        ? UI.badge('venda lancada', 'ok')
+        : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
         status: order.status,
         title: client?.name || 'Pedido sem cliente',
-        subtitle: product ? `${product.name} Â· ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
-        detail: `Entrega: ${order.dueDate || 'sem data'} Â· Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
-        actions: `${order.convertedSaleId ? UI.badge('venda lanÃ§ada', 'ok') : UI.actionButton('convert-order-sale', order.id, 'Baixar venda')} ${UI.actionButton('delete-order', order.id, 'Excluir', 'danger')}`,
+        subtitle: product ? `${product.name} · ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
+        detail: `Entrega: ${order.dueDate || 'sem data'} · Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
+        actions: `${dispatchAction} ${isAdminUser ? UI.actionButton('delete-order', order.id, 'Excluir', 'danger') : ''}`,
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartÃµes entre as colunas ou use o campo "Mover para" no celular.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeca pendente - so o administrador muda o status, faz devolucoes e acertos.', `
+      <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -682,21 +706,18 @@
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label>${UI.fieldLabel('PreÃ§o unitÃ¡rio combinado', 'precoCombinado')}
+        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinado')}
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
         <label>Data de entrega/despacho
           <input name="dueDate" type="date">
         </label>
-        <label>${UI.fieldLabel('Status inicial', 'statusInicial')}
-          <select name="status">${UI.optionList(statuses, 'pendente', '')}</select>
+        <label class="wide">Observações
+          <input name="notes" placeholder="Endereço, forma de pagamento, urgência...">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
-        </label>
-        <button type="submit">Criar pedido</button>
+        <button type="submit">Criar pedido (rapido, 1 produto)</button>
       </form>
-      ${UI.kanban({ statuses, cards, type: 'orders' })}
+      ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
   }
 
@@ -726,7 +747,7 @@
       ];
     });
 
-    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devoluÃ§Ã£o e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
       <form id="consignmentForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -740,15 +761,15 @@
         <label>${UI.fieldLabel('Quantidade enviada', 'qtdEnviada')}
           <input name="quantitySent" type="number" step="0.001" required>
         </label>
-        <label>${UI.fieldLabel('PreÃ§o unitÃ¡rio combinado', 'precoCombinadoConsig')}
+        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinadoConsig')}
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Prazo de acerto, caixa, lote, combinado...">
         </label>
         <button type="submit">Enviar consignado</button>
       </form>
-      ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'Ações'], rows)}
     `, 'consignado');
   }
 
@@ -763,7 +784,7 @@
       detail: task.notes || '',
       actions: UI.actionButton('delete-task', task.id, 'Excluir', 'danger'),
     }));
-    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produÃ§Ã£o, cobranÃ§a, despachos e revisÃ£o.', `
+    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produção, cobrança, despachos e revisão.', `
       <form id="taskForm" class="grid-form">
         <label>Tarefa
           <input name="title" required placeholder="Ex.: Comprar vidros / cobrar cliente / despachar pedido">
@@ -774,7 +795,7 @@
         <label>Status inicial
           <select name="status">${UI.optionList(statuses, 'a_fazer', '')}</select>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Detalhes da tarefa">
         </label>
         <button type="submit">Criar tarefa</button>
@@ -807,20 +828,20 @@
     const movementRows = U.sortByDateDesc(currentMovements()).slice(0, 80).map((mov) => {
       const product = productById(mov.productId);
       return [
-        U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || 'â€”'),
+        U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || '—'),
         U.escapeHtml(mov.type),
         UI.productName(product),
         U.qty(mov.quantity, product?.unit),
         UI.moneyCell(mov.unitCost),
-        U.escapeHtml(mov.notes || 'â€”'),
+        U.escapeHtml(mov.notes || '—'),
       ];
     });
 
-    return UI.section('RelatÃ³rios', 'Leitura rÃ¡pida para revisÃ£o: custo de produto, estoque atual e movimentaÃ§Ãµes.', `
+    return UI.section('Relatórios', 'Leitura rápida para revisão: custo de produto, estoque atual e movimentações.', `
       <div class="three-columns">
-        <div class="panel-card"><h3>Produtos finais e preÃ§o</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'PreÃ§o sugerido', 'PreÃ§o usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
-        <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo mÃ©dio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
-        <div class="panel-card"><h3>Ãšltimas movimentaÃ§Ãµes</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentaÃ§Ã£o.')}</div>
+        <div class="panel-card"><h3>Produtos finais e preço</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'Preço sugerido', 'Preço usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
+        <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
+        <div class="panel-card"><h3>Últimas movimentações</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentação.')}</div>
       </div>
     `);
   }
@@ -837,15 +858,15 @@
     ]);
 
     const csvButtons = collections.map((collection) => {
-      const scope = collection.key === 'businesses' ? 'todos' : 'negÃ³cio ativo';
+      const scope = collection.key === 'businesses' ? 'todos' : 'negócio ativo';
       return `<button type="button" class="small secondary" data-io="export-csv" data-collection="${collection.key}">${U.escapeHtml(collection.sheet)} <span class="hint-inline">${scope}</span></button>`;
     }).join('');
 
-    return UI.section('Backup e exportaÃ§Ã£o', 'Salve, leve para outro computador ou abra seus dados no Excel. Os dados ficam apenas neste navegador â€” exporte com frequÃªncia.', `
+    return UI.section('Backup e exportação', 'Salve, leve para outro computador ou abra seus dados no Excel. Os dados ficam apenas neste navegador — exporte com frequência.', `
       <div class="export-grid">
         <article class="export-card highlight">
           <div class="export-card-head"><span class="export-tag">Recomendado</span><h3>Excel (.xlsx)</h3></div>
-          <p>Backup completo com uma aba por mÃ³dulo. Abre no Excel ou Google Sheets, pode ser editado e reimportado.</p>
+          <p>Backup completo com uma aba por módulo. Abre no Excel ou Google Sheets, pode ser editado e reimportado.</p>
           <div class="export-actions">
             <button type="button" data-io="export-xlsx">Baixar Excel completo</button>
             <label class="file-button">
@@ -857,7 +878,7 @@
 
         <article class="export-card">
           <div class="export-card-head"><h3>Backup JSON</h3></div>
-          <p>CÃ³pia tÃ©cnica fiel de tudo, incluindo configuraÃ§Ãµes. Ideal como backup de seguranÃ§a.</p>
+          <p>Cópia técnica fiel de tudo, incluindo configurações. Ideal como backup de segurança.</p>
           <div class="export-actions">
             <button type="button" class="secondary" data-io="export-json">Baixar JSON</button>
             <label class="file-button">
@@ -868,24 +889,24 @@
         </article>
 
         <article class="export-card">
-          <div class="export-card-head"><h3>CSV por mÃ³dulo</h3></div>
-          <p>Uma tabela por vez, para abrir em qualquer planilha ou enviar para alguÃ©m.</p>
+          <div class="export-card-head"><h3>CSV por módulo</h3></div>
+          <p>Uma tabela por vez, para abrir em qualquer planilha ou enviar para alguém.</p>
           <div class="export-actions wrap">${csvButtons}</div>
         </article>
       </div>
 
-      <div class="notice info">Importar substitui os dados atuais deste navegador. FaÃ§a um backup antes se tiver dÃºvida.</div>
+      <div class="notice info">Importar substitui os dados atuais deste navegador. Faça um backup antes se tiver dúvida.</div>
 
       <div class="panel-card">
-        <h3>O que estÃ¡ salvo agora</h3>
-        ${UI.table(['MÃ³dulo', 'Registros'], countRows, 'Nenhum dado ainda.')}
+        <h3>O que está salvo agora</h3>
+        ${UI.table(['Módulo', 'Registros'], countRows, 'Nenhum dado ainda.')}
       </div>
     `);
   }
 
   async function updateBusiness(data) {
     const business = S.activeBusiness();
-    if (!business) throw new Error('Sua conta ainda nÃ£o estÃ¡ vinculada a um negÃ³cio.');
+    if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
     await S.update('businesses', business.id, {
       name: data.name.trim(),
       segment: data.segment,
@@ -918,7 +939,7 @@
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.totalCost, 'Valor total');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const quantity = U.number(data.quantity);
     const totalCost = U.number(data.totalCost);
     const unitCost = totalCost / quantity;
@@ -949,9 +970,9 @@
 
   async function addRecipe(data) {
     U.assertPositive(data.quantityPerUnit, 'Quantidade por unidade');
-    if (data.finalProductId === data.inputProductId) throw new Error('Produto final nÃ£o pode consumir ele mesmo.');
+    if (data.finalProductId === data.inputProductId) throw new Error('Produto final não pode consumir ele mesmo.');
     const duplicate = currentRecipes().find((row) => row.finalProductId === data.finalProductId && row.inputProductId === data.inputProductId);
-    if (duplicate) throw new Error('Este item jÃ¡ existe na ficha tÃ©cnica. Exclua o anterior antes de lanÃ§ar novo valor.');
+    if (duplicate) throw new Error('Este item já existe na ficha técnica. Exclua o anterior antes de lançar novo valor.');
     await S.add('recipes', {
       finalProductId: data.finalProductId,
       inputProductId: data.inputProductId,
@@ -962,9 +983,9 @@
   async function addProduction(data) {
     U.assertPositive(data.quantity, 'Quantidade produzida');
     const finalProduct = productById(data.finalProductId);
-    if (!finalProduct) throw new Error('Produto final nÃ£o encontrado.');
+    if (!finalProduct) throw new Error('Produto final não encontrado.');
     const recipe = Calc.calculateRecipeCost(finalProduct.id, state());
-    if (!recipe.items.length) throw new Error('Produto final sem ficha tÃ©cnica.');
+    if (!recipe.items.length) throw new Error('Produto final sem ficha técnica.');
     const quantity = U.number(data.quantity);
 
     const shortages = recipe.items.filter((item) => U.number(item.input?.currentStock) < item.quantityPerUnit * quantity);
@@ -988,7 +1009,7 @@
         quantity: -consumedQty,
         unitCost: U.number(item.input.avgCost),
         totalCost: -cost,
-        notes: `ProduÃ§Ã£o de ${finalProduct.name}`,
+        notes: `Produção de ${finalProduct.name}`,
       });
     }
 
@@ -1021,15 +1042,15 @@
     });
   }
 
-  // Vendedor logado tem um preÃ§o/piso especÃ­fico para este produto? (linha de
-  // seller_prices jÃ¡ carregada no cache pelo refresh â€” ver src/state.js).
+  // Vendedor logado tem um preço/piso específico para este produto? (linha de
+  // seller_prices já carregada no cache pelo refresh — ver src/state.js).
   function sellerPriceForProduct(productId) {
     return (state().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
   }
 
-  // Bloqueio client-side do piso de preÃ§o (UX): o trigger do banco (ver
-  // docs/backend.md Â§7) Ã© a garantia final, isto sÃ³ evita uma viagem ao
-  // servidor para descobrir que o preÃ§o estÃ¡ abaixo do piso.
+  // Bloqueio client-side do piso de preço (UX): o trigger do banco (ver
+  // docs/backend.md §7) é a garantia final, isto só evita uma viagem ao
+  // servidor para descobrir que o preço está abaixo do piso.
   function validateSaleFloor(data) {
     const user = S.getCurrentUser();
     if (!user || user.role !== 'vendedor') return;
@@ -1044,24 +1065,24 @@
 
   async function addSale(data, options = {}) {
     U.assertPositive(data.quantity, 'Quantidade');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
-    // Vendedor nÃ£o tem permissÃ£o (RLS) para dar baixa no estoque central nem
-    // registrar stock_movements do tipo saida_venda â€” sÃ³ admin controla o
-    // estoque central. Produto fÃ­sico vendido por vendedor precisa vir do
-    // prÃ³prio estoque (aba "Meu estoque", vira consignado), nÃ£o desta venda
+    if (!product) throw new Error('Produto não encontrado.');
+    // Vendedor não tem permissão (RLS) para dar baixa no estoque central nem
+    // registrar stock_movements do tipo saida_venda — só admin controla o
+    // estoque central. Produto físico vendido por vendedor precisa vir do
+    // próprio estoque (aba "Meu estoque", vira consignado), não desta venda
     // direta. Barrar aqui evita criar a venda e falhar depois no meio do
-    // fluxo (registro de venda Ã³rfÃ£o, sem baixa de estoque).
+    // fluxo (registro de venda órfão, sem baixa de estoque).
     if (!options.skipStockMovement && product.type !== 'servico') {
       const currentUser = S.getCurrentUser();
       if (currentUser && currentUser.role === 'vendedor') {
-        throw new Error('Vendedores vendem produtos fÃ­sicos pela aba "Meu estoque" (vira consignado). Aqui vocÃª sÃ³ pode lanÃ§ar vendas de serviÃ§os.');
+        throw new Error('Vendedores vendem produtos físicos pela aba "Meu estoque" (vira consignado). Aqui você só pode lançar vendas de serviços.');
       }
     }
     const quantity = U.number(data.quantity);
     if (product.type !== 'servico' && U.number(product.currentStock) < quantity && !options.skipStockCheck) {
-      throw new Error(`Estoque insuficiente. DisponÃ­vel: ${U.qty(product.currentStock, product.unit)}.`);
+      throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
     }
     const unitCost = options.unitCostOverride ?? U.number(product.avgCost);
     const math = Calc.saleMath({
@@ -1104,10 +1125,10 @@
     return sale;
   }
 
-  // Wrapper usado pelo #saleForm (lanÃ§amento manual de venda): valida o piso
-  // de preÃ§o do vendedor antes de chamar addSale. Fluxos internos (conversÃ£o
+  // Wrapper usado pelo #saleForm (lançamento manual de venda): valida o piso
+  // de preço do vendedor antes de chamar addSale. Fluxos internos (conversão
   // de pedido, baixa de consignado) chamam addSale diretamente, sem esta
-  // validaÃ§Ã£o extra, porque o preÃ§o jÃ¡ vem combinado/aprovado antes.
+  // validação extra, porque o preço já vem combinado/aprovado antes.
   async function submitSale(data) {
     validateSaleFloor(data);
     return addSale(data);
@@ -1115,14 +1136,14 @@
 
   async function addOrder(data) {
     U.assertPositive(data.quantity, 'Quantidade');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     await S.add('orders', {
       clientId: data.clientId || null,
       productId: data.productId,
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
       dueDate: data.dueDate || null,
-      status: data.status || 'pendente',
+      status: 'pendente',
       notes: data.notes || '',
       convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
@@ -1131,11 +1152,11 @@
 
   async function addConsignment(data) {
     U.assertPositive(data.quantitySent, 'Quantidade enviada');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const quantitySent = U.number(data.quantitySent);
-    if (U.number(product.currentStock) < quantitySent) throw new Error(`Estoque insuficiente. DisponÃ­vel: ${U.qty(product.currentStock, product.unit)}.`);
+    if (U.number(product.currentStock) < quantitySent) throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
     const costAtSend = U.number(product.avgCost);
     await S.update('products', product.id, { currentStock: U.number(product.currentStock) - quantitySent });
     const record = await S.add('consignments', {
@@ -1202,7 +1223,7 @@
     try {
       switch (action) {
         case 'delete-product':
-          if (confirm('Excluir produto? As movimentaÃ§Ãµes antigas ficam no histÃ³rico com item removido.')) await deleteRecord('products', id);
+          if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
         case 'adjust-stock':
           await adjustStock(id);
@@ -1210,10 +1231,13 @@
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
-        case 'delete-order': await deleteRecord('orders', id); break;
+        case 'delete-order':
+          if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
+          await deleteRecord('orders', id);
+          break;
         case 'delete-task': await deleteRecord('tasks', id); break;
         case 'delete-consignment':
-          if (confirm('Excluir consignaÃ§Ã£o? Isso nÃ£o desfaz estoque automaticamente. Use apenas para correÃ§Ã£o manual/revisÃ£o.')) await deleteRecord('consignments', id);
+          if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
           break;
         case 'convert-order-sale':
           await convertOrderToSale(id);
@@ -1240,9 +1264,10 @@
   }
 
   async function convertOrderToSale(orderId) {
+    if (!S.isAdmin()) throw new Error('Somente o administrador pode alterar o status do pedido e baixar a venda.');
     const order = state().orders.find((item) => item.id === orderId);
-    if (!order) throw new Error('Pedido nÃ£o encontrado.');
-    if (order.convertedSaleId) throw new Error('Pedido jÃ¡ foi convertido em venda.');
+    if (!order) throw new Error('Pedido não encontrado.');
+    if (order.convertedSaleId) throw new Error('Pedido já foi convertido em venda.');
     const sale = await addSale({
       date: U.today(),
       channel: 'Pedido',
@@ -1253,22 +1278,22 @@
       discount: 0,
       fixedFees: 0,
       feePercent: 0,
-      notes: `Baixa automÃ¡tica do pedido ${order.id}`,
+      notes: `Baixa automática do pedido ${order.id}`,
     }, { origin: 'pedido', originId: order.id });
     await S.update('orders', order.id, { convertedSaleId: sale.id, status: 'despachado' });
   }
 
   async function consignmentSell(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const product = productById(item.productId);
-    if (!product) throw new Error('Produto da consignaÃ§Ã£o nÃ£o encontrado.');
+    if (!product) throw new Error('Produto da consignação não encontrado.');
     const available = Calc.consignmentAvailableWithClient(item);
-    const qtyText = prompt(`Quantidade vendida pelo cliente? DisponÃ­vel com cliente: ${U.qty(available, product?.unit)}`);
+    const qtyText = prompt(`Quantidade vendida pelo cliente? Disponível com cliente: ${U.qty(available, product?.unit)}`);
     if (qtyText === null) return;
     const quantity = U.number(qtyText);
     U.assertPositive(quantity, 'Quantidade vendida');
-    if (quantity > available) throw new Error('Quantidade maior que o disponÃ­vel com o cliente.');
+    if (quantity > available) throw new Error('Quantidade maior que o disponível com o cliente.');
     await addSale({
       date: U.today(),
       channel: 'Consignado',
@@ -1279,7 +1304,7 @@
       discount: 0,
       fixedFees: 0,
       feePercent: 0,
-      notes: `Venda informada na consignaÃ§Ã£o ${item.id}`,
+      notes: `Venda informada na consignação ${item.id}`,
     }, { skipStockMovement: true, skipStockCheck: true, unitCostOverride: item.costAtSend, origin: 'consignado', originId: item.id });
     await S.update('consignments', item.id, { quantitySold: U.number(item.quantitySold) + quantity });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'venda_cliente', date: U.today(), quantity, amount: quantity * U.number(item.unitPrice) });
@@ -1287,15 +1312,15 @@
 
   async function consignmentReturn(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const product = productById(item.productId);
-    if (!product) throw new Error('Produto da consignaÃ§Ã£o nÃ£o encontrado.');
+    if (!product) throw new Error('Produto da consignação não encontrado.');
     const available = Calc.consignmentAvailableWithClient(item);
-    const qtyText = prompt(`Quantidade devolvida? DisponÃ­vel com cliente: ${U.qty(available, product?.unit)}`);
+    const qtyText = prompt(`Quantidade devolvida? Disponível com cliente: ${U.qty(available, product?.unit)}`);
     if (qtyText === null) return;
     const quantity = U.number(qtyText);
     U.assertPositive(quantity, 'Quantidade devolvida');
-    if (quantity > available) throw new Error('Quantidade maior que o disponÃ­vel com o cliente.');
+    if (quantity > available) throw new Error('Quantidade maior que o disponível com o cliente.');
     await S.update('products', product.id, { currentStock: U.number(product.currentStock) + quantity });
     await S.update('consignments', item.id, { quantityReturned: U.number(item.quantityReturned) + quantity });
     await S.recordMovement({
@@ -1305,16 +1330,16 @@
       quantity,
       unitCost: U.number(item.costAtSend),
       totalCost: quantity * U.number(item.costAtSend),
-      notes: `DevoluÃ§Ã£o consignado ${item.id}`,
+      notes: `Devolução consignado ${item.id}`,
     });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'devolucao', date: U.today(), quantity, amount: 0 });
   }
 
   async function consignmentPay(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const open = Calc.consignmentOpenAmount(item);
-    if (open <= 0) throw new Error('NÃ£o hÃ¡ valor em aberto nesta consignaÃ§Ã£o.');
+    if (open <= 0) throw new Error('Não há valor em aberto nesta consignação.');
     const amountText = prompt(`Valor pago pelo cliente? Em aberto: ${U.money(open)}`);
     if (amountText === null) return;
     const amount = U.number(amountText);
@@ -1324,20 +1349,20 @@
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'pagamento', date: U.today(), quantity: 0, amount });
   }
 
-  // CorreÃ§Ã£o de contagem/perda fora dos fluxos normais (compra, produÃ§Ã£o,
+  // Correção de contagem/perda fora dos fluxos normais (compra, produção,
   // venda, consignado): sempre gera stockMovements com type 'ajuste_manual'
-  // e motivo obrigatÃ³rio, nunca muda o estoque em silÃªncio (ver CLAUDE.md,
-  // regra "Estoque nunca deve ser alterado sem movimentaÃ§Ã£o").
+  // e motivo obrigatório, nunca muda o estoque em silêncio (ver CLAUDE.md,
+  // regra "Estoque nunca deve ser alterado sem movimentação").
   async function adjustStock(productId) {
     const product = productById(productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(product.currentStock, product.unit)}`);
     if (newQtyText === null) return;
     const newQty = U.number(newQtyText);
-    if (newQty < 0) throw new Error('Estoque nÃ£o pode ficar negativo.');
+    if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
     const diff = newQty - U.number(product.currentStock);
     if (diff === 0) return;
-    const reason = prompt('Motivo do ajuste (obrigatÃ³rio):');
+    const reason = prompt('Motivo do ajuste (obrigatório):');
     if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
     const unitCost = U.number(product.avgCost);
     await S.update('products', product.id, { currentStock: newQty });
@@ -1390,6 +1415,10 @@
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
+    // So admin altera status de pedido - a coluna ja nao e arrastavel para
+    // vendedor (readOnly em UI.kanban), isto e so defesa extra; o banco
+    // tambem bloqueia via trigger.
+    if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });
     } catch (error) {
@@ -1398,8 +1427,8 @@
     renderAll();
   }
 
-  // Alternativa ao arrastar-e-soltar (arrastar com o dedo nÃ£o dispara os
-  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartÃ£o,
+  // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
+  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
   // ver UI.kanban() em src/ui.js.
   async function handleKanbanMove(event) {
     const select = event.target.closest('[data-kanban-move]');
@@ -1407,6 +1436,7 @@
     const board = select.closest('[data-kanban-type]');
     if (!board) return;
     const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    if (collection === 'orders' && !S.isAdmin()) return;
     const cardId = select.dataset.cardId;
     try {
       await S.update(collection, cardId, { status: select.value });
@@ -1416,7 +1446,7 @@
     renderAll();
   }
 
-  // ---------- Ajuda contextual (balÃ£o do Ã­cone "â“˜") ----------
+  // ---------- Ajuda contextual (balão do ícone "ⓘ") ----------
   let tipEl = null;
   function ensureTip() {
     if (tipEl) return tipEl;
@@ -1438,7 +1468,7 @@
     let left = r.left + r.width / 2 - tr.width / 2;
     left = Math.max(margin, Math.min(left, window.innerWidth - tr.width - margin));
     let top = r.top - tr.height - 8;
-    if (top < margin) top = r.bottom + 8; // sem espaÃ§o acima: mostra abaixo
+    if (top < margin) top = r.bottom + 8; // sem espaço acima: mostra abaixo
     tip.style.left = `${Math.round(left)}px`;
     tip.style.top = `${Math.round(top)}px`;
   }
@@ -1458,7 +1488,7 @@
       if (target) showTip(target);
     });
     document.addEventListener('focusout', hideTip);
-    // Toque fora do Ã­cone fecha o balÃ£o no celular.
+    // Toque fora do ícone fecha o balão no celular.
     document.addEventListener('click', (event) => {
       if (!event.target.closest('[data-tip]')) hideTip();
     });
@@ -1466,9 +1496,9 @@
     window.addEventListener('resize', hideTip);
   }
 
-  // SugestÃ£o/piso de preÃ§o no formulÃ¡rio de venda (vendedor): ao escolher o
-  // produto, prefixa o preÃ§o unitÃ¡rio com C360.calc.resolveSellerPrice(...) e
-  // mostra o piso efetivo. NÃ£o bloqueia digitaÃ§Ã£o livre â€” a validaÃ§Ã£o real
+  // Sugestão/piso de preço no formulário de venda (vendedor): ao escolher o
+  // produto, prefixa o preço unitário com C360.calc.resolveSellerPrice(...) e
+  // mostra o piso efetivo. Não bloqueia digitação livre — a validação real
   // acontece em validateSaleFloor() no submit (ver submitSale).
   function updateSalePriceHint(form) {
     const hint = form.querySelector('#salePriceHint');
@@ -1487,9 +1517,9 @@
       unitPriceInput.value = resolved.price;
     }
     const floorText = resolved.floor === null || resolved.floor === undefined
-      ? 'sem piso mÃ­nimo definido'
-      : `mÃ­nimo permitido: ${U.money(resolved.floor)}`;
-    hint.innerHTML = UI.formNotice(`PreÃ§o sugerido: ${U.money(resolved.price)} Â· ${floorText}`, 'info');
+      ? 'sem piso mínimo definido'
+      : `mínimo permitido: ${U.money(resolved.floor)}`;
+    hint.innerHTML = UI.formNotice(`Preço sugerido: ${U.money(resolved.price)} · ${floorText}`, 'info');
   }
 
   function handleSalePriceHint(event) {
@@ -1506,7 +1536,7 @@
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     els.btnReset.addEventListener('click', () => {
-      if (confirm('Zerar todos os dados locais deste navegador? FaÃ§a um backup antes.')) {
+      if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
         renderAll();
         toast('Dados locais zerados.', 'success');
@@ -1583,12 +1613,12 @@
   window.C360.app = { refresh: renderAll, toast };
 
   // ---------------------------------------------------------------------
-  // Bootstrap com portÃ£o de autenticaÃ§Ã£o (src/auth.js): a tela de login Ã©
-  // mostrada enquanto nÃ£o houver sessÃ£o vÃ¡lida; o dashboard/abas sÃ³ montam
+  // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
+  // mostrada enquanto não houver sessão válida; o dashboard/abas só montam
   // depois que C360.auth confirma o perfil (via restoreSession() ou o
-  // onSuccess do formulÃ¡rio de login). `bindEvents()` Ã© chamado sÃ³ uma vez,
-  // na primeira entrada â€” logout/login de novo nÃ£o rebinda os listeners
-  // globais (eles nÃ£o dependem de sessÃ£o para existir, sÃ³ a renderizaÃ§Ã£o
+  // onSuccess do formulário de login). `bindEvents()` é chamado só uma vez,
+  // na primeira entrada — logout/login de novo não rebinda os listeners
+  // globais (eles não dependem de sessão para existir, só a renderização
   // muda com applyRoleVisibility()).
   // ---------------------------------------------------------------------
   let eventsBound = false;
@@ -1630,7 +1660,7 @@
         authenticated = await window.C360.auth.restoreSession();
       }
     } catch (error) {
-      console.error('C360.app: erro ao restaurar sessÃ£o', error);
+      console.error('C360.app: erro ao restaurar sessão', error);
     }
     if (authenticated) {
       boot();

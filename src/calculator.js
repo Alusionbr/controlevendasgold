@@ -1,19 +1,19 @@
 (function () {
   'use strict';
 
-  // MÃ³dulo "Calculadora" (aba Calculadora).
-  // ExpÃµe window.C360.calculator = { render, mount }.
+  // Módulo "Calculadora" (aba Calculadora).
+  // Expõe window.C360.calculator = { render, mount }.
   //
-  // CSS novo necessÃ¡rio (ainda nÃ£o existe em styles/main.css â€” nÃ£o editado por
-  // este arquivo, apenas listado aqui e no relatÃ³rio para o agente MOBILE/SEC):
-  //   .calculator-card   â€” cartÃ£o que envolve a calculadora padrÃ£o (pode herdar de .panel-card)
-  //   .calc-display      â€” moldura do visor (nÃºmero grande, alinhado Ã  direita)
-  //   .calc-expression   â€” linha pequena acima do visor com a operaÃ§Ã£o pendente
-  //   .calc-value        â€” nÃºmero grande do visor
-  //   .calc-keypad       â€” grid 4 colunas para as teclas
-  //   .calc-key          â€” tamanho/toque das teclas (usadas junto com .secondary/.ghost/.danger jÃ¡ existentes)
-  //   .calc-key.span2    â€” tecla que ocupa 2 colunas (o "0")
-  //   .calc-field        â€” rÃ³tulo + input empilhados nos mini-formulÃ¡rios de negÃ³cio
+  // CSS novo necessário (ainda não existe em styles/main.css — não editado por
+  // este arquivo, apenas listado aqui e no relatório para o agente MOBILE/SEC):
+  //   .calculator-card   — cartão que envolve a calculadora padrão (pode herdar de .panel-card)
+  //   .calc-display      — moldura do visor (número grande, alinhado à direita)
+  //   .calc-expression   — linha pequena acima do visor com a operação pendente
+  //   .calc-value        — número grande do visor
+  //   .calc-keypad       — grid 4 colunas para as teclas
+  //   .calc-key          — tamanho/toque das teclas (usadas junto com .secondary/.ghost/.danger já existentes)
+  //   .calc-key.span2    — tecla que ocupa 2 colunas (o "0")
+  //   .calc-field        — rótulo + input empilhados nos mini-formulários de negócio
 
   window.C360 = window.C360 || {};
   const U = window.C360.utils;
@@ -21,14 +21,14 @@
   const S = window.C360.state;
   const Calc = window.C360.calc;
 
-  const OPERATORS = ['+', '-', 'Ã—', 'Ã·'];
+  const OPERATORS = ['+', '-', '×', '÷'];
 
   function formatPercent(value) {
     return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
   }
 
   function placeholderResult() {
-    return '<div class="cost-item"><span>Resultado</span><strong>â€”</strong></div>';
+    return '<div class="cost-item"><span>Resultado</span><strong>—</strong></div>';
   }
 
   // ---------- HTML ----------
@@ -88,7 +88,7 @@
 
   function renderStandardCalculator() {
     return `
-      <div class="panel-card calculator-card" id="calcStandard" tabindex="0" aria-label="Calculadora. Use o teclado numÃ©rico ou toque nos botÃµes.">
+      <div class="panel-card calculator-card" id="calcStandard" tabindex="0" aria-label="Calculadora. Use o teclado numérico ou toque nos botões.">
         <h3>Calculadora</h3>
         <div class="calc-display" id="calcDisplay" aria-live="polite">
           <div class="calc-expression" id="calcExpression">&nbsp;</div>
@@ -96,14 +96,14 @@
         </div>
         <div class="calc-keypad" id="calcKeypad" role="group" aria-label="Teclado da calculadora">
           <button type="button" class="calc-key ghost danger" data-calc="clear" aria-label="Limpar tudo">C</button>
-          <button type="button" class="calc-key ghost" data-calc="backspace" aria-label="Apagar Ãºltimo dÃ­gito">âŒ«</button>
+          <button type="button" class="calc-key ghost" data-calc="backspace" aria-label="Apagar último dígito">⌫</button>
           <button type="button" class="calc-key ghost" data-calc="percent" aria-label="Porcentagem">%</button>
-          <button type="button" class="calc-key secondary" data-calc="op" data-op="Ã·" aria-label="Dividir">Ã·</button>
+          <button type="button" class="calc-key secondary" data-calc="op" data-op="÷" aria-label="Dividir">÷</button>
 
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="7">7</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="8">8</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="9">9</button>
-          <button type="button" class="calc-key secondary" data-calc="op" data-op="Ã—" aria-label="Multiplicar">Ã—</button>
+          <button type="button" class="calc-key secondary" data-calc="op" data-op="×" aria-label="Multiplicar">×</button>
 
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="4">4</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="5">5</button>
@@ -116,7 +116,7 @@
           <button type="button" class="calc-key secondary" data-calc="op" data-op="+" aria-label="Somar">+</button>
 
           <button type="button" class="calc-key ghost span2" data-calc="digit" data-digit="0">0</button>
-          <button type="button" class="calc-key ghost" data-calc="decimal" aria-label="VÃ­rgula decimal">,</button>
+          <button type="button" class="calc-key ghost" data-calc="decimal" aria-label="Vírgula decimal">,</button>
           <button type="button" class="calc-key" data-calc="equals" aria-label="Igual">=</button>
         </div>
       </div>
@@ -125,8 +125,8 @@
 
   function renderBusinessTools() {
     return UI.section(
-      'CÃ¡lculos do negÃ³cio',
-      'Ferramentas rÃ¡pidas de precificaÃ§Ã£o para cosmÃ©ticos e perfumaria: margem, markup, desconto e preÃ§o com margem alvo.',
+      'Cálculos do negócio',
+      'Ferramentas rápidas de precificação para cosméticos e perfumaria: margem, markup, desconto e preço com margem alvo.',
       `
         <div class="three-columns">
           ${renderMargemTool()}
@@ -141,13 +141,13 @@
   function renderMargemTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="margem">
-        <h3>Margem ${UI.help('Informe o custo e o preÃ§o de venda para ver a margem % e o lucro em R$.')}</h3>
+        <h3>Margem ${UI.help('Informe o custo e o preço de venda para ver a margem % e o lucro em R$.')}</h3>
         <div class="calc-field">
           <label for="calcMargemCusto">Custo (R$)</label>
           <input id="calcMargemCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="calc-field">
-          <label for="calcMargemPreco">PreÃ§o de venda (R$)</label>
+          <label for="calcMargemPreco">Preço de venda (R$)</label>
           <input id="calcMargemPreco" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="cost-box" id="calcMargemResultado">${placeholderResult()}</div>
@@ -158,7 +158,7 @@
   function renderMarkupTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="markup">
-        <h3>Markup ${UI.help('Informe o custo e o percentual de markup para ver o preÃ§o de venda sugerido.')}</h3>
+        <h3>Markup ${UI.help('Informe o custo e o percentual de markup para ver o preço de venda sugerido.')}</h3>
         <div class="calc-field">
           <label for="calcMarkupCusto">Custo (R$)</label>
           <input id="calcMarkupCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
@@ -175,9 +175,9 @@
   function renderDescontoTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="desconto">
-        <h3>Desconto ${UI.help('Informe o preÃ§o e o percentual de desconto para ver o preÃ§o final e o valor descontado.')}</h3>
+        <h3>Desconto ${UI.help('Informe o preço e o percentual de desconto para ver o preço final e o valor descontado.')}</h3>
         <div class="calc-field">
-          <label for="calcDescontoPreco">PreÃ§o (R$)</label>
+          <label for="calcDescontoPreco">Preço (R$)</label>
           <input id="calcDescontoPreco" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="calc-field">
@@ -192,7 +192,7 @@
   function renderMargemAlvoTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="margem-alvo">
-        <h3>PreÃ§o com margem alvo ${UI.help('Informe o custo e a margem que vocÃª quer ganhar para ver o preÃ§o sugerido.')}</h3>
+        <h3>Preço com margem alvo ${UI.help('Informe o custo e a margem que você quer ganhar para ver o preço sugerido.')}</h3>
         <div class="calc-field">
           <label for="calcAlvoCusto">Custo (R$)</label>
           <input id="calcAlvoCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
@@ -431,10 +431,10 @@
     const exprEl = container.querySelector('#calcExpression');
     if (!card || !keypad || !valueEl || !exprEl) return;
 
-    let current = '0'; // string bruta digitada: dÃ­gitos + no mÃ¡ximo uma vÃ­rgula
-    let previous = null; // nÃºmero (operando anterior)
-    let operator = null; // '+' | '-' | 'Ã—' | 'Ã·'
-    let overwrite = false; // true logo apÃ³s operador/igual/porcentagem: prÃ³ximo dÃ­gito comeÃ§a nÃºmero novo
+    let current = '0'; // string bruta digitada: dígitos + no máximo uma vírgula
+    let previous = null; // número (operando anterior)
+    let operator = null; // '+' | '-' | '×' | '÷'
+    let overwrite = false; // true logo após operador/igual/porcentagem: próximo dígito começa número novo
     let errorState = false;
 
     function parseCurrent() {
@@ -469,15 +469,15 @@
       switch (op) {
         case '+': return round(a + b);
         case '-': return round(a - b);
-        case 'Ã—': return round(a * b);
-        case 'Ã·': return b === 0 ? null : round(a / b);
+        case '×': return round(a * b);
+        case '÷': return b === 0 ? null : round(a / b);
         default: return b;
       }
     }
 
     function updateDisplay() {
       valueEl.textContent = errorState ? 'Erro' : formatRawForDisplay(current);
-      exprEl.textContent = operator && previous !== null ? `${formatNumber(previous)} ${operator}` : 'Â ';
+      exprEl.textContent = operator && previous !== null ? `${formatNumber(previous)} ${operator}` : ' ';
     }
 
     function showError() {
@@ -586,8 +586,8 @@
       else if (key === ',' || key === '.') { pressDecimal(); event.preventDefault(); }
       else if (key === '+') { pressOperator('+'); event.preventDefault(); }
       else if (key === '-') { pressOperator('-'); event.preventDefault(); }
-      else if (key === '*' || key.toLowerCase() === 'x') { pressOperator('Ã—'); event.preventDefault(); }
-      else if (key === '/') { pressOperator('Ã·'); event.preventDefault(); }
+      else if (key === '*' || key.toLowerCase() === 'x') { pressOperator('×'); event.preventDefault(); }
+      else if (key === '/') { pressOperator('÷'); event.preventDefault(); }
       else if (key === '%') { pressPercent(); event.preventDefault(); }
       else if (key === 'Enter' || key === '=') { pressEquals(); event.preventDefault(); }
       else if (key === 'Backspace') { pressBackspace(); event.preventDefault(); }
@@ -612,11 +612,11 @@
       const custo = U.number(custoEl.value);
       const preco = U.number(precoEl.value);
       if (preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Informe um preÃ§o de venda maior que zero.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Informe um preço de venda maior que zero.', 'warning');
         return;
       }
       if (custo < 0) {
-        resultEl.innerHTML = UI.formNotice('O custo nÃ£o pode ser negativo.', 'warning');
+        resultEl.innerHTML = UI.formNotice('O custo não pode ser negativo.', 'warning');
         return;
       }
       const lucro = preco - custo;
@@ -650,12 +650,12 @@
       }
       const preco = custo * (1 + markup / 100);
       if (!Number.isFinite(preco) || preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Esse markup resulta em preÃ§o invÃ¡lido. Use um percentual maior.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Esse markup resulta em preço inválido. Use um percentual maior.', 'warning');
         return;
       }
       const lucro = preco - custo;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o de venda</span><strong>${U.money(preco)}</strong></div>
+        <div class="cost-item"><span>Preço de venda</span><strong>${U.money(preco)}</strong></div>
         <div class="cost-item"><span>Lucro</span><strong>${U.money(lucro)}</strong></div>
       `;
     }
@@ -678,7 +678,7 @@
       const preco = U.number(precoEl.value);
       const desconto = U.number(descontoEl.value);
       if (preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Informe um preÃ§o maior que zero.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Informe um preço maior que zero.', 'warning');
         return;
       }
       if (desconto < 0 || desconto > 100) {
@@ -688,7 +688,7 @@
       const valorDesconto = preco * (desconto / 100);
       const precoFinal = preco - valorDesconto;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o final</span><strong>${U.money(precoFinal)}</strong></div>
+        <div class="cost-item"><span>Preço final</span><strong>${U.money(precoFinal)}</strong></div>
         <div class="cost-item"><span>Desconto</span><strong>${U.money(valorDesconto)}</strong></div>
       `;
     }
@@ -720,12 +720,12 @@
       }
       const preco = custo / (1 - margemAlvo / 100);
       if (!Number.isFinite(preco) || preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('NÃ£o foi possÃ­vel calcular um preÃ§o vÃ¡lido com esses valores.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Não foi possível calcular um preço válido com esses valores.', 'warning');
         return;
       }
       const lucro = preco - custo;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o sugerido</span><strong>${U.money(preco)}</strong></div>
+        <div class="cost-item"><span>Preço sugerido</span><strong>${U.money(preco)}</strong></div>
         <div class="cost-item"><span>Lucro</span><strong>${U.money(lucro)}</strong></div>
       `;
     }

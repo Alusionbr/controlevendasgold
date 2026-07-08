@@ -17,6 +17,25 @@
     expired: 'Expirado',
   };
 
+  // Rascunho do carrinho vive fora de mount(): app.js recria o container do
+  // Vendas/Pedidos a cada renderAll() (qualquer acao na tela dispara isso),
+  // e mount() e chamado de novo - se o draft fosse uma variavel local do
+  // fecho de mount(), cada remount zeraria os itens ja adicionados ao
+  // carrinho. Mantendo o objeto no escopo do modulo, ele sobrevive a
+  // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
+  // mesmo carrinho).
+  const persistentDraft = {
+    source: 'seller_stock',
+    paymentMode: 'avista',
+    expiresHours: '48',
+    targetSellerId: '',
+    customerName: '',
+    channel: 'WhatsApp',
+    notes: '',
+    items: [],
+    lastLink: '',
+  };
+
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -81,8 +100,10 @@
     ].join('');
     const paymentOptions = [
       '<option value="avista">A vista</option>',
+      '<option value="parcial">Parcial</option>',
       allowConsignment ? '<option value="consignado">Consignado</option>' : '',
     ].join('');
+    const channelOptions = UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '');
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
       ? `<label>Vendedor consignado
@@ -115,6 +136,12 @@
             </label>
             <label>Pagamento
               <select name="paymentMode">${paymentOptions}</select>
+            </label>
+            <label>Canal
+              <select name="channel">${channelOptions}</select>
+            </label>
+            <label>Nome do cliente
+              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Opcional">
             </label>
             ${sellerTargetField}
             <label>Validade do link
@@ -187,6 +214,7 @@
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const cards = sellers.map((seller) => {
       const settings = settingForSeller(seller.id);
+      const credits = U.number(settings.stockAdjustmentCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
           <div>
@@ -200,13 +228,17 @@
             <input name="maxDiscountPercent" type="number" min="0" max="100" step="0.01" value="${U.escapeHtml(settings.maxDiscountPercent || 0)}">
           </label>
           <button type="submit" class="small">Salvar permissao</button>
+          <div class="seller-permission-stock-adjust">
+            ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
+            <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
+          </div>
         </form>
       `;
     }).join('');
     return UI.section(
       'Permissoes dos vendedores',
       'Controle quem pode usar consignado, estoque do admin e links publicos.',
-      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div>`
+      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div><p class="hint-inline">"Liberar 1 acerto de estoque" da ao vendedor uma unica correcao do proprio estoque (util para quem ja tinha mercadoria mas nunca fez o acerto certo). Depois de usado, o credito zera e precisa ser liberado de novo.</p>`
     );
   }
   function renderAdminApprovals(feedback) {
@@ -250,15 +282,7 @@
   }
 
   function mount(container, options = {}) {
-    const draft = {
-      source: 'seller_stock',
-      paymentMode: 'avista',
-      expiresHours: '48',
-      targetSellerId: '',
-      notes: '',
-      items: [],
-      lastLink: '',
-    };
+    const draft = persistentDraft;
     let feedback = null;
     let approvalFeedback = null;
     let settingsFeedback = null;
@@ -274,6 +298,8 @@
       if (config) {
         config.source.value = draft.source;
         config.paymentMode.value = draft.paymentMode;
+        if (config.channel) config.channel.value = draft.channel || 'WhatsApp';
+        if (config.customerName) config.customerName.value = draft.customerName || '';
         if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
         config.expiresHours.value = draft.expiresHours;
       }
@@ -285,6 +311,8 @@
       const data = U.formData(config);
       draft.source = data.source || 'seller_stock';
       draft.paymentMode = data.paymentMode || 'avista';
+      draft.channel = data.channel || 'WhatsApp';
+      draft.customerName = data.customerName || '';
       draft.expiresHours = data.expiresHours || '48';
       draft.targetSellerId = data.targetSellerId || draft.targetSellerId || '';
       draft.notes = data.notes || '';
@@ -301,7 +329,8 @@
         source: draft.source,
         paymentMode: draft.paymentMode,
         status,
-        channel: 'WhatsApp',
+        channel: draft.channel || 'WhatsApp',
+        customerName: draft.customerName || null,
         publicExpiresAt: status === 'shared' ? expiresAt : null,
         notes: draft.notes || '',
       });
@@ -546,23 +575,27 @@
         } else if (action === 'clear-draft') {
           draft.items = [];
           draft.lastLink = '';
+          draft.customerName = '';
         } else if (action === 'save-cart') {
           if (isAdmin() && draft.paymentMode === 'consignado') {
             await createAdminSellerConsignment();
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
           } else {
             const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
             await createCart(status);
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
           }
         } else if (action === 'share-cart') {
           const cart = await createCart('shared');
           draft.items = [];
           draft.lastLink = publicUrl(cart);
+          draft.customerName = '';
           feedback = { message: 'Link publico criado. Ele expira no prazo escolhido.', type: 'success' };
         } else if (action === 'copy-link') {
           const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
@@ -579,6 +612,21 @@
           if (!confirm('Rejeitar este carrinho?')) return;
           await approveCart(button.dataset.cartId, false);
           approvalFeedback = { message: 'Carrinho rejeitado.', type: 'warning' };
+        } else if (action === 'grant-stock-adjustment') {
+          const sellerId = button.dataset.sellerId;
+          const current = settingForSeller(sellerId);
+          const payload = {
+            sellerId,
+            allowAdminStockSales: current.allowAdminStockSales !== false,
+            allowConsignment: !!current.allowConsignment,
+            allowPublicCartLinks: current.allowPublicCartLinks !== false,
+            maxDiscountPercent: U.number(current.maxDiscountPercent),
+            stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          await S().refresh();
+          settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };

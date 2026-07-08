@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-osimSIEqdB8FU27Yx4mc3VUDkrtoyUJYAScgOBf/J3w=' 'sha256-UkFvbzKhBWnZ0sxGXcyPwlGTNo8tGYJdQMIC5lO8iQc=' 'sha256-dBY/xRYRZScglr0JQITYLtnSBr/CX2iO5DKMkXIo6XM=' 'sha256-nR7adyP14C/XkrYn5ZAiNWwTLUk/eFE99taMg5307qE=' 'sha256-a6NncMHDXLrIeAgQtHlt+rFZIcrt3/pidUpADFb2bg4=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-HEykH+AR2OYe4Oa642Z3V2g2RmxBlM+dV1k4ZUIoiaA=' 'sha256-172AqV7viq/JO+naK5GCXXmBXWpStTmHoq9oW+OB6dk=' 'sha256-e/wHUNpc5sLiENGiD+OTysC7f+2Ce+LziNcgP6j+R8Q=' 'sha256-dSmZRJLC1kUhx3u4JicuRSyhHBI4D0WzKBUTTaUo7a0=' 'sha256-ZFnHcNYcDF5P/HTfURIZcS7LzkJV32Og9+07bh/MDQA=' 'sha256-fJaW/03kEh23oAyBBc+1buW5/q7ciiv7PpZN+Y86oKc=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-RSUjz9Kg5Hd2jfArQC5NHm235LkICqb4vzkdugc34Ww=' 'sha256-k9M2Q1zwbUK58igYZ/Y8Uzaklv7euLKpnmw8iHyymCg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-5kCzBGfEPX71CBR+EGmO+U/6c5/xwhh6knuVon9FWVE=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-WwHMwSkuHpGK7YNvxo1q02cHi6eN9ozugAHUh0sBXjQ=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-nQM2xgD+Z7UplGkgVh70GsdXIPkt4DKwxRIJ6If3+/0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -238,6 +238,7 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow-sm);
 }
+.business-bar[hidden] { display: none; }
 .business-bar > div { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 240px; min-width: 0; }
 .business-bar label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
 .business-bar select { min-width: 200px; }
@@ -1131,6 +1132,14 @@ pre {
   height: 18px;
   flex: 0 0 auto;
 }
+.seller-permission-stock-adjust {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+}
 .dashboard-period-card { gap: 0.5rem; }
 .dashboard-period-fields {
   display: grid;
@@ -1322,9 +1331,9 @@ pre {
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api � camada fina de acesso � Supabase (Auth + PostgREST + Edge
+  // C360.api - camada fina de acesso a Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de pre�o, trigger de aprova��o, edge
+  // (tabelas, RLS, trigger de piso de preco, trigger de aprovacao, edge
   // function create-seller).
   // ==========================================================================
 
@@ -1449,7 +1458,7 @@ pre {
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permiss�o ou registro n�o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permissao ou registro nao encontrado).', 403);
     return Array.isArray(result) ? result[0] : result;
   }
 
@@ -1458,7 +1467,7 @@ pre {
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro exclu�do (sem permiss�o ou registro n�o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluido (sem permissao ou registro nao encontrado).', 403);
   }
 
   async function upsert(table, payload, conflictColumns) {
@@ -1641,6 +1650,18 @@ pre {
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  // Acerto de estoque próprio do vendedor: só funciona se o admin liberou 1
+  // crédito em seller_settings.stock_adjustment_credits (RPC consome esse
+  // crédito e grava trilha de auditoria em seller_stock_adjustments).
+  async function adjustOwnStock({ productId, newQuantity, reason }) {
+    const row = await restRequest('/rest/v1/rpc/seller_adjust_own_stock', {
+      method: 'POST',
+      body: { p_product_id: productId, p_new_quantity: newQuantity, p_reason: reason },
+    });
+    if (!row) return null;
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -1657,6 +1678,7 @@ pre {
       allowConsignment: row.allow_consignment,
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
+      stockAdjustmentCredits: row.stock_adjustment_credits,
       notes: row.notes,
     }));
   }
@@ -1792,6 +1814,7 @@ pre {
     listSellerStock,
     setSellerStock,
     consumeSellerStock,
+    adjustOwnStock,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
@@ -1810,54 +1833,54 @@ pre {
 })();
 </script>
   <script>
-﻿(function () {
+(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
   const { uid, nowIso } = window.C360.utils;
 
   // ==========================================================================
-  // C360.state â€” cache em memÃ³ria alimentado por C360.api (Supabase), com
-  // espelho em localStorage sÃ³ para pintura instantÃ¢nea no reload (a rede Ã©
+  // C360.state — cache em memória alimentado por C360.api (Supabase), com
+  // espelho em localStorage só para pintura instantânea no reload (a rede é
   // sempre a fonte de verdade assim que `refresh()` resolve).
   //
-  // MIGRAÃ‡ÃƒO IMPORTANTE para quem integra com src/app.js: `add`, `addGlobal`,
-  // `update` e `remove` agora sÃ£o ASSÃNCRONOS (retornam Promise). Todo
+  // MIGRAÇÃO IMPORTANTE para quem integra com src/app.js: `add`, `addGlobal`,
+  // `update` e `remove` agora são ASSÍNCRONOS (retornam Promise). Todo
   // call-site em app.js que hoje faz `const rec = C360.state.add(...)` de
-  // forma sÃ­ncrona precisa virar `async function renderX/addX() { ... const
-  // rec = await C360.state.add(...); ... }`, e todo handler de formulÃ¡rio
+  // forma síncrona precisa virar `async function renderX/addX() { ... const
+  // rec = await C360.state.add(...); ... }`, e todo handler de formulário
   // (`form.addEventListener('submit', ...)`) precisa ser `async`. Ver
-  // relatÃ³rio do agente para a lista completa de pontos identificados em
+  // relatório do agente para a lista completa de pontos identificados em
   // src/app.js.
   //
   // Chaves do cache (getState()): igual ao shape antigo (schemaVersion 2)
   // MAIS: sellerPrices, sellerStock, salesGoals, goalsProgress, profile
-  // (perfil do usuÃ¡rio logado, singular), profiles (array â€” todos os perfis
-  // visÃ­veis ao usuÃ¡rio atual: para admin, todo mundo do negÃ³cio; para
-  // vendedor, sÃ³ a prÃ³pria linha) e sellers (alias de profiles filtrado por
-  // role === 'vendedor' â€” src/sellerStock.js lÃª `getState().profiles`
-  // diretamente, entÃ£o os dois nomes precisam existir).
+  // (perfil do usuário logado, singular), profiles (array — todos os perfis
+  // visíveis ao usuário atual: para admin, todo mundo do negócio; para
+  // vendedor, só a própria linha) e sellers (alias de profiles filtrado por
+  // role === 'vendedor' — src/sellerStock.js lê `getState().profiles`
+  // diretamente, então os dois nomes precisam existir).
   // ==========================================================================
 
-  const CACHE_KEY = 'controle360_cache_v1'; // novo espelho pÃ³s-refresh (fonte: rede)
-  const LEGACY_STORAGE_KEY = 'controle360_multi_v2'; // formato antigo (100% localStorage, prÃ© multi-usuÃ¡rio)
+  const CACHE_KEY = 'controle360_cache_v1'; // novo espelho pós-refresh (fonte: rede)
+  const LEGACY_STORAGE_KEY = 'controle360_multi_v2'; // formato antigo (100% localStorage, pré multi-usuário)
 
   const DEFAULT_SETTINGS = {
     productTypes: [
-      { value: 'materia_prima', label: 'MatÃ©ria-prima' },
-      { value: 'embalagem', label: 'Embalagem / vidro / rÃ³tulo / caixa' },
+      { value: 'materia_prima', label: 'Matéria-prima' },
+      { value: 'embalagem', label: 'Embalagem / vidro / rótulo / caixa' },
       { value: 'produto_final', label: 'Produto final produzido' },
       { value: 'mercadoria', label: 'Mercadoria comprada pronta' },
-      { value: 'kit', label: 'Kit / composiÃ§Ã£o' },
-      { value: 'servico', label: 'ServiÃ§o sem estoque fÃ­sico' },
+      { value: 'kit', label: 'Kit / composição' },
+      { value: 'servico', label: 'Serviço sem estoque físico' },
     ],
     units: ['un', 'kg', 'g', 'l', 'ml', 'pct', 'cx', 'm', 'cm'],
     businessSegments: [
-      'EssÃªncias aromÃ¡ticas',
+      'Essências aromáticas',
       'Alimentos / marmitas',
       'Revenda de mercadorias',
       'Consignado',
-      'ServiÃ§os com materiais',
+      'Serviços com materiais',
       'Outro',
     ],
     channels: ['Direto', 'WhatsApp', 'Instagram', 'Site', 'Marketplace', 'Consignado', 'Outro'],
@@ -1866,7 +1889,7 @@ pre {
       { value: 'em_preparo', label: 'Em preparo' },
       { value: 'pronto', label: 'Pronto' },
       { value: 'despachado', label: 'Despachado' },
-      { value: 'concluido', label: 'ConcluÃ­do' },
+      { value: 'concluido', label: 'Concluído' },
     ],
     taskStatuses: [
       { value: 'a_fazer', label: 'A fazer' },
@@ -1898,7 +1921,7 @@ pre {
       consignments: [],
       consignmentEvents: [],
       tasks: [],
-      // Novo (multi-usuÃ¡rio):
+      // Novo (multi-usuário):
       sellerPrices: [],
       sellerStock: [],
       salesGoals: [],
@@ -1949,8 +1972,8 @@ pre {
     }
   }
 
-  // Mantido por compatibilidade de nome (ver instruÃ§Ã£o de manter toda a API
-  // antiga funcionando); agora sÃ³ persiste o espelho de cache, nÃ£o Ã© mais a
+  // Mantido por compatibilidade de nome (ver instrução de manter toda a API
+  // antiga funcionando); agora só persiste o espelho de cache, não é mais a
   // fonte de verdade.
   function save() {
     persistCacheMirror();
@@ -1977,7 +2000,7 @@ pre {
 
   function ensureBusiness() {
     if (!state.activeBusinessId) {
-      throw new Error('Cadastre ou selecione um negÃ³cio antes de lanÃ§ar dados.');
+      throw new Error('Cadastre ou selecione um negócio antes de lançar dados.');
     }
   }
 
@@ -1988,10 +2011,10 @@ pre {
   }
 
   function setActiveBusiness(id) {
-    // Nota: no modelo multi-usuÃ¡rio cada perfil pertence a UM negÃ³cio sÃ³
-    // (profiles.business_id), entÃ£o isto deixa de escolher entre vÃ¡rios
-    // negÃ³cios do mesmo usuÃ¡rio â€” vira essencialmente um no-op fora do valor
-    // jÃ¡ vindo de profile.businessId. Mantido pela compatibilidade de API.
+    // Nota: no modelo multi-usuário cada perfil pertence a UM negócio só
+    // (profiles.business_id), então isto deixa de escolher entre vários
+    // negócios do mesmo usuário — vira essencialmente um no-op fora do valor
+    // já vindo de profile.businessId. Mantido pela compatibilidade de API.
     state.activeBusinessId = id || null;
     persistCacheMirror();
   }
@@ -2005,8 +2028,8 @@ pre {
   }
 
   // ---------------------------------------------------------------------
-  // camelCase <-> snake_case (independente do conversor de src/api.js â€” cada
-  // arquivo sÃ³ pode depender do que expÃµe publicamente, nÃ£o de internals).
+  // camelCase <-> snake_case (independente do conversor de src/api.js — cada
+  // arquivo só pode depender do que expõe publicamente, não de internals).
   // ---------------------------------------------------------------------
   function camelToSnakeKey(key) {
     return String(key).replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -2035,12 +2058,12 @@ pre {
   }
 
   // ---------------------------------------------------------------------
-  // Nome de coleÃ§Ã£o local (camelCase, shape antigo do app) <-> nome de
-  // tabela real no Postgres (snake_case). Chamadores que jÃ¡ passam o nome de
+  // Nome de coleção local (camelCase, shape antigo do app) <-> nome de
+  // tabela real no Postgres (snake_case). Chamadores que já passam o nome de
   // tabela snake_case diretamente (ex.: src/sellerStock.js chamando
   // `state.add('consignment_events', ...)`) continuam funcionando porque
-  // tableFor() devolve a prÃ³pria string quando ela nÃ£o Ã© uma chave conhecida
-  // do mapa (ou seja, jÃ¡ assume que Ã© o nome real da tabela).
+  // tableFor() devolve a própria string quando ela não é uma chave conhecida
+  // do mapa (ou seja, já assume que é o nome real da tabela).
   // ---------------------------------------------------------------------
   const TABLE_BY_COLLECTION = {
     businesses: 'businesses',
@@ -2069,7 +2092,7 @@ pre {
     return TABLE_BY_COLLECTION[collectionName] || collectionName;
   }
 
-  // Acha a chave do cache (array) correspondente ao nome de coleÃ§Ã£o recebido,
+  // Acha a chave do cache (array) correspondente ao nome de coleção recebido,
   // aceitando tanto o nome "local" camelCase (ex.: 'stockMovements') quanto o
   // nome de tabela snake_case (ex.: 'stock_movements' / 'consignment_events').
   function cacheKeyFor(collectionName) {
@@ -2079,9 +2102,9 @@ pre {
     return null;
   }
 
-  // ColeÃ§Ãµes cujas linhas pertencem a um vendedor (seller_id NOT NULL/():
-  // usado para auto-carimbar sellerId em add() quando quem estÃ¡ logado Ã©
-  // vendedor, do mesmo jeito que o add() sÃ­ncrono antigo carimbava
+  // Coleções cujas linhas pertencem a um vendedor (seller_id NOT NULL/():
+  // usado para auto-carimbar sellerId em add() quando quem está logado é
+  // vendedor, do mesmo jeito que o add() síncrono antigo carimbava
   // businessId automaticamente.
   const SELLER_OWNED_COLLECTIONS = new Set(['clients', 'sales', 'orders', 'consignments', 'saleCarts']);
 
@@ -2143,13 +2166,13 @@ pre {
     persistCacheMirror();
   }
 
-  // NOTA/gap de backend (ver relatÃ³rio do agente): `stock_movements` estÃ¡
-  // descrito em docs/backend.md Â§6 como admin-only (Ãºnica policy de RLS Ã©
-  // `stock_movements_all_admin`; nÃ£o existe policy de INSERT para
+  // NOTA/gap de backend (ver relatório do agente): `stock_movements` está
+  // descrito em docs/backend.md §6 como admin-only (única policy de RLS é
+  // `stock_movements_all_admin`; não existe policy de INSERT para
   // vendedor). Se um vendedor chamar recordMovement() hoje, o PostgREST
-  // devolve 401/permission denied â€” src/returns.js (recordDevolucao/
-  // recordDesperdicio) depende deste mÃ©todo tambÃ©m para o fluxo do
-  // vendedor, entÃ£o esta Ã© uma lacuna real a resolver no schema/RLS, nÃ£o
+  // devolve 401/permission denied — src/returns.js (recordDevolucao/
+  // recordDesperdicio) depende deste método também para o fluxo do
+  // vendedor, então esta é uma lacuna real a resolver no schema/RLS, não
   // algo que este arquivo possa contornar sozinho.
   async function recordMovement(payload) {
     ensureBusiness();
@@ -2163,8 +2186,8 @@ pre {
   }
 
   // ---------------------------------------------------------------------
-  // refresh() â€” repovoa o cache a partir de C360.api, de acordo com o papel
-  // do usuÃ¡rio logado.
+  // refresh() — repovoa o cache a partir de C360.api, de acordo com o papel
+  // do usuário logado.
   // ---------------------------------------------------------------------
   async function refreshAsAdmin(businessId) {
     const api = window.C360.api;
@@ -2244,7 +2267,7 @@ pre {
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
-    state.products = sellerProducts; // jÃ¡ camelCase (seller_products, sem custo)
+    state.products = sellerProducts; // já camelCase (seller_products, sem custo)
     state.clients = clients.map(toCamelCaseRow);
     state.sales = sales.map(toCamelCaseRow);
     state.orders = orders.map(toCamelCaseRow);
@@ -2256,8 +2279,8 @@ pre {
     state.saleCarts = saleCarts;
     state.saleCartItems = saleCartItems;
 
-    // Tabelas admin-only (RLS devolveria [] mesmo se chamÃ¡ssemos): evitamos
-    // o round-trip de rede e jÃ¡ deixamos vazio.
+    // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
+    // o round-trip de rede e já deixamos vazio.
     state.suppliers = [];
     state.purchases = [];
     state.stockMovements = [];
@@ -2280,7 +2303,7 @@ pre {
     if (!api || typeof api.getCurrentAuthUserId !== 'function') return;
 
     const userId = api.getCurrentAuthUserId();
-    if (!userId) return; // nÃ£o autenticado; getState() segue servindo o cache atual
+    if (!userId) return; // não autenticado; getState() segue servindo o cache atual
 
     const profile = await api.getProfile(userId);
     if (!profile) return;
@@ -2289,8 +2312,8 @@ pre {
     state.activeBusinessId = profile.businessId || null;
 
     if (!profile.businessId) {
-      // Perfil provisionado sem negÃ³cio ainda (bootstrap pendente) â€” nada
-      // mais para buscar alÃ©m do prÃ³prio perfil.
+      // Perfil provisionado sem negócio ainda (bootstrap pendente) — nada
+      // mais para buscar além do próprio perfil.
       persistCacheMirror();
       return;
     }
@@ -2536,7 +2559,6 @@ pre {
     cmv: 'CMV = Custo da Mercadoria Vendida. Quanto te custou o que você vendeu: quantidade × custo médio no momento da venda.',
     // Pedidos
     precoCombinado: 'Preço por unidade combinado com o cliente neste pedido.',
-    statusInicial: 'Em que etapa o pedido começa. Depois você arrasta o cartão entre as colunas.',
     // Consignado
     consignado: 'Você entrega produtos ao cliente sem vender ainda: o estoque sai do seu controle e fica "com o cliente". A venda só conta quando ele avisa que vendeu.',
     qtdEnviada: 'Quantas unidades você está entregando ao cliente para ele tentar vender.',
@@ -2649,7 +2671,10 @@ pre {
     `;
   }
 
-  function kanban({ statuses, cards, type }) {
+  // readOnly: usado pelo Kanban de Pedidos quando quem está olhando é
+  // vendedor — só admin pode mudar o status de um pedido, então nem o
+  // arrastar-e-soltar nem o select "mover para" aparecem para vendedor.
+  function kanban({ statuses, cards, type, readOnly = false }) {
     return `<div class="kanban" data-kanban-type="${escapeHtml(type)}">
       ${statuses.map((status) => {
         const filtered = cards.filter((card) => card.status === status.value);
@@ -2658,11 +2683,11 @@ pre {
             <h3>${escapeHtml(status.label)} ${badge(String(filtered.length))}</h3>
             <div class="kanban-dropzone">
               ${filtered.map((card) => `
-                <article class="kanban-card" draggable="true" data-card-id="${escapeHtml(card.id)}">
+                <article class="kanban-card" draggable="${readOnly ? 'false' : 'true'}" data-card-id="${escapeHtml(card.id)}">
                   <strong>${escapeHtml(card.title)}</strong>
                   ${card.subtitle ? `<p>${escapeHtml(card.subtitle)}</p>` : ''}
                   ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
-                  ${kanbanMoveSelect(card, statuses)}
+                  ${readOnly ? '' : kanbanMoveSelect(card, statuses)}
                   <div class="actions">${card.actions || ''}</div>
                 </article>
               `).join('')}
@@ -4073,6 +4098,7 @@ pre {
         .ss-badge-urgent { animation: none; }
       }
       .ss-approval-card .actions button { flex: 1 1 auto; min-width: 130px; }
+      .ss-stock-adjust-notice { margin-bottom: 0.6rem; }
     `;
     document.head.appendChild(style);
   }
@@ -4123,6 +4149,34 @@ pre {
     `;
   }
 
+  // ---------------------------------------------------------------------
+  // Acerto de estoque próprio — só aparece quando o admin liberou 1 crédito
+  // (seller_settings.stock_adjustment_credits > 0). Consome o RPC
+  // seller_adjust_own_stock via C360.api.adjustOwnStock, que já zera o
+  // crédito no servidor depois de usado.
+  // ---------------------------------------------------------------------
+  function adjustFormHtml(adjustFeedback) {
+    const products = productsList();
+    return `
+      <div class="ss-stock-adjust-notice">${UI.badge('Acerto de estoque liberado pelo administrador', 'ok')}</div>
+      <form class="ss-inline-form" data-ss-adjust-form>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', 'Selecione o produto')}</select>
+        </label>
+        <label>Novo estoque (quantidade correta)
+          <input name="newQuantity" type="number" step="0.001" min="0" required>
+        </label>
+        <label>Motivo do acerto (obrigatório)
+          <input name="reason" required placeholder="Ex.: contagem antiga nunca foi lançada certo">
+        </label>
+        <div class="actions">
+          <button type="submit">Registrar acerto (usa o crédito)</button>
+        </div>
+        ${adjustFeedback ? UI.formNotice(adjustFeedback.message, adjustFeedback.type) : ''}
+      </form>
+    `;
+  }
+
   function renderMyStock(data = {}) {
     ensureStyles();
     const apiAvailable = data.apiAvailable !== undefined ? data.apiAvailable : hasApi('listSellerStock');
@@ -4143,11 +4197,23 @@ pre {
       ? `<div class="ss-stock-grid">${rows.map((row) => stockCardHtml(row, data.openProductId)).join('')}</div>`
       : '<div class="empty-state"><strong>Nenhum estoque próprio no momento.</strong><span>Peça ao administrador para lhe repassar produtos.</span></div>';
 
-    return UI.section(
-      'Meu estoque',
-      'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
-      `${notice}${body}`
-    );
+    const credits = U.number(data.sellerSettings && data.sellerSettings.stockAdjustmentCredits);
+    const adjustSection = credits > 0
+      ? UI.section(
+          'Acerto de estoque',
+          'Corrige a quantidade que você realmente tem, com motivo obrigatório. Depois de usar, o administrador precisa liberar de novo.',
+          adjustFormHtml(data.adjustFeedback)
+        )
+      : '';
+
+    return `
+      ${UI.section(
+        'Meu estoque',
+        'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
+        `${notice}${body}`
+      )}
+      ${adjustSection}
+    `;
   }
 
   function mountMyStock(container) {
@@ -4162,20 +4228,27 @@ pre {
     let rows = [];
     let loading = true;
     let openProductId = null;
+    let sellerSettings = null;
+    let adjustFeedback = null;
 
     function paint() {
-      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true });
+      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true, sellerSettings, adjustFeedback });
     }
 
     async function load() {
       loading = true;
       paint();
       try {
-        const res = await safeCall('listSellerStock', user.id);
-        rows = Array.isArray(res) ? res : [];
+        const [stockRes, settingsRes] = await Promise.all([
+          safeCall('listSellerStock', user.id),
+          hasApi('listSellerSettings') ? safeCall('listSellerSettings', { sellerId: user.id }) : Promise.resolve(null),
+        ]);
+        rows = Array.isArray(stockRes) ? stockRes : [];
+        sellerSettings = Array.isArray(settingsRes) ? (settingsRes[0] || null) : null;
       } catch (error) {
         console.error('C360.sellerStock: erro ao carregar estoque próprio', error);
         rows = [];
+        sellerSettings = null;
       }
       loading = false;
       paint();
@@ -4217,6 +4290,29 @@ pre {
       } catch (error) {
         alert(error.message);
         if (submitButton) submitButton.disabled = false;
+      }
+    });
+
+    container.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-ss-adjust-form]');
+      if (!form) return;
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      try {
+        if (!hasApi('adjustOwnStock')) throw new Error('Recurso de acerto de estoque indisponível (modo demonstração).');
+        const data = U.formData(form);
+        if (submitButton) submitButton.disabled = true;
+        await safeCall('adjustOwnStock', {
+          productId: data.productId,
+          newQuantity: U.number(data.newQuantity),
+          reason: (data.reason || '').trim(),
+        });
+        adjustFeedback = null;
+        await load();
+      } catch (error) {
+        adjustFeedback = { message: error.message, type: 'danger' };
+        if (submitButton) submitButton.disabled = false;
+        paint();
       }
     });
 
@@ -4539,19 +4635,19 @@ pre {
 (function () {
   'use strict';
 
-  // MÃ³dulo "Calculadora" (aba Calculadora).
-  // ExpÃµe window.C360.calculator = { render, mount }.
+  // Módulo "Calculadora" (aba Calculadora).
+  // Expõe window.C360.calculator = { render, mount }.
   //
-  // CSS novo necessÃ¡rio (ainda nÃ£o existe em styles/main.css â€” nÃ£o editado por
-  // este arquivo, apenas listado aqui e no relatÃ³rio para o agente MOBILE/SEC):
-  //   .calculator-card   â€” cartÃ£o que envolve a calculadora padrÃ£o (pode herdar de .panel-card)
-  //   .calc-display      â€” moldura do visor (nÃºmero grande, alinhado Ã  direita)
-  //   .calc-expression   â€” linha pequena acima do visor com a operaÃ§Ã£o pendente
-  //   .calc-value        â€” nÃºmero grande do visor
-  //   .calc-keypad       â€” grid 4 colunas para as teclas
-  //   .calc-key          â€” tamanho/toque das teclas (usadas junto com .secondary/.ghost/.danger jÃ¡ existentes)
-  //   .calc-key.span2    â€” tecla que ocupa 2 colunas (o "0")
-  //   .calc-field        â€” rÃ³tulo + input empilhados nos mini-formulÃ¡rios de negÃ³cio
+  // CSS novo necessário (ainda não existe em styles/main.css — não editado por
+  // este arquivo, apenas listado aqui e no relatório para o agente MOBILE/SEC):
+  //   .calculator-card   — cartão que envolve a calculadora padrão (pode herdar de .panel-card)
+  //   .calc-display      — moldura do visor (número grande, alinhado à direita)
+  //   .calc-expression   — linha pequena acima do visor com a operação pendente
+  //   .calc-value        — número grande do visor
+  //   .calc-keypad       — grid 4 colunas para as teclas
+  //   .calc-key          — tamanho/toque das teclas (usadas junto com .secondary/.ghost/.danger já existentes)
+  //   .calc-key.span2    — tecla que ocupa 2 colunas (o "0")
+  //   .calc-field        — rótulo + input empilhados nos mini-formulários de negócio
 
   window.C360 = window.C360 || {};
   const U = window.C360.utils;
@@ -4559,14 +4655,14 @@ pre {
   const S = window.C360.state;
   const Calc = window.C360.calc;
 
-  const OPERATORS = ['+', '-', 'Ã—', 'Ã·'];
+  const OPERATORS = ['+', '-', '×', '÷'];
 
   function formatPercent(value) {
     return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
   }
 
   function placeholderResult() {
-    return '<div class="cost-item"><span>Resultado</span><strong>â€”</strong></div>';
+    return '<div class="cost-item"><span>Resultado</span><strong>—</strong></div>';
   }
 
   // ---------- HTML ----------
@@ -4626,7 +4722,7 @@ pre {
 
   function renderStandardCalculator() {
     return `
-      <div class="panel-card calculator-card" id="calcStandard" tabindex="0" aria-label="Calculadora. Use o teclado numÃ©rico ou toque nos botÃµes.">
+      <div class="panel-card calculator-card" id="calcStandard" tabindex="0" aria-label="Calculadora. Use o teclado numérico ou toque nos botões.">
         <h3>Calculadora</h3>
         <div class="calc-display" id="calcDisplay" aria-live="polite">
           <div class="calc-expression" id="calcExpression">&nbsp;</div>
@@ -4634,14 +4730,14 @@ pre {
         </div>
         <div class="calc-keypad" id="calcKeypad" role="group" aria-label="Teclado da calculadora">
           <button type="button" class="calc-key ghost danger" data-calc="clear" aria-label="Limpar tudo">C</button>
-          <button type="button" class="calc-key ghost" data-calc="backspace" aria-label="Apagar Ãºltimo dÃ­gito">âŒ«</button>
+          <button type="button" class="calc-key ghost" data-calc="backspace" aria-label="Apagar último dígito">⌫</button>
           <button type="button" class="calc-key ghost" data-calc="percent" aria-label="Porcentagem">%</button>
-          <button type="button" class="calc-key secondary" data-calc="op" data-op="Ã·" aria-label="Dividir">Ã·</button>
+          <button type="button" class="calc-key secondary" data-calc="op" data-op="÷" aria-label="Dividir">÷</button>
 
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="7">7</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="8">8</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="9">9</button>
-          <button type="button" class="calc-key secondary" data-calc="op" data-op="Ã—" aria-label="Multiplicar">Ã—</button>
+          <button type="button" class="calc-key secondary" data-calc="op" data-op="×" aria-label="Multiplicar">×</button>
 
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="4">4</button>
           <button type="button" class="calc-key ghost" data-calc="digit" data-digit="5">5</button>
@@ -4654,7 +4750,7 @@ pre {
           <button type="button" class="calc-key secondary" data-calc="op" data-op="+" aria-label="Somar">+</button>
 
           <button type="button" class="calc-key ghost span2" data-calc="digit" data-digit="0">0</button>
-          <button type="button" class="calc-key ghost" data-calc="decimal" aria-label="VÃ­rgula decimal">,</button>
+          <button type="button" class="calc-key ghost" data-calc="decimal" aria-label="Vírgula decimal">,</button>
           <button type="button" class="calc-key" data-calc="equals" aria-label="Igual">=</button>
         </div>
       </div>
@@ -4663,8 +4759,8 @@ pre {
 
   function renderBusinessTools() {
     return UI.section(
-      'CÃ¡lculos do negÃ³cio',
-      'Ferramentas rÃ¡pidas de precificaÃ§Ã£o para cosmÃ©ticos e perfumaria: margem, markup, desconto e preÃ§o com margem alvo.',
+      'Cálculos do negócio',
+      'Ferramentas rápidas de precificação para cosméticos e perfumaria: margem, markup, desconto e preço com margem alvo.',
       `
         <div class="three-columns">
           ${renderMargemTool()}
@@ -4679,13 +4775,13 @@ pre {
   function renderMargemTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="margem">
-        <h3>Margem ${UI.help('Informe o custo e o preÃ§o de venda para ver a margem % e o lucro em R$.')}</h3>
+        <h3>Margem ${UI.help('Informe o custo e o preço de venda para ver a margem % e o lucro em R$.')}</h3>
         <div class="calc-field">
           <label for="calcMargemCusto">Custo (R$)</label>
           <input id="calcMargemCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="calc-field">
-          <label for="calcMargemPreco">PreÃ§o de venda (R$)</label>
+          <label for="calcMargemPreco">Preço de venda (R$)</label>
           <input id="calcMargemPreco" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="cost-box" id="calcMargemResultado">${placeholderResult()}</div>
@@ -4696,7 +4792,7 @@ pre {
   function renderMarkupTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="markup">
-        <h3>Markup ${UI.help('Informe o custo e o percentual de markup para ver o preÃ§o de venda sugerido.')}</h3>
+        <h3>Markup ${UI.help('Informe o custo e o percentual de markup para ver o preço de venda sugerido.')}</h3>
         <div class="calc-field">
           <label for="calcMarkupCusto">Custo (R$)</label>
           <input id="calcMarkupCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
@@ -4713,9 +4809,9 @@ pre {
   function renderDescontoTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="desconto">
-        <h3>Desconto ${UI.help('Informe o preÃ§o e o percentual de desconto para ver o preÃ§o final e o valor descontado.')}</h3>
+        <h3>Desconto ${UI.help('Informe o preço e o percentual de desconto para ver o preço final e o valor descontado.')}</h3>
         <div class="calc-field">
-          <label for="calcDescontoPreco">PreÃ§o (R$)</label>
+          <label for="calcDescontoPreco">Preço (R$)</label>
           <input id="calcDescontoPreco" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
         </div>
         <div class="calc-field">
@@ -4730,7 +4826,7 @@ pre {
   function renderMargemAlvoTool() {
     return `
       <div class="panel-card calc-tool" data-calc-tool="margem-alvo">
-        <h3>PreÃ§o com margem alvo ${UI.help('Informe o custo e a margem que vocÃª quer ganhar para ver o preÃ§o sugerido.')}</h3>
+        <h3>Preço com margem alvo ${UI.help('Informe o custo e a margem que você quer ganhar para ver o preço sugerido.')}</h3>
         <div class="calc-field">
           <label for="calcAlvoCusto">Custo (R$)</label>
           <input id="calcAlvoCusto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
@@ -4969,10 +5065,10 @@ pre {
     const exprEl = container.querySelector('#calcExpression');
     if (!card || !keypad || !valueEl || !exprEl) return;
 
-    let current = '0'; // string bruta digitada: dÃ­gitos + no mÃ¡ximo uma vÃ­rgula
-    let previous = null; // nÃºmero (operando anterior)
-    let operator = null; // '+' | '-' | 'Ã—' | 'Ã·'
-    let overwrite = false; // true logo apÃ³s operador/igual/porcentagem: prÃ³ximo dÃ­gito comeÃ§a nÃºmero novo
+    let current = '0'; // string bruta digitada: dígitos + no máximo uma vírgula
+    let previous = null; // número (operando anterior)
+    let operator = null; // '+' | '-' | '×' | '÷'
+    let overwrite = false; // true logo após operador/igual/porcentagem: próximo dígito começa número novo
     let errorState = false;
 
     function parseCurrent() {
@@ -5007,15 +5103,15 @@ pre {
       switch (op) {
         case '+': return round(a + b);
         case '-': return round(a - b);
-        case 'Ã—': return round(a * b);
-        case 'Ã·': return b === 0 ? null : round(a / b);
+        case '×': return round(a * b);
+        case '÷': return b === 0 ? null : round(a / b);
         default: return b;
       }
     }
 
     function updateDisplay() {
       valueEl.textContent = errorState ? 'Erro' : formatRawForDisplay(current);
-      exprEl.textContent = operator && previous !== null ? `${formatNumber(previous)} ${operator}` : 'Â ';
+      exprEl.textContent = operator && previous !== null ? `${formatNumber(previous)} ${operator}` : ' ';
     }
 
     function showError() {
@@ -5124,8 +5220,8 @@ pre {
       else if (key === ',' || key === '.') { pressDecimal(); event.preventDefault(); }
       else if (key === '+') { pressOperator('+'); event.preventDefault(); }
       else if (key === '-') { pressOperator('-'); event.preventDefault(); }
-      else if (key === '*' || key.toLowerCase() === 'x') { pressOperator('Ã—'); event.preventDefault(); }
-      else if (key === '/') { pressOperator('Ã·'); event.preventDefault(); }
+      else if (key === '*' || key.toLowerCase() === 'x') { pressOperator('×'); event.preventDefault(); }
+      else if (key === '/') { pressOperator('÷'); event.preventDefault(); }
       else if (key === '%') { pressPercent(); event.preventDefault(); }
       else if (key === 'Enter' || key === '=') { pressEquals(); event.preventDefault(); }
       else if (key === 'Backspace') { pressBackspace(); event.preventDefault(); }
@@ -5150,11 +5246,11 @@ pre {
       const custo = U.number(custoEl.value);
       const preco = U.number(precoEl.value);
       if (preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Informe um preÃ§o de venda maior que zero.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Informe um preço de venda maior que zero.', 'warning');
         return;
       }
       if (custo < 0) {
-        resultEl.innerHTML = UI.formNotice('O custo nÃ£o pode ser negativo.', 'warning');
+        resultEl.innerHTML = UI.formNotice('O custo não pode ser negativo.', 'warning');
         return;
       }
       const lucro = preco - custo;
@@ -5188,12 +5284,12 @@ pre {
       }
       const preco = custo * (1 + markup / 100);
       if (!Number.isFinite(preco) || preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Esse markup resulta em preÃ§o invÃ¡lido. Use um percentual maior.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Esse markup resulta em preço inválido. Use um percentual maior.', 'warning');
         return;
       }
       const lucro = preco - custo;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o de venda</span><strong>${U.money(preco)}</strong></div>
+        <div class="cost-item"><span>Preço de venda</span><strong>${U.money(preco)}</strong></div>
         <div class="cost-item"><span>Lucro</span><strong>${U.money(lucro)}</strong></div>
       `;
     }
@@ -5216,7 +5312,7 @@ pre {
       const preco = U.number(precoEl.value);
       const desconto = U.number(descontoEl.value);
       if (preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('Informe um preÃ§o maior que zero.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Informe um preço maior que zero.', 'warning');
         return;
       }
       if (desconto < 0 || desconto > 100) {
@@ -5226,7 +5322,7 @@ pre {
       const valorDesconto = preco * (desconto / 100);
       const precoFinal = preco - valorDesconto;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o final</span><strong>${U.money(precoFinal)}</strong></div>
+        <div class="cost-item"><span>Preço final</span><strong>${U.money(precoFinal)}</strong></div>
         <div class="cost-item"><span>Desconto</span><strong>${U.money(valorDesconto)}</strong></div>
       `;
     }
@@ -5258,12 +5354,12 @@ pre {
       }
       const preco = custo / (1 - margemAlvo / 100);
       if (!Number.isFinite(preco) || preco <= 0) {
-        resultEl.innerHTML = UI.formNotice('NÃ£o foi possÃ­vel calcular um preÃ§o vÃ¡lido com esses valores.', 'warning');
+        resultEl.innerHTML = UI.formNotice('Não foi possível calcular um preço válido com esses valores.', 'warning');
         return;
       }
       const lucro = preco - custo;
       resultEl.innerHTML = `
-        <div class="cost-item"><span>PreÃ§o sugerido</span><strong>${U.money(preco)}</strong></div>
+        <div class="cost-item"><span>Preço sugerido</span><strong>${U.money(preco)}</strong></div>
         <div class="cost-item"><span>Lucro</span><strong>${U.money(lucro)}</strong></div>
       `;
     }
@@ -5332,6 +5428,25 @@ pre {
     expired: 'Expirado',
   };
 
+  // Rascunho do carrinho vive fora de mount(): app.js recria o container do
+  // Vendas/Pedidos a cada renderAll() (qualquer acao na tela dispara isso),
+  // e mount() e chamado de novo - se o draft fosse uma variavel local do
+  // fecho de mount(), cada remount zeraria os itens ja adicionados ao
+  // carrinho. Mantendo o objeto no escopo do modulo, ele sobrevive a
+  // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
+  // mesmo carrinho).
+  const persistentDraft = {
+    source: 'seller_stock',
+    paymentMode: 'avista',
+    expiresHours: '48',
+    targetSellerId: '',
+    customerName: '',
+    channel: 'WhatsApp',
+    notes: '',
+    items: [],
+    lastLink: '',
+  };
+
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -5396,8 +5511,10 @@ pre {
     ].join('');
     const paymentOptions = [
       '<option value="avista">A vista</option>',
+      '<option value="parcial">Parcial</option>',
       allowConsignment ? '<option value="consignado">Consignado</option>' : '',
     ].join('');
+    const channelOptions = UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '');
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
       ? `<label>Vendedor consignado
@@ -5430,6 +5547,12 @@ pre {
             </label>
             <label>Pagamento
               <select name="paymentMode">${paymentOptions}</select>
+            </label>
+            <label>Canal
+              <select name="channel">${channelOptions}</select>
+            </label>
+            <label>Nome do cliente
+              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Opcional">
             </label>
             ${sellerTargetField}
             <label>Validade do link
@@ -5502,6 +5625,7 @@ pre {
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const cards = sellers.map((seller) => {
       const settings = settingForSeller(seller.id);
+      const credits = U.number(settings.stockAdjustmentCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
           <div>
@@ -5515,13 +5639,17 @@ pre {
             <input name="maxDiscountPercent" type="number" min="0" max="100" step="0.01" value="${U.escapeHtml(settings.maxDiscountPercent || 0)}">
           </label>
           <button type="submit" class="small">Salvar permissao</button>
+          <div class="seller-permission-stock-adjust">
+            ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
+            <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
+          </div>
         </form>
       `;
     }).join('');
     return UI.section(
       'Permissoes dos vendedores',
       'Controle quem pode usar consignado, estoque do admin e links publicos.',
-      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div>`
+      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div><p class="hint-inline">"Liberar 1 acerto de estoque" da ao vendedor uma unica correcao do proprio estoque (util para quem ja tinha mercadoria mas nunca fez o acerto certo). Depois de usado, o credito zera e precisa ser liberado de novo.</p>`
     );
   }
   function renderAdminApprovals(feedback) {
@@ -5565,15 +5693,7 @@ pre {
   }
 
   function mount(container, options = {}) {
-    const draft = {
-      source: 'seller_stock',
-      paymentMode: 'avista',
-      expiresHours: '48',
-      targetSellerId: '',
-      notes: '',
-      items: [],
-      lastLink: '',
-    };
+    const draft = persistentDraft;
     let feedback = null;
     let approvalFeedback = null;
     let settingsFeedback = null;
@@ -5589,6 +5709,8 @@ pre {
       if (config) {
         config.source.value = draft.source;
         config.paymentMode.value = draft.paymentMode;
+        if (config.channel) config.channel.value = draft.channel || 'WhatsApp';
+        if (config.customerName) config.customerName.value = draft.customerName || '';
         if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
         config.expiresHours.value = draft.expiresHours;
       }
@@ -5600,6 +5722,8 @@ pre {
       const data = U.formData(config);
       draft.source = data.source || 'seller_stock';
       draft.paymentMode = data.paymentMode || 'avista';
+      draft.channel = data.channel || 'WhatsApp';
+      draft.customerName = data.customerName || '';
       draft.expiresHours = data.expiresHours || '48';
       draft.targetSellerId = data.targetSellerId || draft.targetSellerId || '';
       draft.notes = data.notes || '';
@@ -5616,7 +5740,8 @@ pre {
         source: draft.source,
         paymentMode: draft.paymentMode,
         status,
-        channel: 'WhatsApp',
+        channel: draft.channel || 'WhatsApp',
+        customerName: draft.customerName || null,
         publicExpiresAt: status === 'shared' ? expiresAt : null,
         notes: draft.notes || '',
       });
@@ -5861,23 +5986,27 @@ pre {
         } else if (action === 'clear-draft') {
           draft.items = [];
           draft.lastLink = '';
+          draft.customerName = '';
         } else if (action === 'save-cart') {
           if (isAdmin() && draft.paymentMode === 'consignado') {
             await createAdminSellerConsignment();
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
           } else {
             const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
             await createCart(status);
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
           }
         } else if (action === 'share-cart') {
           const cart = await createCart('shared');
           draft.items = [];
           draft.lastLink = publicUrl(cart);
+          draft.customerName = '';
           feedback = { message: 'Link publico criado. Ele expira no prazo escolhido.', type: 'success' };
         } else if (action === 'copy-link') {
           const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
@@ -5894,6 +6023,21 @@ pre {
           if (!confirm('Rejeitar este carrinho?')) return;
           await approveCart(button.dataset.cartId, false);
           approvalFeedback = { message: 'Carrinho rejeitado.', type: 'warning' };
+        } else if (action === 'grant-stock-adjustment') {
+          const sellerId = button.dataset.sellerId;
+          const current = settingForSeller(sellerId);
+          const payload = {
+            sellerId,
+            allowAdminStockSales: current.allowAdminStockSales !== false,
+            allowConsignment: !!current.allowConsignment,
+            allowPublicCartLinks: current.allowPublicCartLinks !== false,
+            maxDiscountPercent: U.number(current.maxDiscountPercent),
+            stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          await S().refresh();
+          settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -7174,7 +7318,7 @@ pre {
 })();
 </script>
   <script>
-﻿(function () {
+(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
@@ -7182,30 +7326,30 @@ pre {
   const S = window.C360.state;
   const XLSX = window.C360.xlsx;
 
-  // RÃ³tulos das colunas em portuguÃªs. As planilhas sÃ£o legÃ­veis para humanos,
-  // mas continuam reversÃ­veis na importaÃ§Ã£o porque cada rÃ³tulo aponta de volta
-  // para a chave tÃ©cnica do dado.
+  // Rótulos das colunas em português. As planilhas são legíveis para humanos,
+  // mas continuam reversíveis na importação porque cada rótulo aponta de volta
+  // para a chave técnica do dado.
   const LABELS = {
-    id: 'ID', businessId: 'ID do negÃ³cio', name: 'Nome', segment: 'Segmento',
-    defaultTargetMargin: 'Margem padrÃ£o (%)', defaultFeePercent: 'Taxas padrÃ£o (%)',
-    notes: 'ObservaÃ§Ãµes', createdAt: 'Criado em', updatedAt: 'Atualizado em',
-    type: 'Tipo', unit: 'Unidade', currentStock: 'Estoque atual', avgCost: 'Custo mÃ©dio',
-    salePrice: 'PreÃ§o de venda', minStock: 'Estoque mÃ­nimo',
-    laborCostPerUnit: 'MÃ£o de obra por unidade', overheadCostPerUnit: 'Custo fixo por unidade',
-    lossPercent: 'Perda tÃ©cnica (%)', targetMarginPercent: 'Margem desejada (%)',
+    id: 'ID', businessId: 'ID do negócio', name: 'Nome', segment: 'Segmento',
+    defaultTargetMargin: 'Margem padrão (%)', defaultFeePercent: 'Taxas padrão (%)',
+    notes: 'Observações', createdAt: 'Criado em', updatedAt: 'Atualizado em',
+    type: 'Tipo', unit: 'Unidade', currentStock: 'Estoque atual', avgCost: 'Custo médio',
+    salePrice: 'Preço de venda', minStock: 'Estoque mínimo',
+    laborCostPerUnit: 'Mão de obra por unidade', overheadCostPerUnit: 'Custo fixo por unidade',
+    lossPercent: 'Perda técnica (%)', targetMarginPercent: 'Margem desejada (%)',
     taxFeePercent: 'Taxas sobre venda (%)', phone: 'Telefone', date: 'Data',
     supplierId: 'ID do fornecedor', productId: 'ID do produto', quantity: 'Quantidade',
-    totalCost: 'Custo total', unitCost: 'Custo unitÃ¡rio',
+    totalCost: 'Custo total', unitCost: 'Custo unitário',
     finalProductId: 'ID do produto final', inputProductId: 'ID do insumo',
     quantityPerUnit: 'Qtd. por unidade', channel: 'Canal', clientId: 'ID do cliente',
-    unitPrice: 'PreÃ§o unitÃ¡rio', discount: 'Desconto', fixedFees: 'Taxa fixa',
+    unitPrice: 'Preço unitário', discount: 'Desconto', fixedFees: 'Taxa fixa',
     feePercent: 'Taxa (%)', grossRevenue: 'Receita bruta', percentFees: 'Taxas percentuais',
-    netRevenue: 'Receita lÃ­quida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
+    netRevenue: 'Receita líquida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
     origin: 'Origem', originId: 'ID de origem', dueDate: 'Prazo / entrega', status: 'Status',
     convertedSaleId: 'ID da venda gerada', quantitySent: 'Qtd. enviada',
     quantitySold: 'Qtd. vendida', quantityReturned: 'Qtd. devolvida',
     amountPaid: 'Valor pago', costAtSend: 'Custo no envio',
-    consignmentId: 'ID da consignaÃ§Ã£o', amount: 'Valor', title: 'TÃ­tulo',
+    consignmentId: 'ID da consignação', amount: 'Valor', title: 'Título',
     sellerId: 'ID do vendedor', source: 'Origem do estoque', paymentMode: 'Pagamento', publicToken: 'Token publico',
     publicExpiresAt: 'Expira em', submittedAt: 'Enviado em', approvedAt: 'Aprovado em', approvedBy: 'Aprovado por',
     paymentProofPath: 'Comprovante', customerName: 'Cliente', customerPhone: 'Telefone do cliente', customerNotes: 'Obs. do cliente',
@@ -7224,16 +7368,16 @@ pre {
 
   const DATE_KEYS = new Set(['date', 'dueDate', 'publicExpiresAt', 'submittedAt', 'approvedAt']);
 
-  // ColeÃ§Ã£o -> nome da aba + ordem de colunas.
+  // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
-    { key: 'businesses', sheet: 'NegÃ³cios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'businesses', sheet: 'Negócios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'clients', sheet: 'Clientes', fields: ['id', 'businessId', 'name', 'phone', 'type', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'suppliers', sheet: 'Fornecedores', fields: ['id', 'businessId', 'name', 'phone', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'date', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'stockMovements', sheet: 'MovimentaÃ§Ãµes', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
-    { key: 'recipes', sheet: 'Fichas tÃ©cnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
-    { key: 'productions', sheet: 'ProduÃ§Ã£o', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
+    { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
+    { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
@@ -7295,31 +7439,31 @@ pre {
     if (app && typeof app.refresh === 'function') app.refresh();
   }
 
-  // TODO(integrador): quando existir login com papÃ©is (admin/vendedor), este
-  // backup Excel exporta TODO o negÃ³cio (todas as coleÃ§Ãµes, todos os
+  // TODO(integrador): quando existir login com papéis (admin/vendedor), este
+  // backup Excel exporta TODO o negócio (todas as coleções, todos os
   // registros). Antes de montar `sheets`, se currentUser.role === 'vendedor',
-  // filtrar cada coleÃ§Ã£o relevante (clients, sales, orders, consignments,
-  // consignmentEvents e qualquer outra com dono por vendedor) para manter sÃ³
-  // os registros com seller_id === currentUser.id â€” um vendedor nunca deve
-  // conseguir baixar o backup completo dos outros vendedores/do negÃ³cio todo.
-  // ColeÃ§Ãµes sem dono individual (businesses, products, suppliers, recipes,
+  // filtrar cada coleção relevante (clients, sales, orders, consignments,
+  // consignmentEvents e qualquer outra com dono por vendedor) para manter só
+  // os registros com seller_id === currentUser.id — um vendedor nunca deve
+  // conseguir baixar o backup completo dos outros vendedores/do negócio todo.
+  // Coleções sem dono individual (businesses, products, suppliers, recipes,
   // etc.) provavelmente continuam completas mesmo para vendedor; confirmar
-  // com a regra de negÃ³cio quando o papel existir.
+  // com a regra de negócio quando o papel existir.
   //
-  // Nota sobre injeÃ§Ã£o de fÃ³rmula (ver csvField() abaixo, seÃ§Ã£o CSV): este
-  // motor .xlsx (src/xlsx-lite.js, funÃ§Ã£o sheetXml) escreve toda string como
-  // cÃ©lula tipada `t="inlineStr"` (texto explÃ­cito no XML da planilha), nunca
-  // como fÃ³rmula (`<f>`). Excel/Sheets respeitam esse tipo ao abrir um .xlsx
-  // de verdade e nÃ£o reinterpretam o conteÃºdo como fÃ³rmula â€” diferente de CSV
-  // puro, que nÃ£o carrega tipo de cÃ©lula. Por isso o backup Excel nÃ£o precisa
-  // do mesmo prefixo de apÃ³strofo aplicado no CSV.
+  // Nota sobre injeção de fórmula (ver csvField() abaixo, seção CSV): este
+  // motor .xlsx (src/xlsx-lite.js, função sheetXml) escreve toda string como
+  // célula tipada `t="inlineStr"` (texto explícito no XML da planilha), nunca
+  // como fórmula (`<f>`). Excel/Sheets respeitam esse tipo ao abrir um .xlsx
+  // de verdade e não reinterpretam o conteúdo como fórmula — diferente de CSV
+  // puro, que não carrega tipo de célula. Por isso o backup Excel não precisa
+  // do mesmo prefixo de apóstrofo aplicado no CSV.
   // ---------- Exportar Excel (backup completo) ----------
   function exportXlsx() {
     const state = S.getState();
     const sheets = [];
 
     const summary = [
-      ['Controle360 Multi â€” backup completo'],
+      ['Controle360 Multi — backup completo'],
       ['Gerado em', new Date().toLocaleString('pt-BR')],
       [''],
       ['Aba', 'Registros'],
@@ -7329,7 +7473,7 @@ pre {
     });
     summary.push(['']);
     summary.push(['Como reimportar: use "Importar Excel" na aba Dados.']);
-    summary.push(['Pode editar as abas de dados. NÃ£o apague a aba ' + BACKUP_SHEET + '.']);
+    summary.push(['Pode editar as abas de dados. Não apague a aba ' + BACKUP_SHEET + '.']);
     sheets.push({ name: 'Resumo', rows: summary });
 
     COLLECTIONS.forEach((collection) => {
@@ -7352,7 +7496,7 @@ pre {
     sheets.push({
       name: BACKUP_SHEET,
       rows: [
-        ['NÃ£o edite esta aba. Ela guarda configuraÃ§Ãµes para restaurar o backup.'],
+        ['Não edite esta aba. Ela guarda configurações para restaurar o backup.'],
         [BACKUP_MARKER, JSON.stringify(config)],
       ],
     });
@@ -7369,7 +7513,7 @@ pre {
       map[deburr(label(key))] = key;
       map[deburr(key)] = key;
     });
-    // TambÃ©m aceita rÃ³tulos de chaves que nÃ£o estÃ£o na ordem padrÃ£o.
+    // Também aceita rótulos de chaves que não estão na ordem padrão.
     Object.keys(LABELS).forEach((key) => {
       if (!(deburr(label(key)) in map)) map[deburr(label(key))] = key;
     });
@@ -7442,7 +7586,7 @@ pre {
             if (config.meta) next.meta = config.meta;
             if (config.activeBusinessId) next.activeBusinessId = config.activeBusinessId;
           } catch (error) {
-            /* configuraÃ§Ã£o ilegÃ­vel: mantÃ©m a atual */
+            /* configuração ilegível: mantém a atual */
           }
         }
       }
@@ -7459,22 +7603,22 @@ pre {
       refresh();
       notify('Planilha importada com sucesso.', 'success');
     } catch (error) {
-      notify('NÃ£o foi possÃ­vel importar: ' + error.message, 'error');
-      window.alert('NÃ£o foi possÃ­vel importar: ' + error.message);
+      notify('Não foi possível importar: ' + error.message, 'error');
+      window.alert('Não foi possível importar: ' + error.message);
     }
   }
 
-  // ---------- CSV por mÃ³dulo ----------
-  // ProteÃ§Ã£o contra injeÃ§Ã£o de fÃ³rmula (CSV/Excel formula injection): um
-  // cliente chamado "=HYPERLINK(...)" ou "+SUM(...)" pode virar fÃ³rmula viva
-  // quando o CSV Ã© aberto no Excel/Sheets, porque CSV nÃ£o tem tipo de cÃ©lula
-  // â€” o programa decide na hora se o texto "parece" fÃ³rmula. MitigaÃ§Ã£o padrÃ£o
-  // (OWASP): se o campo (depois de tirar espaÃ§os nas pontas) comeÃ§a com
-  // = + - @, prefixar com um apÃ³strofo antes de aplicar a citaÃ§Ã£o normal.
-  // SÃ³ se aplica a valores de TEXTO: campos numÃ©ricos de verdade (NUMERIC_KEYS,
-  // jÃ¡ convertidos para Number em cellValue) nÃ£o passam por aqui â€” um custo
-  // negativo como -45.5 continua sendo nÃºmero, nÃ£o texto, entÃ£o nÃ£o corre
-  // risco de virar fÃ³rmula e nÃ£o deve ganhar apÃ³strofo.
+  // ---------- CSV por módulo ----------
+  // Proteção contra injeção de fórmula (CSV/Excel formula injection): um
+  // cliente chamado "=HYPERLINK(...)" ou "+SUM(...)" pode virar fórmula viva
+  // quando o CSV é aberto no Excel/Sheets, porque CSV não tem tipo de célula
+  // — o programa decide na hora se o texto "parece" fórmula. Mitigação padrão
+  // (OWASP): se o campo (depois de tirar espaços nas pontas) começa com
+  // = + - @, prefixar com um apóstrofo antes de aplicar a citação normal.
+  // Só se aplica a valores de TEXTO: campos numéricos de verdade (NUMERIC_KEYS,
+  // já convertidos para Number em cellValue) não passam por aqui — um custo
+  // negativo como -45.5 continua sendo número, não texto, então não corre
+  // risco de virar fórmula e não deve ganhar apóstrofo.
   function csvField(value) {
     const isRealNumber = typeof value === 'number';
     let text = String(value ?? '');
@@ -7485,13 +7629,13 @@ pre {
     return text;
   }
 
-  // TODO(integrador): este CSV por mÃ³dulo jÃ¡ filtra por negÃ³cio ativo
-  // (activeBusinessId), mas nÃ£o por vendedor. Quando currentUser.role ===
-  // 'vendedor' existir, adicionar aqui um segundo filtro â€” depois do filtro
-  // de activeBusinessId e antes de montar `fields`/`lines` â€” restringindo
-  // `records` a `record.seller_id === currentUser.id` para as coleÃ§Ãµes que
-  // pertencem a um vendedor especÃ­fico: clients, sales, orders, consignments
-  // (e consignmentEvents, que Ã© filho de consignments). Um vendedor nÃ£o pode
+  // TODO(integrador): este CSV por módulo já filtra por negócio ativo
+  // (activeBusinessId), mas não por vendedor. Quando currentUser.role ===
+  // 'vendedor' existir, adicionar aqui um segundo filtro — depois do filtro
+  // de activeBusinessId e antes de montar `fields`/`lines` — restringindo
+  // `records` a `record.seller_id === currentUser.id` para as coleções que
+  // pertencem a um vendedor específico: clients, sales, orders, consignments
+  // (e consignmentEvents, que é filho de consignments). Um vendedor não pode
   // exportar CSV de clientes/vendas/pedidos/consignados de outro vendedor.
   function exportCsv(collectionKey) {
     const collection = COLLECTIONS.find((item) => item.key === collectionKey);
@@ -7511,13 +7655,13 @@ pre {
     notify(`CSV de ${collection.sheet} exportado.`, 'success');
   }
 
-  // TODO(integrador): exportJson() serializa S.getState() inteiro â€” todas as
-  // coleÃ§Ãµes, de todos os negÃ³cios, sem filtro nenhum (Ã© o backup bruto).
+  // TODO(integrador): exportJson() serializa S.getState() inteiro — todas as
+  // coleções, de todos os negócios, sem filtro nenhum (é o backup bruto).
   // Quando currentUser.role === 'vendedor' existir, este backup completo
   // provavelmente deve ficar bloqueado para vendedor (ou passar por um clone
   // do estado com clients/sales/orders/consignments/consignmentEvents
-  // filtrados por seller_id === currentUser.id antes do JSON.stringify) â€”
-  // decidir com a regra de negÃ³cio se vendedor tem acesso a este botÃ£o.
+  // filtrados por seller_id === currentUser.id antes do JSON.stringify) —
+  // decidir com a regra de negócio se vendedor tem acesso a este botão.
   // ---------- JSON ----------
   function exportJson() {
     U.downloadText(`controle360-backup-${U.today()}.json`, JSON.stringify(S.getState(), null, 2));
@@ -7534,8 +7678,8 @@ pre {
         refresh();
         notify('Backup JSON importado.', 'success');
       } catch (error) {
-        notify('Backup invÃ¡lido: ' + error.message, 'error');
-        window.alert('Backup invÃ¡lido: ' + error.message);
+        notify('Backup inválido: ' + error.message, 'error');
+        window.alert('Backup inválido: ' + error.message);
       }
     };
     reader.readAsText(file);
@@ -7552,7 +7696,7 @@ pre {
 })();
 </script>
   <script>
-﻿(function () {
+(function () {
   'use strict';
 
   const U = window.C360.utils;
@@ -7585,8 +7729,8 @@ pre {
 
   // ---------------------------------------------------------------------
   // Visibilidade de abas por papel (defesa em profundidade: a RLS do banco
-  // jÃ¡ bloqueia o acesso real, isto sÃ³ evita que a interface ofereÃ§a botÃµes
-  // que dariam erro de permissÃ£o para um vendedor).
+  // já bloqueia o acesso real, isto só evita que a interface ofereça botões
+  // que dariam erro de permissão para um vendedor).
   // ---------------------------------------------------------------------
   const TAB_ROLES = {
     negocios: ['admin'],
@@ -7662,7 +7806,7 @@ pre {
   function supplierById(id) { return state().suppliers.find((supplier) => supplier.id === id) || null; }
 
   function activeBusinessRequiredHtml() {
-    return UI.formNotice('Cadastre ou selecione um negÃ³cio ativo para usar este mÃ³dulo.', 'warning');
+    return UI.formNotice('Cadastre ou selecione um negócio ativo para usar este módulo.', 'warning');
   }
 
   function renderAll() {
@@ -7673,7 +7817,7 @@ pre {
 
   function renderBusinessSelector() {
     const businesses = state().businesses;
-    els.activeBusiness.innerHTML = UI.optionList(businesses, state().activeBusinessId, businesses.length ? 'Selecione' : 'Nenhum negÃ³cio cadastrado');
+    els.activeBusiness.innerHTML = UI.optionList(businesses, state().activeBusinessId, businesses.length ? 'Selecione' : 'Nenhum negócio cadastrado');
     els.activeBusiness.disabled = businesses.length === 0;
   }
 
@@ -7710,7 +7854,7 @@ pre {
     renderTab();
   }
 
-  // Abas "clÃ¡ssicas": a funÃ§Ã£o devolve uma string HTML, que Ã© jogada em
+  // Abas "clássicas": a função devolve uma string HTML, que é jogada em
   // els.view.innerHTML e usa o delegador global de cliques/submits (handleClick/
   // handleSubmit) definido mais abaixo neste arquivo.
   const LEGACY_RENDERERS = {
@@ -7729,10 +7873,10 @@ pre {
     dados: renderData,
   };
 
-  // Abas "modulares": vÃªm de src/auth.js, src/pricing.js, src/sellerStock.js,
-  // src/calculator.js, src/goals.js, src/sellerHelp.js â€” cada uma gerencia seu
-  // prÃ³prio HTML e listeners escopados a um container (padrÃ£o mount/refresh),
-  // em vez de usar o delegador global. NÃ£o presumimos qual mÃ³dulo carregou
+  // Abas "modulares": vêm de src/auth.js, src/pricing.js, src/sellerStock.js,
+  // src/calculator.js, src/goals.js, src/sellerHelp.js — cada uma gerencia seu
+  // próprio HTML e listeners escopados a um container (padrão mount/refresh),
+  // em vez de usar o delegador global. Não presumimos qual módulo carregou
   // primeiro: acessamos window.C360.<modulo> no momento do mount.
   function renderTab() {
     if (!tabAllowed(activeTab)) {
@@ -7743,6 +7887,7 @@ pre {
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      if (activeTab === 'pedidos') mountOrdersCartPanel();
       return;
     }
     mountModuleTab(activeTab);
@@ -7785,7 +7930,7 @@ pre {
           els.view.innerHTML = window.C360.calculator.render();
           window.C360.calculator.mount(els.view);
         } else {
-          els.view.innerHTML = UI.formNotice('Calculadora indisponÃ­vel.', 'warning');
+          els.view.innerHTML = UI.formNotice('Calculadora indisponível.', 'warning');
         }
         break;
       case 'metas':
@@ -7810,10 +7955,11 @@ pre {
     }
   }
 
-  // Painel de devoluÃ§Ã£o/desperdÃ­cio (src/returns.js) para a venda cujo id estÃ¡
-  // em `openReturnsSaleId`, aberto/fechado pelo botÃ£o "DevoluÃ§Ã£o/DesperdÃ­cio"
+  // Painel de devolução/desperdício (src/returns.js) para a venda cujo id está
+  // em `openReturnsSaleId`, aberto/fechado pelo botão "Devolução/Desperdício"
   // na tabela de vendas (ver handleClick, case 'toggle-returns').
   function mountSalesExtras() {
+    mountSalesCartPanel('salesCartPanel');
     const container = document.getElementById('returnsPanel');
     if (!container) return;
     if (!openReturnsSaleId) {
@@ -7836,33 +7982,49 @@ pre {
     }
   }
 
-  // Cada conta admin jÃ¡ vem vinculada a exatamente um negÃ³cio (provisionado
-  // manualmente no backend â€” ver docs/backend.md, seÃ§Ã£o "Gaps"). NÃ£o existe
-  // policy de INSERT/DELETE para `businesses`, sÃ³ UPDATE do prÃ³prio negÃ³cio;
-  // esta tela edita os dados do negÃ³cio jÃ¡ vinculado, nÃ£o cria nem exclui.
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js - quando a origem
+  // escolhida e "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovacao do admin). O rascunho do carrinho e compartilhado
+  // com a aba Vendas (ver comentario de persistentDraft em salesCart.js).
+  function mountOrdersCartPanel() {
+    mountSalesCartPanel('ordersCartPanel');
+  }
+
+  function mountSalesCartPanel(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (window.C360.salesCart && typeof window.C360.salesCart.mount === 'function') {
+      window.C360.salesCart.mount(container, { onDone: renderAll });
+    }
+  }
+
+  // Cada conta admin já vem vinculada a exatamente um negócio (provisionado
+  // manualmente no backend — ver docs/backend.md, seção "Gaps"). Não existe
+  // policy de INSERT/DELETE para `businesses`, só UPDATE do próprio negócio;
+  // esta tela edita os dados do negócio já vinculado, não cria nem exclui.
   function renderBusinesses() {
     const business = S.activeBusiness();
     if (!business) {
-      return UI.formNotice('Sua conta ainda nÃ£o estÃ¡ vinculada a um negÃ³cio. Fale com o administrador do sistema.', 'warning');
+      return UI.formNotice('Sua conta ainda não está vinculada a um negócio. Fale com o administrador do sistema.', 'warning');
     }
-    return UI.section('NegÃ³cios', 'Dados do seu negÃ³cio. Cada conta jÃ¡ vem vinculada a um Ãºnico negÃ³cio â€” nÃ£o Ã© possÃ­vel criar outro por aqui.', `
+    return UI.section('Negócios', 'Dados do seu negócio. Cada conta já vem vinculada a um único negócio — não é possível criar outro por aqui.', `
       <form id="businessForm" class="grid-form">
-        <label>Nome do negÃ³cio
-          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: EssÃªncias / Marmitas / Revenda">
+        <label>Nome do negócio
+          <input name="name" required value="${U.escapeHtml(business.name)}" placeholder="Ex.: Essências / Marmitas / Revenda">
         </label>
         <label>Segmento
           <select name="segment">${UI.optionList(state().settings.businessSegments, business.segment || '', 'Escolha')}</select>
         </label>
-        <label>${UI.fieldLabel('Margem desejada padrÃ£o (%)', 'margemDesejada')}
+        <label>${UI.fieldLabel('Margem desejada padrão (%)', 'margemDesejada')}
           <input name="defaultTargetMargin" type="number" step="0.01" value="${U.escapeHtml(business.defaultTargetMargin ?? 50)}">
         </label>
-        <label>${UI.fieldLabel('Taxas padrÃ£o de venda (%)', 'taxasPadrao')}
+        <label>${UI.fieldLabel('Taxas padrão de venda (%)', 'taxasPadrao')}
           <input name="defaultFeePercent" type="number" step="0.01" value="${U.escapeHtml(business.defaultFeePercent ?? 0)}">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <textarea name="notes" placeholder="Regras prÃ³prias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
+        <label class="wide">Observações
+          <textarea name="notes" placeholder="Regras próprias, fornecedores, particularidades...">${U.escapeHtml(business.notes || '')}</textarea>
         </label>
-        <button type="submit">Salvar negÃ³cio</button>
+        <button type="submit">Salvar negócio</button>
       </form>
     `);
   }
@@ -7878,7 +8040,7 @@ pre {
         U.escapeHtml(product.unit),
         UI.stockCell(product),
         UI.moneyCell(product.avgCost),
-        cost ? UI.moneyCell(cost.totalCostPerUnit) : 'â€”',
+        cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
         `<div class="actions">
@@ -7888,10 +8050,10 @@ pre {
       ];
     });
 
-    return UI.section('Produtos, insumos e embalagens', 'Cadastre matÃ©ria-prima, vidro, rÃ³tulo, caixa, produto final, kit, mercadoria ou serviÃ§o. NÃ£o hÃ¡ dados modelo preenchidos.', `
+    return UI.section('Produtos, insumos e embalagens', 'Cadastre matéria-prima, vidro, rótulo, caixa, produto final, kit, mercadoria ou serviço. Não há dados modelo preenchidos.', `
       <form id="productForm" class="grid-form">
         <label>Nome
-          <input name="name" required placeholder="Ex.: Vidro Ã¢mbar 100 ml / RÃ³tulo / EssÃªncia pronta">
+          <input name="name" required placeholder="Ex.: Vidro âmbar 100 ml / Rótulo / Essência pronta">
         </label>
         <label>${UI.fieldLabel('Tipo', 'tipoProduto')}
           <select name="type" required>${UI.optionList(state().settings.productTypes, '', 'Tipo')}</select>
@@ -7902,39 +8064,39 @@ pre {
         <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}
           <input name="currentStock" type="number" step="0.001" value="0">
         </label>
-        <label>${UI.fieldLabel('Custo mÃ©dio inicial', 'custoMedioInicial')}
+        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}
           <input name="avgCost" type="number" step="0.0001" value="0">
         </label>
-        <label>${UI.fieldLabel('PreÃ§o de venda manual', 'precoVendaManual')}
+        <label>${UI.fieldLabel('Preço de venda manual', 'precoVendaManual')}
           <input name="salePrice" type="number" step="0.01" value="0">
-          <span>Opcional. Se deixar 0, use o preÃ§o sugerido no mÃ³dulo Fichas e custos.</span>
+          <span>Opcional. Se deixar 0, use o preço sugerido no módulo Fichas e custos.</span>
         </label>
-        <label>${UI.fieldLabel('Estoque mÃ­nimo', 'estoqueMinimo')}
+        <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}
           <input name="minStock" type="number" step="0.001" value="0">
         </label>
-        <label>${UI.fieldLabel('MÃ£o de obra por unidade', 'maoDeObra')}
+        <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}
           <input name="laborCostPerUnit" type="number" step="0.01" value="0">
         </label>
         <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}
           <input name="overheadCostPerUnit" type="number" step="0.01" value="0">
         </label>
-        <label>${UI.fieldLabel('Perda tÃ©cnica (%)', 'perdaTecnica')}
+        <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}
           <input name="lossPercent" type="number" step="0.01" value="0">
         </label>
         <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}
           <input name="targetMarginPercent" type="number" step="0.01" value="">
-          <span>Se vazio, usa a margem padrÃ£o do negÃ³cio.</span>
+          <span>Se vazio, usa a margem padrão do negócio.</span>
         </label>
         <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}
           <input name="taxFeePercent" type="number" step="0.01" value="">
-          <span>Marketplace, cartÃ£o ou taxa estimada.</span>
+          <span>Marketplace, cartão ou taxa estimada.</span>
         </label>
-        <label class="full">ObservaÃ§Ãµes
-          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produÃ§Ã£o..."></textarea>
+        <label class="full">Observações
+          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea>
         </label>
         <button type="submit">Cadastrar produto</button>
       </form>
-      ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo mÃ©dio', 'Custo ficha', 'PreÃ§o manual', 'Margem', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
     `);
   }
 
@@ -7946,9 +8108,9 @@ pre {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const rows = currentClients().map((client) => [
       U.escapeHtml(client.name),
-      U.escapeHtml(client.phone || 'â€”'),
+      U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
-      U.escapeHtml(client.notes || 'â€”'),
+      U.escapeHtml(client.notes || '—'),
       `<div class="actions">${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
@@ -7966,12 +8128,12 @@ pre {
             <option value="ambos">Ambos</option>
           </select>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="EndereÃ§o, regra de pagamento, etc.">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Endereço, regra de pagamento, etc.">
         </label>
         <button type="submit">Cadastrar cliente</button>
       </form>
-      ${UI.table(['Nome', 'Telefone', 'Tipo', 'ObservaÃ§Ãµes', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Nome', 'Telefone', 'Tipo', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -7979,11 +8141,11 @@ pre {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const rows = currentSuppliers().map((supplier) => [
       U.escapeHtml(supplier.name),
-      U.escapeHtml(supplier.phone || 'â€”'),
-      U.escapeHtml(supplier.notes || 'â€”'),
+      U.escapeHtml(supplier.phone || '—'),
+      U.escapeHtml(supplier.notes || '—'),
       `<div class="actions">${UI.actionButton('delete-supplier', supplier.id, 'Excluir', 'danger')}</div>`,
     ]);
-    return UI.section('Fornecedores', 'Fornecedores alimentam as compras e ajudam a rastrear custo de matÃ©ria-prima e embalagem.', `
+    return UI.section('Fornecedores', 'Fornecedores alimentam as compras e ajudam a rastrear custo de matéria-prima e embalagem.', `
       <form id="supplierForm" class="grid-form">
         <label>Nome
           <input name="name" required placeholder="Fornecedor">
@@ -7991,12 +8153,12 @@ pre {
         <label>Telefone / contato
           <input name="phone" placeholder="Opcional">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="Prazo, desconto, pedido mÃ­nimo...">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Prazo, desconto, pedido mínimo...">
         </label>
         <button type="submit">Cadastrar fornecedor</button>
       </form>
-      ${UI.table(['Nome', 'Contato', 'ObservaÃ§Ãµes', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Nome', 'Contato', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -8009,15 +8171,15 @@ pre {
       const supplier = supplierById(purchase.supplierId);
       return [
         U.escapeHtml(purchase.date),
-        U.escapeHtml(supplier?.name || 'â€”'),
+        U.escapeHtml(supplier?.name || '—'),
         UI.productName(product),
         U.qty(purchase.quantity, product?.unit),
         UI.moneyCell(purchase.totalCost),
         UI.moneyCell(purchase.unitCost),
-        U.escapeHtml(purchase.notes || 'â€”'),
+        U.escapeHtml(purchase.notes || '—'),
       ];
     });
-    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo mÃ©dio ponderado automaticamente.', `
+    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo médio ponderado automaticamente.', `
       <form id="purchaseForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -8034,12 +8196,12 @@ pre {
         <label>${UI.fieldLabel('Valor total da compra', 'valorTotalCompra')}
           <input name="totalCost" type="number" step="0.01" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Nota, lote, forma de pagamento...">
         </label>
-        <button type="submit">LanÃ§ar compra</button>
+        <button type="submit">Lançar compra</button>
       </form>
-      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitÃ¡rio', 'Obs.'], rows)}
+      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Obs.'], rows)}
     `);
   }
 
@@ -8061,42 +8223,42 @@ pre {
       ];
     });
 
-    return UI.section('Fichas tÃ©cnicas e cÃ¡lculo de custo', 'Monte a composiÃ§Ã£o do produto: matÃ©ria-prima, vidro, rÃ³tulo, caixa, embalagem e custos rateados. O sistema calcula custo e preÃ§o sugerido.', `
+    return UI.section('Fichas técnicas e cálculo de custo', 'Monte a composição do produto: matéria-prima, vidro, rótulo, caixa, embalagem e custos rateados. O sistema calcula custo e preço sugerido.', `
       <div class="two-columns">
         <div class="panel-card">
-          <h3>Adicionar item Ã  ficha ${UI.help('fichaTecnica')}</h3>
+          <h3>Adicionar item à ficha ${UI.help('fichaTecnica')}</h3>
           <form id="recipeForm" class="stack-form">
             <label>Produto final / kit
               <select name="finalProductId" required>${UI.optionList(finalProducts, '', 'Produto final')}</select>
             </label>
-            <label>MatÃ©ria-prima ou embalagem
+            <label>Matéria-prima ou embalagem
               <select name="inputProductId" required>${UI.optionList(inputProducts, '', 'Insumo/embalagem')}</select>
             </label>
             <label>${UI.fieldLabel('Quantidade usada por unidade final', 'qtdPorUnidade')}
               <input name="quantityPerUnit" type="number" step="0.0001" required placeholder="Ex.: 100 ml, 1 un, 0.05 kg">
             </label>
-            <button type="submit">Adicionar Ã  ficha</button>
+            <button type="submit">Adicionar à ficha</button>
           </form>
-          <div class="notice">Para essÃªncia aromÃ¡tica, cadastre cada item separadamente: base/fragrÃ¢ncia, vidro, vÃ¡lvula/tampa, rÃ³tulo, caixa e lacre. Depois vincule tudo aqui.</div>
+          <div class="notice">Para essência aromática, cadastre cada item separadamente: base/fragrância, vidro, válvula/tampa, rótulo, caixa e lacre. Depois vincule tudo aqui.</div>
         </div>
         <div class="panel-card">
-          <h3>Simulador rÃ¡pido</h3>
+          <h3>Simulador rápido</h3>
           <form id="costPreviewForm" class="stack-form">
             <label>Produto para calcular
               <select name="finalProductId">${UI.optionList(finalProducts, selectedFinalId, 'Produto final')}</select>
             </label>
             <button type="submit">Calcular</button>
           </form>
-          <div id="costPreview">${selectedCost ? renderCostPreview(selectedCost) : UI.formNotice('Cadastre um produto final/kit e sua ficha tÃ©cnica para calcular.', 'warning')}</div>
+          <div id="costPreview">${selectedCost ? renderCostPreview(selectedCost) : UI.formNotice('Cadastre um produto final/kit e sua ficha técnica para calcular.', 'warning')}</div>
         </div>
       </div>
       <h3>Itens cadastrados nas fichas</h3>
-      ${UI.table(['Produto final', 'Insumo/embalagem', 'Qtd. por unidade', 'Custo na ficha', 'AÃ§Ãµes'], recipeRows)}
+      ${UI.table(['Produto final', 'Insumo/embalagem', 'Qtd. por unidade', 'Custo na ficha', 'Ações'], recipeRows)}
     `);
   }
 
   function renderCostPreview(cost) {
-    if (!cost.finalProduct) return UI.formNotice('Produto nÃ£o encontrado.', 'danger');
+    if (!cost.finalProduct) return UI.formNotice('Produto não encontrado.', 'danger');
     const rows = cost.items.map((item) => [
       UI.productName(item.input),
       U.qty(item.quantityPerUnit, item.input?.unit),
@@ -8107,10 +8269,10 @@ pre {
       ${UI.costBox(cost)}
       <div class="notice">
         Produto: <strong>${U.escapeHtml(cost.finalProduct.name)}</strong><br>
-        Margem desejada: <strong>${(cost.targetMarginPercent * 100).toFixed(2)}%</strong> Â· Taxas: <strong>${(cost.taxFeePercent * 100).toFixed(2)}%</strong><br>
-        Lucro bruto estimado no preÃ§o escolhido: <strong>${U.money(cost.grossProfitAtSelectedPrice)}</strong> Â· Margem real: <strong>${(cost.marginAtSelectedPrice * 100).toFixed(2)}%</strong>
+        Margem desejada: <strong>${(cost.targetMarginPercent * 100).toFixed(2)}%</strong> · Taxas: <strong>${(cost.taxFeePercent * 100).toFixed(2)}%</strong><br>
+        Lucro bruto estimado no preço escolhido: <strong>${U.money(cost.grossProfitAtSelectedPrice)}</strong> · Margem real: <strong>${(cost.marginAtSelectedPrice * 100).toFixed(2)}%</strong>
       </div>
-      ${UI.table(['Item', 'Qtd.', 'Custo mÃ©dio', 'Custo por unidade final'], rows, 'Nenhum item na ficha ainda.')}
+      ${UI.table(['Item', 'Qtd.', 'Custo médio', 'Custo por unidade final'], rows, 'Nenhum item na ficha ainda.')}
     `;
   }
 
@@ -8125,10 +8287,10 @@ pre {
         U.qty(prod.quantity, product?.unit),
         UI.moneyCell(prod.totalCost),
         UI.moneyCell(prod.unitCost),
-        U.escapeHtml(prod.notes || 'â€”'),
+        U.escapeHtml(prod.notes || '—'),
       ];
     });
-    return UI.section('ProduÃ§Ã£o', 'ProduÃ§Ã£o consome a ficha tÃ©cnica, baixa insumos/embalagens e dÃ¡ entrada no produto final com custo calculado.', `
+    return UI.section('Produção', 'Produção consome a ficha técnica, baixa insumos/embalagens e dá entrada no produto final com custo calculado.', `
       <form id="productionForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -8139,12 +8301,12 @@ pre {
         <label>${UI.fieldLabel('Quantidade produzida', 'qtdProduzida')}
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="Lote, produÃ§Ã£o, perdas reais...">
+        <label class="wide">Observações
+          <input name="notes" placeholder="Lote, produção, perdas reais...">
         </label>
-        <button type="submit">LanÃ§ar produÃ§Ã£o</button>
+        <button type="submit">Lançar produção</button>
       </form>
-      ${UI.table(['Data', 'Produto', 'Qtd.', 'Custo total', 'Custo unitÃ¡rio', 'Obs.'], rows)}
+      ${UI.table(['Data', 'Produto', 'Qtd.', 'Custo total', 'Custo unitário', 'Obs.'], rows)}
     `);
   }
 
@@ -8157,18 +8319,19 @@ pre {
       const isReturnOrScrap = sale.quantity < 0 || !!sale.parentSaleId;
       return [
         U.escapeHtml(sale.date),
-        U.escapeHtml(sale.channel || 'â€”'),
-        U.escapeHtml(client?.name || 'â€”'),
+        U.escapeHtml(sale.channel || '—'),
+        U.escapeHtml(client?.name || '—'),
         UI.productName(product),
         U.qty(sale.quantity, product?.unit),
         UI.moneyCell(sale.netRevenue),
         UI.moneyCell(sale.cogs),
         UI.moneyCell(sale.grossProfit),
         `${(U.number(sale.margin) * 100).toFixed(2)}%`,
-        isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
+        isReturnOrScrap ? '—' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'Devolução/Desperdício')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
+      <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -8185,7 +8348,7 @@ pre {
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label>PreÃ§o unitÃ¡rio
+        <label>Preço unitário
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
         <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
@@ -8197,13 +8360,13 @@ pre {
         <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
           <input name="feePercent" type="number" step="0.01" value="0">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda</button>
+        <button type="submit">Lancar venda rapida (1 produto)</button>
       </form>
-      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
       <div id="returnsPanel"></div>
     `, 'cmv');
   }
@@ -8212,20 +8375,25 @@ pre {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const statuses = state().settings.orderStatuses;
+    const isAdminUser = S.isAdmin();
     const cards = currentOrders().map((order) => {
       const client = clientById(order.clientId);
       const product = productById(order.productId);
+      const dispatchAction = order.convertedSaleId
+        ? UI.badge('venda lancada', 'ok')
+        : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
         status: order.status,
         title: client?.name || 'Pedido sem cliente',
-        subtitle: product ? `${product.name} Â· ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
-        detail: `Entrega: ${order.dueDate || 'sem data'} Â· Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
-        actions: `${order.convertedSaleId ? UI.badge('venda lanÃ§ada', 'ok') : UI.actionButton('convert-order-sale', order.id, 'Baixar venda')} ${UI.actionButton('delete-order', order.id, 'Excluir', 'danger')}`,
+        subtitle: product ? `${product.name} · ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
+        detail: `Entrega: ${order.dueDate || 'sem data'} · Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
+        actions: `${dispatchAction} ${isAdminUser ? UI.actionButton('delete-order', order.id, 'Excluir', 'danger') : ''}`,
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartÃµes entre as colunas ou use o campo "Mover para" no celular.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeca pendente - so o administrador muda o status, faz devolucoes e acertos.', `
+      <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -8236,21 +8404,18 @@ pre {
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" required>
         </label>
-        <label>${UI.fieldLabel('PreÃ§o unitÃ¡rio combinado', 'precoCombinado')}
+        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinado')}
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
         <label>Data de entrega/despacho
           <input name="dueDate" type="date">
         </label>
-        <label>${UI.fieldLabel('Status inicial', 'statusInicial')}
-          <select name="status">${UI.optionList(statuses, 'pendente', '')}</select>
+        <label class="wide">Observações
+          <input name="notes" placeholder="Endereço, forma de pagamento, urgência...">
         </label>
-        <label class="wide">ObservaÃ§Ãµes
-          <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
-        </label>
-        <button type="submit">Criar pedido</button>
+        <button type="submit">Criar pedido (rapido, 1 produto)</button>
       </form>
-      ${UI.kanban({ statuses, cards, type: 'orders' })}
+      ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
   }
 
@@ -8280,7 +8445,7 @@ pre {
       ];
     });
 
-    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devoluÃ§Ã£o e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
       <form id="consignmentForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -8294,15 +8459,15 @@ pre {
         <label>${UI.fieldLabel('Quantidade enviada', 'qtdEnviada')}
           <input name="quantitySent" type="number" step="0.001" required>
         </label>
-        <label>${UI.fieldLabel('PreÃ§o unitÃ¡rio combinado', 'precoCombinadoConsig')}
+        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinadoConsig')}
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Prazo de acerto, caixa, lote, combinado...">
         </label>
         <button type="submit">Enviar consignado</button>
       </form>
-      ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'AÃ§Ãµes'], rows)}
+      ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'Ações'], rows)}
     `, 'consignado');
   }
 
@@ -8317,7 +8482,7 @@ pre {
       detail: task.notes || '',
       actions: UI.actionButton('delete-task', task.id, 'Excluir', 'danger'),
     }));
-    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produÃ§Ã£o, cobranÃ§a, despachos e revisÃ£o.', `
+    return UI.section('Quadro de tarefas', 'Arraste tarefas entre as colunas (ou use o campo "Mover para" no celular). Use para compras, produção, cobrança, despachos e revisão.', `
       <form id="taskForm" class="grid-form">
         <label>Tarefa
           <input name="title" required placeholder="Ex.: Comprar vidros / cobrar cliente / despachar pedido">
@@ -8328,7 +8493,7 @@ pre {
         <label>Status inicial
           <select name="status">${UI.optionList(statuses, 'a_fazer', '')}</select>
         </label>
-        <label class="wide">ObservaÃ§Ãµes
+        <label class="wide">Observações
           <input name="notes" placeholder="Detalhes da tarefa">
         </label>
         <button type="submit">Criar tarefa</button>
@@ -8361,20 +8526,20 @@ pre {
     const movementRows = U.sortByDateDesc(currentMovements()).slice(0, 80).map((mov) => {
       const product = productById(mov.productId);
       return [
-        U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || 'â€”'),
+        U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || '—'),
         U.escapeHtml(mov.type),
         UI.productName(product),
         U.qty(mov.quantity, product?.unit),
         UI.moneyCell(mov.unitCost),
-        U.escapeHtml(mov.notes || 'â€”'),
+        U.escapeHtml(mov.notes || '—'),
       ];
     });
 
-    return UI.section('RelatÃ³rios', 'Leitura rÃ¡pida para revisÃ£o: custo de produto, estoque atual e movimentaÃ§Ãµes.', `
+    return UI.section('Relatórios', 'Leitura rápida para revisão: custo de produto, estoque atual e movimentações.', `
       <div class="three-columns">
-        <div class="panel-card"><h3>Produtos finais e preÃ§o</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'PreÃ§o sugerido', 'PreÃ§o usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
-        <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo mÃ©dio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
-        <div class="panel-card"><h3>Ãšltimas movimentaÃ§Ãµes</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentaÃ§Ã£o.')}</div>
+        <div class="panel-card"><h3>Produtos finais e preço</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'Preço sugerido', 'Preço usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
+        <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
+        <div class="panel-card"><h3>Últimas movimentações</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentação.')}</div>
       </div>
     `);
   }
@@ -8391,15 +8556,15 @@ pre {
     ]);
 
     const csvButtons = collections.map((collection) => {
-      const scope = collection.key === 'businesses' ? 'todos' : 'negÃ³cio ativo';
+      const scope = collection.key === 'businesses' ? 'todos' : 'negócio ativo';
       return `<button type="button" class="small secondary" data-io="export-csv" data-collection="${collection.key}">${U.escapeHtml(collection.sheet)} <span class="hint-inline">${scope}</span></button>`;
     }).join('');
 
-    return UI.section('Backup e exportaÃ§Ã£o', 'Salve, leve para outro computador ou abra seus dados no Excel. Os dados ficam apenas neste navegador â€” exporte com frequÃªncia.', `
+    return UI.section('Backup e exportação', 'Salve, leve para outro computador ou abra seus dados no Excel. Os dados ficam apenas neste navegador — exporte com frequência.', `
       <div class="export-grid">
         <article class="export-card highlight">
           <div class="export-card-head"><span class="export-tag">Recomendado</span><h3>Excel (.xlsx)</h3></div>
-          <p>Backup completo com uma aba por mÃ³dulo. Abre no Excel ou Google Sheets, pode ser editado e reimportado.</p>
+          <p>Backup completo com uma aba por módulo. Abre no Excel ou Google Sheets, pode ser editado e reimportado.</p>
           <div class="export-actions">
             <button type="button" data-io="export-xlsx">Baixar Excel completo</button>
             <label class="file-button">
@@ -8411,7 +8576,7 @@ pre {
 
         <article class="export-card">
           <div class="export-card-head"><h3>Backup JSON</h3></div>
-          <p>CÃ³pia tÃ©cnica fiel de tudo, incluindo configuraÃ§Ãµes. Ideal como backup de seguranÃ§a.</p>
+          <p>Cópia técnica fiel de tudo, incluindo configurações. Ideal como backup de segurança.</p>
           <div class="export-actions">
             <button type="button" class="secondary" data-io="export-json">Baixar JSON</button>
             <label class="file-button">
@@ -8422,24 +8587,24 @@ pre {
         </article>
 
         <article class="export-card">
-          <div class="export-card-head"><h3>CSV por mÃ³dulo</h3></div>
-          <p>Uma tabela por vez, para abrir em qualquer planilha ou enviar para alguÃ©m.</p>
+          <div class="export-card-head"><h3>CSV por módulo</h3></div>
+          <p>Uma tabela por vez, para abrir em qualquer planilha ou enviar para alguém.</p>
           <div class="export-actions wrap">${csvButtons}</div>
         </article>
       </div>
 
-      <div class="notice info">Importar substitui os dados atuais deste navegador. FaÃ§a um backup antes se tiver dÃºvida.</div>
+      <div class="notice info">Importar substitui os dados atuais deste navegador. Faça um backup antes se tiver dúvida.</div>
 
       <div class="panel-card">
-        <h3>O que estÃ¡ salvo agora</h3>
-        ${UI.table(['MÃ³dulo', 'Registros'], countRows, 'Nenhum dado ainda.')}
+        <h3>O que está salvo agora</h3>
+        ${UI.table(['Módulo', 'Registros'], countRows, 'Nenhum dado ainda.')}
       </div>
     `);
   }
 
   async function updateBusiness(data) {
     const business = S.activeBusiness();
-    if (!business) throw new Error('Sua conta ainda nÃ£o estÃ¡ vinculada a um negÃ³cio.');
+    if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
     await S.update('businesses', business.id, {
       name: data.name.trim(),
       segment: data.segment,
@@ -8472,7 +8637,7 @@ pre {
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.totalCost, 'Valor total');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const quantity = U.number(data.quantity);
     const totalCost = U.number(data.totalCost);
     const unitCost = totalCost / quantity;
@@ -8503,9 +8668,9 @@ pre {
 
   async function addRecipe(data) {
     U.assertPositive(data.quantityPerUnit, 'Quantidade por unidade');
-    if (data.finalProductId === data.inputProductId) throw new Error('Produto final nÃ£o pode consumir ele mesmo.');
+    if (data.finalProductId === data.inputProductId) throw new Error('Produto final não pode consumir ele mesmo.');
     const duplicate = currentRecipes().find((row) => row.finalProductId === data.finalProductId && row.inputProductId === data.inputProductId);
-    if (duplicate) throw new Error('Este item jÃ¡ existe na ficha tÃ©cnica. Exclua o anterior antes de lanÃ§ar novo valor.');
+    if (duplicate) throw new Error('Este item já existe na ficha técnica. Exclua o anterior antes de lançar novo valor.');
     await S.add('recipes', {
       finalProductId: data.finalProductId,
       inputProductId: data.inputProductId,
@@ -8516,9 +8681,9 @@ pre {
   async function addProduction(data) {
     U.assertPositive(data.quantity, 'Quantidade produzida');
     const finalProduct = productById(data.finalProductId);
-    if (!finalProduct) throw new Error('Produto final nÃ£o encontrado.');
+    if (!finalProduct) throw new Error('Produto final não encontrado.');
     const recipe = Calc.calculateRecipeCost(finalProduct.id, state());
-    if (!recipe.items.length) throw new Error('Produto final sem ficha tÃ©cnica.');
+    if (!recipe.items.length) throw new Error('Produto final sem ficha técnica.');
     const quantity = U.number(data.quantity);
 
     const shortages = recipe.items.filter((item) => U.number(item.input?.currentStock) < item.quantityPerUnit * quantity);
@@ -8542,7 +8707,7 @@ pre {
         quantity: -consumedQty,
         unitCost: U.number(item.input.avgCost),
         totalCost: -cost,
-        notes: `ProduÃ§Ã£o de ${finalProduct.name}`,
+        notes: `Produção de ${finalProduct.name}`,
       });
     }
 
@@ -8575,15 +8740,15 @@ pre {
     });
   }
 
-  // Vendedor logado tem um preÃ§o/piso especÃ­fico para este produto? (linha de
-  // seller_prices jÃ¡ carregada no cache pelo refresh â€” ver src/state.js).
+  // Vendedor logado tem um preço/piso específico para este produto? (linha de
+  // seller_prices já carregada no cache pelo refresh — ver src/state.js).
   function sellerPriceForProduct(productId) {
     return (state().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
   }
 
-  // Bloqueio client-side do piso de preÃ§o (UX): o trigger do banco (ver
-  // docs/backend.md Â§7) Ã© a garantia final, isto sÃ³ evita uma viagem ao
-  // servidor para descobrir que o preÃ§o estÃ¡ abaixo do piso.
+  // Bloqueio client-side do piso de preço (UX): o trigger do banco (ver
+  // docs/backend.md §7) é a garantia final, isto só evita uma viagem ao
+  // servidor para descobrir que o preço está abaixo do piso.
   function validateSaleFloor(data) {
     const user = S.getCurrentUser();
     if (!user || user.role !== 'vendedor') return;
@@ -8598,24 +8763,24 @@ pre {
 
   async function addSale(data, options = {}) {
     U.assertPositive(data.quantity, 'Quantidade');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
-    // Vendedor nÃ£o tem permissÃ£o (RLS) para dar baixa no estoque central nem
-    // registrar stock_movements do tipo saida_venda â€” sÃ³ admin controla o
-    // estoque central. Produto fÃ­sico vendido por vendedor precisa vir do
-    // prÃ³prio estoque (aba "Meu estoque", vira consignado), nÃ£o desta venda
+    if (!product) throw new Error('Produto não encontrado.');
+    // Vendedor não tem permissão (RLS) para dar baixa no estoque central nem
+    // registrar stock_movements do tipo saida_venda — só admin controla o
+    // estoque central. Produto físico vendido por vendedor precisa vir do
+    // próprio estoque (aba "Meu estoque", vira consignado), não desta venda
     // direta. Barrar aqui evita criar a venda e falhar depois no meio do
-    // fluxo (registro de venda Ã³rfÃ£o, sem baixa de estoque).
+    // fluxo (registro de venda órfão, sem baixa de estoque).
     if (!options.skipStockMovement && product.type !== 'servico') {
       const currentUser = S.getCurrentUser();
       if (currentUser && currentUser.role === 'vendedor') {
-        throw new Error('Vendedores vendem produtos fÃ­sicos pela aba "Meu estoque" (vira consignado). Aqui vocÃª sÃ³ pode lanÃ§ar vendas de serviÃ§os.');
+        throw new Error('Vendedores vendem produtos físicos pela aba "Meu estoque" (vira consignado). Aqui você só pode lançar vendas de serviços.');
       }
     }
     const quantity = U.number(data.quantity);
     if (product.type !== 'servico' && U.number(product.currentStock) < quantity && !options.skipStockCheck) {
-      throw new Error(`Estoque insuficiente. DisponÃ­vel: ${U.qty(product.currentStock, product.unit)}.`);
+      throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
     }
     const unitCost = options.unitCostOverride ?? U.number(product.avgCost);
     const math = Calc.saleMath({
@@ -8658,10 +8823,10 @@ pre {
     return sale;
   }
 
-  // Wrapper usado pelo #saleForm (lanÃ§amento manual de venda): valida o piso
-  // de preÃ§o do vendedor antes de chamar addSale. Fluxos internos (conversÃ£o
+  // Wrapper usado pelo #saleForm (lançamento manual de venda): valida o piso
+  // de preço do vendedor antes de chamar addSale. Fluxos internos (conversão
   // de pedido, baixa de consignado) chamam addSale diretamente, sem esta
-  // validaÃ§Ã£o extra, porque o preÃ§o jÃ¡ vem combinado/aprovado antes.
+  // validação extra, porque o preço já vem combinado/aprovado antes.
   async function submitSale(data) {
     validateSaleFloor(data);
     return addSale(data);
@@ -8669,14 +8834,14 @@ pre {
 
   async function addOrder(data) {
     U.assertPositive(data.quantity, 'Quantidade');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     await S.add('orders', {
       clientId: data.clientId || null,
       productId: data.productId,
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
       dueDate: data.dueDate || null,
-      status: data.status || 'pendente',
+      status: 'pendente',
       notes: data.notes || '',
       convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
@@ -8685,11 +8850,11 @@ pre {
 
   async function addConsignment(data) {
     U.assertPositive(data.quantitySent, 'Quantidade enviada');
-    U.assertPositive(data.unitPrice, 'PreÃ§o unitÃ¡rio');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
     const product = productById(data.productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const quantitySent = U.number(data.quantitySent);
-    if (U.number(product.currentStock) < quantitySent) throw new Error(`Estoque insuficiente. DisponÃ­vel: ${U.qty(product.currentStock, product.unit)}.`);
+    if (U.number(product.currentStock) < quantitySent) throw new Error(`Estoque insuficiente. Disponível: ${U.qty(product.currentStock, product.unit)}.`);
     const costAtSend = U.number(product.avgCost);
     await S.update('products', product.id, { currentStock: U.number(product.currentStock) - quantitySent });
     const record = await S.add('consignments', {
@@ -8756,7 +8921,7 @@ pre {
     try {
       switch (action) {
         case 'delete-product':
-          if (confirm('Excluir produto? As movimentaÃ§Ãµes antigas ficam no histÃ³rico com item removido.')) await deleteRecord('products', id);
+          if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
           break;
         case 'adjust-stock':
           await adjustStock(id);
@@ -8764,10 +8929,13 @@ pre {
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
-        case 'delete-order': await deleteRecord('orders', id); break;
+        case 'delete-order':
+          if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
+          await deleteRecord('orders', id);
+          break;
         case 'delete-task': await deleteRecord('tasks', id); break;
         case 'delete-consignment':
-          if (confirm('Excluir consignaÃ§Ã£o? Isso nÃ£o desfaz estoque automaticamente. Use apenas para correÃ§Ã£o manual/revisÃ£o.')) await deleteRecord('consignments', id);
+          if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
           break;
         case 'convert-order-sale':
           await convertOrderToSale(id);
@@ -8794,9 +8962,10 @@ pre {
   }
 
   async function convertOrderToSale(orderId) {
+    if (!S.isAdmin()) throw new Error('Somente o administrador pode alterar o status do pedido e baixar a venda.');
     const order = state().orders.find((item) => item.id === orderId);
-    if (!order) throw new Error('Pedido nÃ£o encontrado.');
-    if (order.convertedSaleId) throw new Error('Pedido jÃ¡ foi convertido em venda.');
+    if (!order) throw new Error('Pedido não encontrado.');
+    if (order.convertedSaleId) throw new Error('Pedido já foi convertido em venda.');
     const sale = await addSale({
       date: U.today(),
       channel: 'Pedido',
@@ -8807,22 +8976,22 @@ pre {
       discount: 0,
       fixedFees: 0,
       feePercent: 0,
-      notes: `Baixa automÃ¡tica do pedido ${order.id}`,
+      notes: `Baixa automática do pedido ${order.id}`,
     }, { origin: 'pedido', originId: order.id });
     await S.update('orders', order.id, { convertedSaleId: sale.id, status: 'despachado' });
   }
 
   async function consignmentSell(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const product = productById(item.productId);
-    if (!product) throw new Error('Produto da consignaÃ§Ã£o nÃ£o encontrado.');
+    if (!product) throw new Error('Produto da consignação não encontrado.');
     const available = Calc.consignmentAvailableWithClient(item);
-    const qtyText = prompt(`Quantidade vendida pelo cliente? DisponÃ­vel com cliente: ${U.qty(available, product?.unit)}`);
+    const qtyText = prompt(`Quantidade vendida pelo cliente? Disponível com cliente: ${U.qty(available, product?.unit)}`);
     if (qtyText === null) return;
     const quantity = U.number(qtyText);
     U.assertPositive(quantity, 'Quantidade vendida');
-    if (quantity > available) throw new Error('Quantidade maior que o disponÃ­vel com o cliente.');
+    if (quantity > available) throw new Error('Quantidade maior que o disponível com o cliente.');
     await addSale({
       date: U.today(),
       channel: 'Consignado',
@@ -8833,7 +9002,7 @@ pre {
       discount: 0,
       fixedFees: 0,
       feePercent: 0,
-      notes: `Venda informada na consignaÃ§Ã£o ${item.id}`,
+      notes: `Venda informada na consignação ${item.id}`,
     }, { skipStockMovement: true, skipStockCheck: true, unitCostOverride: item.costAtSend, origin: 'consignado', originId: item.id });
     await S.update('consignments', item.id, { quantitySold: U.number(item.quantitySold) + quantity });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'venda_cliente', date: U.today(), quantity, amount: quantity * U.number(item.unitPrice) });
@@ -8841,15 +9010,15 @@ pre {
 
   async function consignmentReturn(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const product = productById(item.productId);
-    if (!product) throw new Error('Produto da consignaÃ§Ã£o nÃ£o encontrado.');
+    if (!product) throw new Error('Produto da consignação não encontrado.');
     const available = Calc.consignmentAvailableWithClient(item);
-    const qtyText = prompt(`Quantidade devolvida? DisponÃ­vel com cliente: ${U.qty(available, product?.unit)}`);
+    const qtyText = prompt(`Quantidade devolvida? Disponível com cliente: ${U.qty(available, product?.unit)}`);
     if (qtyText === null) return;
     const quantity = U.number(qtyText);
     U.assertPositive(quantity, 'Quantidade devolvida');
-    if (quantity > available) throw new Error('Quantidade maior que o disponÃ­vel com o cliente.');
+    if (quantity > available) throw new Error('Quantidade maior que o disponível com o cliente.');
     await S.update('products', product.id, { currentStock: U.number(product.currentStock) + quantity });
     await S.update('consignments', item.id, { quantityReturned: U.number(item.quantityReturned) + quantity });
     await S.recordMovement({
@@ -8859,16 +9028,16 @@ pre {
       quantity,
       unitCost: U.number(item.costAtSend),
       totalCost: quantity * U.number(item.costAtSend),
-      notes: `DevoluÃ§Ã£o consignado ${item.id}`,
+      notes: `Devolução consignado ${item.id}`,
     });
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'devolucao', date: U.today(), quantity, amount: 0 });
   }
 
   async function consignmentPay(id) {
     const item = state().consignments.find((record) => record.id === id);
-    if (!item) throw new Error('ConsignaÃ§Ã£o nÃ£o encontrada.');
+    if (!item) throw new Error('Consignação não encontrada.');
     const open = Calc.consignmentOpenAmount(item);
-    if (open <= 0) throw new Error('NÃ£o hÃ¡ valor em aberto nesta consignaÃ§Ã£o.');
+    if (open <= 0) throw new Error('Não há valor em aberto nesta consignação.');
     const amountText = prompt(`Valor pago pelo cliente? Em aberto: ${U.money(open)}`);
     if (amountText === null) return;
     const amount = U.number(amountText);
@@ -8878,20 +9047,20 @@ pre {
     await S.add('consignmentEvents', { consignmentId: item.id, type: 'pagamento', date: U.today(), quantity: 0, amount });
   }
 
-  // CorreÃ§Ã£o de contagem/perda fora dos fluxos normais (compra, produÃ§Ã£o,
+  // Correção de contagem/perda fora dos fluxos normais (compra, produção,
   // venda, consignado): sempre gera stockMovements com type 'ajuste_manual'
-  // e motivo obrigatÃ³rio, nunca muda o estoque em silÃªncio (ver CLAUDE.md,
-  // regra "Estoque nunca deve ser alterado sem movimentaÃ§Ã£o").
+  // e motivo obrigatório, nunca muda o estoque em silêncio (ver CLAUDE.md,
+  // regra "Estoque nunca deve ser alterado sem movimentação").
   async function adjustStock(productId) {
     const product = productById(productId);
-    if (!product) throw new Error('Produto nÃ£o encontrado.');
+    if (!product) throw new Error('Produto não encontrado.');
     const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(product.currentStock, product.unit)}`);
     if (newQtyText === null) return;
     const newQty = U.number(newQtyText);
-    if (newQty < 0) throw new Error('Estoque nÃ£o pode ficar negativo.');
+    if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
     const diff = newQty - U.number(product.currentStock);
     if (diff === 0) return;
-    const reason = prompt('Motivo do ajuste (obrigatÃ³rio):');
+    const reason = prompt('Motivo do ajuste (obrigatório):');
     if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
     const unitCost = U.number(product.avgCost);
     await S.update('products', product.id, { currentStock: newQty });
@@ -8944,6 +9113,10 @@ pre {
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
+    // So admin altera status de pedido - a coluna ja nao e arrastavel para
+    // vendedor (readOnly em UI.kanban), isto e so defesa extra; o banco
+    // tambem bloqueia via trigger.
+    if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });
     } catch (error) {
@@ -8952,8 +9125,8 @@ pre {
     renderAll();
   }
 
-  // Alternativa ao arrastar-e-soltar (arrastar com o dedo nÃ£o dispara os
-  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartÃ£o,
+  // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
+  // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
   // ver UI.kanban() em src/ui.js.
   async function handleKanbanMove(event) {
     const select = event.target.closest('[data-kanban-move]');
@@ -8961,6 +9134,7 @@ pre {
     const board = select.closest('[data-kanban-type]');
     if (!board) return;
     const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    if (collection === 'orders' && !S.isAdmin()) return;
     const cardId = select.dataset.cardId;
     try {
       await S.update(collection, cardId, { status: select.value });
@@ -8970,7 +9144,7 @@ pre {
     renderAll();
   }
 
-  // ---------- Ajuda contextual (balÃ£o do Ã­cone "â“˜") ----------
+  // ---------- Ajuda contextual (balão do ícone "ⓘ") ----------
   let tipEl = null;
   function ensureTip() {
     if (tipEl) return tipEl;
@@ -8992,7 +9166,7 @@ pre {
     let left = r.left + r.width / 2 - tr.width / 2;
     left = Math.max(margin, Math.min(left, window.innerWidth - tr.width - margin));
     let top = r.top - tr.height - 8;
-    if (top < margin) top = r.bottom + 8; // sem espaÃ§o acima: mostra abaixo
+    if (top < margin) top = r.bottom + 8; // sem espaço acima: mostra abaixo
     tip.style.left = `${Math.round(left)}px`;
     tip.style.top = `${Math.round(top)}px`;
   }
@@ -9012,7 +9186,7 @@ pre {
       if (target) showTip(target);
     });
     document.addEventListener('focusout', hideTip);
-    // Toque fora do Ã­cone fecha o balÃ£o no celular.
+    // Toque fora do ícone fecha o balão no celular.
     document.addEventListener('click', (event) => {
       if (!event.target.closest('[data-tip]')) hideTip();
     });
@@ -9020,9 +9194,9 @@ pre {
     window.addEventListener('resize', hideTip);
   }
 
-  // SugestÃ£o/piso de preÃ§o no formulÃ¡rio de venda (vendedor): ao escolher o
-  // produto, prefixa o preÃ§o unitÃ¡rio com C360.calc.resolveSellerPrice(...) e
-  // mostra o piso efetivo. NÃ£o bloqueia digitaÃ§Ã£o livre â€” a validaÃ§Ã£o real
+  // Sugestão/piso de preço no formulário de venda (vendedor): ao escolher o
+  // produto, prefixa o preço unitário com C360.calc.resolveSellerPrice(...) e
+  // mostra o piso efetivo. Não bloqueia digitação livre — a validação real
   // acontece em validateSaleFloor() no submit (ver submitSale).
   function updateSalePriceHint(form) {
     const hint = form.querySelector('#salePriceHint');
@@ -9041,9 +9215,9 @@ pre {
       unitPriceInput.value = resolved.price;
     }
     const floorText = resolved.floor === null || resolved.floor === undefined
-      ? 'sem piso mÃ­nimo definido'
-      : `mÃ­nimo permitido: ${U.money(resolved.floor)}`;
-    hint.innerHTML = UI.formNotice(`PreÃ§o sugerido: ${U.money(resolved.price)} Â· ${floorText}`, 'info');
+      ? 'sem piso mínimo definido'
+      : `mínimo permitido: ${U.money(resolved.floor)}`;
+    hint.innerHTML = UI.formNotice(`Preço sugerido: ${U.money(resolved.price)} · ${floorText}`, 'info');
   }
 
   function handleSalePriceHint(event) {
@@ -9060,7 +9234,7 @@ pre {
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     els.btnReset.addEventListener('click', () => {
-      if (confirm('Zerar todos os dados locais deste navegador? FaÃ§a um backup antes.')) {
+      if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
         renderAll();
         toast('Dados locais zerados.', 'success');
@@ -9137,12 +9311,12 @@ pre {
   window.C360.app = { refresh: renderAll, toast };
 
   // ---------------------------------------------------------------------
-  // Bootstrap com portÃ£o de autenticaÃ§Ã£o (src/auth.js): a tela de login Ã©
-  // mostrada enquanto nÃ£o houver sessÃ£o vÃ¡lida; o dashboard/abas sÃ³ montam
+  // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
+  // mostrada enquanto não houver sessão válida; o dashboard/abas só montam
   // depois que C360.auth confirma o perfil (via restoreSession() ou o
-  // onSuccess do formulÃ¡rio de login). `bindEvents()` Ã© chamado sÃ³ uma vez,
-  // na primeira entrada â€” logout/login de novo nÃ£o rebinda os listeners
-  // globais (eles nÃ£o dependem de sessÃ£o para existir, sÃ³ a renderizaÃ§Ã£o
+  // onSuccess do formulário de login). `bindEvents()` é chamado só uma vez,
+  // na primeira entrada — logout/login de novo não rebinda os listeners
+  // globais (eles não dependem de sessão para existir, só a renderização
   // muda com applyRoleVisibility()).
   // ---------------------------------------------------------------------
   let eventsBound = false;
@@ -9184,7 +9358,7 @@ pre {
         authenticated = await window.C360.auth.restoreSession();
       }
     } catch (error) {
-      console.error('C360.app: erro ao restaurar sessÃ£o', error);
+      console.error('C360.app: erro ao restaurar sessão', error);
     }
     if (authenticated) {
       boot();

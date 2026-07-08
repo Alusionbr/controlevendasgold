@@ -436,11 +436,16 @@ Admin-only.
 | **approval_status** | **approvalStatus** | text — **NOVO**: `pendente_aprovacao`\|`aprovado`\|`rejeitado` |
 
 `status` (logística) só passa a ter efeito prático depois de
-`approval_status = 'aprovado'` — é uma convenção de fluxo de tela, o banco
-não bloqueia mudar `status` antes da aprovação (só bloqueia mudar
-`approval_status` por quem não é admin). O frontend deve tratar pedidos com
-`approval_status != 'aprovado'` como "aguardando aprovação", independente do
-`status` logístico.
+`approval_status = 'aprovado'` — é uma convenção de fluxo de tela. O frontend
+deve tratar pedidos com `approval_status != 'aprovado'` como "aguardando
+aprovação", independente do `status` logístico.
+
+**Desde a migração `0009_order_status_lock_and_stock_credits.sql`**: o
+trigger `enforce_order_approval_lock` também força `status = 'pendente'` em
+todo INSERT (não importa quem cria) e bloqueia qualquer UPDATE que mude
+`status` quando quem chama não é admin (`raise exception 'Somente admin pode
+alterar o status do pedido'`). Ou seja, criar pedido sempre nasce pendente, e
+só admin avança o status depois.
 
 ### consignments
 
@@ -608,6 +613,13 @@ Erro devolvido pelo PostgREST quando o preço fica abaixo do piso:
 - **DELETE é só admin** em tudo. Se alguma tela de vendedor precisar
   "excluir" (ex.: cliente cadastrado errado), hoje só dá para editar/inativar
   ou pedir para o admin apagar.
+- **Resolvido**: o botão "Excluir" de `orders` (que antes falhava
+  silenciosamente/com erro técnico para vendedor, já que a policy de DELETE
+  é só admin) agora só aparece na interface para o papel admin — junto com
+  "Baixar venda" e o Kanban arrastável, que a partir da migração `0009`
+  também são só-admin no pedido (ver seção 5, `orders`). `clients` e
+  `consignments` continuam com o mesmo gap documentado (decisão de produto
+  pendente).
 - **CORS da Edge Function está `*`** (aberto) — trocar por origem exata do
   GitHub Pages assim que o domínio publicado for conhecido (comentário
   `TODO` já deixado em `supabase/functions/create-seller/index.ts`).
@@ -621,12 +633,14 @@ Erro devolvido pelo PostgREST quando o preço fica abaixo do piso:
 
 A integracao de carrinho usa:
 
-- `seller_settings`: permissao por vendedor para estoque do admin, consignado e link publico.
-- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao.
+- `seller_settings`: permissao por vendedor para estoque do admin, consignado e link publico. Ganhou `stock_adjustment_credits integer default 0` (migração `0009`) — admin incrementa em 1 para liberar um acerto de estoque; o RPC `seller_adjust_own_stock` zera de novo depois de usado.
+- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao. `payment_mode` aceita `avista` | `consignado` | `parcial` (migração `0009` adicionou `parcial`).
 - `sale_cart_items`: itens do carrinho, quantidade solicitada e quantidade aprovada pelo admin.
+- `seller_stock_adjustments` (NOVA, migração `0009`): trilha de auditoria dos acertos de estoque próprio feitos pelo vendedor — `business_id, seller_id, product_id, previous_quantity, new_quantity, reason, created_at`. Admin lê tudo do próprio negócio; vendedor só as próprias linhas. Só é escrita pelo RPC abaixo (sem policy de INSERT direta).
 - `payment-proofs`: bucket privado do Supabase Storage para imagens/PDFs de comprovante.
 - `public.public_cart_lookup(token uuid)`: RPC publica que so retorna carrinhos `avista`, compartilhados e nao expirados.
 - `public.consume_seller_stock(product_id, quantity)`: RPC autenticada para baixar estoque proprio do vendedor sem permitir update livre em `seller_stock`.
+- `public.seller_adjust_own_stock(p_product_id, p_new_quantity, p_reason)` (NOVA, migração `0009`): RPC `security definer` autenticada — só funciona se `seller_settings.stock_adjustment_credits > 0` para quem chama; corrige `seller_stock` para `p_new_quantity`, grava `seller_stock_adjustments` e decrementa o crédito para 0. `p_reason` é obrigatório (erro se vazio).
 - Edge Function `public-cart`: endpoint previsto para cliente sem login consultar/enviar carrinho e comprovante. Precisa ser publicada no projeto antes do link publico aceitar envio de comprovante.
 
 Carrinho publico nao permite consignado. Se a origem for `admin_stock`, o envio vira `pending_approval`; se for `seller_stock`, vira `submitted` para o vendedor revisar/baixar estoque proprio.
