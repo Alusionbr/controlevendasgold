@@ -1,51 +1,51 @@
-﻿(function () {
+(function () {
   'use strict';
 
   window.C360 = window.C360 || {};
   const { uid, nowIso } = window.C360.utils;
 
   // ==========================================================================
-  // C360.state â€” cache em memÃ³ria alimentado por C360.api (Supabase), com
-  // espelho em localStorage sÃ³ para pintura instantÃ¢nea no reload (a rede Ã©
+  // C360.state — cache em memória alimentado por C360.api (Supabase), com
+  // espelho em localStorage só para pintura instantânea no reload (a rede é
   // sempre a fonte de verdade assim que `refresh()` resolve).
   //
-  // MIGRAÃ‡ÃƒO IMPORTANTE para quem integra com src/app.js: `add`, `addGlobal`,
-  // `update` e `remove` agora sÃ£o ASSÃNCRONOS (retornam Promise). Todo
+  // MIGRAÇÃO IMPORTANTE para quem integra com src/app.js: `add`, `addGlobal`,
+  // `update` e `remove` agora são ASSÍNCRONOS (retornam Promise). Todo
   // call-site em app.js que hoje faz `const rec = C360.state.add(...)` de
-  // forma sÃ­ncrona precisa virar `async function renderX/addX() { ... const
-  // rec = await C360.state.add(...); ... }`, e todo handler de formulÃ¡rio
+  // forma síncrona precisa virar `async function renderX/addX() { ... const
+  // rec = await C360.state.add(...); ... }`, e todo handler de formulário
   // (`form.addEventListener('submit', ...)`) precisa ser `async`. Ver
-  // relatÃ³rio do agente para a lista completa de pontos identificados em
+  // relatório do agente para a lista completa de pontos identificados em
   // src/app.js.
   //
   // Chaves do cache (getState()): igual ao shape antigo (schemaVersion 2)
   // MAIS: sellerPrices, sellerStock, salesGoals, goalsProgress, profile
-  // (perfil do usuÃ¡rio logado, singular), profiles (array â€” todos os perfis
-  // visÃ­veis ao usuÃ¡rio atual: para admin, todo mundo do negÃ³cio; para
-  // vendedor, sÃ³ a prÃ³pria linha) e sellers (alias de profiles filtrado por
-  // role === 'vendedor' â€” src/sellerStock.js lÃª `getState().profiles`
-  // diretamente, entÃ£o os dois nomes precisam existir).
+  // (perfil do usuário logado, singular), profiles (array — todos os perfis
+  // visíveis ao usuário atual: para admin, todo mundo do negócio; para
+  // vendedor, só a própria linha) e sellers (alias de profiles filtrado por
+  // role === 'vendedor' — src/sellerStock.js lê `getState().profiles`
+  // diretamente, então os dois nomes precisam existir).
   // ==========================================================================
 
-  const CACHE_KEY = 'controle360_cache_v1'; // novo espelho pÃ³s-refresh (fonte: rede)
-  const LEGACY_STORAGE_KEY = 'controle360_multi_v2'; // formato antigo (100% localStorage, prÃ© multi-usuÃ¡rio)
+  const CACHE_KEY = 'controle360_cache_v1'; // novo espelho pós-refresh (fonte: rede)
+  const LEGACY_STORAGE_KEY = 'controle360_multi_v2'; // formato antigo (100% localStorage, pré multi-usuário)
 
   const DEFAULT_SETTINGS = {
     productTypes: [
-      { value: 'materia_prima', label: 'MatÃ©ria-prima' },
-      { value: 'embalagem', label: 'Embalagem / vidro / rÃ³tulo / caixa' },
+      { value: 'materia_prima', label: 'Matéria-prima' },
+      { value: 'embalagem', label: 'Embalagem / vidro / rótulo / caixa' },
       { value: 'produto_final', label: 'Produto final produzido' },
       { value: 'mercadoria', label: 'Mercadoria comprada pronta' },
-      { value: 'kit', label: 'Kit / composiÃ§Ã£o' },
-      { value: 'servico', label: 'ServiÃ§o sem estoque fÃ­sico' },
+      { value: 'kit', label: 'Kit / composição' },
+      { value: 'servico', label: 'Serviço sem estoque físico' },
     ],
     units: ['un', 'kg', 'g', 'l', 'ml', 'pct', 'cx', 'm', 'cm'],
     businessSegments: [
-      'EssÃªncias aromÃ¡ticas',
+      'Essências aromáticas',
       'Alimentos / marmitas',
       'Revenda de mercadorias',
       'Consignado',
-      'ServiÃ§os com materiais',
+      'Serviços com materiais',
       'Outro',
     ],
     channels: ['Direto', 'WhatsApp', 'Instagram', 'Site', 'Marketplace', 'Consignado', 'Outro'],
@@ -54,7 +54,7 @@
       { value: 'em_preparo', label: 'Em preparo' },
       { value: 'pronto', label: 'Pronto' },
       { value: 'despachado', label: 'Despachado' },
-      { value: 'concluido', label: 'ConcluÃ­do' },
+      { value: 'concluido', label: 'Concluído' },
     ],
     taskStatuses: [
       { value: 'a_fazer', label: 'A fazer' },
@@ -86,7 +86,7 @@
       consignments: [],
       consignmentEvents: [],
       tasks: [],
-      // Novo (multi-usuÃ¡rio):
+      // Novo (multi-usuário):
       sellerPrices: [],
       sellerStock: [],
       salesGoals: [],
@@ -137,8 +137,8 @@
     }
   }
 
-  // Mantido por compatibilidade de nome (ver instruÃ§Ã£o de manter toda a API
-  // antiga funcionando); agora sÃ³ persiste o espelho de cache, nÃ£o Ã© mais a
+  // Mantido por compatibilidade de nome (ver instrução de manter toda a API
+  // antiga funcionando); agora só persiste o espelho de cache, não é mais a
   // fonte de verdade.
   function save() {
     persistCacheMirror();
@@ -165,7 +165,7 @@
 
   function ensureBusiness() {
     if (!state.activeBusinessId) {
-      throw new Error('Cadastre ou selecione um negÃ³cio antes de lanÃ§ar dados.');
+      throw new Error('Cadastre ou selecione um negócio antes de lançar dados.');
     }
   }
 
@@ -176,10 +176,10 @@
   }
 
   function setActiveBusiness(id) {
-    // Nota: no modelo multi-usuÃ¡rio cada perfil pertence a UM negÃ³cio sÃ³
-    // (profiles.business_id), entÃ£o isto deixa de escolher entre vÃ¡rios
-    // negÃ³cios do mesmo usuÃ¡rio â€” vira essencialmente um no-op fora do valor
-    // jÃ¡ vindo de profile.businessId. Mantido pela compatibilidade de API.
+    // Nota: no modelo multi-usuário cada perfil pertence a UM negócio só
+    // (profiles.business_id), então isto deixa de escolher entre vários
+    // negócios do mesmo usuário — vira essencialmente um no-op fora do valor
+    // já vindo de profile.businessId. Mantido pela compatibilidade de API.
     state.activeBusinessId = id || null;
     persistCacheMirror();
   }
@@ -193,8 +193,8 @@
   }
 
   // ---------------------------------------------------------------------
-  // camelCase <-> snake_case (independente do conversor de src/api.js â€” cada
-  // arquivo sÃ³ pode depender do que expÃµe publicamente, nÃ£o de internals).
+  // camelCase <-> snake_case (independente do conversor de src/api.js — cada
+  // arquivo só pode depender do que expõe publicamente, não de internals).
   // ---------------------------------------------------------------------
   function camelToSnakeKey(key) {
     return String(key).replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -223,12 +223,12 @@
   }
 
   // ---------------------------------------------------------------------
-  // Nome de coleÃ§Ã£o local (camelCase, shape antigo do app) <-> nome de
-  // tabela real no Postgres (snake_case). Chamadores que jÃ¡ passam o nome de
+  // Nome de coleção local (camelCase, shape antigo do app) <-> nome de
+  // tabela real no Postgres (snake_case). Chamadores que já passam o nome de
   // tabela snake_case diretamente (ex.: src/sellerStock.js chamando
   // `state.add('consignment_events', ...)`) continuam funcionando porque
-  // tableFor() devolve a prÃ³pria string quando ela nÃ£o Ã© uma chave conhecida
-  // do mapa (ou seja, jÃ¡ assume que Ã© o nome real da tabela).
+  // tableFor() devolve a própria string quando ela não é uma chave conhecida
+  // do mapa (ou seja, já assume que é o nome real da tabela).
   // ---------------------------------------------------------------------
   const TABLE_BY_COLLECTION = {
     businesses: 'businesses',
@@ -257,7 +257,7 @@
     return TABLE_BY_COLLECTION[collectionName] || collectionName;
   }
 
-  // Acha a chave do cache (array) correspondente ao nome de coleÃ§Ã£o recebido,
+  // Acha a chave do cache (array) correspondente ao nome de coleção recebido,
   // aceitando tanto o nome "local" camelCase (ex.: 'stockMovements') quanto o
   // nome de tabela snake_case (ex.: 'stock_movements' / 'consignment_events').
   function cacheKeyFor(collectionName) {
@@ -267,9 +267,9 @@
     return null;
   }
 
-  // ColeÃ§Ãµes cujas linhas pertencem a um vendedor (seller_id NOT NULL/():
-  // usado para auto-carimbar sellerId em add() quando quem estÃ¡ logado Ã©
-  // vendedor, do mesmo jeito que o add() sÃ­ncrono antigo carimbava
+  // Coleções cujas linhas pertencem a um vendedor (seller_id NOT NULL/():
+  // usado para auto-carimbar sellerId em add() quando quem está logado é
+  // vendedor, do mesmo jeito que o add() síncrono antigo carimbava
   // businessId automaticamente.
   const SELLER_OWNED_COLLECTIONS = new Set(['clients', 'sales', 'orders', 'consignments', 'saleCarts']);
 
@@ -331,13 +331,13 @@
     persistCacheMirror();
   }
 
-  // NOTA/gap de backend (ver relatÃ³rio do agente): `stock_movements` estÃ¡
-  // descrito em docs/backend.md Â§6 como admin-only (Ãºnica policy de RLS Ã©
-  // `stock_movements_all_admin`; nÃ£o existe policy de INSERT para
+  // NOTA/gap de backend (ver relatório do agente): `stock_movements` está
+  // descrito em docs/backend.md §6 como admin-only (única policy de RLS é
+  // `stock_movements_all_admin`; não existe policy de INSERT para
   // vendedor). Se um vendedor chamar recordMovement() hoje, o PostgREST
-  // devolve 401/permission denied â€” src/returns.js (recordDevolucao/
-  // recordDesperdicio) depende deste mÃ©todo tambÃ©m para o fluxo do
-  // vendedor, entÃ£o esta Ã© uma lacuna real a resolver no schema/RLS, nÃ£o
+  // devolve 401/permission denied — src/returns.js (recordDevolucao/
+  // recordDesperdicio) depende deste método também para o fluxo do
+  // vendedor, então esta é uma lacuna real a resolver no schema/RLS, não
   // algo que este arquivo possa contornar sozinho.
   async function recordMovement(payload) {
     ensureBusiness();
@@ -351,8 +351,8 @@
   }
 
   // ---------------------------------------------------------------------
-  // refresh() â€” repovoa o cache a partir de C360.api, de acordo com o papel
-  // do usuÃ¡rio logado.
+  // refresh() — repovoa o cache a partir de C360.api, de acordo com o papel
+  // do usuário logado.
   // ---------------------------------------------------------------------
   async function refreshAsAdmin(businessId) {
     const api = window.C360.api;
@@ -432,7 +432,7 @@
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
-    state.products = sellerProducts; // jÃ¡ camelCase (seller_products, sem custo)
+    state.products = sellerProducts; // já camelCase (seller_products, sem custo)
     state.clients = clients.map(toCamelCaseRow);
     state.sales = sales.map(toCamelCaseRow);
     state.orders = orders.map(toCamelCaseRow);
@@ -444,8 +444,8 @@
     state.saleCarts = saleCarts;
     state.saleCartItems = saleCartItems;
 
-    // Tabelas admin-only (RLS devolveria [] mesmo se chamÃ¡ssemos): evitamos
-    // o round-trip de rede e jÃ¡ deixamos vazio.
+    // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
+    // o round-trip de rede e já deixamos vazio.
     state.suppliers = [];
     state.purchases = [];
     state.stockMovements = [];
@@ -468,7 +468,7 @@
     if (!api || typeof api.getCurrentAuthUserId !== 'function') return;
 
     const userId = api.getCurrentAuthUserId();
-    if (!userId) return; // nÃ£o autenticado; getState() segue servindo o cache atual
+    if (!userId) return; // não autenticado; getState() segue servindo o cache atual
 
     const profile = await api.getProfile(userId);
     if (!profile) return;
@@ -477,8 +477,8 @@
     state.activeBusinessId = profile.businessId || null;
 
     if (!profile.businessId) {
-      // Perfil provisionado sem negÃ³cio ainda (bootstrap pendente) â€” nada
-      // mais para buscar alÃ©m do prÃ³prio perfil.
+      // Perfil provisionado sem negócio ainda (bootstrap pendente) — nada
+      // mais para buscar além do próprio perfil.
       persistCacheMirror();
       return;
     }
