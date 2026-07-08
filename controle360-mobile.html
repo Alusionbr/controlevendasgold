@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-5kCzBGfEPX71CBR+EGmO+U/6c5/xwhh6knuVon9FWVE=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-WwHMwSkuHpGK7YNvxo1q02cHi6eN9ozugAHUh0sBXjQ=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-nQM2xgD+Z7UplGkgVh70GsdXIPkt4DKwxRIJ6If3+/0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-5kCzBGfEPX71CBR+EGmO+U/6c5/xwhh6knuVon9FWVE=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-WwHMwSkuHpGK7YNvxo1q02cHi6eN9ozugAHUh0sBXjQ=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-IFobzKLV5NIBd25lhNbgjA/76Bqv1yztbLLCpolhXjQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -324,6 +324,137 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
+
+/* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
+   No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
+   no rodapé assume: 4 destinos principais por perfil + "Mais" para o
+   restante (gerados em src/app.js a partir do mesmo TAB_ORDER/TAB_LABELS
+   que alimenta .tabs, então não há lista duplicada). Acima de 720px volta
+   a valer a barra de abas horizontal de sempre. */
+.bottom-nav {
+  display: none;
+}
+@media (max-width: 720px) {
+  .bottom-nav {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav[hidden] { display: none; }
+  .tabs { display: none; }
+  #dashboard { display: none; }
+  .app-shell { padding-bottom: 5.2rem; }
+}
+.bottom-nav-set {
+  display: flex;
+}
+.bottom-nav-set[hidden] { display: none; }
+.bottom-nav-item {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  min-height: 56px;
+  padding: 0.4rem 0.2rem;
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 0.76rem;
+}
+.bottom-nav-item.active { color: var(--accent-deep); background: var(--accent-soft); }
+.bottom-nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Menu "Mais" (sheet mobile) ---------- */
+.more-menu[hidden] { display: none; }
+.more-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+}
+.more-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.more-menu-sheet {
+  position: relative;
+  width: 100%;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0));
+  box-shadow: var(--shadow);
+}
+.more-menu-sheet header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.more-menu-role[hidden] { display: none; }
+.more-menu-role {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.more-menu-item {
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+}
+.more-menu-item.active { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
+
+@media (min-width: 721px) {
+  .more-menu { display: none !important; }
+}
+
+/* ---------- Tela "Hoje" ---------- */
+.today-screen { display: flex; flex-direction: column; gap: 1.2rem; }
+.today-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+.today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
+.quick-action {
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+.today-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.today-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.today-list li:last-child { border-bottom: 0; }
 
 /* ---------- Seções ---------- */
 .view { display: block; }
@@ -1093,6 +1224,18 @@ pre {
 .calc-floating-panel[hidden] { display: none; }
 .calc-floating-panel .calculator-page { display: block; }
 .calc-floating-panel .three-columns { grid-template-columns: 1fr; }
+
+/* No celular a bottom-nav ocupa a faixa inferior da tela: empurra a
+   calculadora flutuante para cima dela, senão o botão redondo cobre o
+   último item da barra (ex.: "Mais") e bloqueia o toque. */
+@media (max-width: 720px) {
+  .calc-fab {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem));
+  }
+  .calc-floating-panel {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem) + 68px);
+  }
+}
 .calc-floating-head {
   display: flex;
   align-items: center;
@@ -1180,31 +1323,23 @@ pre {
 
     <section id="dashboard" class="dashboard"></section>
 
-    <nav class="tabs" aria-label="Módulos do sistema">
-      <button class="tab-button active" data-tab="negocios">Negócios</button>
-      <button class="tab-button" data-tab="produtos">Produtos</button>
-      <button class="tab-button" data-tab="clientes">Clientes</button>
-      <button class="tab-button" data-tab="fornecedores">Fornecedores</button>
-      <button class="tab-button" data-tab="compras">Compras</button>
-      <button class="tab-button" data-tab="fichas">Fichas e custos</button>
-      <button class="tab-button" data-tab="producao">Produção</button>
-      <button class="tab-button" data-tab="vendas">Vendas</button>
-      <button class="tab-button" data-tab="pedidos">Pedidos</button>
-      <button class="tab-button" data-tab="consignado">Consignado</button>
-      <button class="tab-button" data-tab="estoque">Meu estoque</button>
-      <button class="tab-button" data-tab="tarefas">Tarefas</button>
-      <button class="tab-button" data-tab="relatorios">Relatórios</button>
-      <button class="tab-button" data-tab="vendedores">Vendedores</button>
-      <button class="tab-button" data-tab="precos">Preços</button>
-      <button class="tab-button" data-tab="aprovacoes">Aprovações</button>
-      <button class="tab-button" data-tab="calculadora">Calculadora</button>
-      <button class="tab-button" data-tab="metas">Metas</button>
-      <button class="tab-button" data-tab="ajuda">Ajuda</button>
-      <button class="tab-button" data-tab="dados">Dados</button>
-    </nav>
+    <nav class="tabs" id="tabsBar" aria-label="Módulos do sistema"></nav>
 
     <section id="view" class="view"></section>
   </main>
+
+  <nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal" hidden></nav>
+
+  <div class="more-menu" id="moreMenu" hidden>
+    <div class="more-menu-backdrop" data-more-menu-close></div>
+    <div class="more-menu-sheet" role="dialog" aria-modal="true" aria-label="Mais opções">
+      <header>
+        <strong>Mais</strong>
+        <button type="button" class="ghost small" data-more-menu-close aria-label="Fechar">Fechar</button>
+      </header>
+      <div class="more-menu-list" id="moreMenuList"></div>
+    </div>
+  </div>
 
   <template id="emptyStateTemplate">
     <div class="empty-state">
@@ -7704,35 +7839,47 @@ pre {
   const Calc = window.C360.calc;
   const UI = window.C360.ui;
 
-  const els = {
-    view: document.getElementById('view'),
-    dashboard: document.getElementById('dashboard'),
-    activeBusiness: document.getElementById('activeBusiness'),
-    btnExport: document.getElementById('btnExport'),
-    btnDataTab: document.getElementById('btnDataTab'),
-    btnReset: document.getElementById('btnReset'),
-    btnLogout: document.getElementById('btnLogout'),
-    toastHost: document.getElementById('toastHost'),
-    headerActions: document.getElementById('headerActions'),
-    appShell: document.getElementById('appShell'),
-    authRoot: document.getElementById('authRoot'),
-    businessBar: document.querySelector('.business-bar'),
-    tabs: [...document.querySelectorAll('.tab-button')],
+  // ---------------------------------------------------------------------
+  // Navegação: fonte única de abas (ordem + rótulo + papéis permitidos).
+  // A barra de abas do desktop, a bottom-nav mobile e o menu "Mais" são
+  // todos gerados a partir deste mapa, em vez de listas duplicadas em
+  // index.html e aqui (fonte antiga do bug de dessincronização).
+  // ---------------------------------------------------------------------
+  const TAB_ORDER = [
+    'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
+    'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
+    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes',
+    'calculadora', 'metas', 'ajuda', 'dados',
+  ];
+
+  const TAB_LABELS = {
+    hoje: 'Hoje',
+    negocios: 'Negócios',
+    produtos: 'Produtos',
+    clientes: 'Clientes',
+    fornecedores: 'Fornecedores',
+    compras: 'Compras',
+    fichas: 'Fichas e custos',
+    producao: 'Produção',
+    vendas: 'Vendas',
+    pedidos: 'Pedidos',
+    consignado: 'Consignado',
+    estoque: 'Meu estoque',
+    tarefas: 'Tarefas',
+    relatorios: 'Relatórios',
+    vendedores: 'Vendedores',
+    precos: 'Preços',
+    aprovacoes: 'Aprovações',
+    calculadora: 'Calculadora',
+    metas: 'Metas',
+    ajuda: 'Ajuda',
+    dados: 'Dados',
   };
 
-  let activeTab = 'negocios';
-  const todayDate = new Date();
-  let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
-  let dashboardEnd = U.today();
-  let draggedCard = null;
-  let openReturnsSaleId = null;
-
-  // ---------------------------------------------------------------------
-  // Visibilidade de abas por papel (defesa em profundidade: a RLS do banco
-  // já bloqueia o acesso real, isto só evita que a interface ofereça botões
-  // que dariam erro de permissão para um vendedor).
-  // ---------------------------------------------------------------------
+  // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
+  // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
+    hoje: ['admin', 'vendedor'],
     negocios: ['admin'],
     produtos: ['admin'],
     clientes: ['admin', 'vendedor'],
@@ -7755,6 +7902,83 @@ pre {
     dados: ['admin'],
   };
 
+  // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
+  // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  const BOTTOM_NAV_PRIMARY = {
+    admin: ['hoje', 'vendas', 'clientes', 'produtos'],
+    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+  };
+  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque' };
+
+  function buildTabsBar() {
+    const bar = document.getElementById('tabsBar');
+    if (!bar) return;
+    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+  }
+
+  function buildBottomNav() {
+    const nav = document.getElementById('bottomNav');
+    if (!nav) return;
+    nav.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
+      const items = BOTTOM_NAV_PRIMARY[role].map((tab) => `
+        <button type="button" class="bottom-nav-item" data-tab="${tab}">
+          <span class="bottom-nav-label">${U.escapeHtml(BOTTOM_NAV_SHORT_LABELS[tab] || TAB_LABELS[tab])}</span>
+        </button>
+      `).join('');
+      return `
+        <div class="bottom-nav-set" data-role-set="${role}" hidden>
+          ${items}
+          <button type="button" class="bottom-nav-item" data-more-menu-open>
+            <span class="bottom-nav-label">Mais</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function buildMoreMenu() {
+    const list = document.getElementById('moreMenuList');
+    if (!list) return;
+    list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
+      const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
+      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      return `
+        <div class="more-menu-role" data-role-set="${role}" hidden>
+          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+        </div>
+      `;
+    }).join('');
+  }
+
+  buildTabsBar();
+  buildBottomNav();
+  buildMoreMenu();
+
+  const els = {
+    view: document.getElementById('view'),
+    dashboard: document.getElementById('dashboard'),
+    activeBusiness: document.getElementById('activeBusiness'),
+    btnExport: document.getElementById('btnExport'),
+    btnDataTab: document.getElementById('btnDataTab'),
+    btnReset: document.getElementById('btnReset'),
+    btnLogout: document.getElementById('btnLogout'),
+    toastHost: document.getElementById('toastHost'),
+    headerActions: document.getElementById('headerActions'),
+    appShell: document.getElementById('appShell'),
+    authRoot: document.getElementById('authRoot'),
+    businessBar: document.querySelector('.business-bar'),
+    tabs: [...document.querySelectorAll('.tab-button')],
+    bottomNav: document.getElementById('bottomNav'),
+    moreMenu: document.getElementById('moreMenu'),
+  };
+
+  let activeTab = 'hoje';
+  const todayDate = new Date();
+  let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
+  let dashboardEnd = U.today();
+  let draggedCard = null;
+  let openReturnsSaleId = null;
+
   function currentRole() {
     const user = S.getCurrentUser();
     return user ? user.role : 'admin';
@@ -7766,7 +7990,21 @@ pre {
   }
 
   function firstAllowedTab() {
-    return els.tabs.map((button) => button.dataset.tab).find(tabAllowed) || 'vendas';
+    return TAB_ORDER.find(tabAllowed) || 'hoje';
+  }
+
+  function syncActiveNav() {
+    document.querySelectorAll('.tab-button, .bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
+      button.classList.toggle('active', button.dataset.tab === activeTab);
+    });
+  }
+
+  function openMoreMenu() {
+    if (els.moreMenu) els.moreMenu.hidden = false;
+  }
+
+  function closeMoreMenu() {
+    if (els.moreMenu) els.moreMenu.hidden = true;
   }
 
   function applyRoleVisibility() {
@@ -7776,10 +8014,20 @@ pre {
       button.hidden = !allowed;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    if (els.bottomNav) {
+      els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
+        node.hidden = node.dataset.roleSet !== role;
+      });
+    }
+    if (els.moreMenu) {
+      els.moreMenu.querySelectorAll('.more-menu-role').forEach((node) => {
+        node.hidden = node.dataset.roleSet !== role;
+      });
+    }
     if (!tabAllowed(activeTab)) {
       activeTab = firstAllowedTab();
-      els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
     }
+    syncActiveNav();
   }
 
   function state() {
@@ -7848,16 +8096,100 @@ pre {
     `;
   }
 
+  // Tela "Hoje" — abertura padrão da navegação mobile (ver
+  // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
+  // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
+  // ações rápidas e listas curtas para não exigir rolar as abas completas.
+  function renderToday() {
+    const isAdminUser = S.isAdmin();
+    const todayStr = U.today();
+    const sales = currentSales();
+    const todaySales = sales.filter((sale) => sale.date === todayStr);
+    const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales });
+    const stockMetrics = Calc.businessMetrics(state());
+
+    const quickActions = isAdminUser
+      ? [
+          { tab: 'vendas', label: 'Nova venda' },
+          { tab: 'clientes', label: 'Novo cliente' },
+          { tab: 'produtos', label: 'Estoque' },
+          { tab: 'aprovacoes', label: 'Aprovações' },
+        ]
+      : [
+          { tab: 'vendas', label: 'Vender' },
+          { tab: 'clientes', label: 'Novo cliente' },
+          { tab: 'estoque', label: 'Meu estoque' },
+          { tab: 'pedidos', label: 'Meus pedidos' },
+        ];
+
+    const recentSales = U.sortByDateDesc(sales).slice(0, 5);
+    const recentSalesHtml = recentSales.length
+      ? `<ul class="today-list">${recentSales.map((sale) => {
+          const product = productById(sale.productId);
+          const client = clientById(sale.clientId);
+          const label = `${U.escapeHtml(product ? product.name : 'Produto removido')}${client ? ' · ' + U.escapeHtml(client.name) : ''}`;
+          return `<li><span>${label}</span><strong>${U.money(sale.netRevenue)}</strong></li>`;
+        }).join('')}</ul>`
+      : UI.formNotice('Nenhuma venda registrada ainda.', '');
+
+    const lowStockProducts = currentProducts()
+      .filter((product) => U.number(product.minStock) > 0 && U.number(product.currentStock) <= U.number(product.minStock))
+      .slice(0, 5);
+    const lowStockHtml = lowStockProducts.length
+      ? `<ul class="today-list">${lowStockProducts.map((product) => `<li><span>${U.escapeHtml(product.name)}</span>${UI.stockCell(product)}</li>`).join('')}</ul>`
+      : UI.formNotice('Nenhum produto abaixo do estoque mínimo.', 'success');
+
+    return `
+      <div class="today-screen">
+        <div class="dashboard">
+          ${[
+            UI.metric(isAdminUser ? 'Vendas hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+            UI.metric('Lucro bruto hoje', U.money(todayMetrics.grossProfit), 'lucroBruto'),
+            isAdminUser
+              ? UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque')
+              : UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+            UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+          ].join('')}
+        </div>
+
+        <section class="today-section">
+          <h3>Ações rápidas</h3>
+          <div class="quick-actions">
+            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
+          </div>
+        </section>
+
+        <section class="today-section">
+          <h3>Últimas vendas</h3>
+          ${recentSalesHtml}
+        </section>
+
+        <section class="today-section">
+          <h3>${isAdminUser ? 'Estoque crítico' : 'Meu estoque baixo'}</h3>
+          ${lowStockHtml}
+        </section>
+      </div>
+    `;
+  }
+
   function setTab(tab) {
     activeTab = tab;
-    els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === tab));
+    syncActiveNav();
+    closeMoreMenu();
     renderTab();
+  }
+
+  function handleQuickAction(event) {
+    const trigger = event.target.closest('.quick-action[data-tab]');
+    if (!trigger) return;
+    setTab(trigger.dataset.tab);
   }
 
   // Abas "clássicas": a função devolve uma string HTML, que é jogada em
   // els.view.innerHTML e usa o delegador global de cliques/submits (handleClick/
   // handleSubmit) definido mais abaixo neste arquivo.
   const LEGACY_RENDERERS = {
+    hoje: renderToday,
     negocios: renderBusinesses,
     produtos: renderProducts,
     clientes: renderClients,
@@ -7881,7 +8213,7 @@ pre {
   function renderTab() {
     if (!tabAllowed(activeTab)) {
       activeTab = firstAllowedTab();
-      els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
+      syncActiveNav();
     }
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
@@ -9230,6 +9562,14 @@ pre {
   function bindEvents() {
     bindHelpTips();
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
+      button.addEventListener('click', () => setTab(button.dataset.tab));
+    });
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('[data-more-menu-open]')) openMoreMenu();
+      if (event.target.closest('[data-more-menu-close]')) closeMoreMenu();
+    });
+    document.addEventListener('click', handleQuickAction);
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
@@ -9325,11 +9665,14 @@ pre {
     if (els.authRoot) els.authRoot.innerHTML = '';
     if (els.appShell) els.appShell.hidden = false;
     if (els.headerActions) els.headerActions.hidden = false;
+    if (els.bottomNav) els.bottomNav.hidden = false;
   }
 
   function showLogin() {
     if (els.appShell) els.appShell.hidden = true;
     if (els.headerActions) els.headerActions.hidden = true;
+    if (els.bottomNav) els.bottomNav.hidden = true;
+    closeMoreMenu();
     if (els.authRoot && window.C360.auth) {
       els.authRoot.innerHTML = window.C360.auth.render();
       window.C360.auth.mount(els.authRoot, { onSuccess: boot });
@@ -9339,7 +9682,6 @@ pre {
   function boot() {
     showAppShell();
     activeTab = firstAllowedTab();
-    els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
     if (!eventsBound) {
       bindEvents();
       eventsBound = true;

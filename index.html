@@ -34,31 +34,23 @@
 
     <section id="dashboard" class="dashboard"></section>
 
-    <nav class="tabs" aria-label="Módulos do sistema">
-      <button class="tab-button active" data-tab="negocios">Negócios</button>
-      <button class="tab-button" data-tab="produtos">Produtos</button>
-      <button class="tab-button" data-tab="clientes">Clientes</button>
-      <button class="tab-button" data-tab="fornecedores">Fornecedores</button>
-      <button class="tab-button" data-tab="compras">Compras</button>
-      <button class="tab-button" data-tab="fichas">Fichas e custos</button>
-      <button class="tab-button" data-tab="producao">Produção</button>
-      <button class="tab-button" data-tab="vendas">Vendas</button>
-      <button class="tab-button" data-tab="pedidos">Pedidos</button>
-      <button class="tab-button" data-tab="consignado">Consignado</button>
-      <button class="tab-button" data-tab="estoque">Meu estoque</button>
-      <button class="tab-button" data-tab="tarefas">Tarefas</button>
-      <button class="tab-button" data-tab="relatorios">Relatórios</button>
-      <button class="tab-button" data-tab="vendedores">Vendedores</button>
-      <button class="tab-button" data-tab="precos">Preços</button>
-      <button class="tab-button" data-tab="aprovacoes">Aprovações</button>
-      <button class="tab-button" data-tab="calculadora">Calculadora</button>
-      <button class="tab-button" data-tab="metas">Metas</button>
-      <button class="tab-button" data-tab="ajuda">Ajuda</button>
-      <button class="tab-button" data-tab="dados">Dados</button>
-    </nav>
+    <nav class="tabs" id="tabsBar" aria-label="Módulos do sistema"></nav>
 
     <section id="view" class="view"></section>
   </main>
+
+  <nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal" hidden></nav>
+
+  <div class="more-menu" id="moreMenu" hidden>
+    <div class="more-menu-backdrop" data-more-menu-close></div>
+    <div class="more-menu-sheet" role="dialog" aria-modal="true" aria-label="Mais opções">
+      <header>
+        <strong>Mais</strong>
+        <button type="button" class="ghost small" data-more-menu-close aria-label="Fechar">Fechar</button>
+      </header>
+      <div class="more-menu-list" id="moreMenuList"></div>
+    </div>
+  </div>
 
   <template id="emptyStateTemplate">
     <div class="empty-state">
