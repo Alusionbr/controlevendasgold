@@ -97,6 +97,8 @@
       // Fase 3 (conta corrente do vendedor):
       sellerAccountEntries: [],
       sellerPayments: [],
+      // Fase 4 (devolução com status, desperdício, brinde):
+      operationalMovements: [],
       profile: null,
       profiles: [],
       sellers: [],
@@ -255,6 +257,7 @@
     saleCartItems: 'sale_cart_items',
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
+    operationalMovements: 'operational_movements',
     profiles: 'profiles',
   };
 
@@ -276,7 +279,7 @@
   // usado para auto-carimbar sellerId em add() quando quem está logado é
   // vendedor, do mesmo jeito que o add() síncrono antigo carimbava
   // businessId automaticamente.
-  const SELLER_OWNED_COLLECTIONS = new Set(['clients', 'sales', 'orders', 'consignments', 'saleCarts']);
+  const SELLER_OWNED_COLLECTIONS = new Set(['clients', 'sales', 'orders', 'consignments', 'saleCarts', 'operationalMovements']);
 
   async function add(collectionName, payload) {
     ensureBusiness();
@@ -365,7 +368,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments,
+      sellerAccountEntries, sellerPayments, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -388,6 +391,7 @@
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -412,6 +416,7 @@
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),
@@ -426,7 +431,7 @@
     const [
       businesses, sellerProducts, clients, sales, orders, consignments,
       consignmentEvents, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments,
+      sellerAccountEntries, sellerPayments, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -442,6 +447,7 @@
       api.listSaleCartItems({ business_id: businessId }),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
+      api.list('operational_movements', { seller_id: userId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -458,6 +464,7 @@
     state.saleCartItems = saleCartItems;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
     // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
     // o round-trip de rede e já deixamos vazio.

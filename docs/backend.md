@@ -655,3 +655,16 @@ Ver `docs/replication-v1/04-fase3-ledger-vendedor.md` para o desenho completo.
 - `seller_payments`: pagamentos fracionados recebidos (`business_id, seller_id, amount, payment_date, method, proof_url, notes, received_by, created_at`). Cada pagamento também gera um lançamento `payment`/`credit` correspondente (feito pelo frontend nas duas chamadas seguidas, `src/sellerLedger.js` `mountAdmin`).
 - RLS: `*_all_admin` (admin lê/escreve tudo do próprio negócio) + `seller_id = auth.uid()` só de leitura para vendedor. **Sem** policy de INSERT/UPDATE para vendedor — toda escrita é ação do admin (registrar pagamento) ou acontece dentro da aprovação de carrinho (`C360.salesCart.approveCart`, que roda no contexto do admin logado). "Vendedor informar pagamento" ficou fora de escopo desta fase (decisão registrada no doc acima).
 - O débito de reposição (`debit_replenishment`) é lançado por item, na aprovação de carrinho consignado/parcial, sobre `itemTotal - itemPaid` (a fatia proporcional do `paid_initial_amount` já pago) — nunca sobre o valor solicitado, só o aprovado.
+
+---
+
+## Devolução com status, desperdício e brinde — migração `0012`
+
+Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
+
+- `operational_movements`: `business_id, type (return|waste|gift), status, product_id, quantity_declared, quantity_received, seller_id, client_id, reason, notes, affects_stock, affects_finance, unit_value, total_value, created_by, approved_by, created_at, updated_at, confirmed_at`.
+- `status` de `return`: `a_devolver | enviado | recebido | devolvido | devolvido_parcialmente | recusado`. `status` de `waste`/`gift`: `pending | confirmed | cancelled`.
+- **Regra central**: `a_devolver`/`pending` não afeta estoque nem financeiro. Só a conferência (sempre ação do admin, via `C360.operationalMovements.confirmMovement`) dispara o impacto — trigger `enforce_operational_movement_lock` bloqueia UPDATE de `status` por quem não é admin.
+- RLS: `*_all_admin` + vendedor só `select`/`insert` do próprio (`seller_id = auth.uid()`), e o `insert` só é aceito com `status in ('a_devolver', 'pending')` — vendedor nunca confere.
+- `stock_movements.type` ganhou `saida_brinde` (mesma migração). `return` confirmado sempre gera `entrada_devolucao_consignado` (mercadoria volta ao estoque central); `waste`/`gift` só geram `stock_movements` quando a origem é o estoque central do admin (`seller_id` nulo) — quando a origem é o estoque do vendedor, a baixa acontece só em `seller_stock` (o central já tinha sido debitado no envio consignado).
+- Sem RPC `SECURITY DEFINER`: confirmar é sempre uma ação do admin logado, que já tem RLS de escrita em `products`/`stock_movements`/`seller_stock`/`seller_account_entries` via `*_all_admin` — mesmo padrão de `C360.salesCart.approveCart`.

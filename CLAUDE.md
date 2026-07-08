@@ -472,6 +472,8 @@ essas informações aqui — só resumir o que muda no comportamento do app.
 | Aprovações | admin | `src/salesCart.js` (`mountApprovals`, reposição em carrinhos) + `src/sellerStock.js` (`mountGrantStock`, concessão direta de estoque) |
 | Débitos dos vendedores | admin | `src/sellerLedger.js` (`mountAdmin`) |
 | Meu saldo com admin | vendedor | `src/sellerLedger.js` (`mountSeller`) |
+| Devoluções, desperdícios e brindes | admin | `src/operationalMovements.js` (`mountAdmin`, fila de conferência) |
+| Devoluções e brindes | vendedor | `src/operationalMovements.js` (`mountSeller`, solicitar + acompanhar) |
 | Meu estoque | vendedor | `src/sellerStock.js` (`mountMyStock`) |
 | Calculadora | admin + vendedor | `src/calculator.js` |
 | Metas | admin + vendedor | `src/goals.js` (`mountAdmin`/`mountSeller` conforme o papel) |
@@ -587,7 +589,19 @@ nestas áreas). Fases 1–3 implementadas:
   enxerga o próprio saldo ("Meu saldo com admin"), sem escrita — decisão
   registrada em `docs/replication-v1/04-fase3-ledger-vendedor.md`.
 
-**Pendente**: Fase 4 (devoluções com status, desperdício, brinde), Fase 5
-(relatórios) e Fase 6 (revisão de segurança Supabase). Migrations `0010` e
-`0011` foram escritas mas podem não ter sido aplicadas ainda — conferir com
-`mcp__Supabase__list_migrations` antes de assumir que já rodaram.
+- **Fase 4 (devolução com status, desperdício, brinde)**: nova tabela
+  `operational_movements` (migração `0012`) + `src/operationalMovements.js`.
+  Distinto de `src/returns.js` (devolução/desperdício **imediatos** a partir
+  de uma venda direta): este módulo é para mercadoria física com o vendedor
+  (reposição/consignado) voltando, se perdendo ou virando brinde. Regra
+  central: status `a_devolver`/`pending` não mexe em estoque nem
+  financeiro — só a conferência do admin dispara o impacto (baixa em
+  `seller_stock` ou `products.current_stock`, `stock_movements` quando
+  aplicável, e `return_credit` no ledger da Fase 3 se marcado "abater da
+  dívida"). Vendedor só cria a solicitação; nunca confere (trigger de banco
+  bloqueia).
+
+**Pendente**: Fase 5 (relatórios) e Fase 6 (revisão de segurança Supabase).
+Migrations `0010`, `0011` e `0012` foram escritas mas podem não ter sido
+aplicadas ainda — conferir com `mcp__Supabase__list_migrations` antes de
+assumir que já rodaram.

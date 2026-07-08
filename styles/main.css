@@ -1128,7 +1128,7 @@ pre {
 }
 .cart-total span { color: var(--muted); font-weight: 700; }
 .cart-total strong { font-size: 1.35rem; font-family: var(--num); color: var(--ink); }
-.approval-cart-list { display: grid; gap: 0.9rem; }
+.approval-cart-list, .om-admin-list { display: grid; gap: 0.9rem; }
 .approval-cart-card {
   background: var(--surface);
   border: 1px solid var(--accent-border-soft);

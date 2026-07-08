@@ -16,7 +16,8 @@
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes', 'debitos',
-    'meusaldo', 'calculadora', 'metas', 'ajuda', 'dados',
+    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
+    'ajuda', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -39,6 +40,8 @@
     aprovacoes: 'Aprovações',
     debitos: 'Débitos dos vendedores',
     meusaldo: 'Meu saldo com admin',
+    devolucoes: 'Devoluções, desperdícios e brindes',
+    minhasdevolucoes: 'Devoluções e brindes',
     calculadora: 'Calculadora',
     metas: 'Metas',
     ajuda: 'Ajuda',
@@ -67,6 +70,8 @@
     aprovacoes: ['admin'],
     debitos: ['admin'],
     meusaldo: ['vendedor'],
+    devolucoes: ['admin'],
+    minhasdevolucoes: ['vendedor'],
     calculadora: ['admin', 'vendedor'],
     metas: ['admin', 'vendedor'],
     ajuda: ['vendedor'],
@@ -435,6 +440,18 @@
         els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
         if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
           window.C360.sellerLedger.mountSeller(document.getElementById('sellerLedgerPanel'));
+        }
+        break;
+      case 'devolucoes':
+        els.view.innerHTML = '<div id="operationalMovementsAdminPanel"></div>';
+        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountAdmin === 'function') {
+          window.C360.operationalMovements.mountAdmin(document.getElementById('operationalMovementsAdminPanel'), { onDone: renderAll });
+        }
+        break;
+      case 'minhasdevolucoes':
+        els.view.innerHTML = '<div id="operationalMovementsPanel"></div>';
+        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountSeller === 'function') {
+          window.C360.operationalMovements.mountSeller(document.getElementById('operationalMovementsPanel'));
         }
         break;
       case 'estoque':
