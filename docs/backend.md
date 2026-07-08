@@ -644,3 +644,14 @@ A integracao de carrinho usa:
 - Edge Function `public-cart`: endpoint previsto para cliente sem login consultar/enviar carrinho e comprovante. Precisa ser publicada no projeto antes do link publico aceitar envio de comprovante.
 
 Carrinho publico nao permite consignado. Se a origem for `admin_stock`, o envio vira `pending_approval`; se for `seller_stock`, vira `submitted` para o vendedor revisar/baixar estoque proprio.
+
+---
+
+## Conta corrente do vendedor (ledger) — migração `0011`
+
+Ver `docs/replication-v1/04-fase3-ledger-vendedor.md` para o desenho completo.
+
+- `seller_account_entries`: lançamentos (`business_id, seller_id, type, direction, amount, source_type, source_id, notes, created_by, created_at`). `type` aceita `debit_replenishment | payment | return_credit | manual_adjustment | writeoff | bonus_credit`; `direction` é `debit` (aumenta a dívida) ou `credit` (reduz). **Saldo = soma dos lançamentos, nunca um número sobrescrito** — `C360.calc.sellerBalance(entries)`.
+- `seller_payments`: pagamentos fracionados recebidos (`business_id, seller_id, amount, payment_date, method, proof_url, notes, received_by, created_at`). Cada pagamento também gera um lançamento `payment`/`credit` correspondente (feito pelo frontend nas duas chamadas seguidas, `src/sellerLedger.js` `mountAdmin`).
+- RLS: `*_all_admin` (admin lê/escreve tudo do próprio negócio) + `seller_id = auth.uid()` só de leitura para vendedor. **Sem** policy de INSERT/UPDATE para vendedor — toda escrita é ação do admin (registrar pagamento) ou acontece dentro da aprovação de carrinho (`C360.salesCart.approveCart`, que roda no contexto do admin logado). "Vendedor informar pagamento" ficou fora de escopo desta fase (decisão registrada no doc acima).
+- O débito de reposição (`debit_replenishment`) é lançado por item, na aprovação de carrinho consignado/parcial, sobre `itemTotal - itemPaid` (a fatia proporcional do `paid_initial_amount` já pago) — nunca sobre o valor solicitado, só o aprovado.

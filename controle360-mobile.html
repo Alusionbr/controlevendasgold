@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-5kCzBGfEPX71CBR+EGmO+U/6c5/xwhh6knuVon9FWVE=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-AQkk69yKPLGVykXqQIIQiL+aMar7iiWMkUmG2l/wkbo=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-itPeMiJol5KMBUHwdGp/2hme7L8rfCtJiLjrC/0PK1Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-b7GWSWtCrfY3pgvSnEnFBxb3hdK7dRMrDpeX2V3bIJ4=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-/uwJSsr1H6yG6QjC1gupP9IpE0iFMRL4ijZBsvRBAsI=' 'sha256-5JAh1YTh17KKhLsc+NDM0VfjSf1AtOcTytZjjcbmBOU=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-AXFtansGkYy33sDcOrjRj1NA1NjzQHcHPAEjnja73gU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1250,6 +1250,13 @@ pre {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0.85rem;
 }
+.seller-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.9rem;
+}
+.seller-ledger-card { display: grid; gap: 0.7rem; }
 .seller-permission-card {
   display: grid;
   gap: 0.65rem;
@@ -2064,6 +2071,9 @@ pre {
       sellerSettings: [],
       saleCarts: [],
       saleCartItems: [],
+      // Fase 3 (conta corrente do vendedor):
+      sellerAccountEntries: [],
+      sellerPayments: [],
       profile: null,
       profiles: [],
       sellers: [],
@@ -2220,6 +2230,8 @@ pre {
     sellerSettings: 'seller_settings',
     saleCarts: 'sale_carts',
     saleCartItems: 'sale_cart_items',
+    sellerAccountEntries: 'seller_account_entries',
+    sellerPayments: 'seller_payments',
     profiles: 'profiles',
   };
 
@@ -2330,6 +2342,7 @@ pre {
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
+      sellerAccountEntries, sellerPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -2350,6 +2363,8 @@ pre {
       api.list('seller_settings', { business_id: businessId }),
       api.list('sale_carts', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('sale_cart_items', { business_id: businessId }),
+      api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -2372,6 +2387,8 @@ pre {
     state.sellerSettings = sellerSettings.map(toCamelCaseRow);
     state.saleCarts = saleCarts.map(toCamelCaseRow);
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
+    state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
+    state.sellerPayments = sellerPayments.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),
@@ -2386,6 +2403,7 @@ pre {
     const [
       businesses, sellerProducts, clients, sales, orders, consignments,
       consignmentEvents, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
+      sellerAccountEntries, sellerPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -2399,6 +2417,8 @@ pre {
       api.listSellerSettings({ sellerId: userId }),
       api.listSaleCarts({ seller_id: userId }),
       api.listSaleCartItems({ business_id: businessId }),
+      api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
+      api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -2413,6 +2433,8 @@ pre {
     state.sellerSettings = sellerSettings;
     state.saleCarts = saleCarts;
     state.saleCartItems = saleCartItems;
+    state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
+    state.sellerPayments = sellerPayments.map(toCamelCaseRow);
 
     // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
     // o round-trip de rede e já deixamos vazio.
@@ -2565,6 +2587,16 @@ pre {
     return { grossRevenue, percentFees, netRevenue, cogs, grossProfit, margin };
   }
 
+  // Saldo do vendedor com o admin (Fase 3 — ledger dedicado, ver
+  // docs/replication-v1/04-fase3-ledger-vendedor.md): sempre a soma dos
+  // lançamentos, nunca um número sobrescrito. Positivo = vendedor deve.
+  function sellerBalance(entries) {
+    return (entries || []).reduce((sum, entry) => {
+      const amount = number(entry.amount);
+      return entry.direction === 'credit' ? sum - amount : sum + amount;
+    }, 0);
+  }
+
   function consignmentOpenAmount(consignment) {
     const soldValue = number(consignment.quantitySold) * number(consignment.unitPrice);
     return Math.max(soldValue - number(consignment.amountPaid), 0);
@@ -2639,6 +2671,7 @@ pre {
     weightedAverageCost,
     calculateRecipeCost,
     saleMath,
+    sellerBalance,
     consignmentOpenAmount,
     consignmentAvailableWithClient,
     businessMetrics,
@@ -6044,6 +6077,7 @@ pre {
       if (qty > 0) {
         const itemTotal = qty * U.number(item.unitPrice);
         const itemPaid = totalAprovado > 0 ? (itemTotal / totalAprovado) * paidInitial : 0;
+        const itemDebt = Math.max(itemTotal - itemPaid, 0);
         if (cart.paymentMode === 'consignado' || cart.paymentMode === 'parcial') {
           // eslint-disable-next-line no-await-in-loop
           await transferAdminStockToSeller({
@@ -6055,6 +6089,21 @@ pre {
             cartId: cart.id,
             note: `${cart.paymentMode === 'parcial' ? 'Reposicao parcial' : 'Consignado'} aprovado para ${sellerName(cart.sellerId)} via carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
           });
+          if (itemDebt > 0) {
+            // Fase 3 (ledger): a divida so entra sobre a quantidade
+            // APROVADA, nunca a solicitada. Ver docs/replication-v1/
+            // 04-fase3-ledger-vendedor.md.
+            // eslint-disable-next-line no-await-in-loop
+            await S().add('sellerAccountEntries', {
+              sellerId: cart.sellerId,
+              type: 'debit_replenishment',
+              direction: 'debit',
+              amount: itemDebt,
+              sourceType: 'sale_cart_item',
+              sourceId: item.id,
+              notes: `Reposicao (${PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode}) via carrinho ${cart.id}`,
+            });
+          }
         } else {
           // eslint-disable-next-line no-await-in-loop
           await S().add('orders', {
@@ -6340,6 +6389,194 @@ pre {
   }
 
   window.C360.salesCart = { mount, mountApprovals, mountPublic };
+})();
+</script>
+  <script>
+(function () {
+  'use strict';
+
+  window.C360 = window.C360 || {};
+  const U = window.C360.utils;
+  const UI = window.C360.ui;
+
+  // ==========================================================================
+  // Conta corrente do vendedor com o admin (Fase 3 do pacote de replicação —
+  // ver docs/replication-v1/04-fase3-ledger-vendedor.md). O saldo é sempre a
+  // soma dos lançamentos em `seller_account_entries` (nunca um número
+  // sobrescrito). Débito de reposição consignado/parcial é lançado por
+  // src/salesCart.js na aprovação; este módulo só cuida de:
+  //   - admin: ver saldo de cada vendedor e registrar pagamento recebido;
+  //   - vendedor: ver o próprio saldo e histórico (só leitura).
+  //
+  // "Vendedor informar pagamento" fica fora de escopo por ora (decisão
+  // registrada no doc da fase): toda escrita no ledger é ação do admin.
+  // ==========================================================================
+
+  const TYPE_LABELS = {
+    debit_replenishment: 'Reposição',
+    payment: 'Pagamento',
+    return_credit: 'Devolução',
+    manual_adjustment: 'Ajuste manual',
+    writeoff: 'Baixa de dívida',
+    bonus_credit: 'Bonificação',
+  };
+
+  function S() { return window.C360.state; }
+  function Calc() { return window.C360.calc; }
+  function state() { return S().getState(); }
+  function isAdmin() { return S().isAdmin(); }
+  function user() { return S().getCurrentUser(); }
+
+  function entriesForSeller(sellerId) {
+    return (state().sellerAccountEntries || []).filter((entry) => String(entry.sellerId) === String(sellerId));
+  }
+
+  function paymentsForSeller(sellerId) {
+    return (state().sellerPayments || []).filter((payment) => String(payment.sellerId) === String(sellerId));
+  }
+
+  function balanceFor(sellerId) {
+    return Calc().sellerBalance(entriesForSeller(sellerId));
+  }
+
+  function entryRow(entry) {
+    const label = TYPE_LABELS[entry.type] || entry.type;
+    const signedAmount = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
+    return [
+      (entry.createdAt || '').slice(0, 10),
+      U.escapeHtml(label),
+      UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
+      U.escapeHtml(entry.notes || ''),
+      `<strong>${signedAmount < 0 ? '- ' : ''}${U.money(Math.abs(signedAmount))}</strong>`,
+    ];
+  }
+
+  // ---------------------------------------------------------------------
+  // Admin — saldo de todos os vendedores + registrar pagamento recebido
+  // ---------------------------------------------------------------------
+  function renderAdmin(feedback) {
+    const sellers = (state().sellers || []).filter((seller) => seller.active !== false);
+    const totalOpen = sellers.reduce((sum, seller) => sum + Math.max(balanceFor(seller.id), 0), 0);
+
+    const cards = sellers.map((seller) => {
+      const balance = balanceFor(seller.id);
+      const entries = entriesForSeller(seller.id).slice(0, 8);
+      return `
+        <article class="panel-card seller-ledger-card" data-seller-ledger-card="${U.escapeHtml(seller.id)}">
+          <div class="approval-card-head">
+            <strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong>
+            ${UI.badge(balance > 0 ? `Deve ${U.money(balance)}` : 'Em dia', balance > 0 ? 'danger' : 'ok')}
+          </div>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Registrar pagamento</button>
+          </form>
+          ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
+        </article>
+      `;
+    }).join('');
+
+    return UI.section(
+      'Débitos dos vendedores',
+      'Conta corrente de reposição consignado/parcial: saldo é sempre a soma dos lançamentos.',
+      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+       ${UI.metric('Total em aberto', U.money(totalOpen), null)}
+       <div class="seller-ledger-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para acompanhar débitos.</span></div>'}</div>`
+    );
+  }
+
+  function mountAdmin(container, options = {}) {
+    if (!container) return;
+    let feedback = null;
+
+    function paint() {
+      container.innerHTML = isAdmin() ? renderAdmin(feedback) : UI.formNotice('Somente admin.', 'warning');
+    }
+
+    container.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-ledger-payment-form]');
+      if (!form) return;
+      event.preventDefault();
+      const sellerId = form.dataset.sellerId;
+      const data = U.formData(form);
+      const amount = U.number(data.amount);
+      try {
+        if (amount <= 0) throw new Error('Informe um valor maior que zero.');
+        const payment = await S().add('sellerPayments', {
+          sellerId,
+          amount,
+          paymentDate: U.today(),
+          method: data.method || null,
+          notes: data.notes || '',
+          receivedBy: user()?.id || null,
+        });
+        await S().add('sellerAccountEntries', {
+          sellerId,
+          type: 'payment',
+          direction: 'credit',
+          amount,
+          sourceType: 'seller_payment',
+          sourceId: payment?.id || null,
+          notes: data.notes || '',
+        });
+        await S().refresh();
+        feedback = { message: 'Pagamento registrado.', type: 'success' };
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+      if (typeof options.onDone === 'function') options.onDone();
+    });
+
+    paint();
+  }
+
+  // ---------------------------------------------------------------------
+  // Vendedor — só o próprio saldo e histórico, sem escrita
+  // ---------------------------------------------------------------------
+  function renderSeller() {
+    const currentUser = user();
+    if (!currentUser) return UI.formNotice('Entre na sua conta.', 'warning');
+    const balance = balanceFor(currentUser.id);
+    const entries = entriesForSeller(currentUser.id).slice(0, 30);
+    const payments = paymentsForSeller(currentUser.id).slice(0, 10);
+
+    return UI.section(
+      'Meu saldo com admin',
+      'Reposição consignado/parcial vira débito aqui; pagamentos recebidos abatem o saldo.',
+      `
+        ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
+        <h3>Histórico</h3>
+        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
+        <h3>Pagamentos já registrados</h3>
+        ${UI.table(
+          ['Data', 'Forma', 'Nota', 'Valor'],
+          payments.map((payment) => [
+            (payment.paymentDate || '').slice(0, 10),
+            U.escapeHtml(payment.method || '—'),
+            U.escapeHtml(payment.notes || ''),
+            UI.moneyCell(payment.amount),
+          ]),
+          'Nenhum pagamento registrado ainda.'
+        )}
+      `
+    );
+  }
+
+  function mountSeller(container) {
+    if (!container) return;
+    container.innerHTML = renderSeller();
+  }
+
+  window.C360.sellerLedger = { mountAdmin, mountSeller };
 })();
 </script>
   <script>
@@ -7943,8 +8180,8 @@ pre {
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes',
-    'calculadora', 'metas', 'ajuda', 'dados',
+    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes', 'debitos',
+    'meusaldo', 'calculadora', 'metas', 'ajuda', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -7965,6 +8202,8 @@ pre {
     vendedores: 'Vendedores',
     precos: 'Preços',
     aprovacoes: 'Aprovações',
+    debitos: 'Débitos dos vendedores',
+    meusaldo: 'Meu saldo com admin',
     calculadora: 'Calculadora',
     metas: 'Metas',
     ajuda: 'Ajuda',
@@ -7991,6 +8230,8 @@ pre {
     vendedores: ['admin'],
     precos: ['admin'],
     aprovacoes: ['admin'],
+    debitos: ['admin'],
+    meusaldo: ['vendedor'],
     calculadora: ['admin', 'vendedor'],
     metas: ['admin', 'vendedor'],
     ajuda: ['vendedor'],
@@ -8347,6 +8588,18 @@ pre {
         }
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
+        }
+        break;
+      case 'debitos':
+        els.view.innerHTML = '<div id="sellerLedgerAdminPanel"></div>';
+        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountAdmin === 'function') {
+          window.C360.sellerLedger.mountAdmin(document.getElementById('sellerLedgerAdminPanel'), { onDone: renderAll });
+        }
+        break;
+      case 'meusaldo':
+        els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
+        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
+          window.C360.sellerLedger.mountSeller(document.getElementById('sellerLedgerPanel'));
         }
         break;
       case 'estoque':

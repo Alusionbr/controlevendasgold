@@ -79,6 +79,16 @@
     return { grossRevenue, percentFees, netRevenue, cogs, grossProfit, margin };
   }
 
+  // Saldo do vendedor com o admin (Fase 3 — ledger dedicado, ver
+  // docs/replication-v1/04-fase3-ledger-vendedor.md): sempre a soma dos
+  // lançamentos, nunca um número sobrescrito. Positivo = vendedor deve.
+  function sellerBalance(entries) {
+    return (entries || []).reduce((sum, entry) => {
+      const amount = number(entry.amount);
+      return entry.direction === 'credit' ? sum - amount : sum + amount;
+    }, 0);
+  }
+
   function consignmentOpenAmount(consignment) {
     const soldValue = number(consignment.quantitySold) * number(consignment.unitPrice);
     return Math.max(soldValue - number(consignment.amountPaid), 0);
@@ -153,6 +163,7 @@
     weightedAverageCost,
     calculateRecipeCost,
     saleMath,
+    sellerBalance,
     consignmentOpenAmount,
     consignmentAvailableWithClient,
     businessMetrics,

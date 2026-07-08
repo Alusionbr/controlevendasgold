@@ -498,6 +498,7 @@
       if (qty > 0) {
         const itemTotal = qty * U.number(item.unitPrice);
         const itemPaid = totalAprovado > 0 ? (itemTotal / totalAprovado) * paidInitial : 0;
+        const itemDebt = Math.max(itemTotal - itemPaid, 0);
         if (cart.paymentMode === 'consignado' || cart.paymentMode === 'parcial') {
           // eslint-disable-next-line no-await-in-loop
           await transferAdminStockToSeller({
@@ -509,6 +510,21 @@
             cartId: cart.id,
             note: `${cart.paymentMode === 'parcial' ? 'Reposicao parcial' : 'Consignado'} aprovado para ${sellerName(cart.sellerId)} via carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
           });
+          if (itemDebt > 0) {
+            // Fase 3 (ledger): a divida so entra sobre a quantidade
+            // APROVADA, nunca a solicitada. Ver docs/replication-v1/
+            // 04-fase3-ledger-vendedor.md.
+            // eslint-disable-next-line no-await-in-loop
+            await S().add('sellerAccountEntries', {
+              sellerId: cart.sellerId,
+              type: 'debit_replenishment',
+              direction: 'debit',
+              amount: itemDebt,
+              sourceType: 'sale_cart_item',
+              sourceId: item.id,
+              notes: `Reposicao (${PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode}) via carrinho ${cart.id}`,
+            });
+          }
         } else {
           // eslint-disable-next-line no-await-in-loop
           await S().add('orders', {

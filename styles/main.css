@@ -1242,6 +1242,13 @@ pre {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0.85rem;
 }
+.seller-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.9rem;
+}
+.seller-ledger-card { display: grid; gap: 0.7rem; }
 .seller-permission-card {
   display: grid;
   gap: 0.65rem;

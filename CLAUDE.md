@@ -470,6 +470,8 @@ essas informações aqui — só resumir o que muda no comportamento do app.
 | Vendedores | admin | `src/auth.js` (`renderSellers`/`mountSellers`) |
 | Preços | admin | `src/pricing.js` |
 | Aprovações | admin | `src/salesCart.js` (`mountApprovals`, reposição em carrinhos) + `src/sellerStock.js` (`mountGrantStock`, concessão direta de estoque) |
+| Débitos dos vendedores | admin | `src/sellerLedger.js` (`mountAdmin`) |
+| Meu saldo com admin | vendedor | `src/sellerLedger.js` (`mountSeller`) |
 | Meu estoque | vendedor | `src/sellerStock.js` (`mountMyStock`) |
 | Calculadora | admin + vendedor | `src/calculator.js` |
 | Metas | admin + vendedor | `src/goals.js` (`mountAdmin`/`mountSeller` conforme o papel) |
@@ -553,3 +555,39 @@ login, e `signOut()` no botão "Sair" do cabeçalho).
   `autocapitalize/autocorrect/spellcheck` desligados (reduz sugestão de
   domínio do navegador) e um alerta pós-criação confirmando o e-mail exato
   que ficou salvo no servidor (não o que foi digitado).
+
+---
+
+## Atualização: replicação v1 — mobile por perfil, reposição em carrinhos, ledger
+
+Análise completa e sequenciamento em `docs/replication-v1/` (ler antes de mexer
+nestas áreas). Fases 1–3 implementadas:
+
+- **Fase 1 (navegação mobile por perfil)**: `index.html`/`src/app.js` geram a
+  barra de abas do desktop, a bottom-nav mobile e o menu "Mais" a partir de
+  uma única fonte (`TAB_ORDER`/`TAB_LABELS`/`TAB_ROLES` em `src/app.js`) —
+  não existe mais lista de abas duplicada. Nova aba `hoje` (tela "Hoje") é a
+  aberta por padrão para os dois papéis. Abaixo de 720px a bottom-nav fixa
+  assume e o dashboard fixo (`#dashboard`) cede lugar à tela "Hoje"; acima
+  disso o comportamento de desktop é o de sempre.
+- **Fase 2 (reposição padronizada em carrinhos)**: a aprovação de pedido de
+  reposição do vendedor vive só na aba "Aprovações", via
+  `C360.salesCart.mountApprovals` — o antigo caminho binário de `orders`
+  (`C360.sellerStock.mountApprovals`) saiu da navegação. `sale_carts` ganhou
+  `paid_initial_amount` (migração `0010`): pagamento `parcial` agora tem
+  valor real, e a aprovação calcula o que fica devendo sobre a quantidade
+  **aprovada**, nunca a solicitada.
+- **Fase 3 (conta corrente do vendedor)**: novo ledger dedicado
+  (`seller_account_entries` + `seller_payments`, migração `0011`,
+  `src/sellerLedger.js`) substitui o saldo implícito que reaproveitava
+  `consignments`. Saldo é sempre a soma dos lançamentos — nunca sobrescrito.
+  Débito de reposição consignado/parcial é lançado por
+  `src/salesCart.js` (`approveCart`) no momento da aprovação. Só o admin
+  registra pagamento recebido ("Débitos dos vendedores"); vendedor só
+  enxerga o próprio saldo ("Meu saldo com admin"), sem escrita — decisão
+  registrada em `docs/replication-v1/04-fase3-ledger-vendedor.md`.
+
+**Pendente**: Fase 4 (devoluções com status, desperdício, brinde), Fase 5
+(relatórios) e Fase 6 (revisão de segurança Supabase). Migrations `0010` e
+`0011` foram escritas mas podem não ter sido aplicadas ainda — conferir com
+`mcp__Supabase__list_migrations` antes de assumir que já rodaram.
