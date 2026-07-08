@@ -1076,7 +1076,92 @@
         <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
         <div class="panel-card"><h3>Últimas movimentações</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentação.')}</div>
       </div>
+      ${renderReplicationReports()}
     `);
+  }
+
+  function sellerName(id) {
+    const profile = state().profiles.find((item) => String(item.id) === String(id));
+    return profile ? profile.name : 'Vendedor';
+  }
+
+  // Fase 5 do pacote de replicação (docs/replication-v1/06-fases5-6-relatorios-e-seguranca.md):
+  // relatórios que consomem o que as Fases 2-4 criaram. Sem tabela nova —
+  // só leitura do que já está em cache (sellerAccountEntries, saleCarts,
+  // orders, operationalMovements).
+  function renderReplicationReports() {
+    const businessId = state().activeBusinessId;
+
+    const sellerBalanceRows = state().sellers
+      .filter((seller) => seller.active !== false)
+      .map((seller) => {
+        const entries = state().sellerAccountEntries.filter((entry) => String(entry.sellerId) === String(seller.id));
+        return { seller, balance: Calc.sellerBalance(entries) };
+      })
+      .filter((row) => row.balance !== 0)
+      .sort((a, b) => b.balance - a.balance)
+      .map((row) => [U.escapeHtml(row.seller.name || 'Vendedor'), UI.moneyCell(row.balance)]);
+
+    const openCarts = (state().saleCarts || []).filter((cart) => ['pending_approval', 'partially_approved'].includes(cart.status));
+    const openOrders = currentOrders().filter((order) => !['despachado', 'concluido'].includes(order.status));
+    const openOrderRows = [
+      ...openCarts.map((cart) => [
+        'Carrinho', U.escapeHtml(sellerName(cart.sellerId)), U.escapeHtml(cart.customerName || '—'),
+        U.escapeHtml(cart.status), (cart.createdAt || '').slice(0, 10),
+      ]),
+      ...openOrders.map((order) => [
+        'Pedido', U.escapeHtml(sellerName(order.sellerId)), U.escapeHtml(clientById(order.clientId)?.name || '—'),
+        U.escapeHtml(order.status), (order.dueDate || '').slice(0, 10),
+      ]),
+    ];
+
+    const movements = state().operationalMovements || [];
+    const pendingReturns = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado', 'recebido'].includes(movement.status));
+    const pendingReturnRows = pendingReturns.map((movement) => {
+      const product = productById(movement.productId);
+      return [
+        U.escapeHtml(sellerName(movement.sellerId)), U.escapeHtml(product ? product.name : 'Produto removido'),
+        U.qty(movement.quantityDeclared, product?.unit), U.escapeHtml(movement.status),
+      ];
+    });
+
+    const wasteByMonth = {};
+    movements.filter((movement) => movement.type === 'waste' && movement.status === 'confirmed').forEach((movement) => {
+      const month = (movement.confirmedAt || movement.createdAt || '').slice(0, 7) || '—';
+      const product = productById(movement.productId);
+      const value = U.number(movement.quantityReceived) * U.number(product?.avgCost);
+      wasteByMonth[month] = (wasteByMonth[month] || 0) + value;
+    });
+    const wasteRows = Object.entries(wasteByMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([month, value]) => [U.escapeHtml(month), UI.moneyCell(value)]);
+
+    const giftsByResponsible = {};
+    movements.filter((movement) => movement.type === 'gift' && movement.status === 'confirmed').forEach((movement) => {
+      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Admin';
+      const product = productById(movement.productId);
+      const qty = U.number(movement.quantityReceived);
+      if (!giftsByResponsible[label]) giftsByResponsible[label] = [];
+      giftsByResponsible[label].push(`${qty} ${product?.unit || ''} de ${product?.name || 'produto removido'}`);
+    });
+    const giftRows = Object.entries(giftsByResponsible).map(([label, items]) => [U.escapeHtml(label), U.escapeHtml(items.join(', '))]);
+
+    const inTransit = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado'].includes(movement.status));
+    const inTransitRows = inTransit.map((movement) => {
+      const product = productById(movement.productId);
+      return [U.escapeHtml(sellerName(movement.sellerId)), U.escapeHtml(product ? product.name : 'Produto removido'), U.qty(movement.quantityDeclared, product?.unit)];
+    });
+
+    if (!businessId) return '';
+
+    return `
+      <div class="three-columns" style="margin-top: 1.2rem;">
+        <div class="panel-card"><h3>Saldo por vendedor</h3>${UI.table(['Vendedor', 'Saldo'], sellerBalanceRows, 'Nenhum vendedor com saldo em aberto.')}</div>
+        <div class="panel-card"><h3>Pedidos em aberto</h3>${UI.table(['Origem', 'Vendedor', 'Cliente', 'Status', 'Data'], openOrderRows, 'Nenhum pedido em aberto.')}</div>
+        <div class="panel-card"><h3>Devoluções pendentes</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.', 'Status'], pendingReturnRows, 'Nenhuma devolução pendente.')}</div>
+        <div class="panel-card"><h3>Desperdício por período</h3>${UI.table(['Mês', 'Valor perdido'], wasteRows, 'Nenhum desperdício confirmado ainda.')}</div>
+        <div class="panel-card"><h3>Brindes por responsável</h3>${UI.table(['Responsável', 'Itens'], giftRows, 'Nenhum brinde confirmado ainda.')}</div>
+        <div class="panel-card"><h3>Estoque em trânsito</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.'], inTransitRows, 'Nada em trânsito.')}</div>
+      </div>
+    `;
   }
 
   function currentMovements() {

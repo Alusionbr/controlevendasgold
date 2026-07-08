@@ -601,7 +601,13 @@ nestas áreas). Fases 1–3 implementadas:
   dívida"). Vendedor só cria a solicitação; nunca confere (trigger de banco
   bloqueia).
 
-**Pendente**: Fase 5 (relatórios) e Fase 6 (revisão de segurança Supabase).
-Migrations `0010`, `0011` e `0012` foram escritas mas podem não ter sido
-aplicadas ainda — conferir com `mcp__Supabase__list_migrations` antes de
-assumir que já rodaram.
+- **Fase 5 (relatórios)**: `renderReplicationReports()` em `src/app.js`,
+  dentro da aba "Relatórios" (admin). Sem tabela nova — só leitura do que as
+  Fases 2-4 já criaram: saldo por vendedor, pedidos em aberto (carrinhos +
+  orders), devoluções pendentes, desperdício por período (agrupado por
+  mês), brindes por responsável, estoque em trânsito.
+
+**Pendente**: Fase 6 (revisão de segurança Supabase — RLS/índices/advisors
+após aplicar as migrations). Migrations `0010`, `0011` e `0012` foram
+escritas mas podem não ter sido aplicadas ainda — conferir com
+`mcp__Supabase__list_migrations` antes de assumir que já rodaram.
