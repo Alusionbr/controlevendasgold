@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-FjIbTJ5a322+3BXt3oOWG+tcmwf1s8LxeJTljwxBjLk=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-q+o61xtyLMUgUPu7rBXBQW9mb3L9A4n/s+FXtMkItWk=' 'sha256-z34IgVHIOoojkQF1JmFMvg4twAhyM7StyrFXC6PVWcg=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-Vm2lfB2gG512pj48YT1DGZPhRazMIXHaZml5uOEIzgc=' 'sha256-3+7zJeAFjK/hVoquOt8l7Rb4+V07VSPNZw1lKBHppzo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-FjIbTJ5a322+3BXt3oOWG+tcmwf1s8LxeJTljwxBjLk=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-q+o61xtyLMUgUPu7rBXBQW9mb3L9A4n/s+FXtMkItWk=' 'sha256-WwHMwSkuHpGK7YNvxo1q02cHi6eN9ozugAHUh0sBXjQ=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-Vm2lfB2gG512pj48YT1DGZPhRazMIXHaZml5uOEIzgc=' 'sha256-3b2w+9AzRnBjJS3uU7sHyjbY2T4tnOVukloD4kPFUiU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -238,6 +238,7 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow-sm);
 }
+.business-bar[hidden] { display: none; }
 .business-bar > div { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 240px; min-width: 0; }
 .business-bar label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
 .business-bar select { min-width: 200px; }
@@ -5428,10 +5429,10 @@ pre {
   };
 
   // Rascunho do carrinho vive fora de mount(): app.js recria o container do
-  // Vendas/Pedidos a cada renderAll() (qualquer aÃ§Ã£o na tela dispara isso),
-  // e mount() Ã© chamado de novo â€” se o draft fosse uma variÃ¡vel local do
-  // fecho de mount(), cada remount zeraria os itens jÃ¡ adicionados ao
-  // carrinho. Mantendo o objeto no escopo do mÃ³dulo, ele sobrevive a
+  // Vendas/Pedidos a cada renderAll() (qualquer acao na tela dispara isso),
+  // e mount() e chamado de novo - se o draft fosse uma variavel local do
+  // fecho de mount(), cada remount zeraria os itens ja adicionados ao
+  // carrinho. Mantendo o objeto no escopo do modulo, ele sobrevive a
   // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
   // mesmo carrinho).
   const persistentDraft = {
@@ -7981,10 +7982,10 @@ pre {
     }
   }
 
-  // Aba Pedidos: mesmo carrinho de src/salesCart.js â€” quando a origem
-  // escolhida Ã© "Estoque do administrador", o carrinho vira pedido
-  // (aguardando aprovaÃ§Ã£o do admin). O rascunho do carrinho Ã© compartilhado
-  // com a aba Vendas (ver comentÃ¡rio de persistentDraft em salesCart.js).
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js - quando a origem
+  // escolhida e "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovacao do admin). O rascunho do carrinho e compartilhado
+  // com a aba Vendas (ver comentario de persistentDraft em salesCart.js).
   function mountOrdersCartPanel() {
     mountSalesCartPanel('ordersCartPanel');
   }
@@ -8329,7 +8330,7 @@ pre {
         isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto. Monte um carrinho com vÃ¡rios produtos abaixo, ou lance uma venda rÃ¡pida de 1 produto no formulÃ¡rio.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
       <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
@@ -8363,7 +8364,7 @@ pre {
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda rÃ¡pida (1 produto)</button>
+        <button type="submit">Lancar venda rapida (1 produto)</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
       <div id="returnsPanel"></div>
@@ -8379,7 +8380,7 @@ pre {
       const client = clientById(order.clientId);
       const product = productById(order.productId);
       const dispatchAction = order.convertedSaleId
-        ? UI.badge('venda lanÃ§ada', 'ok')
+        ? UI.badge('venda lancada', 'ok')
         : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
@@ -8391,7 +8392,7 @@ pre {
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeÃ§a pendente â€” sÃ³ o administrador muda o status, faz devoluÃ§Ãµes e acertos.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeca pendente - so o administrador muda o status, faz devolucoes e acertos.', `
       <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
@@ -8412,7 +8413,7 @@ pre {
         <label class="wide">ObservaÃ§Ãµes
           <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
         </label>
-        <button type="submit">Criar pedido (rÃ¡pido, 1 produto)</button>
+        <button type="submit">Criar pedido (rapido, 1 produto)</button>
       </form>
       ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
@@ -9112,9 +9113,9 @@ pre {
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
-    // SÃ³ admin altera status de pedido â€” a coluna jÃ¡ nÃ£o Ã© arrastÃ¡vel para
-    // vendedor (readOnly em UI.kanban), isto Ã© sÃ³ defesa extra; o banco
-    // tambÃ©m bloqueia via trigger.
+    // So admin altera status de pedido - a coluna ja nao e arrastavel para
+    // vendedor (readOnly em UI.kanban), isto e so defesa extra; o banco
+    // tambem bloqueia via trigger.
     if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });

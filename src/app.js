@@ -284,10 +284,10 @@
     }
   }
 
-  // Aba Pedidos: mesmo carrinho de src/salesCart.js â€” quando a origem
-  // escolhida Ã© "Estoque do administrador", o carrinho vira pedido
-  // (aguardando aprovaÃ§Ã£o do admin). O rascunho do carrinho Ã© compartilhado
-  // com a aba Vendas (ver comentÃ¡rio de persistentDraft em salesCart.js).
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js - quando a origem
+  // escolhida e "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovacao do admin). O rascunho do carrinho e compartilhado
+  // com a aba Vendas (ver comentario de persistentDraft em salesCart.js).
   function mountOrdersCartPanel() {
     mountSalesCartPanel('ordersCartPanel');
   }
@@ -632,7 +632,7 @@
         isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto. Monte um carrinho com vÃ¡rios produtos abaixo, ou lance uma venda rÃ¡pida de 1 produto no formulÃ¡rio.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
       <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
@@ -666,7 +666,7 @@
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda rÃ¡pida (1 produto)</button>
+        <button type="submit">Lancar venda rapida (1 produto)</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
       <div id="returnsPanel"></div>
@@ -682,7 +682,7 @@
       const client = clientById(order.clientId);
       const product = productById(order.productId);
       const dispatchAction = order.convertedSaleId
-        ? UI.badge('venda lanÃ§ada', 'ok')
+        ? UI.badge('venda lancada', 'ok')
         : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
@@ -694,7 +694,7 @@
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeÃ§a pendente â€” sÃ³ o administrador muda o status, faz devoluÃ§Ãµes e acertos.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeca pendente - so o administrador muda o status, faz devolucoes e acertos.', `
       <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
@@ -715,7 +715,7 @@
         <label class="wide">ObservaÃ§Ãµes
           <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
         </label>
-        <button type="submit">Criar pedido (rÃ¡pido, 1 produto)</button>
+        <button type="submit">Criar pedido (rapido, 1 produto)</button>
       </form>
       ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
@@ -1415,9 +1415,9 @@
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
-    // SÃ³ admin altera status de pedido â€” a coluna jÃ¡ nÃ£o Ã© arrastÃ¡vel para
-    // vendedor (readOnly em UI.kanban), isto Ã© sÃ³ defesa extra; o banco
-    // tambÃ©m bloqueia via trigger.
+    // So admin altera status de pedido - a coluna ja nao e arrastavel para
+    // vendedor (readOnly em UI.kanban), isto e so defesa extra; o banco
+    // tambem bloqueia via trigger.
     if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });

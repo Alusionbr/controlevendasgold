@@ -18,10 +18,10 @@
   };
 
   // Rascunho do carrinho vive fora de mount(): app.js recria o container do
-  // Vendas/Pedidos a cada renderAll() (qualquer aÃ§Ã£o na tela dispara isso),
-  // e mount() Ã© chamado de novo â€” se o draft fosse uma variÃ¡vel local do
-  // fecho de mount(), cada remount zeraria os itens jÃ¡ adicionados ao
-  // carrinho. Mantendo o objeto no escopo do mÃ³dulo, ele sobrevive a
+  // Vendas/Pedidos a cada renderAll() (qualquer acao na tela dispara isso),
+  // e mount() e chamado de novo - se o draft fosse uma variavel local do
+  // fecho de mount(), cada remount zeraria os itens ja adicionados ao
+  // carrinho. Mantendo o objeto no escopo do modulo, ele sobrevive a
   // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
   // mesmo carrinho).
   const persistentDraft = {
