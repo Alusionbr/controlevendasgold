@@ -634,7 +634,7 @@ Erro devolvido pelo PostgREST quando o preço fica abaixo do piso:
 A integracao de carrinho usa:
 
 - `seller_settings`: permissao por vendedor para estoque do admin, consignado e link publico. Ganhou `stock_adjustment_credits integer default 0` (migração `0009`) — admin incrementa em 1 para liberar um acerto de estoque; o RPC `seller_adjust_own_stock` zera de novo depois de usado.
-- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao. `payment_mode` aceita `avista` | `consignado` | `parcial` (migração `0009` adicionou `parcial`).
+- `sale_carts`: cabecalho do carrinho, origem do estoque, status, token publico e expiracao. `payment_mode` aceita `avista` | `consignado` | `parcial` (migração `0009` adicionou `parcial`). `paid_initial_amount numeric not null default 0` (migração `0010`) guarda quanto foi pago no ato do pedido: igual ao total no `avista`, `0` no `consignado`, e o valor informado pelo vendedor no `parcial` — usado na aprovação (`C360.salesCart.approveCart`) para calcular o que fica devendo sobre a quantidade **aprovada**, não a solicitada (docs/replication-v1/03-fase2-reposicao-carrinhos.md).
 - `sale_cart_items`: itens do carrinho, quantidade solicitada e quantidade aprovada pelo admin.
 - `seller_stock_adjustments` (NOVA, migração `0009`): trilha de auditoria dos acertos de estoque próprio feitos pelo vendedor — `business_id, seller_id, product_id, previous_quantity, new_quantity, reason, created_at`. Admin lê tudo do próprio negócio; vendedor só as próprias linhas. Só é escrita pelo RPC abaixo (sem policy de INSERT direta).
 - `payment-proofs`: bucket privado do Supabase Storage para imagens/PDFs de comprovante.
@@ -644,3 +644,28 @@ A integracao de carrinho usa:
 - Edge Function `public-cart`: endpoint previsto para cliente sem login consultar/enviar carrinho e comprovante. Precisa ser publicada no projeto antes do link publico aceitar envio de comprovante.
 
 Carrinho publico nao permite consignado. Se a origem for `admin_stock`, o envio vira `pending_approval`; se for `seller_stock`, vira `submitted` para o vendedor revisar/baixar estoque proprio.
+
+---
+
+## Conta corrente do vendedor (ledger) — migração `0011`
+
+Ver `docs/replication-v1/04-fase3-ledger-vendedor.md` para o desenho completo.
+
+- `seller_account_entries`: lançamentos (`business_id, seller_id, type, direction, amount, source_type, source_id, notes, created_by, created_at`). `type` aceita `debit_replenishment | payment | return_credit | manual_adjustment | writeoff | bonus_credit`; `direction` é `debit` (aumenta a dívida) ou `credit` (reduz). **Saldo = soma dos lançamentos, nunca um número sobrescrito** — `C360.calc.sellerBalance(entries)`.
+- `seller_payments`: pagamentos fracionados recebidos (`business_id, seller_id, amount, payment_date, method, proof_url, notes, received_by, created_at`). Cada pagamento também gera um lançamento `payment`/`credit` correspondente (feito pelo frontend nas duas chamadas seguidas, `src/sellerLedger.js` `mountAdmin`).
+- RLS: `*_all_admin` (admin lê/escreve tudo do próprio negócio) + `seller_id = auth.uid()` só de leitura para vendedor. **Sem** policy de INSERT/UPDATE para vendedor — toda escrita é ação do admin (registrar pagamento) ou acontece dentro da aprovação de carrinho (`C360.salesCart.approveCart`, que roda no contexto do admin logado). "Vendedor informar pagamento" ficou fora de escopo desta fase (decisão registrada no doc acima).
+- O débito de reposição (`debit_replenishment`) é lançado por item, na aprovação de carrinho consignado/parcial, sobre `itemTotal - itemPaid` (a fatia proporcional do `paid_initial_amount` já pago) — nunca sobre o valor solicitado, só o aprovado.
+- Migração `0013`: índices de FK que faltavam (`approved_by`, `client_id`, `created_by`, `product_id` em `operational_movements`; `created_by` em `seller_account_entries`; `received_by` em `seller_payments`) e RLS das 3 tabelas novas trocada para `(select auth.uid())` (achados do `mcp__Supabase__get_advisors` rodado após aplicar `0010`-`0012`). O mesmo padrão de "múltiplas policies permissivas" e `auth.uid()` sem `select` já existia em `consignments`/`seller_prices`/`seller_stock`/`sale_carts` antes desta migração — não é regressão das Fases 2-4, e a limpeza ampla nas tabelas antigas ficou fora do escopo.
+
+---
+
+## Devolução com status, desperdício e brinde — migração `0012`
+
+Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
+
+- `operational_movements`: `business_id, type (return|waste|gift), status, product_id, quantity_declared, quantity_received, seller_id, client_id, reason, notes, affects_stock, affects_finance, unit_value, total_value, created_by, approved_by, created_at, updated_at, confirmed_at`.
+- `status` de `return`: `a_devolver | enviado | recebido | devolvido | devolvido_parcialmente | recusado`. `status` de `waste`/`gift`: `pending | confirmed | cancelled`.
+- **Regra central**: `a_devolver`/`pending` não afeta estoque nem financeiro. Só a conferência (sempre ação do admin, via `C360.operationalMovements.confirmMovement`) dispara o impacto — trigger `enforce_operational_movement_lock` bloqueia UPDATE de `status` por quem não é admin.
+- RLS: `*_all_admin` + vendedor só `select`/`insert` do próprio (`seller_id = auth.uid()`), e o `insert` só é aceito com `status in ('a_devolver', 'pending')` — vendedor nunca confere.
+- `stock_movements.type` ganhou `saida_brinde` (mesma migração). `return` confirmado sempre gera `entrada_devolucao_consignado` (mercadoria volta ao estoque central); `waste`/`gift` só geram `stock_movements` quando a origem é o estoque central do admin (`seller_id` nulo) — quando a origem é o estoque do vendedor, a baixa acontece só em `seller_stock` (o central já tinha sido debitado no envio consignado).
+- Sem RPC `SECURITY DEFINER`: confirmar é sempre uma ação do admin logado, que já tem RLS de escrita em `products`/`stock_movements`/`seller_stock`/`seller_account_entries` via `*_all_admin` — mesmo padrão de `C360.salesCart.approveCart`.

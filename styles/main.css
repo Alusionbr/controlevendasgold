@@ -317,6 +317,137 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
 
+/* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
+   No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
+   no rodapé assume: 4 destinos principais por perfil + "Mais" para o
+   restante (gerados em src/app.js a partir do mesmo TAB_ORDER/TAB_LABELS
+   que alimenta .tabs, então não há lista duplicada). Acima de 720px volta
+   a valer a barra de abas horizontal de sempre. */
+.bottom-nav {
+  display: none;
+}
+@media (max-width: 720px) {
+  .bottom-nav {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .bottom-nav[hidden] { display: none; }
+  .tabs { display: none; }
+  #dashboard { display: none; }
+  .app-shell { padding-bottom: 5.2rem; }
+}
+.bottom-nav-set {
+  display: flex;
+}
+.bottom-nav-set[hidden] { display: none; }
+.bottom-nav-item {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  min-height: 56px;
+  padding: 0.4rem 0.2rem;
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 0.76rem;
+}
+.bottom-nav-item.active { color: var(--accent-deep); background: var(--accent-soft); }
+.bottom-nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Menu "Mais" (sheet mobile) ---------- */
+.more-menu[hidden] { display: none; }
+.more-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+}
+.more-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.more-menu-sheet {
+  position: relative;
+  width: 100%;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0));
+  box-shadow: var(--shadow);
+}
+.more-menu-sheet header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.more-menu-role[hidden] { display: none; }
+.more-menu-role {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.more-menu-item {
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 600;
+}
+.more-menu-item.active { background: var(--accent); color: var(--accent-contrast); border-color: transparent; }
+
+@media (min-width: 721px) {
+  .more-menu { display: none !important; }
+}
+
+/* ---------- Tela "Hoje" ---------- */
+.today-screen { display: flex; flex-direction: column; gap: 1.2rem; }
+.today-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+.today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
+.quick-action {
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+.today-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.today-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.today-list li:last-child { border-bottom: 0; }
+
 /* ---------- Seções ---------- */
 .view { display: block; }
 .section-head {
@@ -997,7 +1128,7 @@ pre {
 }
 .cart-total span { color: var(--muted); font-weight: 700; }
 .cart-total strong { font-size: 1.35rem; font-family: var(--num); color: var(--ink); }
-.approval-cart-list { display: grid; gap: 0.9rem; }
+.approval-cart-list, .om-admin-list { display: grid; gap: 0.9rem; }
 .approval-cart-card {
   background: var(--surface);
   border: 1px solid var(--accent-border-soft);
@@ -1085,6 +1216,18 @@ pre {
 .calc-floating-panel[hidden] { display: none; }
 .calc-floating-panel .calculator-page { display: block; }
 .calc-floating-panel .three-columns { grid-template-columns: 1fr; }
+
+/* No celular a bottom-nav ocupa a faixa inferior da tela: empurra a
+   calculadora flutuante para cima dela, senão o botão redondo cobre o
+   último item da barra (ex.: "Mais") e bloqueia o toque. */
+@media (max-width: 720px) {
+  .calc-fab {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem));
+  }
+  .calc-floating-panel {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem) + 68px);
+  }
+}
 .calc-floating-head {
   display: flex;
   align-items: center;
@@ -1099,6 +1242,13 @@ pre {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0.85rem;
 }
+.seller-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.9rem;
+}
+.seller-ledger-card { display: grid; gap: 0.7rem; }
 .seller-permission-card {
   display: grid;
   gap: 0.65rem;

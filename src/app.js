@@ -6,35 +6,52 @@
   const Calc = window.C360.calc;
   const UI = window.C360.ui;
 
-  const els = {
-    view: document.getElementById('view'),
-    dashboard: document.getElementById('dashboard'),
-    activeBusiness: document.getElementById('activeBusiness'),
-    btnExport: document.getElementById('btnExport'),
-    btnDataTab: document.getElementById('btnDataTab'),
-    btnReset: document.getElementById('btnReset'),
-    btnLogout: document.getElementById('btnLogout'),
-    toastHost: document.getElementById('toastHost'),
-    headerActions: document.getElementById('headerActions'),
-    appShell: document.getElementById('appShell'),
-    authRoot: document.getElementById('authRoot'),
-    businessBar: document.querySelector('.business-bar'),
-    tabs: [...document.querySelectorAll('.tab-button')],
+  // ---------------------------------------------------------------------
+  // Navegação: fonte única de abas (ordem + rótulo + papéis permitidos).
+  // A barra de abas do desktop, a bottom-nav mobile e o menu "Mais" são
+  // todos gerados a partir deste mapa, em vez de listas duplicadas em
+  // index.html e aqui (fonte antiga do bug de dessincronização).
+  // ---------------------------------------------------------------------
+  const TAB_ORDER = [
+    'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
+    'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
+    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes', 'debitos',
+    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
+    'ajuda', 'dados',
+  ];
+
+  const TAB_LABELS = {
+    hoje: 'Hoje',
+    negocios: 'Negócios',
+    produtos: 'Produtos',
+    clientes: 'Clientes',
+    fornecedores: 'Fornecedores',
+    compras: 'Compras',
+    fichas: 'Fichas e custos',
+    producao: 'Produção',
+    vendas: 'Vendas',
+    pedidos: 'Pedidos',
+    consignado: 'Consignado',
+    estoque: 'Meu estoque',
+    tarefas: 'Tarefas',
+    relatorios: 'Relatórios',
+    vendedores: 'Vendedores',
+    precos: 'Preços',
+    aprovacoes: 'Aprovações',
+    debitos: 'Débitos dos vendedores',
+    meusaldo: 'Meu saldo com admin',
+    devolucoes: 'Devoluções, desperdícios e brindes',
+    minhasdevolucoes: 'Devoluções e brindes',
+    calculadora: 'Calculadora',
+    metas: 'Metas',
+    ajuda: 'Ajuda',
+    dados: 'Dados',
   };
 
-  let activeTab = 'negocios';
-  const todayDate = new Date();
-  let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
-  let dashboardEnd = U.today();
-  let draggedCard = null;
-  let openReturnsSaleId = null;
-
-  // ---------------------------------------------------------------------
-  // Visibilidade de abas por papel (defesa em profundidade: a RLS do banco
-  // já bloqueia o acesso real, isto só evita que a interface ofereça botões
-  // que dariam erro de permissão para um vendedor).
-  // ---------------------------------------------------------------------
+  // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
+  // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
+    hoje: ['admin', 'vendedor'],
     negocios: ['admin'],
     produtos: ['admin'],
     clientes: ['admin', 'vendedor'],
@@ -51,11 +68,92 @@
     vendedores: ['admin'],
     precos: ['admin'],
     aprovacoes: ['admin'],
+    debitos: ['admin'],
+    meusaldo: ['vendedor'],
+    devolucoes: ['admin'],
+    minhasdevolucoes: ['vendedor'],
     calculadora: ['admin', 'vendedor'],
     metas: ['admin', 'vendedor'],
     ajuda: ['vendedor'],
     dados: ['admin'],
   };
+
+  // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
+  // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  const BOTTOM_NAV_PRIMARY = {
+    admin: ['hoje', 'vendas', 'clientes', 'produtos'],
+    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+  };
+  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque' };
+
+  function buildTabsBar() {
+    const bar = document.getElementById('tabsBar');
+    if (!bar) return;
+    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+  }
+
+  function buildBottomNav() {
+    const nav = document.getElementById('bottomNav');
+    if (!nav) return;
+    nav.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
+      const items = BOTTOM_NAV_PRIMARY[role].map((tab) => `
+        <button type="button" class="bottom-nav-item" data-tab="${tab}">
+          <span class="bottom-nav-label">${U.escapeHtml(BOTTOM_NAV_SHORT_LABELS[tab] || TAB_LABELS[tab])}</span>
+        </button>
+      `).join('');
+      return `
+        <div class="bottom-nav-set" data-role-set="${role}" hidden>
+          ${items}
+          <button type="button" class="bottom-nav-item" data-more-menu-open>
+            <span class="bottom-nav-label">Mais</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function buildMoreMenu() {
+    const list = document.getElementById('moreMenuList');
+    if (!list) return;
+    list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
+      const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
+      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      return `
+        <div class="more-menu-role" data-role-set="${role}" hidden>
+          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+        </div>
+      `;
+    }).join('');
+  }
+
+  buildTabsBar();
+  buildBottomNav();
+  buildMoreMenu();
+
+  const els = {
+    view: document.getElementById('view'),
+    dashboard: document.getElementById('dashboard'),
+    activeBusiness: document.getElementById('activeBusiness'),
+    btnExport: document.getElementById('btnExport'),
+    btnDataTab: document.getElementById('btnDataTab'),
+    btnReset: document.getElementById('btnReset'),
+    btnLogout: document.getElementById('btnLogout'),
+    toastHost: document.getElementById('toastHost'),
+    headerActions: document.getElementById('headerActions'),
+    appShell: document.getElementById('appShell'),
+    authRoot: document.getElementById('authRoot'),
+    businessBar: document.querySelector('.business-bar'),
+    tabs: [...document.querySelectorAll('.tab-button')],
+    bottomNav: document.getElementById('bottomNav'),
+    moreMenu: document.getElementById('moreMenu'),
+  };
+
+  let activeTab = 'hoje';
+  const todayDate = new Date();
+  let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
+  let dashboardEnd = U.today();
+  let draggedCard = null;
+  let openReturnsSaleId = null;
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -68,7 +166,21 @@
   }
 
   function firstAllowedTab() {
-    return els.tabs.map((button) => button.dataset.tab).find(tabAllowed) || 'vendas';
+    return TAB_ORDER.find(tabAllowed) || 'hoje';
+  }
+
+  function syncActiveNav() {
+    document.querySelectorAll('.tab-button, .bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
+      button.classList.toggle('active', button.dataset.tab === activeTab);
+    });
+  }
+
+  function openMoreMenu() {
+    if (els.moreMenu) els.moreMenu.hidden = false;
+  }
+
+  function closeMoreMenu() {
+    if (els.moreMenu) els.moreMenu.hidden = true;
   }
 
   function applyRoleVisibility() {
@@ -78,10 +190,20 @@
       button.hidden = !allowed;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    if (els.bottomNav) {
+      els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
+        node.hidden = node.dataset.roleSet !== role;
+      });
+    }
+    if (els.moreMenu) {
+      els.moreMenu.querySelectorAll('.more-menu-role').forEach((node) => {
+        node.hidden = node.dataset.roleSet !== role;
+      });
+    }
     if (!tabAllowed(activeTab)) {
       activeTab = firstAllowedTab();
-      els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
     }
+    syncActiveNav();
   }
 
   function state() {
@@ -150,16 +272,100 @@
     `;
   }
 
+  // Tela "Hoje" — abertura padrão da navegação mobile (ver
+  // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
+  // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
+  // ações rápidas e listas curtas para não exigir rolar as abas completas.
+  function renderToday() {
+    const isAdminUser = S.isAdmin();
+    const todayStr = U.today();
+    const sales = currentSales();
+    const todaySales = sales.filter((sale) => sale.date === todayStr);
+    const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales });
+    const stockMetrics = Calc.businessMetrics(state());
+
+    const quickActions = isAdminUser
+      ? [
+          { tab: 'vendas', label: 'Nova venda' },
+          { tab: 'clientes', label: 'Novo cliente' },
+          { tab: 'produtos', label: 'Estoque' },
+          { tab: 'aprovacoes', label: 'Aprovações' },
+        ]
+      : [
+          { tab: 'vendas', label: 'Vender' },
+          { tab: 'clientes', label: 'Novo cliente' },
+          { tab: 'estoque', label: 'Meu estoque' },
+          { tab: 'pedidos', label: 'Meus pedidos' },
+        ];
+
+    const recentSales = U.sortByDateDesc(sales).slice(0, 5);
+    const recentSalesHtml = recentSales.length
+      ? `<ul class="today-list">${recentSales.map((sale) => {
+          const product = productById(sale.productId);
+          const client = clientById(sale.clientId);
+          const label = `${U.escapeHtml(product ? product.name : 'Produto removido')}${client ? ' · ' + U.escapeHtml(client.name) : ''}`;
+          return `<li><span>${label}</span><strong>${U.money(sale.netRevenue)}</strong></li>`;
+        }).join('')}</ul>`
+      : UI.formNotice('Nenhuma venda registrada ainda.', '');
+
+    const lowStockProducts = currentProducts()
+      .filter((product) => U.number(product.minStock) > 0 && U.number(product.currentStock) <= U.number(product.minStock))
+      .slice(0, 5);
+    const lowStockHtml = lowStockProducts.length
+      ? `<ul class="today-list">${lowStockProducts.map((product) => `<li><span>${U.escapeHtml(product.name)}</span>${UI.stockCell(product)}</li>`).join('')}</ul>`
+      : UI.formNotice('Nenhum produto abaixo do estoque mínimo.', 'success');
+
+    return `
+      <div class="today-screen">
+        <div class="dashboard">
+          ${[
+            UI.metric(isAdminUser ? 'Vendas hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+            UI.metric('Lucro bruto hoje', U.money(todayMetrics.grossProfit), 'lucroBruto'),
+            isAdminUser
+              ? UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque')
+              : UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+            UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+          ].join('')}
+        </div>
+
+        <section class="today-section">
+          <h3>Ações rápidas</h3>
+          <div class="quick-actions">
+            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
+          </div>
+        </section>
+
+        <section class="today-section">
+          <h3>Últimas vendas</h3>
+          ${recentSalesHtml}
+        </section>
+
+        <section class="today-section">
+          <h3>${isAdminUser ? 'Estoque crítico' : 'Meu estoque baixo'}</h3>
+          ${lowStockHtml}
+        </section>
+      </div>
+    `;
+  }
+
   function setTab(tab) {
     activeTab = tab;
-    els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === tab));
+    syncActiveNav();
+    closeMoreMenu();
     renderTab();
+  }
+
+  function handleQuickAction(event) {
+    const trigger = event.target.closest('.quick-action[data-tab]');
+    if (!trigger) return;
+    setTab(trigger.dataset.tab);
   }
 
   // Abas "clássicas": a função devolve uma string HTML, que é jogada em
   // els.view.innerHTML e usa o delegador global de cliques/submits (handleClick/
   // handleSubmit) definido mais abaixo neste arquivo.
   const LEGACY_RENDERERS = {
+    hoje: renderToday,
     negocios: renderBusinesses,
     produtos: renderProducts,
     clientes: renderClients,
@@ -183,7 +389,7 @@
   function renderTab() {
     if (!tabAllowed(activeTab)) {
       activeTab = firstAllowedTab();
-      els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
+      syncActiveNav();
     }
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
@@ -211,14 +417,41 @@
         }
         break;
       case 'aprovacoes':
+        // Reposição padronizada em carrinhos (docs/replication-v1/01-decisoes-de-produto.md,
+        // Decisão 2): a aprovação vive só aqui agora, via C360.salesCart —
+        // o antigo caminho binário de `orders` (C360.sellerStock.mountApprovals)
+        // foi aposentado da navegação. "Conceder estoque direto" continua
+        // sendo uma ferramenta separada (não é aprovação de pedido).
         els.view.innerHTML = '<div id="approvalsPanel"></div><div id="grantStockPanel"></div>';
-        if (window.C360.sellerStock) {
-          if (typeof window.C360.sellerStock.mountApprovals === 'function') {
-            window.C360.sellerStock.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
-          }
-          if (typeof window.C360.sellerStock.mountGrantStock === 'function') {
-            window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
-          }
+        if (window.C360.salesCart && typeof window.C360.salesCart.mountApprovals === 'function') {
+          window.C360.salesCart.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
+        }
+        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
+          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
+        }
+        break;
+      case 'debitos':
+        els.view.innerHTML = '<div id="sellerLedgerAdminPanel"></div>';
+        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountAdmin === 'function') {
+          window.C360.sellerLedger.mountAdmin(document.getElementById('sellerLedgerAdminPanel'), { onDone: renderAll });
+        }
+        break;
+      case 'meusaldo':
+        els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
+        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
+          window.C360.sellerLedger.mountSeller(document.getElementById('sellerLedgerPanel'));
+        }
+        break;
+      case 'devolucoes':
+        els.view.innerHTML = '<div id="operationalMovementsAdminPanel"></div>';
+        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountAdmin === 'function') {
+          window.C360.operationalMovements.mountAdmin(document.getElementById('operationalMovementsAdminPanel'), { onDone: renderAll });
+        }
+        break;
+      case 'minhasdevolucoes':
+        els.view.innerHTML = '<div id="operationalMovementsPanel"></div>';
+        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountSeller === 'function') {
+          window.C360.operationalMovements.mountSeller(document.getElementById('operationalMovementsPanel'));
         }
         break;
       case 'estoque':
@@ -843,7 +1076,92 @@
         <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
         <div class="panel-card"><h3>Últimas movimentações</h3>${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Custo unit.', 'Obs.'], movementRows, 'Nenhuma movimentação.')}</div>
       </div>
+      ${renderReplicationReports()}
     `);
+  }
+
+  function sellerName(id) {
+    const profile = state().profiles.find((item) => String(item.id) === String(id));
+    return profile ? profile.name : 'Vendedor';
+  }
+
+  // Fase 5 do pacote de replicação (docs/replication-v1/06-fases5-6-relatorios-e-seguranca.md):
+  // relatórios que consomem o que as Fases 2-4 criaram. Sem tabela nova —
+  // só leitura do que já está em cache (sellerAccountEntries, saleCarts,
+  // orders, operationalMovements).
+  function renderReplicationReports() {
+    const businessId = state().activeBusinessId;
+
+    const sellerBalanceRows = state().sellers
+      .filter((seller) => seller.active !== false)
+      .map((seller) => {
+        const entries = state().sellerAccountEntries.filter((entry) => String(entry.sellerId) === String(seller.id));
+        return { seller, balance: Calc.sellerBalance(entries) };
+      })
+      .filter((row) => row.balance !== 0)
+      .sort((a, b) => b.balance - a.balance)
+      .map((row) => [U.escapeHtml(row.seller.name || 'Vendedor'), UI.moneyCell(row.balance)]);
+
+    const openCarts = (state().saleCarts || []).filter((cart) => ['pending_approval', 'partially_approved'].includes(cart.status));
+    const openOrders = currentOrders().filter((order) => !['despachado', 'concluido'].includes(order.status));
+    const openOrderRows = [
+      ...openCarts.map((cart) => [
+        'Carrinho', U.escapeHtml(sellerName(cart.sellerId)), U.escapeHtml(cart.customerName || '—'),
+        U.escapeHtml(cart.status), (cart.createdAt || '').slice(0, 10),
+      ]),
+      ...openOrders.map((order) => [
+        'Pedido', U.escapeHtml(sellerName(order.sellerId)), U.escapeHtml(clientById(order.clientId)?.name || '—'),
+        U.escapeHtml(order.status), (order.dueDate || '').slice(0, 10),
+      ]),
+    ];
+
+    const movements = state().operationalMovements || [];
+    const pendingReturns = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado', 'recebido'].includes(movement.status));
+    const pendingReturnRows = pendingReturns.map((movement) => {
+      const product = productById(movement.productId);
+      return [
+        U.escapeHtml(sellerName(movement.sellerId)), U.escapeHtml(product ? product.name : 'Produto removido'),
+        U.qty(movement.quantityDeclared, product?.unit), U.escapeHtml(movement.status),
+      ];
+    });
+
+    const wasteByMonth = {};
+    movements.filter((movement) => movement.type === 'waste' && movement.status === 'confirmed').forEach((movement) => {
+      const month = (movement.confirmedAt || movement.createdAt || '').slice(0, 7) || '—';
+      const product = productById(movement.productId);
+      const value = U.number(movement.quantityReceived) * U.number(product?.avgCost);
+      wasteByMonth[month] = (wasteByMonth[month] || 0) + value;
+    });
+    const wasteRows = Object.entries(wasteByMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([month, value]) => [U.escapeHtml(month), UI.moneyCell(value)]);
+
+    const giftsByResponsible = {};
+    movements.filter((movement) => movement.type === 'gift' && movement.status === 'confirmed').forEach((movement) => {
+      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Admin';
+      const product = productById(movement.productId);
+      const qty = U.number(movement.quantityReceived);
+      if (!giftsByResponsible[label]) giftsByResponsible[label] = [];
+      giftsByResponsible[label].push(`${qty} ${product?.unit || ''} de ${product?.name || 'produto removido'}`);
+    });
+    const giftRows = Object.entries(giftsByResponsible).map(([label, items]) => [U.escapeHtml(label), U.escapeHtml(items.join(', '))]);
+
+    const inTransit = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado'].includes(movement.status));
+    const inTransitRows = inTransit.map((movement) => {
+      const product = productById(movement.productId);
+      return [U.escapeHtml(sellerName(movement.sellerId)), U.escapeHtml(product ? product.name : 'Produto removido'), U.qty(movement.quantityDeclared, product?.unit)];
+    });
+
+    if (!businessId) return '';
+
+    return `
+      <div class="three-columns" style="margin-top: 1.2rem;">
+        <div class="panel-card"><h3>Saldo por vendedor</h3>${UI.table(['Vendedor', 'Saldo'], sellerBalanceRows, 'Nenhum vendedor com saldo em aberto.')}</div>
+        <div class="panel-card"><h3>Pedidos em aberto</h3>${UI.table(['Origem', 'Vendedor', 'Cliente', 'Status', 'Data'], openOrderRows, 'Nenhum pedido em aberto.')}</div>
+        <div class="panel-card"><h3>Devoluções pendentes</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.', 'Status'], pendingReturnRows, 'Nenhuma devolução pendente.')}</div>
+        <div class="panel-card"><h3>Desperdício por período</h3>${UI.table(['Mês', 'Valor perdido'], wasteRows, 'Nenhum desperdício confirmado ainda.')}</div>
+        <div class="panel-card"><h3>Brindes por responsável</h3>${UI.table(['Responsável', 'Itens'], giftRows, 'Nenhum brinde confirmado ainda.')}</div>
+        <div class="panel-card"><h3>Estoque em trânsito</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.'], inTransitRows, 'Nada em trânsito.')}</div>
+      </div>
+    `;
   }
 
   function currentMovements() {
@@ -1532,6 +1850,14 @@
   function bindEvents() {
     bindHelpTips();
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
+      button.addEventListener('click', () => setTab(button.dataset.tab));
+    });
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('[data-more-menu-open]')) openMoreMenu();
+      if (event.target.closest('[data-more-menu-close]')) closeMoreMenu();
+    });
+    document.addEventListener('click', handleQuickAction);
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
@@ -1627,11 +1953,14 @@
     if (els.authRoot) els.authRoot.innerHTML = '';
     if (els.appShell) els.appShell.hidden = false;
     if (els.headerActions) els.headerActions.hidden = false;
+    if (els.bottomNav) els.bottomNav.hidden = false;
   }
 
   function showLogin() {
     if (els.appShell) els.appShell.hidden = true;
     if (els.headerActions) els.headerActions.hidden = true;
+    if (els.bottomNav) els.bottomNav.hidden = true;
+    closeMoreMenu();
     if (els.authRoot && window.C360.auth) {
       els.authRoot.innerHTML = window.C360.auth.render();
       window.C360.auth.mount(els.authRoot, { onSuccess: boot });
@@ -1641,7 +1970,6 @@
   function boot() {
     showAppShell();
     activeTab = firstAllowedTab();
-    els.tabs.forEach((button) => button.classList.toggle('active', button.dataset.tab === activeTab));
     if (!eventsBound) {
       bindEvents();
       eventsBound = true;

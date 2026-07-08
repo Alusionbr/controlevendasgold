@@ -469,7 +469,11 @@ essas informações aqui — só resumir o que muda no comportamento do app.
 |---|---|---|
 | Vendedores | admin | `src/auth.js` (`renderSellers`/`mountSellers`) |
 | Preços | admin | `src/pricing.js` |
-| Aprovações | admin | `src/sellerStock.js` (`mountApprovals` + `mountGrantStock`) |
+| Aprovações | admin | `src/salesCart.js` (`mountApprovals`, reposição em carrinhos) + `src/sellerStock.js` (`mountGrantStock`, concessão direta de estoque) |
+| Débitos dos vendedores | admin | `src/sellerLedger.js` (`mountAdmin`) |
+| Meu saldo com admin | vendedor | `src/sellerLedger.js` (`mountSeller`) |
+| Devoluções, desperdícios e brindes | admin | `src/operationalMovements.js` (`mountAdmin`, fila de conferência) |
+| Devoluções e brindes | vendedor | `src/operationalMovements.js` (`mountSeller`, solicitar + acompanhar) |
 | Meu estoque | vendedor | `src/sellerStock.js` (`mountMyStock`) |
 | Calculadora | admin + vendedor | `src/calculator.js` |
 | Metas | admin + vendedor | `src/goals.js` (`mountAdmin`/`mountSeller` conforme o papel) |
@@ -553,3 +557,63 @@ login, e `signOut()` no botão "Sair" do cabeçalho).
   `autocapitalize/autocorrect/spellcheck` desligados (reduz sugestão de
   domínio do navegador) e um alerta pós-criação confirmando o e-mail exato
   que ficou salvo no servidor (não o que foi digitado).
+
+---
+
+## Atualização: replicação v1 — mobile por perfil, reposição em carrinhos, ledger
+
+Análise completa e sequenciamento em `docs/replication-v1/` (ler antes de mexer
+nestas áreas). Fases 1–3 implementadas:
+
+- **Fase 1 (navegação mobile por perfil)**: `index.html`/`src/app.js` geram a
+  barra de abas do desktop, a bottom-nav mobile e o menu "Mais" a partir de
+  uma única fonte (`TAB_ORDER`/`TAB_LABELS`/`TAB_ROLES` em `src/app.js`) —
+  não existe mais lista de abas duplicada. Nova aba `hoje` (tela "Hoje") é a
+  aberta por padrão para os dois papéis. Abaixo de 720px a bottom-nav fixa
+  assume e o dashboard fixo (`#dashboard`) cede lugar à tela "Hoje"; acima
+  disso o comportamento de desktop é o de sempre.
+- **Fase 2 (reposição padronizada em carrinhos)**: a aprovação de pedido de
+  reposição do vendedor vive só na aba "Aprovações", via
+  `C360.salesCart.mountApprovals` — o antigo caminho binário de `orders`
+  (`C360.sellerStock.mountApprovals`) saiu da navegação. `sale_carts` ganhou
+  `paid_initial_amount` (migração `0010`): pagamento `parcial` agora tem
+  valor real, e a aprovação calcula o que fica devendo sobre a quantidade
+  **aprovada**, nunca a solicitada.
+- **Fase 3 (conta corrente do vendedor)**: novo ledger dedicado
+  (`seller_account_entries` + `seller_payments`, migração `0011`,
+  `src/sellerLedger.js`) substitui o saldo implícito que reaproveitava
+  `consignments`. Saldo é sempre a soma dos lançamentos — nunca sobrescrito.
+  Débito de reposição consignado/parcial é lançado por
+  `src/salesCart.js` (`approveCart`) no momento da aprovação. Só o admin
+  registra pagamento recebido ("Débitos dos vendedores"); vendedor só
+  enxerga o próprio saldo ("Meu saldo com admin"), sem escrita — decisão
+  registrada em `docs/replication-v1/04-fase3-ledger-vendedor.md`.
+
+- **Fase 4 (devolução com status, desperdício, brinde)**: nova tabela
+  `operational_movements` (migração `0012`) + `src/operationalMovements.js`.
+  Distinto de `src/returns.js` (devolução/desperdício **imediatos** a partir
+  de uma venda direta): este módulo é para mercadoria física com o vendedor
+  (reposição/consignado) voltando, se perdendo ou virando brinde. Regra
+  central: status `a_devolver`/`pending` não mexe em estoque nem
+  financeiro — só a conferência do admin dispara o impacto (baixa em
+  `seller_stock` ou `products.current_stock`, `stock_movements` quando
+  aplicável, e `return_credit` no ledger da Fase 3 se marcado "abater da
+  dívida"). Vendedor só cria a solicitação; nunca confere (trigger de banco
+  bloqueia).
+
+- **Fase 5 (relatórios)**: `renderReplicationReports()` em `src/app.js`,
+  dentro da aba "Relatórios" (admin). Sem tabela nova — só leitura do que as
+  Fases 2-4 já criaram: saldo por vendedor, pedidos em aberto (carrinhos +
+  orders), devoluções pendentes, desperdício por período (agrupado por
+  mês), brindes por responsável, estoque em trânsito.
+
+- **Fase 6 (revisão de segurança Supabase)**: migrations `0010`-`0012`
+  aplicadas no projeto Supabase em uso (`zcwnfrhtlhjfprsjktlx`), confirmadas
+  via `mcp__Supabase__list_migrations`. `get_advisors` (security +
+  performance) rodado depois: nenhum achado novo além do mesmo padrão já
+  presente nas tabelas anteriores (RLS `_all_admin` + `_select_seller`,
+  triggers `SECURITY DEFINER` como `enforce_order_approval_lock`). Migration
+  `0013_phase6_performance_indexes.sql` corrige os índices de FK faltando e
+  troca `auth.uid()` por `(select auth.uid())` nas policies de vendedor das
+  3 tabelas novas — não mexeu nas tabelas antigas (fora do escopo desta
+  fase, mesma limitação já documentada). Replicação v1 (Fases 1-6) concluída.
