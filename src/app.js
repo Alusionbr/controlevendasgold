@@ -189,6 +189,7 @@
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      if (activeTab === 'pedidos') mountOrdersCartPanel();
       return;
     }
     mountModuleTab(activeTab);
@@ -260,6 +261,7 @@
   // em `openReturnsSaleId`, aberto/fechado pelo botÃ£o "DevoluÃ§Ã£o/DesperdÃ­cio"
   // na tabela de vendas (ver handleClick, case 'toggle-returns').
   function mountSalesExtras() {
+    mountSalesCartPanel('salesCartPanel');
     const container = document.getElementById('returnsPanel');
     if (!container) return;
     if (!openReturnsSaleId) {
@@ -279,6 +281,22 @@
           toast('Registro salvo.', 'success');
         },
       });
+    }
+  }
+
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js â€” quando a origem
+  // escolhida Ã© "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovaÃ§Ã£o do admin). O rascunho do carrinho Ã© compartilhado
+  // com a aba Vendas (ver comentÃ¡rio de persistentDraft em salesCart.js).
+  function mountOrdersCartPanel() {
+    mountSalesCartPanel('ordersCartPanel');
+  }
+
+  function mountSalesCartPanel(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (window.C360.salesCart && typeof window.C360.salesCart.mount === 'function') {
+      window.C360.salesCart.mount(container, { onDone: renderAll });
     }
   }
 
@@ -614,7 +632,8 @@
         isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto. Monte um carrinho com vÃ¡rios produtos abaixo, ou lance uma venda rÃ¡pida de 1 produto no formulÃ¡rio.', `
+      <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -647,7 +666,7 @@
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda</button>
+        <button type="submit">LanÃ§ar venda rÃ¡pida (1 produto)</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
       <div id="returnsPanel"></div>
@@ -658,20 +677,25 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const statuses = state().settings.orderStatuses;
+    const isAdminUser = S.isAdmin();
     const cards = currentOrders().map((order) => {
       const client = clientById(order.clientId);
       const product = productById(order.productId);
+      const dispatchAction = order.convertedSaleId
+        ? UI.badge('venda lanÃ§ada', 'ok')
+        : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
         status: order.status,
         title: client?.name || 'Pedido sem cliente',
         subtitle: product ? `${product.name} Â· ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
         detail: `Entrega: ${order.dueDate || 'sem data'} Â· Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
-        actions: `${order.convertedSaleId ? UI.badge('venda lanÃ§ada', 'ok') : UI.actionButton('convert-order-sale', order.id, 'Baixar venda')} ${UI.actionButton('delete-order', order.id, 'Excluir', 'danger')}`,
+        actions: `${dispatchAction} ${isAdminUser ? UI.actionButton('delete-order', order.id, 'Excluir', 'danger') : ''}`,
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartÃµes entre as colunas ou use o campo "Mover para" no celular.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeÃ§a pendente â€” sÃ³ o administrador muda o status, faz devoluÃ§Ãµes e acertos.', `
+      <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -688,15 +712,12 @@
         <label>Data de entrega/despacho
           <input name="dueDate" type="date">
         </label>
-        <label>${UI.fieldLabel('Status inicial', 'statusInicial')}
-          <select name="status">${UI.optionList(statuses, 'pendente', '')}</select>
-        </label>
         <label class="wide">ObservaÃ§Ãµes
           <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
         </label>
-        <button type="submit">Criar pedido</button>
+        <button type="submit">Criar pedido (rÃ¡pido, 1 produto)</button>
       </form>
-      ${UI.kanban({ statuses, cards, type: 'orders' })}
+      ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
   }
 
@@ -1122,7 +1143,7 @@
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
       dueDate: data.dueDate || null,
-      status: data.status || 'pendente',
+      status: 'pendente',
       notes: data.notes || '',
       convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
@@ -1210,7 +1231,10 @@
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
-        case 'delete-order': await deleteRecord('orders', id); break;
+        case 'delete-order':
+          if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
+          await deleteRecord('orders', id);
+          break;
         case 'delete-task': await deleteRecord('tasks', id); break;
         case 'delete-consignment':
           if (confirm('Excluir consignaÃ§Ã£o? Isso nÃ£o desfaz estoque automaticamente. Use apenas para correÃ§Ã£o manual/revisÃ£o.')) await deleteRecord('consignments', id);
@@ -1240,6 +1264,7 @@
   }
 
   async function convertOrderToSale(orderId) {
+    if (!S.isAdmin()) throw new Error('Somente o administrador pode alterar o status do pedido e baixar a venda.');
     const order = state().orders.find((item) => item.id === orderId);
     if (!order) throw new Error('Pedido nÃ£o encontrado.');
     if (order.convertedSaleId) throw new Error('Pedido jÃ¡ foi convertido em venda.');
@@ -1390,6 +1415,10 @@
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
+    // SÃ³ admin altera status de pedido â€” a coluna jÃ¡ nÃ£o Ã© arrastÃ¡vel para
+    // vendedor (readOnly em UI.kanban), isto Ã© sÃ³ defesa extra; o banco
+    // tambÃ©m bloqueia via trigger.
+    if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });
     } catch (error) {
@@ -1407,6 +1436,7 @@
     const board = select.closest('[data-kanban-type]');
     if (!board) return;
     const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    if (collection === 'orders' && !S.isAdmin()) return;
     const cardId = select.dataset.cardId;
     try {
       await S.update(collection, cardId, { status: select.value });

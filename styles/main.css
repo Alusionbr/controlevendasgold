@@ -1123,6 +1123,14 @@ pre {
   height: 18px;
   flex: 0 0 auto;
 }
+.seller-permission-stock-adjust {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+}
 .dashboard-period-card { gap: 0.5rem; }
 .dashboard-period-fields {
   display: grid;

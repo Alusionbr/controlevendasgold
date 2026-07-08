@@ -181,6 +181,7 @@
         .ss-badge-urgent { animation: none; }
       }
       .ss-approval-card .actions button { flex: 1 1 auto; min-width: 130px; }
+      .ss-stock-adjust-notice { margin-bottom: 0.6rem; }
     `;
     document.head.appendChild(style);
   }
@@ -231,6 +232,34 @@
     `;
   }
 
+  // ---------------------------------------------------------------------
+  // Acerto de estoque próprio — só aparece quando o admin liberou 1 crédito
+  // (seller_settings.stock_adjustment_credits > 0). Consome o RPC
+  // seller_adjust_own_stock via C360.api.adjustOwnStock, que já zera o
+  // crédito no servidor depois de usado.
+  // ---------------------------------------------------------------------
+  function adjustFormHtml(adjustFeedback) {
+    const products = productsList();
+    return `
+      <div class="ss-stock-adjust-notice">${UI.badge('Acerto de estoque liberado pelo administrador', 'ok')}</div>
+      <form class="ss-inline-form" data-ss-adjust-form>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', 'Selecione o produto')}</select>
+        </label>
+        <label>Novo estoque (quantidade correta)
+          <input name="newQuantity" type="number" step="0.001" min="0" required>
+        </label>
+        <label>Motivo do acerto (obrigatório)
+          <input name="reason" required placeholder="Ex.: contagem antiga nunca foi lançada certo">
+        </label>
+        <div class="actions">
+          <button type="submit">Registrar acerto (usa o crédito)</button>
+        </div>
+        ${adjustFeedback ? UI.formNotice(adjustFeedback.message, adjustFeedback.type) : ''}
+      </form>
+    `;
+  }
+
   function renderMyStock(data = {}) {
     ensureStyles();
     const apiAvailable = data.apiAvailable !== undefined ? data.apiAvailable : hasApi('listSellerStock');
@@ -251,11 +280,23 @@
       ? `<div class="ss-stock-grid">${rows.map((row) => stockCardHtml(row, data.openProductId)).join('')}</div>`
       : '<div class="empty-state"><strong>Nenhum estoque próprio no momento.</strong><span>Peça ao administrador para lhe repassar produtos.</span></div>';
 
-    return UI.section(
-      'Meu estoque',
-      'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
-      `${notice}${body}`
-    );
+    const credits = U.number(data.sellerSettings && data.sellerSettings.stockAdjustmentCredits);
+    const adjustSection = credits > 0
+      ? UI.section(
+          'Acerto de estoque',
+          'Corrige a quantidade que você realmente tem, com motivo obrigatório. Depois de usar, o administrador precisa liberar de novo.',
+          adjustFormHtml(data.adjustFeedback)
+        )
+      : '';
+
+    return `
+      ${UI.section(
+        'Meu estoque',
+        'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
+        `${notice}${body}`
+      )}
+      ${adjustSection}
+    `;
   }
 
   function mountMyStock(container) {
@@ -270,20 +311,27 @@
     let rows = [];
     let loading = true;
     let openProductId = null;
+    let sellerSettings = null;
+    let adjustFeedback = null;
 
     function paint() {
-      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true });
+      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true, sellerSettings, adjustFeedback });
     }
 
     async function load() {
       loading = true;
       paint();
       try {
-        const res = await safeCall('listSellerStock', user.id);
-        rows = Array.isArray(res) ? res : [];
+        const [stockRes, settingsRes] = await Promise.all([
+          safeCall('listSellerStock', user.id),
+          hasApi('listSellerSettings') ? safeCall('listSellerSettings', { sellerId: user.id }) : Promise.resolve(null),
+        ]);
+        rows = Array.isArray(stockRes) ? stockRes : [];
+        sellerSettings = Array.isArray(settingsRes) ? (settingsRes[0] || null) : null;
       } catch (error) {
         console.error('C360.sellerStock: erro ao carregar estoque próprio', error);
         rows = [];
+        sellerSettings = null;
       }
       loading = false;
       paint();
@@ -325,6 +373,29 @@
       } catch (error) {
         alert(error.message);
         if (submitButton) submitButton.disabled = false;
+      }
+    });
+
+    container.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-ss-adjust-form]');
+      if (!form) return;
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      try {
+        if (!hasApi('adjustOwnStock')) throw new Error('Recurso de acerto de estoque indisponível (modo demonstração).');
+        const data = U.formData(form);
+        if (submitButton) submitButton.disabled = true;
+        await safeCall('adjustOwnStock', {
+          productId: data.productId,
+          newQuantity: U.number(data.newQuantity),
+          reason: (data.reason || '').trim(),
+        });
+        adjustFeedback = null;
+        await load();
+      } catch (error) {
+        adjustFeedback = { message: error.message, type: 'danger' };
+        if (submitButton) submitButton.disabled = false;
+        paint();
       }
     });
 

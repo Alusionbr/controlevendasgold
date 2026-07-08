@@ -148,7 +148,31 @@ Venda informada pelo cliente gera venda com canal `Consignado`, mas não baixa e
 
 Pedido é controle operacional. Ele não altera estoque automaticamente até virar venda.
 
-Ao clicar em “Baixar venda”, o pedido cria uma venda e baixa estoque.
+Tanto a aba Vendas quanto a aba Pedidos permitem montar um carrinho com vários produtos de uma vez (ver `src/salesCart.js`). No carrinho, o vendedor escolhe, por item:
+
+- **origem do estoque**: estoque próprio do vendedor ou estoque do administrador (vira pedido aguardando aprovação);
+- **canal** da venda (WhatsApp, Instagram, loja, etc.);
+- **tipo de venda**: à vista, parcial ou consignado;
+- **nome do cliente** (opcional).
+
+Ao retirar/criar um pedido, o status logístico (`status`) **sempre começa `pendente`**, não importa quem cria (admin ou vendedor) — o banco força isso em um trigger, não é só validação de tela. Depois de criado, **somente o administrador** pode:
+
+- mudar o status do pedido (arrastar no Kanban ou usar "Mover para");
+- clicar em "Baixar venda" (o que despacha o pedido e lança a venda);
+- excluir um pedido.
+
+O vendedor só cria e acompanha os próprios pedidos; a mudança de status e a baixa ficam bloqueadas na interface e também no banco (trigger `enforce_order_approval_lock`).
+
+---
+
+## 11.1. Acerto de estoque próprio do vendedor
+
+Vendedores antigos podem ter estoque próprio (consignado/mochila) sem registro correto no sistema. Para corrigir isso sem abrir mão do controle:
+
+1. O administrador clica em "Liberar 1 acerto de estoque" para um vendedor específico (aba Vendas/Pedidos, painel "Permissões dos vendedores"). Isso grava 1 crédito em `seller_settings.stock_adjustment_credits`.
+2. Enquanto tiver crédito, o vendedor vê a seção "Acerto de estoque" na aba **Meu estoque**: escolhe o produto, informa a quantidade correta e o motivo (obrigatório).
+3. O sistema corrige `seller_stock` para a quantidade informada, grava a correção em `seller_stock_adjustments` (auditoria: quantidade anterior, nova, motivo, data) e **zera o crédito**.
+4. Se o vendedor precisar corrigir de novo, o administrador precisa liberar outro crédito.
 
 ---
 

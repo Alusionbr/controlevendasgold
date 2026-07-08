@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-osimSIEqdB8FU27Yx4mc3VUDkrtoyUJYAScgOBf/J3w=' 'sha256-UkFvbzKhBWnZ0sxGXcyPwlGTNo8tGYJdQMIC5lO8iQc=' 'sha256-dBY/xRYRZScglr0JQITYLtnSBr/CX2iO5DKMkXIo6XM=' 'sha256-nR7adyP14C/XkrYn5ZAiNWwTLUk/eFE99taMg5307qE=' 'sha256-a6NncMHDXLrIeAgQtHlt+rFZIcrt3/pidUpADFb2bg4=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-HEykH+AR2OYe4Oa642Z3V2g2RmxBlM+dV1k4ZUIoiaA=' 'sha256-172AqV7viq/JO+naK5GCXXmBXWpStTmHoq9oW+OB6dk=' 'sha256-e/wHUNpc5sLiENGiD+OTysC7f+2Ce+LziNcgP6j+R8Q=' 'sha256-dSmZRJLC1kUhx3u4JicuRSyhHBI4D0WzKBUTTaUo7a0=' 'sha256-ZFnHcNYcDF5P/HTfURIZcS7LzkJV32Og9+07bh/MDQA=' 'sha256-fJaW/03kEh23oAyBBc+1buW5/q7ciiv7PpZN+Y86oKc=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-RSUjz9Kg5Hd2jfArQC5NHm235LkICqb4vzkdugc34Ww=' 'sha256-k9M2Q1zwbUK58igYZ/Y8Uzaklv7euLKpnmw8iHyymCg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bbb5zHq/9lN1bY92tJl89faZQKauC4QCMi+MUoDfM3A=' 'sha256-FjIbTJ5a322+3BXt3oOWG+tcmwf1s8LxeJTljwxBjLk=' 'sha256-eIGvr+ED/6XD8lbXlChNCNu4bCC/QASUFNCIqaQ2+Pk=' 'sha256-r5Qs/JD7ZN1XyquDeKVdv2HRdoREAq06SO29Up9ZbrQ=' 'sha256-ebC0+eOIq8a+s5Y66r8J4BklEf9JHOUAnFOuM2oLGNI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-SIgPlwUF4pfELYKdkfRaA1ULgEjnD6afbsqvvPcjShA=' 'sha256-q+o61xtyLMUgUPu7rBXBQW9mb3L9A4n/s+FXtMkItWk=' 'sha256-z34IgVHIOoojkQF1JmFMvg4twAhyM7StyrFXC6PVWcg=' 'sha256-EsAB8vUbMWpuayfbkXSxzLsvAI+jH0fo0TXWubP7wAk=' 'sha256-i/0M1Vkva/XvtA3UnR5cOkIop2Y81F6QiHImAj9fu3U=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-Vm2lfB2gG512pj48YT1DGZPhRazMIXHaZml5uOEIzgc=' 'sha256-3+7zJeAFjK/hVoquOt8l7Rb4+V07VSPNZw1lKBHppzo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1131,6 +1131,14 @@ pre {
   height: 18px;
   flex: 0 0 auto;
 }
+.seller-permission-stock-adjust {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+}
 .dashboard-period-card { gap: 0.5rem; }
 .dashboard-period-fields {
   display: grid;
@@ -1322,9 +1330,9 @@ pre {
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api � camada fina de acesso � Supabase (Auth + PostgREST + Edge
+  // C360.api - camada fina de acesso a Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de pre�o, trigger de aprova��o, edge
+  // (tabelas, RLS, trigger de piso de preco, trigger de aprovacao, edge
   // function create-seller).
   // ==========================================================================
 
@@ -1449,7 +1457,7 @@ pre {
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permiss�o ou registro n�o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permissao ou registro nao encontrado).', 403);
     return Array.isArray(result) ? result[0] : result;
   }
 
@@ -1458,7 +1466,7 @@ pre {
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro exclu�do (sem permiss�o ou registro n�o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluido (sem permissao ou registro nao encontrado).', 403);
   }
 
   async function upsert(table, payload, conflictColumns) {
@@ -1641,6 +1649,18 @@ pre {
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  // Acerto de estoque próprio do vendedor: só funciona se o admin liberou 1
+  // crédito em seller_settings.stock_adjustment_credits (RPC consome esse
+  // crédito e grava trilha de auditoria em seller_stock_adjustments).
+  async function adjustOwnStock({ productId, newQuantity, reason }) {
+    const row = await restRequest('/rest/v1/rpc/seller_adjust_own_stock', {
+      method: 'POST',
+      body: { p_product_id: productId, p_new_quantity: newQuantity, p_reason: reason },
+    });
+    if (!row) return null;
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -1657,6 +1677,7 @@ pre {
       allowConsignment: row.allow_consignment,
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
+      stockAdjustmentCredits: row.stock_adjustment_credits,
       notes: row.notes,
     }));
   }
@@ -1792,6 +1813,7 @@ pre {
     listSellerStock,
     setSellerStock,
     consumeSellerStock,
+    adjustOwnStock,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
@@ -2536,7 +2558,6 @@ pre {
     cmv: 'CMV = Custo da Mercadoria Vendida. Quanto te custou o que você vendeu: quantidade × custo médio no momento da venda.',
     // Pedidos
     precoCombinado: 'Preço por unidade combinado com o cliente neste pedido.',
-    statusInicial: 'Em que etapa o pedido começa. Depois você arrasta o cartão entre as colunas.',
     // Consignado
     consignado: 'Você entrega produtos ao cliente sem vender ainda: o estoque sai do seu controle e fica "com o cliente". A venda só conta quando ele avisa que vendeu.',
     qtdEnviada: 'Quantas unidades você está entregando ao cliente para ele tentar vender.',
@@ -2649,7 +2670,10 @@ pre {
     `;
   }
 
-  function kanban({ statuses, cards, type }) {
+  // readOnly: usado pelo Kanban de Pedidos quando quem está olhando é
+  // vendedor — só admin pode mudar o status de um pedido, então nem o
+  // arrastar-e-soltar nem o select "mover para" aparecem para vendedor.
+  function kanban({ statuses, cards, type, readOnly = false }) {
     return `<div class="kanban" data-kanban-type="${escapeHtml(type)}">
       ${statuses.map((status) => {
         const filtered = cards.filter((card) => card.status === status.value);
@@ -2658,11 +2682,11 @@ pre {
             <h3>${escapeHtml(status.label)} ${badge(String(filtered.length))}</h3>
             <div class="kanban-dropzone">
               ${filtered.map((card) => `
-                <article class="kanban-card" draggable="true" data-card-id="${escapeHtml(card.id)}">
+                <article class="kanban-card" draggable="${readOnly ? 'false' : 'true'}" data-card-id="${escapeHtml(card.id)}">
                   <strong>${escapeHtml(card.title)}</strong>
                   ${card.subtitle ? `<p>${escapeHtml(card.subtitle)}</p>` : ''}
                   ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
-                  ${kanbanMoveSelect(card, statuses)}
+                  ${readOnly ? '' : kanbanMoveSelect(card, statuses)}
                   <div class="actions">${card.actions || ''}</div>
                 </article>
               `).join('')}
@@ -4073,6 +4097,7 @@ pre {
         .ss-badge-urgent { animation: none; }
       }
       .ss-approval-card .actions button { flex: 1 1 auto; min-width: 130px; }
+      .ss-stock-adjust-notice { margin-bottom: 0.6rem; }
     `;
     document.head.appendChild(style);
   }
@@ -4123,6 +4148,34 @@ pre {
     `;
   }
 
+  // ---------------------------------------------------------------------
+  // Acerto de estoque próprio — só aparece quando o admin liberou 1 crédito
+  // (seller_settings.stock_adjustment_credits > 0). Consome o RPC
+  // seller_adjust_own_stock via C360.api.adjustOwnStock, que já zera o
+  // crédito no servidor depois de usado.
+  // ---------------------------------------------------------------------
+  function adjustFormHtml(adjustFeedback) {
+    const products = productsList();
+    return `
+      <div class="ss-stock-adjust-notice">${UI.badge('Acerto de estoque liberado pelo administrador', 'ok')}</div>
+      <form class="ss-inline-form" data-ss-adjust-form>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', 'Selecione o produto')}</select>
+        </label>
+        <label>Novo estoque (quantidade correta)
+          <input name="newQuantity" type="number" step="0.001" min="0" required>
+        </label>
+        <label>Motivo do acerto (obrigatório)
+          <input name="reason" required placeholder="Ex.: contagem antiga nunca foi lançada certo">
+        </label>
+        <div class="actions">
+          <button type="submit">Registrar acerto (usa o crédito)</button>
+        </div>
+        ${adjustFeedback ? UI.formNotice(adjustFeedback.message, adjustFeedback.type) : ''}
+      </form>
+    `;
+  }
+
   function renderMyStock(data = {}) {
     ensureStyles();
     const apiAvailable = data.apiAvailable !== undefined ? data.apiAvailable : hasApi('listSellerStock');
@@ -4143,11 +4196,23 @@ pre {
       ? `<div class="ss-stock-grid">${rows.map((row) => stockCardHtml(row, data.openProductId)).join('')}</div>`
       : '<div class="empty-state"><strong>Nenhum estoque próprio no momento.</strong><span>Peça ao administrador para lhe repassar produtos.</span></div>';
 
-    return UI.section(
-      'Meu estoque',
-      'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
-      `${notice}${body}`
-    );
+    const credits = U.number(data.sellerSettings && data.sellerSettings.stockAdjustmentCredits);
+    const adjustSection = credits > 0
+      ? UI.section(
+          'Acerto de estoque',
+          'Corrige a quantidade que você realmente tem, com motivo obrigatório. Depois de usar, o administrador precisa liberar de novo.',
+          adjustFormHtml(data.adjustFeedback)
+        )
+      : '';
+
+    return `
+      ${UI.section(
+        'Meu estoque',
+        'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
+        `${notice}${body}`
+      )}
+      ${adjustSection}
+    `;
   }
 
   function mountMyStock(container) {
@@ -4162,20 +4227,27 @@ pre {
     let rows = [];
     let loading = true;
     let openProductId = null;
+    let sellerSettings = null;
+    let adjustFeedback = null;
 
     function paint() {
-      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true });
+      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true, sellerSettings, adjustFeedback });
     }
 
     async function load() {
       loading = true;
       paint();
       try {
-        const res = await safeCall('listSellerStock', user.id);
-        rows = Array.isArray(res) ? res : [];
+        const [stockRes, settingsRes] = await Promise.all([
+          safeCall('listSellerStock', user.id),
+          hasApi('listSellerSettings') ? safeCall('listSellerSettings', { sellerId: user.id }) : Promise.resolve(null),
+        ]);
+        rows = Array.isArray(stockRes) ? stockRes : [];
+        sellerSettings = Array.isArray(settingsRes) ? (settingsRes[0] || null) : null;
       } catch (error) {
         console.error('C360.sellerStock: erro ao carregar estoque próprio', error);
         rows = [];
+        sellerSettings = null;
       }
       loading = false;
       paint();
@@ -4217,6 +4289,29 @@ pre {
       } catch (error) {
         alert(error.message);
         if (submitButton) submitButton.disabled = false;
+      }
+    });
+
+    container.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-ss-adjust-form]');
+      if (!form) return;
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      try {
+        if (!hasApi('adjustOwnStock')) throw new Error('Recurso de acerto de estoque indisponível (modo demonstração).');
+        const data = U.formData(form);
+        if (submitButton) submitButton.disabled = true;
+        await safeCall('adjustOwnStock', {
+          productId: data.productId,
+          newQuantity: U.number(data.newQuantity),
+          reason: (data.reason || '').trim(),
+        });
+        adjustFeedback = null;
+        await load();
+      } catch (error) {
+        adjustFeedback = { message: error.message, type: 'danger' };
+        if (submitButton) submitButton.disabled = false;
+        paint();
       }
     });
 
@@ -5332,6 +5427,25 @@ pre {
     expired: 'Expirado',
   };
 
+  // Rascunho do carrinho vive fora de mount(): app.js recria o container do
+  // Vendas/Pedidos a cada renderAll() (qualquer aÃ§Ã£o na tela dispara isso),
+  // e mount() Ã© chamado de novo â€” se o draft fosse uma variÃ¡vel local do
+  // fecho de mount(), cada remount zeraria os itens jÃ¡ adicionados ao
+  // carrinho. Mantendo o objeto no escopo do mÃ³dulo, ele sobrevive a
+  // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
+  // mesmo carrinho).
+  const persistentDraft = {
+    source: 'seller_stock',
+    paymentMode: 'avista',
+    expiresHours: '48',
+    targetSellerId: '',
+    customerName: '',
+    channel: 'WhatsApp',
+    notes: '',
+    items: [],
+    lastLink: '',
+  };
+
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -5396,8 +5510,10 @@ pre {
     ].join('');
     const paymentOptions = [
       '<option value="avista">A vista</option>',
+      '<option value="parcial">Parcial</option>',
       allowConsignment ? '<option value="consignado">Consignado</option>' : '',
     ].join('');
+    const channelOptions = UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '');
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
       ? `<label>Vendedor consignado
@@ -5430,6 +5546,12 @@ pre {
             </label>
             <label>Pagamento
               <select name="paymentMode">${paymentOptions}</select>
+            </label>
+            <label>Canal
+              <select name="channel">${channelOptions}</select>
+            </label>
+            <label>Nome do cliente
+              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Opcional">
             </label>
             ${sellerTargetField}
             <label>Validade do link
@@ -5502,6 +5624,7 @@ pre {
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
     const cards = sellers.map((seller) => {
       const settings = settingForSeller(seller.id);
+      const credits = U.number(settings.stockAdjustmentCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
           <div>
@@ -5515,13 +5638,17 @@ pre {
             <input name="maxDiscountPercent" type="number" min="0" max="100" step="0.01" value="${U.escapeHtml(settings.maxDiscountPercent || 0)}">
           </label>
           <button type="submit" class="small">Salvar permissao</button>
+          <div class="seller-permission-stock-adjust">
+            ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
+            <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
+          </div>
         </form>
       `;
     }).join('');
     return UI.section(
       'Permissoes dos vendedores',
       'Controle quem pode usar consignado, estoque do admin e links publicos.',
-      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div>`
+      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div><p class="hint-inline">"Liberar 1 acerto de estoque" da ao vendedor uma unica correcao do proprio estoque (util para quem ja tinha mercadoria mas nunca fez o acerto certo). Depois de usado, o credito zera e precisa ser liberado de novo.</p>`
     );
   }
   function renderAdminApprovals(feedback) {
@@ -5565,15 +5692,7 @@ pre {
   }
 
   function mount(container, options = {}) {
-    const draft = {
-      source: 'seller_stock',
-      paymentMode: 'avista',
-      expiresHours: '48',
-      targetSellerId: '',
-      notes: '',
-      items: [],
-      lastLink: '',
-    };
+    const draft = persistentDraft;
     let feedback = null;
     let approvalFeedback = null;
     let settingsFeedback = null;
@@ -5589,6 +5708,8 @@ pre {
       if (config) {
         config.source.value = draft.source;
         config.paymentMode.value = draft.paymentMode;
+        if (config.channel) config.channel.value = draft.channel || 'WhatsApp';
+        if (config.customerName) config.customerName.value = draft.customerName || '';
         if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
         config.expiresHours.value = draft.expiresHours;
       }
@@ -5600,6 +5721,8 @@ pre {
       const data = U.formData(config);
       draft.source = data.source || 'seller_stock';
       draft.paymentMode = data.paymentMode || 'avista';
+      draft.channel = data.channel || 'WhatsApp';
+      draft.customerName = data.customerName || '';
       draft.expiresHours = data.expiresHours || '48';
       draft.targetSellerId = data.targetSellerId || draft.targetSellerId || '';
       draft.notes = data.notes || '';
@@ -5616,7 +5739,8 @@ pre {
         source: draft.source,
         paymentMode: draft.paymentMode,
         status,
-        channel: 'WhatsApp',
+        channel: draft.channel || 'WhatsApp',
+        customerName: draft.customerName || null,
         publicExpiresAt: status === 'shared' ? expiresAt : null,
         notes: draft.notes || '',
       });
@@ -5861,23 +5985,27 @@ pre {
         } else if (action === 'clear-draft') {
           draft.items = [];
           draft.lastLink = '';
+          draft.customerName = '';
         } else if (action === 'save-cart') {
           if (isAdmin() && draft.paymentMode === 'consignado') {
             await createAdminSellerConsignment();
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
           } else {
             const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
             await createCart(status);
             draft.items = [];
             draft.lastLink = '';
+            draft.customerName = '';
             feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
           }
         } else if (action === 'share-cart') {
           const cart = await createCart('shared');
           draft.items = [];
           draft.lastLink = publicUrl(cart);
+          draft.customerName = '';
           feedback = { message: 'Link publico criado. Ele expira no prazo escolhido.', type: 'success' };
         } else if (action === 'copy-link') {
           const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
@@ -5894,6 +6022,21 @@ pre {
           if (!confirm('Rejeitar este carrinho?')) return;
           await approveCart(button.dataset.cartId, false);
           approvalFeedback = { message: 'Carrinho rejeitado.', type: 'warning' };
+        } else if (action === 'grant-stock-adjustment') {
+          const sellerId = button.dataset.sellerId;
+          const current = settingForSeller(sellerId);
+          const payload = {
+            sellerId,
+            allowAdminStockSales: current.allowAdminStockSales !== false,
+            allowConsignment: !!current.allowConsignment,
+            allowPublicCartLinks: current.allowPublicCartLinks !== false,
+            maxDiscountPercent: U.number(current.maxDiscountPercent),
+            stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          await S().refresh();
+          settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -7743,6 +7886,7 @@ pre {
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      if (activeTab === 'pedidos') mountOrdersCartPanel();
       return;
     }
     mountModuleTab(activeTab);
@@ -7814,6 +7958,7 @@ pre {
   // em `openReturnsSaleId`, aberto/fechado pelo botÃ£o "DevoluÃ§Ã£o/DesperdÃ­cio"
   // na tabela de vendas (ver handleClick, case 'toggle-returns').
   function mountSalesExtras() {
+    mountSalesCartPanel('salesCartPanel');
     const container = document.getElementById('returnsPanel');
     if (!container) return;
     if (!openReturnsSaleId) {
@@ -7833,6 +7978,22 @@ pre {
           toast('Registro salvo.', 'success');
         },
       });
+    }
+  }
+
+  // Aba Pedidos: mesmo carrinho de src/salesCart.js â€” quando a origem
+  // escolhida Ã© "Estoque do administrador", o carrinho vira pedido
+  // (aguardando aprovaÃ§Ã£o do admin). O rascunho do carrinho Ã© compartilhado
+  // com a aba Vendas (ver comentÃ¡rio de persistentDraft em salesCart.js).
+  function mountOrdersCartPanel() {
+    mountSalesCartPanel('ordersCartPanel');
+  }
+
+  function mountSalesCartPanel(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (window.C360.salesCart && typeof window.C360.salesCart.mount === 'function') {
+      window.C360.salesCart.mount(container, { onDone: renderAll });
     }
   }
 
@@ -8168,7 +8329,8 @@ pre {
         isReturnOrScrap ? 'â€”' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'DevoluÃ§Ã£o/DesperdÃ­cio')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto.', `
+    return UI.section('Vendas', 'Venda baixa estoque, calcula receita lÃ­quida, CMV e lucro bruto. Monte um carrinho com vÃ¡rios produtos abaixo, ou lance uma venda rÃ¡pida de 1 produto no formulÃ¡rio.', `
+      <div id="salesCartPanel"></div>
       <form id="saleForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
@@ -8201,7 +8363,7 @@ pre {
           <input name="notes" placeholder="Pedido, entrega, plataforma...">
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">LanÃ§ar venda</button>
+        <button type="submit">LanÃ§ar venda rÃ¡pida (1 produto)</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita lÃ­quida', 'CMV', 'Lucro', 'Margem', 'AÃ§Ãµes'], rows)}
       <div id="returnsPanel"></div>
@@ -8212,20 +8374,25 @@ pre {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const statuses = state().settings.orderStatuses;
+    const isAdminUser = S.isAdmin();
     const cards = currentOrders().map((order) => {
       const client = clientById(order.clientId);
       const product = productById(order.productId);
+      const dispatchAction = order.convertedSaleId
+        ? UI.badge('venda lanÃ§ada', 'ok')
+        : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
       return {
         id: order.id,
         status: order.status,
         title: client?.name || 'Pedido sem cliente',
         subtitle: product ? `${product.name} Â· ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
         detail: `Entrega: ${order.dueDate || 'sem data'} Â· Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
-        actions: `${order.convertedSaleId ? UI.badge('venda lanÃ§ada', 'ok') : UI.actionButton('convert-order-sale', order.id, 'Baixar venda')} ${UI.actionButton('delete-order', order.id, 'Excluir', 'danger')}`,
+        actions: `${dispatchAction} ${isAdminUser ? UI.actionButton('delete-order', order.id, 'Excluir', 'danger') : ''}`,
       };
     });
 
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Arraste os cartÃµes entre as colunas ou use o campo "Mover para" no celular.', `
+    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeÃ§a pendente â€” sÃ³ o administrador muda o status, faz devoluÃ§Ãµes e acertos.', `
+      <div id="ordersCartPanel"></div>
       <form id="orderForm" class="grid-form">
         <label>Cliente
           <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
@@ -8242,15 +8409,12 @@ pre {
         <label>Data de entrega/despacho
           <input name="dueDate" type="date">
         </label>
-        <label>${UI.fieldLabel('Status inicial', 'statusInicial')}
-          <select name="status">${UI.optionList(statuses, 'pendente', '')}</select>
-        </label>
         <label class="wide">ObservaÃ§Ãµes
           <input name="notes" placeholder="EndereÃ§o, forma de pagamento, urgÃªncia...">
         </label>
-        <button type="submit">Criar pedido</button>
+        <button type="submit">Criar pedido (rÃ¡pido, 1 produto)</button>
       </form>
-      ${UI.kanban({ statuses, cards, type: 'orders' })}
+      ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
     `);
   }
 
@@ -8676,7 +8840,7 @@ pre {
       quantity: U.number(data.quantity),
       unitPrice: U.number(data.unitPrice),
       dueDate: data.dueDate || null,
-      status: data.status || 'pendente',
+      status: 'pendente',
       notes: data.notes || '',
       convertedSaleId: null,
       approvalStatus: S.isAdmin() ? 'aprovado' : 'pendente_aprovacao',
@@ -8764,7 +8928,10 @@ pre {
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
-        case 'delete-order': await deleteRecord('orders', id); break;
+        case 'delete-order':
+          if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
+          await deleteRecord('orders', id);
+          break;
         case 'delete-task': await deleteRecord('tasks', id); break;
         case 'delete-consignment':
           if (confirm('Excluir consignaÃ§Ã£o? Isso nÃ£o desfaz estoque automaticamente. Use apenas para correÃ§Ã£o manual/revisÃ£o.')) await deleteRecord('consignments', id);
@@ -8794,6 +8961,7 @@ pre {
   }
 
   async function convertOrderToSale(orderId) {
+    if (!S.isAdmin()) throw new Error('Somente o administrador pode alterar o status do pedido e baixar a venda.');
     const order = state().orders.find((item) => item.id === orderId);
     if (!order) throw new Error('Pedido nÃ£o encontrado.');
     if (order.convertedSaleId) throw new Error('Pedido jÃ¡ foi convertido em venda.');
@@ -8944,6 +9112,10 @@ pre {
     const collection = draggedCard.type === 'orders' ? 'orders' : 'tasks';
     const cardId = draggedCard.id;
     draggedCard = null;
+    // SÃ³ admin altera status de pedido â€” a coluna jÃ¡ nÃ£o Ã© arrastÃ¡vel para
+    // vendedor (readOnly em UI.kanban), isto Ã© sÃ³ defesa extra; o banco
+    // tambÃ©m bloqueia via trigger.
+    if (collection === 'orders' && !S.isAdmin()) return;
     try {
       await S.update(collection, cardId, { status: column.dataset.status });
     } catch (error) {
@@ -8961,6 +9133,7 @@ pre {
     const board = select.closest('[data-kanban-type]');
     if (!board) return;
     const collection = board.dataset.kanbanType === 'orders' ? 'orders' : 'tasks';
+    if (collection === 'orders' && !S.isAdmin()) return;
     const cardId = select.dataset.cardId;
     try {
       await S.update(collection, cardId, { status: select.value });

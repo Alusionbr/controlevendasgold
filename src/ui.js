@@ -44,7 +44,6 @@
     cmv: 'CMV = Custo da Mercadoria Vendida. Quanto te custou o que você vendeu: quantidade × custo médio no momento da venda.',
     // Pedidos
     precoCombinado: 'Preço por unidade combinado com o cliente neste pedido.',
-    statusInicial: 'Em que etapa o pedido começa. Depois você arrasta o cartão entre as colunas.',
     // Consignado
     consignado: 'Você entrega produtos ao cliente sem vender ainda: o estoque sai do seu controle e fica "com o cliente". A venda só conta quando ele avisa que vendeu.',
     qtdEnviada: 'Quantas unidades você está entregando ao cliente para ele tentar vender.',
@@ -157,7 +156,10 @@
     `;
   }
 
-  function kanban({ statuses, cards, type }) {
+  // readOnly: usado pelo Kanban de Pedidos quando quem está olhando é
+  // vendedor — só admin pode mudar o status de um pedido, então nem o
+  // arrastar-e-soltar nem o select "mover para" aparecem para vendedor.
+  function kanban({ statuses, cards, type, readOnly = false }) {
     return `<div class="kanban" data-kanban-type="${escapeHtml(type)}">
       ${statuses.map((status) => {
         const filtered = cards.filter((card) => card.status === status.value);
@@ -166,11 +168,11 @@
             <h3>${escapeHtml(status.label)} ${badge(String(filtered.length))}</h3>
             <div class="kanban-dropzone">
               ${filtered.map((card) => `
-                <article class="kanban-card" draggable="true" data-card-id="${escapeHtml(card.id)}">
+                <article class="kanban-card" draggable="${readOnly ? 'false' : 'true'}" data-card-id="${escapeHtml(card.id)}">
                   <strong>${escapeHtml(card.title)}</strong>
                   ${card.subtitle ? `<p>${escapeHtml(card.subtitle)}</p>` : ''}
                   ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
-                  ${kanbanMoveSelect(card, statuses)}
+                  ${readOnly ? '' : kanbanMoveSelect(card, statuses)}
                   <div class="actions">${card.actions || ''}</div>
                 </article>
               `).join('')}

@@ -4,9 +4,9 @@
   window.C360 = window.C360 || {};
 
   // ==========================================================================
-  // C360.api ó camada fina de acesso ‡ Supabase (Auth + PostgREST + Edge
+  // C360.api - camada fina de acesso a Supabase (Auth + PostgREST + Edge
   // Function), vanilla JS/fetch. Ver docs/backend.md para o contrato completo
-  // (tabelas, RLS, trigger de piso de preÁo, trigger de aprovaÁ„o, edge
+  // (tabelas, RLS, trigger de piso de preco, trigger de aprovacao, edge
   // function create-seller).
   // ==========================================================================
 
@@ -131,7 +131,7 @@
       headers: { Prefer: 'return=representation' },
       body: patch,
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permiss„o ou registro n„o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro atualizado (sem permissao ou registro nao encontrado).', 403);
     return Array.isArray(result) ? result[0] : result;
   }
 
@@ -140,7 +140,7 @@
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
     });
-    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluÌdo (sem permiss„o ou registro n„o encontrado).', 403);
+    if (Array.isArray(result) && result.length === 0) throw buildError('Nenhum registro excluido (sem permissao ou registro nao encontrado).', 403);
   }
 
   async function upsert(table, payload, conflictColumns) {
@@ -323,6 +323,18 @@
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  // Acerto de estoque pr√≥prio do vendedor: s√≥ funciona se o admin liberou 1
+  // cr√©dito em seller_settings.stock_adjustment_credits (RPC consome esse
+  // cr√©dito e grava trilha de auditoria em seller_stock_adjustments).
+  async function adjustOwnStock({ productId, newQuantity, reason }) {
+    const row = await restRequest('/rest/v1/rpc/seller_adjust_own_stock', {
+      method: 'POST',
+      body: { p_product_id: productId, p_new_quantity: newQuantity, p_reason: reason },
+    });
+    if (!row) return null;
+    return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -339,6 +351,7 @@
       allowConsignment: row.allow_consignment,
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
+      stockAdjustmentCredits: row.stock_adjustment_credits,
       notes: row.notes,
     }));
   }
@@ -474,6 +487,7 @@
     listSellerStock,
     setSellerStock,
     consumeSellerStock,
+    adjustOwnStock,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
