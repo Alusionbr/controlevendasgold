@@ -258,6 +258,8 @@
       type: row.type,
       unit: row.unit,
       currentStock: row.current_stock,
+      stockAvailable: row.stock_available,
+      stockHidden: row.stock_hidden === true || row.current_stock === null,
       salePrice: row.sale_price,
       defaultPrice: row.default_price,
       priceFloor: row.price_floor,
@@ -356,7 +358,7 @@
     }));
   }
 
-  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, notes }) {
+  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, notes }) {
     const businessId = await currentBusinessId();
     const payload = {
       business_id: businessId,
@@ -365,6 +367,7 @@
       allow_consignment: !!allowConsignment,
       allow_public_cart_links: allowPublicCartLinks !== false,
       max_discount_percent: maxDiscountPercent === undefined ? 0 : maxDiscountPercent,
+      ...(stockAdjustmentCredits === undefined ? {} : { stock_adjustment_credits: stockAdjustmentCredits }),
       notes: notes || null,
     };
     const row = await upsert('seller_settings', payload, 'seller_id');
@@ -377,6 +380,7 @@
       allowConsignment: row.allow_consignment,
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
+      stockAdjustmentCredits: row.stock_adjustment_credits,
       notes: row.notes,
     };
   }
@@ -401,6 +405,7 @@
       approvedAt: row.approved_at,
       approvedBy: row.approved_by,
       paymentProofPath: row.payment_proof_path,
+      paidInitialAmount: row.paid_initial_amount,
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

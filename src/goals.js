@@ -358,9 +358,7 @@
       return UI.section(title, 'Acompanhe sua meta semanal e mensal.', UI.formNotice('Carregando suas metas...', 'info'));
     }
 
-    const weekly = rows.find((row) => row.period_type === 'semana') || null;
-    const monthly = rows.find((row) => row.period_type === 'mes') || null;
-    const cards = [weekly, monthly].filter(Boolean);
+    const cards = rows.slice().sort((a, b) => String(b.period_start || '').localeCompare(String(a.period_start || '')));
 
     const notice = apiAvailable
       ? ''

@@ -4,6 +4,7 @@
   window.C360 = window.C360 || {};
   const U = window.C360.utils;
   const UI = window.C360.ui;
+  const Calc = window.C360.calc;
 
   // ==========================================================================
   // Estoque próprio de vendedor + aprovação de pedidos — módulo autocontido.
@@ -434,7 +435,33 @@
 
       // 3) Criar a consignação já vendida (ver nota de interpretação no topo do arquivo).
       const product = productById(productId);
-      const costAtSend = product && typeof product.avgCost === 'number' ? product.avgCost : null;
+      const costAtSend = product && typeof product.avgCost === 'number' ? product.avgCost : 0;
+      const math = Calc && typeof Calc.saleMath === 'function'
+        ? Calc.saleMath({ quantity: qty, unitPrice: price, discount: 0, fixedFees: 0, feePercent: 0, unitCost: costAtSend })
+        : {
+            grossRevenue: qty * price,
+            netRevenue: qty * price,
+            percentFees: 0,
+            cogs: qty * costAtSend,
+            grossProfit: (qty * price) - (qty * costAtSend),
+            margin: qty * price > 0 ? ((qty * price) - (qty * costAtSend)) / (qty * price) : 0,
+          };
+      const sale = await addRecord('sales', {
+        date: U.today(),
+        channel: 'Estoque proprio',
+        clientId,
+        productId,
+        quantity: qty,
+        unitPrice: price,
+        discount: 0,
+        fixedFees: 0,
+        feePercent: 0,
+        unitCost: costAtSend,
+        ...math,
+        notes: notes || 'Venda pelo estoque proprio',
+        origin: 'manual',
+        originId: null,
+      });
 
       const consignmentPayload = {
         sellerId: user.id,
@@ -448,7 +475,7 @@
         amountPaid: 0,
         status: 'com_cliente',
         date: U.today(),
-        notes: notes || '',
+        notes: notes || (sale && sale.id ? `Venda ${sale.id}` : ''),
       };
       const consignment = await addRecord('consignments', consignmentPayload);
 

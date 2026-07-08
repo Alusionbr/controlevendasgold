@@ -36,6 +36,19 @@
     const profile = (state().profiles || []).find((item) => String(item.id) === String(id));
     return profile ? profile.name : 'Vendedor';
   }
+  function sellerStockRow(sellerId, productId) {
+    return (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId)) || null;
+  }
+  function assertSellerStockAvailable(sellerId, productId, quantity) {
+    if (!sellerId) return null;
+    const current = sellerStockRow(sellerId, productId);
+    const available = U.number(current?.quantity);
+    if (!current || available < U.number(quantity)) {
+      const product = productById(productId);
+      throw new Error(`Estoque proprio insuficiente para ${product ? product.name : 'este produto'}. Disponivel: ${U.qty(available, product?.unit)}.`);
+    }
+    return current;
+  }
 
   function statusLabel(movement) {
     const map = movement.type === 'return' ? RETURN_STATUS_LABELS : SIMPLE_STATUS_LABELS;
@@ -52,9 +65,8 @@
   // Efeito real (estoque + financeiro) — só chamado na conferência.
   // ---------------------------------------------------------------------
   async function decrementSellerStock(sellerId, productId, quantity) {
-    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
-    if (!current) return;
-    const nextQuantity = Math.max(U.number(current.quantity) - U.number(quantity), 0);
+    const current = assertSellerStockAvailable(sellerId, productId, quantity);
+    const nextQuantity = U.number(current.quantity) - U.number(quantity);
     await S().update('sellerStock', current.id, { quantity: nextQuantity });
   }
 
@@ -165,7 +177,12 @@
   }
 
   function renderSellerForm(feedback) {
-    const products = (state().products || []).filter((product) => product.type !== 'servico');
+    const ownStockIds = new Set((state().sellerStock || [])
+      .filter((row) => U.number(row.quantity) > 0)
+      .map((row) => String(row.productId)));
+    const products = (state().products || [])
+      .filter((product) => product.type !== 'servico' && ownStockIds.has(String(product.id)));
+    const productSelect = UI.optionList(products, '', products.length ? 'Produto' : 'Sem estoque proprio');
     return `
       ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
       <form class="grid-form" data-om-form novalidate>
@@ -177,7 +194,7 @@
           </select>
         </label>
         <label>Produto
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
+          <select name="productId" required>${productSelect}</select>
         </label>
         <label>Quantidade
           <input name="quantityDeclared" type="number" step="0.001" min="0.001" required>
@@ -217,10 +234,13 @@
       event.preventDefault();
       const data = U.formData(form);
       try {
+        const currentUser = user();
         const qty = U.number(data.quantityDeclared);
+        if (!currentUser) throw new Error('Entre na sua conta antes de registrar.');
         if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
         if (!data.productId) throw new Error('Selecione um produto.');
         if (!data.reason || !data.reason.trim()) throw new Error('Informe o motivo.');
+        assertSellerStockAvailable(currentUser.id, data.productId, qty);
         await S().add('operationalMovements', {
           type: data.type,
           status: data.type === 'return' ? 'a_devolver' : 'pending',

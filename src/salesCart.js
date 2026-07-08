@@ -4,6 +4,7 @@
   window.C360 = window.C360 || {};
   const U = window.C360.utils;
   const UI = window.C360.ui;
+  const Calc = window.C360.calc;
 
   const STATUS_LABELS = {
     draft: 'Rascunho',
@@ -55,6 +56,7 @@
       allowConsignment: false,
       allowPublicCartLinks: true,
       maxDiscountPercent: 0,
+      stockAdjustmentCredits: 0,
     };
   }
   function itemsForCart(cartId) {
@@ -251,6 +253,70 @@
       `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div><p class="hint-inline">"Liberar 1 acerto de estoque" da ao vendedor uma unica correcao do proprio estoque (util para quem ja tinha mercadoria mas nunca fez o acerto certo). Depois de usado, o credito zera e precisa ser liberado de novo.</p>`
     );
   }
+
+  function mountSettings(container, options = {}) {
+    if (!container) return null;
+    let settingsFeedback = null;
+
+    function paint() {
+      container.innerHTML = renderAdminSettings(settingsFeedback);
+    }
+
+    container.addEventListener('submit', async (event) => {
+      const settingsForm = event.target.closest('[data-seller-settings-form]');
+      if (!settingsForm) return;
+      event.preventDefault();
+      try {
+        const sellerId = settingsForm.dataset.sellerId;
+        const current = settingForSeller(sellerId);
+        const payload = {
+          sellerId,
+          allowAdminStockSales: !!settingsForm.elements.allowAdminStockSales.checked,
+          allowConsignment: !!settingsForm.elements.allowConsignment.checked,
+          allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
+          maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
+          stockAdjustmentCredits: U.number(current.stockAdjustmentCredits),
+        };
+        if (current.id) await S().update('sellerSettings', current.id, payload);
+        else await S().add('sellerSettings', payload);
+        await S().refresh();
+        settingsFeedback = { message: 'Permissoes salvas.', type: 'success' };
+      } catch (error) {
+        settingsFeedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+      if (typeof options.onDone === 'function') options.onDone();
+    });
+
+    container.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-cart-action="grant-stock-adjustment"]');
+      if (!button) return;
+      try {
+        const sellerId = button.dataset.sellerId;
+        const current = settingForSeller(sellerId);
+        const payload = {
+          sellerId,
+          allowAdminStockSales: current.allowAdminStockSales !== false,
+          allowConsignment: !!current.allowConsignment,
+          allowPublicCartLinks: current.allowPublicCartLinks !== false,
+          maxDiscountPercent: U.number(current.maxDiscountPercent),
+          stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
+        };
+        if (current.id) await S().update('sellerSettings', current.id, payload);
+        else await S().add('sellerSettings', payload);
+        await S().refresh();
+        settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
+      } catch (error) {
+        settingsFeedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+      if (typeof options.onDone === 'function') options.onDone();
+    });
+
+    paint();
+    return { refresh: paint };
+  }
+
   function renderAdminApprovals(feedback) {
     if (!isAdmin()) return '';
     const carts = (state().saleCarts || []).filter((cart) => cart.source === 'admin_stock' && cart.status === 'pending_approval');
@@ -313,14 +379,15 @@
     const currentUser = user();
     if (!currentUser) throw new Error('Entre na sua conta antes de criar carrinho.');
     const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
+    const finalStatus = status || 'draft';
     const cart = await S().add('saleCarts', {
       sellerId: isAdmin() && draft.targetSellerId ? draft.targetSellerId : currentUser.id,
       source: draft.source,
       paymentMode: draft.paymentMode,
-      status,
+      status: 'draft',
       channel: draft.channel || 'WhatsApp',
       customerName: draft.customerName || null,
-      publicExpiresAt: status === 'shared' ? expiresAt : null,
+      publicExpiresAt: null,
       paidInitialAmount: resolvePaidInitialAmount(draft),
       notes: draft.notes || '',
     });
@@ -333,8 +400,13 @@
         unitPrice: U.number(item.unitPrice),
       });
     }
+    const finalPatch = {
+      status: finalStatus,
+      publicExpiresAt: finalStatus === 'shared' ? expiresAt : null,
+    };
+    const finalCart = finalStatus === 'draft' ? cart : await S().update('saleCarts', cart.id, finalPatch);
     await S().refresh();
-    return cart;
+    return { ...cart, ...finalCart };
   }
 
   async function addToSellerStock(sellerId, productId, quantity) {
@@ -427,36 +499,77 @@
     return cart;
   }
 
+  function saleMathForCart({ quantity, unitPrice, unitCost }) {
+    if (Calc && typeof Calc.saleMath === 'function') {
+      return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
+    }
+    const grossRevenue = U.number(quantity) * U.number(unitPrice);
+    const cogs = U.number(quantity) * U.number(unitCost);
+    const grossProfit = grossRevenue - cogs;
+    return {
+      grossRevenue,
+      netRevenue: grossRevenue,
+      percentFees: 0,
+      cogs,
+      grossProfit,
+      margin: grossRevenue > 0 ? grossProfit / grossRevenue : 0,
+    };
+  }
+
   async function convertOwnStockCart(cart) {
     const items = itemsForCart(cart.id);
     for (const item of items) {
       const product = productById(item.productId);
+      const quantity = U.number(item.quantity);
+      const unitPrice = U.number(item.unitPrice);
+      const unitCost = U.number(product?.avgCost);
       // eslint-disable-next-line no-await-in-loop
-      await api().consumeSellerStock({ productId: item.productId, quantity: item.quantity });
+      await api().consumeSellerStock({ productId: item.productId, quantity });
+      const math = saleMathForCart({ quantity, unitPrice, unitCost });
+      // eslint-disable-next-line no-await-in-loop
+      const sale = await S().add('sales', {
+        date: U.today(),
+        channel: cart.channel || 'Carrinho',
+        clientId: cart.clientId || null,
+        productId: item.productId,
+        quantity,
+        unitPrice,
+        discount: 0,
+        fixedFees: 0,
+        feePercent: 0,
+        unitCost,
+        ...math,
+        notes: `Venda pelo carrinho ${cart.id}${cart.customerName ? ` - ${cart.customerName}` : ''}`,
+        origin: 'pedido',
+        originId: cart.id,
+      });
       // eslint-disable-next-line no-await-in-loop
       const consignment = await S().add('consignments', {
         sellerId: cart.sellerId,
         clientId: cart.clientId || null,
         productId: item.productId,
-        quantitySent: item.quantity,
-        quantitySold: cart.paymentMode === 'avista' ? item.quantity : 0,
+        quantitySent: quantity,
+        quantitySold: quantity,
         quantityReturned: 0,
-        unitPrice: item.unitPrice,
-        costAtSend: product ? product.avgCost : null,
+        unitPrice,
+        costAtSend: unitCost,
         amountPaid: 0,
         status: 'com_cliente',
         date: U.today(),
-        notes: `Carrinho ${cart.id}`,
+        notes: `Venda pelo carrinho ${cart.id}`,
       });
-      if (consignment && consignment.id && cart.paymentMode === 'avista') {
+      if (consignment && consignment.id) {
         // eslint-disable-next-line no-await-in-loop
         await S().add('consignmentEvents', {
           consignmentId: consignment.id,
           type: 'venda_cliente',
           date: U.today(),
-          quantity: item.quantity,
-          amount: U.number(item.quantity) * U.number(item.unitPrice),
+          quantity,
+          amount: quantity * unitPrice,
         });
+      }
+      if (sale && sale.id) {
+        // venda gravada para painel/metas; consignado guarda acerto com admin
       }
     }
     await S().update('saleCarts', cart.id, { status: 'converted' });
@@ -661,6 +774,14 @@
             draft.customerName = '';
             draft.paidInitialAmount = '0';
             feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
+          } else if (!isAdmin() && draft.source === 'seller_stock') {
+            const cart = await createCart(draft, 'submitted');
+            await convertOwnStockCart(cart);
+            draft.items = [];
+            draft.lastLink = '';
+            draft.customerName = '';
+            draft.paidInitialAmount = '0';
+            feedback = { message: 'Venda registrada. O estoque proprio foi baixado automaticamente.', type: 'success' };
           } else {
             const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
             await createCart(draft, status);
@@ -809,5 +930,5 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountApprovals, mountPublic };
+  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic };
 })();

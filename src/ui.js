@@ -105,10 +105,14 @@
   }
 
   function stockCell(product) {
+    if (product && product.stockHidden) {
+      if (product.stockAvailable === false) return badge('Indisponivel', 'warn');
+      return badge('Disponivel');
+    }
     const current = number(product.currentStock);
     const minimum = number(product.minStock);
     const warning = minimum > 0 && current <= minimum ? 'warn' : 'ok';
-    return `${qty(current, product.unit)} ${minimum > 0 ? badge(`mín. ${qty(minimum, product.unit)}`, warning) : ''}`;
+    return `${qty(current, product.unit)} ${minimum > 0 ? badge(`min. ${qty(minimum, product.unit)}`, warning) : ''}`;
   }
 
   function actionButton(action, id, label, extraClass = 'secondary') {

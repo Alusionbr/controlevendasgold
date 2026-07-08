@@ -422,9 +422,12 @@
         // o antigo caminho binário de `orders` (C360.sellerStock.mountApprovals)
         // foi aposentado da navegação. "Conceder estoque direto" continua
         // sendo uma ferramenta separada (não é aprovação de pedido).
-        els.view.innerHTML = '<div id="approvalsPanel"></div><div id="grantStockPanel"></div>';
+        els.view.innerHTML = '<div id="approvalsPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.salesCart && typeof window.C360.salesCart.mountApprovals === 'function') {
           window.C360.salesCart.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
+        }
+        if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
+          window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
         }
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
@@ -1981,14 +1984,32 @@
     renderAll();
   }
 
+  function publicCartToken() {
+    try {
+      return new URLSearchParams(window.location.search).get('cart') || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
   async function init() {
+    const token = publicCartToken();
+    if (token && window.C360.salesCart && typeof window.C360.salesCart.mountPublic === 'function') {
+      if (els.appShell) els.appShell.hidden = true;
+      if (els.headerActions) els.headerActions.hidden = true;
+      if (els.bottomNav) els.bottomNav.hidden = true;
+      closeMoreMenu();
+      window.C360.salesCart.mountPublic(els.authRoot || document.body, token);
+      return;
+    }
+
     let authenticated = false;
     try {
       if (window.C360.auth && typeof window.C360.auth.restoreSession === 'function') {
         authenticated = await window.C360.auth.restoreSession();
       }
     } catch (error) {
-      console.error('C360.app: erro ao restaurar sessão', error);
+      console.error('C360.app: erro ao restaurar sessao', error);
     }
     if (authenticated) {
       boot();
