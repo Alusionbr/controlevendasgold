@@ -5,9 +5,11 @@ atual do código do Controle360. O pacote foi escrito de forma genérica (para "
 projeto); estes documentos corrigem as premissas que já estão desatualizadas e transformam as 6 fases em
 tickets concretos, apontando os arquivos e tabelas reais.
 
-> **Importante:** este ciclo é **só de análise/planejamento**. Nenhum arquivo de funcionalidade
-> (`src/*.js`, `index.html`, `styles/main.css`) foi alterado e **nenhuma migration foi aplicada**. O único
-> SQL aqui é um **rascunho** em `supabase/migrations/drafts/` para revisão humana.
+> **Atualização (9 de julho):** Este ciclo começou como **análise/planejamento**, mas evoluiu para
+> **implementação completa de todas as 6 fases**. A prioridade do usuário foi funcionalidades e UX
+> em vez de documentação inicial — todas as mudanças foram commitadas, testadas e deployadas para
+> produção via GitHub Pages. Os documentos abaixo refletem a análise original; a implementação real
+> está nos commits listados no quadro abaixo.
 
 ## Ordem de leitura
 
@@ -19,18 +21,18 @@ tickets concretos, apontando os arquivos e tabelas reais.
 6. [`05-fase4-devolucoes-desperdicio-brinde.md`](05-fase4-devolucoes-desperdicio-brinde.md) — Fase 4: devoluções com status, desperdício e brinde.
 7. [`06-fases5-6-relatorios-e-seguranca.md`](06-fases5-6-relatorios-e-seguranca.md) — Fases 5 e 6: relatórios e revisão Supabase.
 
-## Sequência recomendada de execução
+## Sequência de implementação (concluída)
 
 Bate com `project-templates/AI_IMPLEMENTATION_ORDER.md` do pacote:
 
-| # | Fase | Toca banco? | Reversível fácil? | Status |
-|---|------|-------------|-------------------|--------|
-| 1 | Navegação mobile por perfil | Não | Sim | Planejado |
-| 2 | Reposição em carrinhos (`parcial` real) | Sim (1 coluna) | Sim | Planejado |
-| 3 | Ledger do vendedor + pagamentos fracionados | Sim (2 tabelas + RPC) | Médio | Planejado |
-| 4 | Devoluções com status, desperdício, brinde | Sim (1 tabela + RLS) | Médio | Planejado |
-| 5 | Relatórios | Não (lê o que as fases criaram) | Sim | Planejado |
-| 6 | Revisão Supabase (RLS/índices/advisors) | Revisão | — | Planejado |
+| # | Fase | Toca banco? | Reversível fácil? | Status | Implementação |
+|---|------|-------------|-------------------|--------|---|
+| 1 | Navegação mobile por perfil | Não | Sim | ✅ **Implementado** | [7dc16c0](https://github.com/Alusionbr/controlevendasgold/commit/7dc16c0), [d7670ae](https://github.com/Alusionbr/controlevendasgold/commit/d7670ae), [c7c93f1](https://github.com/Alusionbr/controlevendasgold/commit/c7c93f1) |
+| 2 | Reposição em carrinhos (`parcial` real) | Sim (1 coluna) | Sim | ✅ **Implementado** | [bb37a65](https://github.com/Alusionbr/controlevendasgold/commit/bb37a65), [d79e478](https://github.com/Alusionbr/controlevendasgold/commit/d79e478) |
+| 3 | Ledger do vendedor + pagamentos fracionados | Sim (2 tabelas + RPC) | Médio | ✅ **Implementado** | [022672c](https://github.com/Alusionbr/controlevendasgold/commit/022672c), [5832b1a](https://github.com/Alusionbr/controlevendasgold/commit/5832b1a) |
+| 4 | Devoluções com status, desperdício, brinde | Sim (1 tabela + RLS) | Médio | ✅ **Implementado** | Migrations `0011-0012` |
+| 5 | Relatórios | Não (lê o que as fases criaram) | Sim | ✅ **Implementado** | `renderReplicationReports()` em `src/app.js` |
+| 6 | Revisão Supabase (RLS/índices/advisors) | Revisão | — | ✅ **Implementado** | Migrations `0010-0013`, `mcp__Supabase__get_advisors` |
 
 ## Princípio que não muda
 
