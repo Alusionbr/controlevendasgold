@@ -718,3 +718,41 @@ formato salvo em `sales` — só remoção de duplicação de UI e reorganizaç�
 visual. Verificado via a skill `run-controlevendasgold`: lançar uma venda
 rápida com o "Mais opções" fechado grava corretamente com os defaults, e a
 aba Aprovações continua mostrando/salvando permissões normalmente.
+
+---
+
+## Atualização: pedido de estoque direto em "Meu estoque"
+
+Objetivo: só existe **um** estoque físico principal (o do administrador).
+Todo produto na mão de um vendedor chegou até ele retirando desse estoque
+único — à vista ou a prazo (consignado, vira dívida), sempre com aprovação
+do administrador antes do estoque sair fisicamente. O pedido explícito do
+usuário foi ter "uma funcionalidade que faça isso" num só lugar, sem perder
+essa lógica.
+
+- **`src/salesCart.js`**: nova função `requestStockFromAdmin({ productId,
+  quantity, unitPrice, paymentMode })`, exportada em `window.C360.salesCart`.
+  Reaproveita `createCart(draft, 'pending_approval')` — o mesmo caminho que
+  a aba "Pedidos" já usava — só que com uma assinatura de 1 item, sem os
+  campos irrelevantes pra esse caso (canal, link público, validade). Não
+  cria lógica nova de aprovação/dívida: a aprovação continua acontecendo
+  em `approveCart()` (aba Aprovações), que já decide orders (à vista) vs.
+  débito no ledger (a prazo/consignado) por `paymentMode` — comportamento
+  inalterado.
+- **`src/sellerStock.js`**: a tela "Meu estoque" ganhou a seção "Pedir mais
+  estoque" (`requestSection`/`requestFormHtml`) — Produto, Quantidade, Preço
+  unitário (pré-preenchido com `Calc.resolveSellerPrice`) e Forma de
+  pagamento (À vista / A prazo). Abaixo, uma tabela "Aguardando aprovação"
+  lista os pedidos do próprio vendedor ainda `pending_approval` (lida de
+  `state().saleCarts`), pra ele não perder de vista o que já pediu sem
+  precisar visitar outra aba.
+
+Nenhuma aba nova, nenhuma aba removida — o vendedor continua podendo usar a
+aba "Pedidos" (construtor de carrinho genérico, com canal/link
+público/múltiplos itens) se precisar de algo mais elaborado; "Meu estoque"
+agora cobre o caso comum (pedir reposição do estoque principal) sem exigir
+entender aquele formulário maior. Verificado via a skill
+`run-controlevendasgold`, round-trip completo: vendedor pede a prazo em
+"Meu estoque" → aparece em "Aprovações" com o total correto → admin aprova →
+dívida aparece no painel da aba Vendedores e "Valor em estoque" cai o
+correspondente.

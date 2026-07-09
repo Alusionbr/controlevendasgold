@@ -234,6 +234,81 @@
   }
 
   // ---------------------------------------------------------------------
+  // Pedir mais estoque ao admin — à vista ou a prazo (consignado, gera
+  // dívida). Um único ponto de entrada em "Meu estoque" em vez de o
+  // vendedor precisar entender o construtor de carrinho genérico (canal,
+  // link público, múltiplos itens) na aba Pedidos só pra pedir reposição.
+  // ---------------------------------------------------------------------
+  function sellerPriceForProduct(productId) {
+    return (fullState().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
+  }
+
+  function resolvedRequestPrice(product) {
+    if (!product) return '';
+    if (Calc && typeof Calc.resolveSellerPrice === 'function') {
+      const resolved = Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceForProduct(product.id) });
+      return resolved.price || '';
+    }
+    return product.salePrice || product.defaultPrice || '';
+  }
+
+  function requestFormHtml(feedback) {
+    const products = productsList().filter((product) => product.type !== 'servico');
+    return `
+      <form class="ss-inline-form" data-ss-request-form>
+        <label>Produto
+          <select name="productId" required data-ss-request-product>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto disponível')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantity" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label>Preço unitário
+          <input name="unitPrice" type="number" step="0.01" min="0.01" required data-ss-request-price>
+        </label>
+        <label>Forma de pagamento
+          <select name="paymentMode">
+            <option value="avista">À vista</option>
+            <option value="consignado">A prazo (consignado — vira dívida com o admin)</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Enviar pedido ao administrador</button>
+        </div>
+        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+      </form>
+    `;
+  }
+
+  function pendingRequestRows() {
+    const st = fullState();
+    const me = currentUser();
+    if (!me) return [];
+    return (st.saleCarts || [])
+      .filter((cart) => String(cart.sellerId) === String(me.id) && cart.source === 'admin_stock' && cart.status === 'pending_approval')
+      .map((cart) => {
+        const items = (st.saleCartItems || []).filter((item) => String(item.cartId) === String(cart.id));
+        const total = items.reduce((sum, item) => sum + U.number(item.quantity) * U.number(item.unitPrice), 0);
+        const desc = items.map((item) => {
+          const product = productById(item.productId);
+          return `${product ? U.escapeHtml(product.name) : 'Produto'} (${U.qty(item.quantity, product?.unit)})`;
+        }).join(', ') || '—';
+        return [desc, cart.paymentMode === 'consignado' ? UI.badge('A prazo', '') : UI.badge('À vista', 'ok'), UI.moneyCell(total)];
+      });
+  }
+
+  function requestSection(feedback) {
+    const pending = pendingRequestRows();
+    return UI.section(
+      'Pedir mais estoque',
+      'Retira do estoque principal do administrador. À vista ou a prazo, o pedido fica aguardando aprovação antes do estoque sair.',
+      `
+        ${requestFormHtml(feedback)}
+        ${pending.length ? `<h3>Aguardando aprovação</h3>${UI.table(['Itens', 'Forma', 'Valor'], pending)}` : ''}
+      `
+    );
+  }
+
+  // ---------------------------------------------------------------------
   // Acerto de estoque próprio — só aparece quando o admin liberou 1 crédito
   // (seller_settings.stock_adjustment_credits > 0). Consome o RPC
   // seller_adjust_own_stock via C360.api.adjustOwnStock, que já zera o
@@ -296,6 +371,7 @@
         'Produtos que você guarda para vender por conta própria. Ao vender, o valor vira consignado devido ao administrador.',
         `${notice}${body}`
       )}
+      ${requestSection(data.requestFeedback)}
       ${adjustSection}
     `;
   }
@@ -314,9 +390,10 @@
     let openProductId = null;
     let sellerSettings = null;
     let adjustFeedback = null;
+    let requestFeedback = null;
 
     function paint() {
-      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true, sellerSettings, adjustFeedback });
+      container.innerHTML = renderMyStock({ rows, loading, openProductId, apiAvailable: true, sellerSettings, adjustFeedback, requestFeedback });
     }
 
     async function load() {
@@ -353,7 +430,40 @@
       }
     });
 
+    container.addEventListener('change', (event) => {
+      if (event.target.matches('[data-ss-request-product]')) {
+        const form = event.target.closest('[data-ss-request-form]');
+        const priceField = form && form.querySelector('[data-ss-request-price]');
+        if (priceField) priceField.value = resolvedRequestPrice(productById(event.target.value)) || '';
+      }
+    });
+
     container.addEventListener('submit', async (event) => {
+      const requestForm = event.target.closest('[data-ss-request-form]');
+      if (requestForm) {
+        event.preventDefault();
+        const submitButton = requestForm.querySelector('button[type="submit"]');
+        try {
+          const data = U.formData(requestForm);
+          if (submitButton) submitButton.disabled = true;
+          if (!window.C360.salesCart || typeof window.C360.salesCart.requestStockFromAdmin !== 'function') {
+            throw new Error('Pedido de estoque indisponível no momento.');
+          }
+          await window.C360.salesCart.requestStockFromAdmin({
+            productId: data.productId,
+            quantity: data.quantity,
+            unitPrice: data.unitPrice,
+            paymentMode: data.paymentMode,
+          });
+          requestFeedback = { message: 'Pedido enviado. Aguarde a aprovação do administrador.', type: 'success' };
+        } catch (error) {
+          requestFeedback = { message: (error && error.message) || 'Não foi possível enviar o pedido.', type: 'danger' };
+        }
+        if (submitButton) submitButton.disabled = false;
+        paint();
+        return;
+      }
+
       const form = event.target.closest('[data-ss-sell-form]');
       if (!form) return;
       event.preventDefault();
