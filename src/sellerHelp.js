@@ -2,7 +2,8 @@
   'use strict';
 
   window.C360 = window.C360 || {};
-  const { escapeHtml } = window.C360.utils;
+  const U = window.C360.utils;
+  const { escapeHtml } = U;
 
   // ---------------------------------------------------------------------
   // Conteúdo — Central de Ajuda do vendedor.
@@ -191,6 +192,23 @@
           </ul>
         </div>
 
+        <form class="panel-card help-report-panel" data-help-report-form>
+          <h3>Relatar bug ou pedir ajuda</h3>
+          <p class="hint-inline">A mensagem vira uma tarefa para o administrador olhar.</p>
+          <label>Tipo
+            <select name="type">
+              <option value="bug">Bug no app</option>
+              <option value="duvida">Duvida de uso</option>
+              <option value="melhoria">Sugestao de melhoria</option>
+            </select>
+          </label>
+          <label>Mensagem
+            <textarea name="message" required placeholder="Descreva o que aconteceu e em qual tela."></textarea>
+          </label>
+          <button type="submit">Enviar ao admin</button>
+          <div data-help-report-feedback></div>
+        </form>
+
         <div class="panel-card help-faq-panel">
           <h3>Perguntas frequentes</h3>
           <div class="help-search">
@@ -264,6 +282,28 @@
         filterFaqs(root, event.target.value);
       });
     }
+
+    root.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-help-report-form]');
+      if (!form) return;
+      event.preventDefault();
+      const feedback = form.querySelector('[data-help-report-feedback]');
+      try {
+        const data = U.formData(form);
+        const typeLabel = data.type === 'bug' ? 'BUG' : data.type === 'melhoria' ? 'MELHORIA' : 'AJUDA';
+        const currentUser = window.C360.state && window.C360.state.getCurrentUser ? window.C360.state.getCurrentUser() : null;
+        await window.C360.state.add('tasks', {
+          title: `[${typeLabel}] ${currentUser && currentUser.name ? currentUser.name : 'Usuario'}`,
+          status: 'a_fazer',
+          dueDate: null,
+          notes: (data.message || '').trim(),
+        });
+        form.reset();
+        if (feedback) feedback.innerHTML = '<div class="notice success">Mensagem enviada ao administrador.</div>';
+      } catch (error) {
+        if (feedback) feedback.innerHTML = `<div class="notice danger">${escapeHtml(error.message || 'Nao foi possivel enviar.')}</div>`;
+      }
+    });
 
     root.addEventListener('click', (event) => {
       const trigger = event.target.closest('[data-action="toggle-faq"]');

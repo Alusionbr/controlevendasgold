@@ -36,6 +36,7 @@
     paidInitialAmount: '0',
     items: [],
     lastLink: '',
+    editingCartId: '',
   };
 
   const PAYMENT_MODE_LABELS = { avista: 'A vista', parcial: 'Parcial', consignado: 'Consignado' };
@@ -82,11 +83,98 @@
     return url.toString();
   }
 
+  function sellerPriceForProduct(productId) {
+    return (state().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
+  }
+
+  function ownStockForProduct(productId) {
+    const currentUser = user();
+    if (!currentUser) return null;
+    return (state().sellerStock || []).find((row) => String(row.sellerId) === String(currentUser.id) && String(row.productId) === String(productId)) || null;
+  }
+
+  function resolvedUnitPrice(product) {
+    if (!product) return 0;
+    const currentUser = user();
+    if (currentUser && currentUser.role === 'vendedor' && Calc && typeof Calc.resolveSellerPrice === 'function') {
+      return Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceForProduct(product.id) }).price;
+    }
+    return product.defaultPrice || product.salePrice || 0;
+  }
+
+  function productsForDraft(draft) {
+    const base = (state().products || []).filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
+    if (!isAdmin() && draft.source === 'seller_stock') {
+      const ownStockIds = new Set((state().sellerStock || [])
+        .filter((row) => String(row.sellerId) === String(user()?.id) && U.number(row.quantity) > 0)
+        .map((row) => String(row.productId)));
+      return base.filter((product) => ownStockIds.has(String(product.id)));
+    }
+    return base;
+  }
+
   function productOptions(products) {
     return UI.optionList(products.map((product) => ({
       id: product.id,
-      name: `${product.name} - ${U.money(product.defaultPrice || product.salePrice || 0)}`,
+      name: `${product.name} - ${U.money(resolvedUnitPrice(product))}`,
     })), '', 'Produto');
+  }
+
+  function addDraftItem(draft, { productId, quantity = 1, unitPrice }) {
+    const product = productById(productId);
+    if (!product) return;
+    const qty = U.number(quantity || 1);
+    const price = U.number(unitPrice || resolvedUnitPrice(product));
+    if (qty <= 0) return;
+    const existing = draft.items.find((item) => String(item.productId) === String(productId) && U.number(item.unitPrice) === price);
+    if (existing) existing.quantity = U.number(existing.quantity) + qty;
+    else draft.items.push({ productId, quantity: qty, unitPrice: price });
+  }
+
+  function resetDraft(draft, keepLink = false) {
+    draft.items = [];
+    if (!keepLink) draft.lastLink = '';
+    draft.customerName = '';
+    draft.notes = '';
+    draft.paidInitialAmount = '0';
+    draft.editingCartId = '';
+  }
+
+  function loadDraftFromCart(draft, cart, asAdjustment = false) {
+    draft.source = cart.source || 'seller_stock';
+    draft.paymentMode = cart.paymentMode || 'avista';
+    draft.channel = cart.channel || 'WhatsApp';
+    draft.customerName = cart.customerName || '';
+    draft.notes = asAdjustment ? `Acerto do carrinho ${cart.id}` : (cart.notes || '');
+    draft.paidInitialAmount = cart.paidInitialAmount || '0';
+    draft.expiresHours = draft.expiresHours || '48';
+    draft.targetSellerId = isAdmin() ? (cart.sellerId || '') : '';
+    draft.editingCartId = asAdjustment ? '' : cart.id;
+    draft.items = itemsForCart(cart.id).map((item) => ({
+      productId: item.productId,
+      quantity: U.number(item.quantity),
+      unitPrice: U.number(item.unitPrice),
+    }));
+  }
+
+  function canEditCart(cart) {
+    if (!cart) return false;
+    if (cart.status === 'converted') return true;
+    if (isAdmin()) return !['approved', 'partially_approved', 'rejected', 'expired'].includes(cart.status);
+    return String(cart.sellerId) === String(user()?.id) && ['draft', 'shared', 'submitted', 'pending_approval'].includes(cart.status);
+  }
+
+  function canDeleteCart(cart) {
+    if (!cart || cart.status === 'converted') return false;
+    if (isAdmin()) return !['approved', 'partially_approved'].includes(cart.status);
+    return String(cart.sellerId) === String(user()?.id) && ['draft', 'shared', 'submitted', 'pending_approval'].includes(cart.status);
+  }
+
+  function canConfirmOwnStockCart(cart) {
+    return cart
+      && cart.source === 'seller_stock'
+      && ['submitted', 'shared'].includes(cart.status)
+      && String(cart.sellerId) === String(user()?.id);
   }
 
   function renderBuilder(draft, feedback) {
@@ -96,11 +184,11 @@
       allowConsignment: true,
       allowPublicCartLinks: true,
     };
-    const products = (state().products || []).filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
+    const products = productsForDraft(draft);
     const allowAdminSource = isAdmin() || settings.allowAdminStockSales;
     const allowConsignment = isAdmin() || settings.allowConsignment;
     const sourceOptions = [
-      '<option value="seller_stock">Estoque proprio do vendedor</option>',
+      '<option value="seller_stock">Meu estoque</option>',
       allowAdminSource ? '<option value="admin_stock">Estoque do administrador</option>' : '',
     ].join('');
     const paymentOptions = [
@@ -110,6 +198,7 @@
     ].join('');
     const channelOptions = UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '');
     const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    const editingCart = draft.editingCartId ? (state().saleCarts || []).find((cart) => String(cart.id) === String(draft.editingCartId)) : null;
     const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
       ? `<label>Vendedor consignado
           <select name="targetSellerId" required>${UI.optionList(sellers, draft.targetSellerId || '', sellers.length ? 'Selecione o vendedor' : 'Nenhum vendedor ativo')}</select>
@@ -120,28 +209,59 @@
           <input name="paidInitialAmount" type="number" step="0.01" min="0" value="${U.escapeHtml(draft.paidInitialAmount || '0')}">
         </label>`
       : '';
-    const rows = draft.items.map((item, index) => {
+    const productCards = products.slice(0, 18).map((product) => {
+      const ownStock = ownStockForProduct(product.id);
+      const stockHint = !isAdmin() && draft.source === 'seller_stock'
+        ? `<small>${U.qty(ownStock?.quantity || 0, product.unit)} no seu estoque</small>`
+        : (product.stockHidden ? '<small>Disponibilidade protegida</small>' : '');
+      return `
+        <button type="button" class="cart-product-pick" data-cart-action="quick-add-product" data-product-id="${U.escapeHtml(product.id)}">
+          <strong>${U.escapeHtml(product.name)}</strong>
+          <span>${U.money(resolvedUnitPrice(product))}</span>
+          ${stockHint}
+        </button>
+      `;
+    }).join('');
+    const itemCards = draft.items.map((item, index) => {
       const product = productById(item.productId);
-      return [
-        UI.productName(product),
-        U.qty(item.quantity, product?.unit),
-        UI.moneyCell(item.unitPrice),
-        UI.moneyCell(U.number(item.quantity) * U.number(item.unitPrice)),
-        `<button type="button" class="small danger" data-cart-action="remove-draft-item" data-index="${index}">Remover</button>`,
-      ];
-    });
+      const total = U.number(item.quantity) * U.number(item.unitPrice);
+      return `
+        <article class="cart-draft-item">
+          <div>
+            <strong>${U.escapeHtml(product ? product.name : 'Produto')}</strong>
+            <span>${U.money(item.unitPrice)} cada</span>
+          </div>
+          <div class="cart-stepper">
+            <button type="button" class="small ghost" data-cart-action="dec-draft-item" data-index="${index}">-</button>
+            <input data-draft-qty="${index}" type="number" min="0.001" step="0.001" value="${U.escapeHtml(item.quantity)}" aria-label="Quantidade">
+            <button type="button" class="small ghost" data-cart-action="inc-draft-item" data-index="${index}">+</button>
+          </div>
+          <strong>${U.money(total)}</strong>
+          <button type="button" class="small danger" data-cart-action="remove-draft-item" data-index="${index}">Remover</button>
+        </article>
+      `;
+    }).join('');
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
+    const modeHint = draft.source === 'admin_stock'
+      ? 'Este carrinho vira pedido para aprovacao do administrador.'
+      : 'Salve o carrinho e confirme a venda quando o produto for entregue ou enviado.';
 
     return `
       ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
       ${linkHint}
-      <div class="sales-cart-layout">
+      <div class="sales-cart-layout sales-cart-layout-modern">
         <article class="panel-card sales-cart-builder">
-          <h3>Novo carrinho</h3>
-          <form data-cart-config class="grid-form compact-form">
-            <label>Origem do estoque
+          <div class="cart-panel-head">
+            <div>
+              <h3>${editingCart ? 'Editando carrinho' : 'Novo carrinho'}</h3>
+              <p>${U.escapeHtml(modeHint)}</p>
+            </div>
+            ${editingCart ? UI.badge('Edicao') : ''}
+          </div>
+          <form data-cart-config class="cart-config-grid">
+            <label>Origem
               <select name="source">${sourceOptions}</select>
             </label>
             <label>Pagamento
@@ -150,8 +270,8 @@
             <label>Canal
               <select name="channel">${channelOptions}</select>
             </label>
-            <label>Nome do cliente
-              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Opcional">
+            <label>Cliente ou apelido
+              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Nome para identificar">
             </label>
             ${sellerTargetField}
             ${paidInitialField}
@@ -163,62 +283,93 @@
                 <option value="168">7 dias</option>
               </select>
             </label>
-            <label class="wide">Observacoes internas
-              <input name="notes" value="${U.escapeHtml(draft.notes || '')}" placeholder="Entrega, combinado, origem do atendimento...">
+            <label class="wide">Observacoes
+              <input name="notes" value="${U.escapeHtml(draft.notes || '')}" placeholder="Entrega, combinado, ajuste, troca...">
             </label>
           </form>
 
-          <form data-cart-add-item class="grid-form compact-form">
-            <label>Produto
-              <select name="productId" required>${productOptions(products)}</select>
-            </label>
-            <label>Qtd.
-              <input name="quantity" type="number" step="0.001" min="0.001" required>
-            </label>
-            <label>Preco unitario
-              <input name="unitPrice" type="number" step="0.01" min="0.01" required>
-            </label>
-            <button type="submit">Adicionar item</button>
+          <div class="cart-product-grid">
+            ${productCards || '<div class="empty-state"><strong>Nenhum produto disponivel.</strong><span>Use estoque do admin ou peca reposicao.</span></div>'}
+          </div>
+
+          <form data-cart-add-item class="cart-manual-add">
+            <select name="productId" required>${productOptions(products)}</select>
+            <input name="quantity" type="number" step="0.001" min="0.001" placeholder="Qtd." required>
+            <input name="unitPrice" type="number" step="0.01" min="0.01" placeholder="Preco">
+            <button type="submit">Adicionar</button>
           </form>
         </article>
 
         <article class="panel-card sales-cart-summary">
-          <h3>Carrinho atual</h3>
-          ${UI.table(['Produto', 'Qtd.', 'Unitario', 'Total', ''], rows, 'Nenhum item no carrinho.')}
-          <div class="cart-total"><span>Total</span><strong>${U.money(cartTotal(draft.items))}</strong></div>
-          ${draft.paymentMode === 'parcial' ? `<p class="hint-inline">Fica devendo (sobre o pedido, antes do ajuste do admin): <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>` : ''}
-          <div class="actions">
-            <button type="button" data-cart-action="save-cart" ${draft.items.length ? '' : 'disabled'}>Salvar pedido</button>
+          <div class="cart-panel-head">
+            <div>
+              <h3>Carrinho atual</h3>
+              <p>${draft.items.length} item(ns)</p>
+            </div>
+            <strong>${U.money(cartTotal(draft.items))}</strong>
+          </div>
+          <div class="cart-draft-list">${itemCards || '<div class="empty-state"><strong>Carrinho vazio.</strong><span>Toque em um produto para adicionar.</span></div>'}</div>
+          ${draft.paymentMode === 'parcial' ? `<p class="hint-inline">Fica devendo antes do ajuste do admin: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>` : ''}
+          <div class="actions cart-primary-actions">
+            <button type="button" data-cart-action="save-cart" ${draft.items.length ? '' : 'disabled'}>${editingCart ? 'Salvar alteracoes' : 'Salvar carrinho'}</button>
             <button type="button" class="secondary" data-cart-action="share-cart" ${draft.items.length && draft.paymentMode === 'avista' && settings.allowPublicCartLinks ? '' : 'disabled'}>Gerar link</button>
             <button type="button" class="ghost" data-cart-action="clear-draft">Limpar</button>
           </div>
-          <p class="hint-inline">Link publico aceita somente pagamento a vista e pode receber comprovante.</p>
         </article>
+      </div>
+    `;
+  }
+
+  function renderCartStats(carts) {
+    const sales = (state().sales || []).filter((sale) => String(sale.sellerId || '') === String(user()?.id || '') || isAdmin());
+    const openDebt = (state().sellerAccountEntries || []).reduce((sum, entry) => sum + (entry.direction === 'debit' ? U.number(entry.amount) : -U.number(entry.amount)), 0);
+    const saved = carts.filter((cart) => ['draft', 'submitted', 'shared'].includes(cart.status)).length;
+    const waiting = carts.filter((cart) => cart.status === 'pending_approval').length;
+    return `
+      <div class="sales-cart-kpis">
+        ${UI.metric('Carrinhos salvos', String(saved))}
+        ${UI.metric('Aguardando admin', String(waiting))}
+        ${UI.metric('Faturamento', U.money(sales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0)))}
+        ${!isAdmin() ? UI.metric('Debito com central', U.money(Math.max(openDebt, 0))) : ''}
       </div>
     `;
   }
 
   function renderCarts() {
     const carts = state().saleCarts || [];
-    const rows = carts.slice(0, 40).map((cart) => {
+    const cards = carts.slice(0, 60).map((cart) => {
       const items = itemsForCart(cart.id);
       const itemText = items.map((item) => {
         const product = productById(item.productId);
-        return `${product ? product.name : 'Produto'} (${U.qty(item.quantity, product?.unit)})`;
-      }).join(', ');
+        return `<li><span>${U.escapeHtml(product ? product.name : 'Produto')}</span><strong>${U.qty(item.quantity, product?.unit)}</strong></li>`;
+      }).join('');
       const actions = [];
+      if (canConfirmOwnStockCart(cart)) actions.push(`<button type="button" class="small" data-cart-action="confirm-own-stock" data-cart-id="${U.escapeHtml(cart.id)}">Confirmar venda</button>`);
+      if (canEditCart(cart)) actions.push(`<button type="button" class="small secondary" data-cart-action="edit-cart" data-cart-id="${U.escapeHtml(cart.id)}">${cart.status === 'converted' ? 'Criar acerto' : 'Editar'}</button>`);
       if (cart.publicToken) actions.push(`<button type="button" class="small secondary" data-cart-action="copy-link" data-cart-id="${U.escapeHtml(cart.id)}">Copiar link</button>`);
-      if (cart.source === 'seller_stock' && user() && String(user().id) === String(cart.sellerId) && ['submitted', 'shared'].includes(cart.status)) actions.push(`<button type="button" class="small" data-cart-action="convert-own-stock" data-cart-id="${U.escapeHtml(cart.id)}">Baixar estoque proprio</button>`);
-      return [
-        statusBadge(cart.status),
-        U.escapeHtml(sourceLabel(cart.source)),
-        U.escapeHtml(cart.customerName || 'Sem cliente'),
-        U.escapeHtml(itemText || 'Sem itens'),
-        UI.moneyCell(cartTotal(items)),
-        `<div class="actions">${actions.join('')}</div>`,
-      ];
-    });
-    return UI.section('Carrinhos e pedidos', 'Acompanhe links enviados, pedidos do estoque do admin e vendas do estoque proprio.', UI.table(['Status', 'Origem', 'Cliente', 'Itens', 'Total', 'Acoes'], rows, 'Nenhum carrinho ainda.'));
+      if (canDeleteCart(cart)) actions.push(`<button type="button" class="small danger" data-cart-action="delete-cart" data-cart-id="${U.escapeHtml(cart.id)}">Excluir</button>`);
+      return `
+        <article class="cart-saved-card">
+          <header>
+            <div>
+              <strong>${U.escapeHtml(cart.customerName || 'Carrinho sem nome')}</strong>
+              <span>${U.escapeHtml(sourceLabel(cart.source))} - ${U.escapeHtml(PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode)} - ${U.escapeHtml(cart.channel || 'Canal')}</span>
+            </div>
+            ${statusBadge(cart.status)}
+          </header>
+          <ul>${itemText || '<li><span>Sem itens</span></li>'}</ul>
+          <footer>
+            <strong>${U.money(cartTotal(items))}</strong>
+            <div class="actions">${actions.join('')}</div>
+          </footer>
+        </article>
+      `;
+    }).join('');
+    return UI.section(
+      'Carrinhos e vendas',
+      'Salve varios carrinhos, edite antes da aprovacao e confirme a venda quando entregar ou enviar.',
+      `${renderCartStats(carts)}<div class="cart-saved-grid">${cards || '<div class="empty-state"><strong>Nenhum carrinho ainda.</strong><span>Crie o primeiro carrinho acima.</span></div>'}</div>`
+    );
   }
 
   function renderAdminSettings(settingsFeedback) {
@@ -407,6 +558,43 @@
     const finalCart = finalStatus === 'draft' ? cart : await S().update('saleCarts', cart.id, finalPatch);
     await S().refresh();
     return { ...cart, ...finalCart };
+  }
+
+  async function replaceCartItems(cartId, items) {
+    const currentItems = itemsForCart(cartId);
+    for (const item of currentItems) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().remove('saleCartItems', item.id);
+    }
+    for (const item of items) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().add('saleCartItems', {
+        cartId,
+        productId: item.productId,
+        quantity: U.number(item.quantity),
+        unitPrice: U.number(item.unitPrice),
+      });
+    }
+  }
+
+  async function saveDraftAsCart(draft, status) {
+    if (!draft.editingCartId) return createCart(draft, status);
+    const currentUser = user();
+    const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
+    const cart = await S().update('saleCarts', draft.editingCartId, {
+      sellerId: isAdmin() && draft.targetSellerId ? draft.targetSellerId : currentUser.id,
+      source: draft.source,
+      paymentMode: draft.paymentMode,
+      status,
+      channel: draft.channel || 'WhatsApp',
+      customerName: draft.customerName || null,
+      publicExpiresAt: status === 'shared' ? expiresAt : null,
+      paidInitialAmount: resolvePaidInitialAmount(draft),
+      notes: draft.notes || '',
+    });
+    await replaceCartItems(draft.editingCartId, draft.items);
+    await S().refresh();
+    return cart;
   }
 
   async function addToSellerStock(sellerId, productId, quantity) {
@@ -707,6 +895,26 @@
       if (event.target.closest('[data-cart-config]')) {
         readConfig();
         paint();
+        return;
+      }
+      const qtyInput = event.target.closest('[data-draft-qty]');
+      if (qtyInput) {
+        const item = draft.items[Number(qtyInput.dataset.draftQty)];
+        if (item) item.quantity = U.number(qtyInput.value);
+        draft.items = draft.items.filter((item) => U.number(item.quantity) > 0);
+        paint();
+        return;
+      }
+      const productSelect = event.target.closest('[data-cart-add-item] select[name="productId"]');
+      if (productSelect) {
+        const product = productById(productSelect.value);
+        const form = productSelect.closest('[data-cart-add-item]');
+        if (form && product && form.elements.unitPrice && !form.elements.unitPrice.dataset.touched) {
+          form.elements.unitPrice.value = resolvedUnitPrice(product);
+        }
+      }
+      if (event.target.closest('[data-cart-add-item] input[name="unitPrice"]')) {
+        event.target.dataset.touched = '1';
       }
     });
 
@@ -743,10 +951,10 @@
       const data = U.formData(form);
       const product = productById(data.productId);
       if (!product) return;
-      draft.items.push({
+      addDraftItem(draft, {
         productId: data.productId,
         quantity: U.number(data.quantity),
-        unitPrice: U.number(data.unitPrice || product.defaultPrice || product.salePrice),
+        unitPrice: U.number(data.unitPrice || resolvedUnitPrice(product)),
       });
       form.reset();
       feedback = null;
@@ -761,51 +969,54 @@
         readConfig();
         if (action === 'remove-draft-item') {
           draft.items.splice(Number(button.dataset.index), 1);
+        } else if (action === 'inc-draft-item') {
+          const item = draft.items[Number(button.dataset.index)];
+          if (item) item.quantity = U.number(item.quantity) + 1;
+        } else if (action === 'dec-draft-item') {
+          const item = draft.items[Number(button.dataset.index)];
+          if (item) item.quantity = Math.max(U.number(item.quantity) - 1, 0);
+          if (item && U.number(item.quantity) <= 0) draft.items.splice(Number(button.dataset.index), 1);
+        } else if (action === 'quick-add-product') {
+          addDraftItem(draft, { productId: button.dataset.productId, quantity: 1 });
         } else if (action === 'clear-draft') {
-          draft.items = [];
-          draft.lastLink = '';
-          draft.customerName = '';
-          draft.paidInitialAmount = '0';
+          resetDraft(draft);
         } else if (action === 'save-cart') {
-          if (isAdmin() && draft.paymentMode === 'consignado') {
+          if (isAdmin() && draft.paymentMode === 'consignado' && !draft.editingCartId) {
             await createAdminSellerConsignment(draft);
-            draft.items = [];
-            draft.lastLink = '';
-            draft.customerName = '';
-            draft.paidInitialAmount = '0';
+            resetDraft(draft);
             feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
-          } else if (!isAdmin() && draft.source === 'seller_stock') {
-            const cart = await createCart(draft, 'submitted');
-            await convertOwnStockCart(cart);
-            draft.items = [];
-            draft.lastLink = '';
-            draft.customerName = '';
-            draft.paidInitialAmount = '0';
-            feedback = { message: 'Venda registrada. O estoque proprio foi baixado automaticamente.', type: 'success' };
           } else {
             const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
-            await createCart(draft, status);
-            draft.items = [];
-            draft.lastLink = '';
-            draft.customerName = '';
-            draft.paidInitialAmount = '0';
-            feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo.', type: 'success' };
+            await saveDraftAsCart(draft, status);
+            resetDraft(draft);
+            feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo. Confirme a venda quando entregar ou enviar.', type: 'success' };
           }
         } else if (action === 'share-cart') {
-          const cart = await createCart(draft, 'shared');
-          draft.items = [];
+          const cart = await saveDraftAsCart(draft, 'shared');
+          resetDraft(draft, true);
           draft.lastLink = publicUrl(cart);
-          draft.customerName = '';
-          draft.paidInitialAmount = '0';
           feedback = { message: 'Link publico criado. Ele expira no prazo escolhido.', type: 'success' };
         } else if (action === 'copy-link') {
           const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
           if (cart) await navigator.clipboard.writeText(publicUrl(cart));
           feedback = { message: 'Link copiado.', type: 'success' };
-        } else if (action === 'convert-own-stock') {
+        } else if (action === 'confirm-own-stock' || action === 'convert-own-stock') {
           const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
           if (cart) await convertOwnStockCart(cart);
-          feedback = { message: 'Estoque proprio baixado e consignado registrado.', type: 'success' };
+          feedback = { message: 'Venda confirmada. O estoque proprio foi baixado automaticamente.', type: 'success' };
+        } else if (action === 'edit-cart') {
+          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
+          if (cart) {
+            loadDraftFromCart(draft, cart, cart.status === 'converted');
+            feedback = { message: cart.status === 'converted' ? 'Carrinho vendido carregado como novo acerto.' : 'Carrinho carregado para edicao.', type: 'success' };
+          }
+        } else if (action === 'delete-cart') {
+          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
+          if (cart && confirm('Excluir este carrinho?')) {
+            await S().remove('saleCarts', cart.id);
+            await S().refresh();
+            feedback = { message: 'Carrinho excluido.', type: 'success' };
+          }
         } else if (action === 'grant-stock-adjustment') {
           const sellerId = button.dataset.sellerId;
           const current = settingForSeller(sellerId);

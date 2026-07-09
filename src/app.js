@@ -74,7 +74,7 @@
     minhasdevolucoes: ['vendedor'],
     calculadora: ['admin', 'vendedor'],
     metas: ['admin', 'vendedor'],
-    ajuda: ['vendedor'],
+    ajuda: ['admin', 'vendedor'],
     dados: ['admin'],
   };
 
@@ -136,6 +136,7 @@
     activeBusiness: document.getElementById('activeBusiness'),
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
+    btnHelp: document.getElementById('btnHelp'),
     btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
@@ -1864,6 +1865,7 @@
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
+    if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
     els.btnReset.addEventListener('click', () => {
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
