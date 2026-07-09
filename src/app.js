@@ -875,16 +875,8 @@
     });
     return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
       <div id="salesCartPanel"></div>
+      <h3>Venda rápida (1 produto)</h3>
       <form id="saleForm" class="grid-form">
-        <label>Data
-          <input name="date" type="date" required value="${U.today()}">
-        </label>
-        <label>${UI.fieldLabel('Canal', 'canal')}
-          <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
-        </label>
-        <label>Cliente
-          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
-        </label>
         <label>Produto
           <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
         </label>
@@ -894,20 +886,34 @@
         <label>Preço unitário
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
-        <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
-          <input name="discount" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
-          <input name="fixedFees" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
-          <input name="feePercent" type="number" step="0.01" value="0">
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Pedido, entrega, plataforma...">
+        <label>Cliente
+          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">Lancar venda rapida (1 produto)</button>
+        <details class="full sale-more-options">
+          <summary>Mais opções (data, canal, desconto, taxas, observações)</summary>
+          <div class="grid-form">
+            <label>Data
+              <input name="date" type="date" required value="${U.today()}">
+            </label>
+            <label>${UI.fieldLabel('Canal', 'canal')}
+              <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
+            </label>
+            <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
+              <input name="discount" type="number" step="0.01" value="0">
+            </label>
+            <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
+              <input name="fixedFees" type="number" step="0.01" value="0">
+            </label>
+            <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
+              <input name="feePercent" type="number" step="0.01" value="0">
+            </label>
+            <label class="wide">Observações
+              <input name="notes" placeholder="Pedido, entrega, plataforma...">
+            </label>
+          </div>
+        </details>
+        <button type="submit" class="full">Lancar venda rapida</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
       <div id="returnsPanel"></div>

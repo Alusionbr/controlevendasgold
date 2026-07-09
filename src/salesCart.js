@@ -891,12 +891,10 @@
   function mount(container, options = {}) {
     const draft = persistentDraft;
     let feedback = null;
-    let settingsFeedback = null;
 
     function paint() {
       container.innerHTML = [
         renderBuilder(draft, feedback),
-        renderAdminSettings(settingsFeedback),
         renderCarts(),
       ].join('');
       const config = container.querySelector('[data-cart-config]');
@@ -955,31 +953,6 @@
     });
 
     container.addEventListener('submit', async (event) => {
-      const settingsForm = event.target.closest('[data-seller-settings-form]');
-      if (settingsForm) {
-        event.preventDefault();
-        try {
-          const sellerId = settingsForm.dataset.sellerId;
-          const current = settingForSeller(sellerId);
-          const payload = {
-            sellerId,
-            allowAdminStockSales: !!settingsForm.elements.allowAdminStockSales.checked,
-            allowConsignment: !!settingsForm.elements.allowConsignment.checked,
-            allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
-            maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
-          };
-          if (current.id) await S().update('sellerSettings', current.id, payload);
-          else await S().add('sellerSettings', payload);
-          await S().refresh();
-          settingsFeedback = { message: 'Permissoes salvas.', type: 'success' };
-        } catch (error) {
-          settingsFeedback = { message: error.message, type: 'danger' };
-        }
-        paint();
-        if (typeof options.onDone === 'function') options.onDone();
-        return;
-      }
-
       const form = event.target.closest('[data-cart-add-item]');
       if (!form) return;
       event.preventDefault();
@@ -1053,21 +1026,6 @@
             await S().refresh();
             feedback = { message: 'Carrinho excluido.', type: 'success' };
           }
-        } else if (action === 'grant-stock-adjustment') {
-          const sellerId = button.dataset.sellerId;
-          const current = settingForSeller(sellerId);
-          const payload = {
-            sellerId,
-            allowAdminStockSales: current.allowAdminStockSales !== false,
-            allowConsignment: !!current.allowConsignment,
-            allowPublicCartLinks: current.allowPublicCartLinks !== false,
-            maxDiscountPercent: U.number(current.maxDiscountPercent),
-            stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
-          };
-          if (current.id) await S().update('sellerSettings', current.id, payload);
-          else await S().add('sellerSettings', payload);
-          await S().refresh();
-          settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };

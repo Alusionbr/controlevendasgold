@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-OFX1r+JQSefcHXMEyX+fsN7PiJFmtg+FaWUiCoUjhGk=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7+MHrRQRC7KiFS6Yxg4UxAAX5JeRLlvAEXeh4d16WtE=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-X13Ll07l0GPiX0V4hg9jSVNSsuq6opakwR9BWZCuLr0=' 'sha256-Q+xbsljdIg1QEzNxM082wyw4IIibSfUPAs08xtEoLBo=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-GHBQ6m7Ql9GH/YkJp9/IUP+GwyPvHDRzHAMYSBNtIMY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-OFX1r+JQSefcHXMEyX+fsN7PiJFmtg+FaWUiCoUjhGk=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7+MHrRQRC7KiFS6Yxg4UxAAX5JeRLlvAEXeh4d16WtE=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-dNK9YEpzZU5fMe8kNPqdI1KsJYNKCCV3HQkvEQRXKvA=' 'sha256-Q+xbsljdIg1QEzNxM082wyw4IIibSfUPAs08xtEoLBo=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-xEl25aSkS1wHecLYCNE8Dnle7qBakSf7UrCJkihZpK8='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -500,7 +500,28 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   color: var(--ink);
 }
 .grid-form label.full,
-.grid-form label.wide { grid-column: 1 / -1; }
+.grid-form label.wide,
+.grid-form .full,
+.grid-form .wide { grid-column: 1 / -1; }
+.sale-more-options {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+.sale-more-options summary {
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 0.84rem;
+  color: var(--brand-deep);
+}
+.sale-more-options[open] summary { margin-bottom: 0.7rem; }
+.sale-more-options .grid-form {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: none;
+}
 .grid-form label span {
   font-weight: 500;
   font-size: 0.76rem;
@@ -6857,12 +6878,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function mount(container, options = {}) {
     const draft = persistentDraft;
     let feedback = null;
-    let settingsFeedback = null;
 
     function paint() {
       container.innerHTML = [
         renderBuilder(draft, feedback),
-        renderAdminSettings(settingsFeedback),
         renderCarts(),
       ].join('');
       const config = container.querySelector('[data-cart-config]');
@@ -6921,31 +6940,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
 
     container.addEventListener('submit', async (event) => {
-      const settingsForm = event.target.closest('[data-seller-settings-form]');
-      if (settingsForm) {
-        event.preventDefault();
-        try {
-          const sellerId = settingsForm.dataset.sellerId;
-          const current = settingForSeller(sellerId);
-          const payload = {
-            sellerId,
-            allowAdminStockSales: !!settingsForm.elements.allowAdminStockSales.checked,
-            allowConsignment: !!settingsForm.elements.allowConsignment.checked,
-            allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
-            maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
-          };
-          if (current.id) await S().update('sellerSettings', current.id, payload);
-          else await S().add('sellerSettings', payload);
-          await S().refresh();
-          settingsFeedback = { message: 'Permissoes salvas.', type: 'success' };
-        } catch (error) {
-          settingsFeedback = { message: error.message, type: 'danger' };
-        }
-        paint();
-        if (typeof options.onDone === 'function') options.onDone();
-        return;
-      }
-
       const form = event.target.closest('[data-cart-add-item]');
       if (!form) return;
       event.preventDefault();
@@ -7019,21 +7013,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             await S().refresh();
             feedback = { message: 'Carrinho excluido.', type: 'success' };
           }
-        } else if (action === 'grant-stock-adjustment') {
-          const sellerId = button.dataset.sellerId;
-          const current = settingForSeller(sellerId);
-          const payload = {
-            sellerId,
-            allowAdminStockSales: current.allowAdminStockSales !== false,
-            allowConsignment: !!current.allowConsignment,
-            allowPublicCartLinks: current.allowPublicCartLinks !== false,
-            maxDiscountPercent: U.number(current.maxDiscountPercent),
-            stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
-          };
-          if (current.id) await S().update('sellerSettings', current.id, payload);
-          else await S().add('sellerSettings', payload);
-          await S().refresh();
-          settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -10200,16 +10179,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
     return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
       <div id="salesCartPanel"></div>
+      <h3>Venda rápida (1 produto)</h3>
       <form id="saleForm" class="grid-form">
-        <label>Data
-          <input name="date" type="date" required value="${U.today()}">
-        </label>
-        <label>${UI.fieldLabel('Canal', 'canal')}
-          <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
-        </label>
-        <label>Cliente
-          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
-        </label>
         <label>Produto
           <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
         </label>
@@ -10219,20 +10190,34 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <label>Preço unitário
           <input name="unitPrice" type="number" step="0.01" required>
         </label>
-        <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
-          <input name="discount" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
-          <input name="fixedFees" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
-          <input name="feePercent" type="number" step="0.01" value="0">
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Pedido, entrega, plataforma...">
+        <label>Cliente
+          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
         </label>
         <div id="salePriceHint" class="full"></div>
-        <button type="submit">Lancar venda rapida (1 produto)</button>
+        <details class="full sale-more-options">
+          <summary>Mais opções (data, canal, desconto, taxas, observações)</summary>
+          <div class="grid-form">
+            <label>Data
+              <input name="date" type="date" required value="${U.today()}">
+            </label>
+            <label>${UI.fieldLabel('Canal', 'canal')}
+              <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
+            </label>
+            <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
+              <input name="discount" type="number" step="0.01" value="0">
+            </label>
+            <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
+              <input name="fixedFees" type="number" step="0.01" value="0">
+            </label>
+            <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
+              <input name="feePercent" type="number" step="0.01" value="0">
+            </label>
+            <label class="wide">Observações
+              <input name="notes" placeholder="Pedido, entrega, plataforma...">
+            </label>
+          </div>
+        </details>
+        <button type="submit" class="full">Lancar venda rapida</button>
       </form>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
       <div id="returnsPanel"></div>

@@ -492,7 +492,28 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   color: var(--ink);
 }
 .grid-form label.full,
-.grid-form label.wide { grid-column: 1 / -1; }
+.grid-form label.wide,
+.grid-form .full,
+.grid-form .wide { grid-column: 1 / -1; }
+.sale-more-options {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+.sale-more-options summary {
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 0.84rem;
+  color: var(--brand-deep);
+}
+.sale-more-options[open] summary { margin-bottom: 0.7rem; }
+.sale-more-options .grid-form {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: none;
+}
 .grid-form label span {
   font-weight: 500;
   font-size: 0.76rem;

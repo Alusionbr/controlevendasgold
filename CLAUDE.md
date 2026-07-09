@@ -683,3 +683,38 @@ usuário como "site confuso" / "abre em janela separada sem botão de fechar":
   cabeçalho com botão "Fechar" próprio (`data-role="close-returns"`, novo
   `options.onClose` além do `onDone` já existente) — fecha sem precisar
   achar a linha de novo.
+
+---
+
+## Atualização: simplificação do fluxo de venda
+
+Objetivo: reduzir o quanto a aba "Vendas" exige pra registrar uma venda
+simples de 1 produto — pedido explícito do usuário ("precisa fazer muita
+coisa pra realizar uma venda").
+
+- **Duplicação removida** (`src/salesCart.js`): a seção "Permissões dos
+  vendedores" (checkboxes de consignado/estoque do admin/link público por
+  vendedor) estava implementada **duas vezes** — uma vez como
+  `mountSettings`/`renderAdminSettings`, dedicada à aba "Aprovações"
+  (`src/app.js`, case `aprovacoes`), e de novo inteira dentro do `paint()`
+  de `mount()`, o construtor de carrinho compartilhado pelas abas "Vendas" e
+  "Pedidos". Resultado: todo admin via esse bloco (que nada tem a ver com
+  vender) três vezes — uma em Vendas, uma em Pedidos, uma em Aprovações.
+  Removida a cópia embutida em `mount()` (render + handler de submit do
+  formulário + handler de clique de "Liberar 1 acerto de estoque"); a versão
+  de `mountSettings` na aba Aprovações continua sendo a única fonte.
+- **"Venda rápida (1 produto)" enxuta** (`src/app.js`, `renderSales`): os
+  campos raramente alterados (Data, Canal, Desconto total, Taxa fixa total,
+  Taxa percentual, Observações) foram para dentro de um `<details>`
+  ("Mais opções") fechado por padrão, com os valores default de sempre
+  (data = hoje, taxas = 0). O formulário visível agora é só Produto,
+  Quantidade, Preço unitário e Cliente — os 4 campos que toda venda simples
+  precisa. `<details>`/`<summary>` nativos: nenhum JS novo, funciona com
+  teclado, e o campo Data continua `required` com valor pré-preenchido (não
+  bloqueia envio mesmo fechado).
+
+Nenhuma mudança na lógica de cálculo de venda (`Calc.saleMath`) nem no
+formato salvo em `sales` — só remoção de duplicação de UI e reorganização
+visual. Verificado via a skill `run-controlevendasgold`: lançar uma venda
+rápida com o "Mais opções" fechado grava corretamente com os defaults, e a
+aba Aprovações continua mostrando/salvando permissões normalmente.
