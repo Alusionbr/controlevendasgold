@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-OFX1r+JQSefcHXMEyX+fsN7PiJFmtg+FaWUiCoUjhGk=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-UlalbnpVmIXtzJtiWRQm66LgdDKfDR7atRlpQPiOpkI=' 'sha256-7+MHrRQRC7KiFS6Yxg4UxAAX5JeRLlvAEXeh4d16WtE=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-X13Ll07l0GPiX0V4hg9jSVNSsuq6opakwR9BWZCuLr0=' 'sha256-Q+xbsljdIg1QEzNxM082wyw4IIibSfUPAs08xtEoLBo=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-SxGjveGypCly/ayytt0kHoDWyYsqkId8/Ugmlb0EOrw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-OFX1r+JQSefcHXMEyX+fsN7PiJFmtg+FaWUiCoUjhGk=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7+MHrRQRC7KiFS6Yxg4UxAAX5JeRLlvAEXeh4d16WtE=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-X13Ll07l0GPiX0V4hg9jSVNSsuq6opakwR9BWZCuLr0=' 'sha256-Q+xbsljdIg1QEzNxM082wyw4IIibSfUPAs08xtEoLBo=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-GHBQ6m7Ql9GH/YkJp9/IUP+GwyPvHDRzHAMYSBNtIMY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -437,6 +437,14 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
+@media (max-width: 720px) {
+  /* A calculadora flutuante (.calc-fab) e' position:fixed no canto inferior
+     direito, na mesma faixa vertical onde a tela "Hoje" costuma renderizar
+     a ultima linha de "Acoes rapidas" (ex.: "Meus pedidos"/"Metas") -
+     reserva-se uma folga a direita so' aqui, onde o problema foi reproduzido,
+     em vez de mexer em .app-shell (afetaria toda tela). */
+  .quick-actions { padding-right: 70px; }
+}
 .quick-action {
   min-height: 48px;
   border-radius: var(--radius-sm);
@@ -775,6 +783,14 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+.returns-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.returns-panel-head h3 { font-size: 1rem; }
 .returns-panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -1235,6 +1251,14 @@ pre {
   .calc-floating-panel {
     bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem) + 68px);
   }
+}
+/* O sheet "Mais" (#moreMenu) e a calculadora flutuante disputam o mesmo
+   canto inferior direito - com o sheet aberto, o botao redondo ficava por
+   cima de itens do menu (ex.: "Metas"), competindo pelo toque. Escondida
+   enquanto o sheet estiver aberto. */
+body:has(#moreMenu:not([hidden])) .calc-fab,
+body:has(#moreMenu:not([hidden])) .calc-floating-panel {
+  display: none;
 }
 .calc-floating-head {
   display: flex;
@@ -4191,6 +4215,10 @@ pre {
 
     return `
       <div class="returns-panel" data-returns-panel data-sale-id="${U.escapeHtml(sale.id)}">
+        <div class="returns-panel-head">
+          <h3>Devolução / Desperdício</h3>
+          <button type="button" class="small ghost" data-role="close-returns">Fechar</button>
+        </div>
         <div class="returns-panel-grid">
           <form class="stack-form returns-form" data-role="devolucao-form" novalidate>
             <h4>Registrar devolução</h4>
@@ -4252,14 +4280,25 @@ pre {
   function mount(container, sale, options = {}) {
     if (!container || !sale || !sale.id) return null;
     const onDone = typeof options.onDone === 'function' ? options.onDone : null;
+    const onClose = typeof options.onClose === 'function' ? options.onClose : null;
 
-    if (container.getAttribute('data-returns-sale-id') !== String(sale.id) || !container.querySelector('[data-returns-panel]')) {
+    const isFreshOpen = container.getAttribute('data-returns-sale-id') !== String(sale.id) || !container.querySelector('[data-returns-panel]');
+    if (isFreshOpen) {
       container.innerHTML = render(sale);
       container.setAttribute('data-returns-sale-id', String(sale.id));
+      // O botão que abre este painel (na linha da venda) pode estar longe -
+      // topo de uma tabela longa - e o painel sempre renderiza no fim da
+      // seção Vendas. Sem isto, o painel "aparece em outro lugar da tela"
+      // sem o usuário perceber onde foi parar.
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     if (container.dataset.c360ReturnsWired === '1') return { container, sale };
     container.dataset.c360ReturnsWired = '1';
+
+    container.addEventListener('click', (event) => {
+      if (event.target.closest('[data-role="close-returns"]') && onClose) onClose();
+    });
 
     container.addEventListener('submit', async (event) => {
       const devForm = event.target.closest('[data-role="devolucao-form"]');
@@ -9802,6 +9841,10 @@ pre {
           openReturnsSaleId = null;
           renderAll();
           toast('Registro salvo.', 'success');
+        },
+        onClose: () => {
+          openReturnsSaleId = null;
+          renderAll();
         },
       });
     }

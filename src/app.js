@@ -517,6 +517,10 @@
           renderAll();
           toast('Registro salvo.', 'success');
         },
+        onClose: () => {
+          openReturnsSaleId = null;
+          renderAll();
+        },
       });
     }
   }

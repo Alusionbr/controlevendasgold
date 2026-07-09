@@ -70,6 +70,10 @@
 
     return `
       <div class="returns-panel" data-returns-panel data-sale-id="${U.escapeHtml(sale.id)}">
+        <div class="returns-panel-head">
+          <h3>Devolução / Desperdício</h3>
+          <button type="button" class="small ghost" data-role="close-returns">Fechar</button>
+        </div>
         <div class="returns-panel-grid">
           <form class="stack-form returns-form" data-role="devolucao-form" novalidate>
             <h4>Registrar devolução</h4>
@@ -131,14 +135,25 @@
   function mount(container, sale, options = {}) {
     if (!container || !sale || !sale.id) return null;
     const onDone = typeof options.onDone === 'function' ? options.onDone : null;
+    const onClose = typeof options.onClose === 'function' ? options.onClose : null;
 
-    if (container.getAttribute('data-returns-sale-id') !== String(sale.id) || !container.querySelector('[data-returns-panel]')) {
+    const isFreshOpen = container.getAttribute('data-returns-sale-id') !== String(sale.id) || !container.querySelector('[data-returns-panel]');
+    if (isFreshOpen) {
       container.innerHTML = render(sale);
       container.setAttribute('data-returns-sale-id', String(sale.id));
+      // O botão que abre este painel (na linha da venda) pode estar longe -
+      // topo de uma tabela longa - e o painel sempre renderiza no fim da
+      // seção Vendas. Sem isto, o painel "aparece em outro lugar da tela"
+      // sem o usuário perceber onde foi parar.
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     if (container.dataset.c360ReturnsWired === '1') return { container, sale };
     container.dataset.c360ReturnsWired = '1';
+
+    container.addEventListener('click', (event) => {
+      if (event.target.closest('[data-role="close-returns"]') && onClose) onClose();
+    });
 
     container.addEventListener('submit', async (event) => {
       const devForm = event.target.closest('[data-role="devolucao-form"]');

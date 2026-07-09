@@ -87,11 +87,18 @@ let currentFixture = FIXTURES.admin;
 // consolidated seller panel (send consignado, register payment) back out
 // through the next GET — without this, every action would look like a no-op
 // on screenshot since state.refresh() re-fetches from these same routes.
+const SALE_ID = '44444444-4444-4444-4444-444444444444';
 const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], products: [{
   id: PRODUCT_ID, business_id: BUSINESS_ID, name: 'Produto Demo', type: 'produto_final', unit: 'un',
   current_stock: 100, avg_cost: 10, sale_price: 25, default_price: 25, price_floor: 15, min_stock: 5,
   notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 50,
   tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+}], sales: [{
+  id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: FIXTURES.admin.uid,
+  quantity: 2, unit_price: 25, unit_cost: 10, discount: 0, fixed_fees: 0, fee_percent: 0, percent_fees: 0,
+  gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
+  origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
+  created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
 }] };
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
@@ -151,6 +158,14 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       return json(route, DB.products);
+    }
+    if (p === '/rest/v1/sales') {
+      if (method === 'POST') {
+        const row = { id: nextId('sale'), created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.sales.push(row);
+        return json(route, [row]);
+      }
+      return json(route, DB.sales);
     }
     if (p === '/rest/v1/seller_stock') {
       if (method === 'POST') {

@@ -655,3 +655,31 @@ consignado admin→vendedor, direto ou via aprovação de carrinho.
 `window.C360.sellerLedger` passou a exportar `balanceFor`/`entriesForSeller`/
 `registerPayment`, para este painel poder reaproveitar as duas telas sem
 duplicar lógica de negócio.
+
+---
+
+## Atualização: correções de UX mobile (calculadora flutuante e painel de devolução)
+
+Dois problemas encontrados testando o app com a skill `run-controlevendasgold`
+(ver `.claude/skills/run-controlevendasgold/SKILL.md`), ambos reportados pelo
+usuário como "site confuso" / "abre em janela separada sem botão de fechar":
+
+- **Calculadora flutuante (`.calc-fab`) sobrepondo botões no mobile**
+  (`styles/main.css`): o botão redondo "R$" é `position: fixed` no canto
+  inferior direito e cobria a última linha de "Ações rápidas" da tela "Hoje"
+  (ex.: "Meus pedidos") e itens do sheet "Mais" (ex.: "Metas"). Corrigido com
+  duas regras: `.quick-actions` ganha `padding-right` no mobile (empurra o
+  grid para 1 coluna, liberando o canto onde o FAB fica) e o FAB/painel
+  somem via `body:has(#moreMenu:not([hidden]))` enquanto o sheet "Mais"
+  estiver aberto.
+- **Painel de devolução/desperdício "aparece em outro lugar da tela"**
+  (`src/returns.js`, `src/app.js`): `#returnsPanel` sempre renderiza no fim
+  da seção Vendas, depois do carrinho e da tabela inteira de vendas — se o
+  admin clica em "Devolução/Desperdício" numa venda no topo de uma lista
+  longa, o formulário abre longe do que foi clicado, sem indicação visual de
+  para onde foi. A única forma de fechar era voltar até a mesma linha e
+  clicar de novo no botão (que virava "Fechar"). Corrigido:
+  `returns.mount()` agora faz `scrollIntoView` no painel ao abrir e ganhou um
+  cabeçalho com botão "Fechar" próprio (`data-role="close-returns"`, novo
+  `options.onClose` além do `onDone` já existente) — fecha sem precisar
+  achar a linha de novo.
