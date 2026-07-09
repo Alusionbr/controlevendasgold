@@ -99,7 +99,7 @@ const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], prod
   gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
   origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}] };
+}], saleCarts: [], saleCartItems: [] };
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
 
@@ -159,6 +159,9 @@ async function installMocks(pg) {
       }
       return json(route, DB.products);
     }
+    if (p === '/rest/v1/seller_products') {
+      return json(route, DB.products); // seller_products view: same shape as products for this mock
+    }
     if (p === '/rest/v1/sales') {
       if (method === 'POST') {
         const row = { id: nextId('sale'), created_at: new Date().toISOString(), ...req.postDataJSON() };
@@ -180,6 +183,34 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       return json(route, DB.sellerStock);
+    }
+    if (p === '/rest/v1/sale_carts') {
+      if (method === 'POST') {
+        const row = { id: nextId('cart'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.saleCarts.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.saleCarts.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      return json(route, [...DB.saleCarts].reverse());
+    }
+    if (p === '/rest/v1/sale_cart_items') {
+      if (method === 'POST') {
+        const row = { id: nextId('cartitem'), ...req.postDataJSON() };
+        DB.saleCartItems.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.saleCartItems.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      return json(route, DB.saleCartItems);
     }
     if (p === '/rest/v1/seller_account_entries') {
       if (method === 'POST') {

@@ -740,6 +740,34 @@
     });
   }
 
+  // Usado pelo painel consolidado da tela "Meu estoque" (src/sellerStock.js):
+  // vendedor pedindo reposicao do estoque principal, a vista ou a prazo
+  // (consignado — gera divida, precisa aprovacao do admin), sem passar pela
+  // tela de montagem de carrinho (aba Pedidos) com seus campos irrelevantes
+  // pra esse pedido (canal, link publico, etc.). Mesma logica de sempre:
+  // vira um sale_cart com status pending_approval, so o admin decide quanto
+  // libera (ver approveCart).
+  async function requestStockFromAdmin({ productId, quantity, unitPrice, paymentMode }) {
+    if (isAdmin()) throw new Error('Admin envia estoque direto pelo painel da aba Vendedores.');
+    if (!user()) throw new Error('Entre na sua conta antes de pedir estoque.');
+    const qty = U.number(quantity);
+    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+    const price = U.number(unitPrice);
+    if (price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
+    const mode = paymentMode === 'consignado' ? 'consignado' : 'avista';
+    return createCart({
+      source: 'admin_stock',
+      paymentMode: mode,
+      channel: 'Meu estoque',
+      customerName: '',
+      notes: 'Pedido de reposição via Meu estoque',
+      paidInitialAmount: '0',
+      expiresHours: '48',
+      targetSellerId: '',
+      items: [{ productId, quantity: qty, unitPrice: price }],
+    }, 'pending_approval');
+  }
+
   async function convertOwnStockCart(cart) {
     const items = itemsForCart(cart.id);
     for (const item of items) {
@@ -1135,5 +1163,5 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic, sendConsignmentToSeller };
+  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic, sendConsignmentToSeller, requestStockFromAdmin };
 })();
