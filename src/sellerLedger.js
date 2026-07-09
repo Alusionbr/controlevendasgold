@@ -30,7 +30,6 @@
   function S() { return window.C360.state; }
   function Calc() { return window.C360.calc; }
   function state() { return S().getState(); }
-  function isAdmin() { return S().isAdmin(); }
   function user() { return S().getCurrentUser(); }
 
   function entriesForSeller(sellerId) {
@@ -55,48 +54,6 @@
       U.escapeHtml(entry.notes || ''),
       `<strong>${signedAmount < 0 ? '- ' : ''}${U.money(Math.abs(signedAmount))}</strong>`,
     ];
-  }
-
-  // ---------------------------------------------------------------------
-  // Admin — saldo de todos os vendedores + registrar pagamento recebido
-  // ---------------------------------------------------------------------
-  function renderAdmin(feedback) {
-    const sellers = (state().sellers || []).filter((seller) => seller.active !== false);
-    const totalOpen = sellers.reduce((sum, seller) => sum + Math.max(balanceFor(seller.id), 0), 0);
-
-    const cards = sellers.map((seller) => {
-      const balance = balanceFor(seller.id);
-      const entries = entriesForSeller(seller.id).slice(0, 8);
-      return `
-        <article class="panel-card seller-ledger-card" data-seller-ledger-card="${U.escapeHtml(seller.id)}">
-          <div class="approval-card-head">
-            <strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong>
-            ${UI.badge(balance > 0 ? `Deve ${U.money(balance)}` : 'Em dia', balance > 0 ? 'danger' : 'ok')}
-          </div>
-          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-            <label>Valor recebido
-              <input name="amount" type="number" step="0.01" min="0.01" required>
-            </label>
-            <label>Forma
-              <input name="method" placeholder="Pix, dinheiro...">
-            </label>
-            <label class="wide">Observação
-              <input name="notes" placeholder="Opcional">
-            </label>
-            <button type="submit" class="small">Registrar pagamento</button>
-          </form>
-          ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
-        </article>
-      `;
-    }).join('');
-
-    return UI.section(
-      'Débitos dos vendedores',
-      'Conta corrente de reposição consignado/parcial: saldo é sempre a soma dos lançamentos.',
-      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
-       ${UI.metric('Total em aberto', U.money(totalOpen), null)}
-       <div class="seller-ledger-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para acompanhar débitos.</span></div>'}</div>`
-    );
   }
 
   // Reaproveitado pelo painel consolidado da aba Vendedores (src/auth.js) —
@@ -125,33 +82,6 @@
     });
     await S().refresh();
     return payment;
-  }
-
-  function mountAdmin(container, options = {}) {
-    if (!container) return;
-    let feedback = null;
-
-    function paint() {
-      container.innerHTML = isAdmin() ? renderAdmin(feedback) : UI.formNotice('Somente admin.', 'warning');
-    }
-
-    container.addEventListener('submit', async (event) => {
-      const form = event.target.closest('[data-ledger-payment-form]');
-      if (!form) return;
-      event.preventDefault();
-      const sellerId = form.dataset.sellerId;
-      const data = U.formData(form);
-      try {
-        await registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes });
-        feedback = { message: 'Pagamento registrado.', type: 'success' };
-      } catch (error) {
-        feedback = { message: error.message, type: 'danger' };
-      }
-      paint();
-      if (typeof options.onDone === 'function') options.onDone();
-    });
-
-    paint();
   }
 
   // ---------------------------------------------------------------------
@@ -191,5 +121,5 @@
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountAdmin, mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
 })();

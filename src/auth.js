@@ -489,10 +489,16 @@
         ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
+    const L = ledger();
+    const totalOpen = !loading && L
+      ? sellers.filter((seller) => seller.active !== false).reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      : 0;
+
     return UI.section(
       'Vendedores',
       'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
       `
+        ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
         <div id="authSellersError"></div>
         <form id="authCreateSellerForm" class="grid-form">
           <label class="full">Nome

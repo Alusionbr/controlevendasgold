@@ -1293,7 +1293,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.85rem;
   margin-top: 0.9rem;
 }
-.seller-ledger-card { display: grid; gap: 0.7rem; }
 .seller-manage-panel {
   display: grid;
   gap: 0.7rem;

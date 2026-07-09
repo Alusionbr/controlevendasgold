@@ -467,10 +467,9 @@ essas informações aqui — só resumir o que muda no comportamento do app.
 
 | Aba | Papel | Módulo |
 |---|---|---|
-| Vendedores | admin | `src/auth.js` (`renderSellers`/`mountSellers`) |
+| Vendedores | admin | `src/auth.js` (`renderSellers`/`mountSellers`) — inclui saldo/dívida, pagamento e envio de consignado por vendedor; substitui a antiga aba "Débitos dos vendedores" (ver "Atualização: painel consolidado da aba Vendedores") |
 | Preços | admin | `src/pricing.js` |
 | Aprovações | admin | `src/salesCart.js` (`mountApprovals`, reposição em carrinhos) + `src/sellerStock.js` (`mountGrantStock`, concessão direta de estoque) |
-| Débitos dos vendedores | admin | `src/sellerLedger.js` (`mountAdmin`) |
 | Meu saldo com admin | vendedor | `src/sellerLedger.js` (`mountSeller`) |
 | Devoluções, desperdícios e brindes | admin | `src/operationalMovements.js` (`mountAdmin`, fila de conferência) |
 | Devoluções e brindes | vendedor | `src/operationalMovements.js` (`mountSeller`, solicitar + acompanhar) |
@@ -756,3 +755,33 @@ entender aquele formulário maior. Verificado via a skill
 "Meu estoque" → aparece em "Aprovações" com o total correto → admin aprova →
 dívida aparece no painel da aba Vendedores e "Valor em estoque" cai o
 correspondente.
+
+---
+
+## Atualização: remoção da aba "Débitos dos vendedores" (redundante)
+
+Pedido explícito do usuário: reduzir número de abas com funções parecidas.
+"Débitos dos vendedores" mostrava exatamente os mesmos cards (saldo +
+histórico + formulário de pagamento, por vendedor) que o painel "Gerenciar"
+da aba "Vendedores" já passou a mostrar nesta mesma sessão — informação
+duplicada em duas abas.
+
+- **`src/sellerLedger.js`**: removidos `renderAdmin`/`mountAdmin` (a
+  aba que os usava deixou de existir) e o helper `isAdmin()`, que só era
+  usado por eles. `balanceFor`/`entriesForSeller`/`registerPayment`
+  continuam exportados — são a base tanto de "Meu saldo com admin"
+  (`mountSeller`) quanto do painel consolidado da aba Vendedores
+  (`src/auth.js`).
+- **`src/app.js`**: `debitos` removido de `TAB_ORDER`/`TAB_LABELS`/
+  `TAB_ROLES` e do `switch` de `mountModuleTab`.
+- **`src/auth.js`**: a aba "Vendedores" ganhou a métrica "Total em aberto
+  (todos os vendedores)" no topo (soma de `sellerLedger.balanceFor` de
+  cada vendedor ativo) — a única informação que só existia na aba antiga e
+  não em algum card individual.
+
+Nenhuma tabela de banco, RLS ou fluxo de aprovação mudou — só remoção de
+uma tela redundante. Verificado via a skill `run-controlevendasgold`: com a
+aba removida, o total agregado aparece corretamente na aba Vendedores,
+"Registrar pagamento" (mesmo `registerPayment` reaproveitado) continua
+funcionando ali, e "Meu saldo com admin" (visão do vendedor) continua
+batendo com o saldo do lado do admin.
