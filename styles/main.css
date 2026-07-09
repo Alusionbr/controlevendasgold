@@ -429,6 +429,14 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
+@media (max-width: 720px) {
+  /* A calculadora flutuante (.calc-fab) e' position:fixed no canto inferior
+     direito, na mesma faixa vertical onde a tela "Hoje" costuma renderizar
+     a ultima linha de "Acoes rapidas" (ex.: "Meus pedidos"/"Metas") -
+     reserva-se uma folga a direita so' aqui, onde o problema foi reproduzido,
+     em vez de mexer em .app-shell (afetaria toda tela). */
+  .quick-actions { padding-right: 70px; }
+}
 .quick-action {
   min-height: 48px;
   border-radius: var(--radius-sm);
@@ -767,6 +775,14 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+.returns-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.returns-panel-head h3 { font-size: 1rem; }
 .returns-panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -1227,6 +1243,14 @@ pre {
   .calc-floating-panel {
     bottom: calc(64px + env(safe-area-inset-bottom, 0) + clamp(0.6rem, 3vw, 1rem) + 68px);
   }
+}
+/* O sheet "Mais" (#moreMenu) e a calculadora flutuante disputam o mesmo
+   canto inferior direito - com o sheet aberto, o botao redondo ficava por
+   cima de itens do menu (ex.: "Metas"), competindo pelo toque. Escondida
+   enquanto o sheet estiver aberto. */
+body:has(#moreMenu:not([hidden])) .calc-fab,
+body:has(#moreMenu:not([hidden])) .calc-floating-panel {
+  display: none;
 }
 .calc-floating-head {
   display: flex;
