@@ -15,7 +15,7 @@
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes', 'debitos',
+    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
   ];
@@ -38,7 +38,6 @@
     vendedores: 'Vendedores',
     precos: 'Preços',
     aprovacoes: 'Aprovações',
-    debitos: 'Débitos dos vendedores',
     meusaldo: 'Meu saldo com admin',
     devolucoes: 'Devoluções, desperdícios e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
@@ -68,7 +67,6 @@
     vendedores: ['admin'],
     precos: ['admin'],
     aprovacoes: ['admin'],
-    debitos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: ['vendedor'],
@@ -432,12 +430,6 @@
         }
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
-        }
-        break;
-      case 'debitos':
-        els.view.innerHTML = '<div id="sellerLedgerAdminPanel"></div>';
-        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountAdmin === 'function') {
-          window.C360.sellerLedger.mountAdmin(document.getElementById('sellerLedgerAdminPanel'), { onDone: renderAll });
         }
         break;
       case 'meusaldo':

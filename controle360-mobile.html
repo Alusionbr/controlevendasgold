@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-OFX1r+JQSefcHXMEyX+fsN7PiJFmtg+FaWUiCoUjhGk=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-hnITN6cA45QPPD1fpHj7faPzGhecr2ziOFA8rt5le84=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-s+2u/zDhkdP85NsBKdqCnSqu8W2NABXea4GTaRzw2pE=' 'sha256-Q+xbsljdIg1QEzNxM082wyw4IIibSfUPAs08xtEoLBo=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-xEl25aSkS1wHecLYCNE8Dnle7qBakSf7UrCJkihZpK8='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-hDQTPIc4wJvbd/e0TvMu2IHQb3JiS0MOoGgqjiuDC0Q=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-3rXJOkx8VTb96cxQvL57tPzqNft/oO7crfitnhlmFTg=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-hnITN6cA45QPPD1fpHj7faPzGhecr2ziOFA8rt5le84=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-s+2u/zDhkdP85NsBKdqCnSqu8W2NABXea4GTaRzw2pE=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-T95uVUjNNKzyBBonzTiETzDEViUefAWO9Cj32Y8/kog=' 'sha256-x8QChLFUmOB5dLCOyQwj3aA+ZzVSKxzCKJB+4JlMrjg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1301,7 +1301,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.85rem;
   margin-top: 0.9rem;
 }
-.seller-ledger-card { display: grid; gap: 0.7rem; }
 .seller-manage-panel {
   display: grid;
   gap: 0.7rem;
@@ -3562,10 +3561,16 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
+    const L = ledger();
+    const totalOpen = !loading && L
+      ? sellers.filter((seller) => seller.active !== false).reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      : 0;
+
     return UI.section(
       'Vendedores',
       'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
       `
+        ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
         <div id="authSellersError"></div>
         <form id="authCreateSellerForm" class="grid-form">
           <label class="full">Nome
@@ -7296,7 +7301,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function S() { return window.C360.state; }
   function Calc() { return window.C360.calc; }
   function state() { return S().getState(); }
-  function isAdmin() { return S().isAdmin(); }
   function user() { return S().getCurrentUser(); }
 
   function entriesForSeller(sellerId) {
@@ -7321,48 +7325,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       U.escapeHtml(entry.notes || ''),
       `<strong>${signedAmount < 0 ? '- ' : ''}${U.money(Math.abs(signedAmount))}</strong>`,
     ];
-  }
-
-  // ---------------------------------------------------------------------
-  // Admin — saldo de todos os vendedores + registrar pagamento recebido
-  // ---------------------------------------------------------------------
-  function renderAdmin(feedback) {
-    const sellers = (state().sellers || []).filter((seller) => seller.active !== false);
-    const totalOpen = sellers.reduce((sum, seller) => sum + Math.max(balanceFor(seller.id), 0), 0);
-
-    const cards = sellers.map((seller) => {
-      const balance = balanceFor(seller.id);
-      const entries = entriesForSeller(seller.id).slice(0, 8);
-      return `
-        <article class="panel-card seller-ledger-card" data-seller-ledger-card="${U.escapeHtml(seller.id)}">
-          <div class="approval-card-head">
-            <strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong>
-            ${UI.badge(balance > 0 ? `Deve ${U.money(balance)}` : 'Em dia', balance > 0 ? 'danger' : 'ok')}
-          </div>
-          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-            <label>Valor recebido
-              <input name="amount" type="number" step="0.01" min="0.01" required>
-            </label>
-            <label>Forma
-              <input name="method" placeholder="Pix, dinheiro...">
-            </label>
-            <label class="wide">Observação
-              <input name="notes" placeholder="Opcional">
-            </label>
-            <button type="submit" class="small">Registrar pagamento</button>
-          </form>
-          ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
-        </article>
-      `;
-    }).join('');
-
-    return UI.section(
-      'Débitos dos vendedores',
-      'Conta corrente de reposição consignado/parcial: saldo é sempre a soma dos lançamentos.',
-      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
-       ${UI.metric('Total em aberto', U.money(totalOpen), null)}
-       <div class="seller-ledger-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para acompanhar débitos.</span></div>'}</div>`
-    );
   }
 
   // Reaproveitado pelo painel consolidado da aba Vendedores (src/auth.js) —
@@ -7391,33 +7353,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
     await S().refresh();
     return payment;
-  }
-
-  function mountAdmin(container, options = {}) {
-    if (!container) return;
-    let feedback = null;
-
-    function paint() {
-      container.innerHTML = isAdmin() ? renderAdmin(feedback) : UI.formNotice('Somente admin.', 'warning');
-    }
-
-    container.addEventListener('submit', async (event) => {
-      const form = event.target.closest('[data-ledger-payment-form]');
-      if (!form) return;
-      event.preventDefault();
-      const sellerId = form.dataset.sellerId;
-      const data = U.formData(form);
-      try {
-        await registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes });
-        feedback = { message: 'Pagamento registrado.', type: 'success' };
-      } catch (error) {
-        feedback = { message: error.message, type: 'danger' };
-      }
-      paint();
-      if (typeof options.onDone === 'function') options.onDone();
-    });
-
-    paint();
   }
 
   // ---------------------------------------------------------------------
@@ -7457,7 +7392,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountAdmin, mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
 })();
 </script>
   <script>
@@ -9457,7 +9392,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes', 'debitos',
+    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
   ];
@@ -9480,7 +9415,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     vendedores: 'Vendedores',
     precos: 'Preços',
     aprovacoes: 'Aprovações',
-    debitos: 'Débitos dos vendedores',
     meusaldo: 'Meu saldo com admin',
     devolucoes: 'Devoluções, desperdícios e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
@@ -9510,7 +9444,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     vendedores: ['admin'],
     precos: ['admin'],
     aprovacoes: ['admin'],
-    debitos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: ['vendedor'],
@@ -9874,12 +9807,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         }
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
-        }
-        break;
-      case 'debitos':
-        els.view.innerHTML = '<div id="sellerLedgerAdminPanel"></div>';
-        if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountAdmin === 'function') {
-          window.C360.sellerLedger.mountAdmin(document.getElementById('sellerLedgerAdminPanel'), { onDone: renderAll });
         }
         break;
       case 'meusaldo':
