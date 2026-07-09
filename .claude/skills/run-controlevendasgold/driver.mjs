@@ -75,7 +75,26 @@ const FIXTURES = {
   vendedor: { uid: '22222222-2222-2222-2222-222222222222', email: 'vendedor@demo.local', role: 'vendedor' },
 };
 const BUSINESS_ID = '99999999-9999-9999-9999-999999999999';
+const PRODUCT_ID = '33333333-3333-3333-3333-333333333333';
+// A small fixed roster so the admin's "Vendedores" panel (and per-seller
+// management) has more than one row to expand/collapse and switch between.
+const SELLER_ROSTER = [
+  { id: FIXTURES.vendedor.uid, role: 'vendedor', name: 'Vendedor Demo', email: FIXTURES.vendedor.email, business_id: BUSINESS_ID, active: true },
+  { id: '22222222-2222-2222-2222-222222222223', role: 'vendedor', name: 'Vendedor Dois', email: 'vendedor2@demo.local', business_id: BUSINESS_ID, active: true },
+];
 let currentFixture = FIXTURES.admin;
+// In-memory ledger/stock so `installMocks` can round-trip POSTs made by the
+// consolidated seller panel (send consignado, register payment) back out
+// through the next GET — without this, every action would look like a no-op
+// on screenshot since state.refresh() re-fetches from these same routes.
+const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], products: [{
+  id: PRODUCT_ID, business_id: BUSINESS_ID, name: 'Produto Demo', type: 'produto_final', unit: 'un',
+  current_stock: 100, avg_cost: 10, sale_price: 25, default_price: 25, price_floor: 15, min_stock: 5,
+  notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 50,
+  tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+}] };
+let seq = 1;
+const nextId = (prefix) => `${prefix}-${seq++}`;
 
 function json(route, body, status = 200) {
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -87,6 +106,7 @@ async function installMocks(pg) {
     const url = new URL(req.url());
     const p = url.pathname;
     const method = req.method();
+    const params = url.searchParams;
 
     if (p === '/auth/v1/token') {
       return json(route, {
@@ -101,10 +121,21 @@ async function installMocks(pg) {
     if (p === '/auth/v1/logout') return json(route, {}, 204);
 
     if (p === '/rest/v1/profiles') {
+      // getProfile(uid): id=eq.<uid> — only the logged-in user's own row.
+      const idFilter = params.get('id');
+      if (idFilter) {
+        const uid = idFilter.replace('eq.', '');
+        return json(route, [{
+          id: uid, role: currentFixture.role, name: currentFixture.role === 'admin' ? 'Admin Demo' : 'Vendedor Demo',
+          business_id: BUSINESS_ID, active: true,
+        }]);
+      }
+      // listSellers(): role=eq.vendedor — the roster shown in "Vendedores".
+      if (params.get('role') === 'eq.vendedor') return json(route, SELLER_ROSTER);
+      // refreshAsAdmin's full profiles list: business_id=eq.<bid>, no id/role.
       return json(route, [{
-        id: currentFixture.uid, role: currentFixture.role, name: currentFixture.role === 'admin' ? 'Admin Demo' : 'Vendedor Demo',
-        business_id: BUSINESS_ID, active: true,
-      }]);
+        id: FIXTURES.admin.uid, role: 'admin', name: 'Admin Demo', business_id: BUSINESS_ID, active: true,
+      }, ...SELLER_ROSTER]);
     }
     if (p === '/rest/v1/businesses') {
       return json(route, [{
@@ -112,7 +143,52 @@ async function installMocks(pg) {
         default_margin_percent: 50, default_tax_percent: 5, created_at: new Date().toISOString(),
       }]);
     }
+    if (p === '/rest/v1/products') {
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.products.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      return json(route, DB.products);
+    }
+    if (p === '/rest/v1/seller_stock') {
+      if (method === 'POST') {
+        const row = { id: nextId('sstock'), ...req.postDataJSON() };
+        DB.sellerStock.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.sellerStock.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      return json(route, DB.sellerStock);
+    }
+    if (p === '/rest/v1/seller_account_entries') {
+      if (method === 'POST') {
+        const row = { id: nextId('entry'), created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.sellerAccountEntries.push(row);
+        return json(route, [row]);
+      }
+      return json(route, [...DB.sellerAccountEntries].reverse());
+    }
+    if (p === '/rest/v1/seller_payments') {
+      if (method === 'POST') {
+        const row = { id: nextId('pay'), created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.sellerPayments.push(row);
+        return json(route, [row]);
+      }
+      return json(route, [...DB.sellerPayments].reverse());
+    }
     if (p.startsWith('/rest/v1/rpc/')) return json(route, null);
+    if (method === 'POST' && p.startsWith('/rest/v1/')) {
+      // Generic insert fallback (consignments, consignment_events, stock_movements,
+      // sale_carts, sale_cart_items, ...): echo back an id so callers that read
+      // result[0].id don't blow up, without needing a bespoke branch per table.
+      return json(route, [{ id: nextId('row'), created_at: new Date().toISOString(), ...req.postDataJSON() }]);
+    }
     if (p.startsWith('/rest/v1/')) return json(route, []); // every other table: empty, still renders
     if (p.startsWith('/functions/v1/')) return json(route, {});
 

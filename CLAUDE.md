@@ -617,3 +617,41 @@ nestas áreas). Fases 1–3 implementadas:
   troca `auth.uid()` por `(select auth.uid())` nas policies de vendedor das
   3 tabelas novas — não mexeu nas tabelas antigas (fora do escopo desta
   fase, mesma limitação já documentada). Replicação v1 (Fases 1-6) concluída.
+
+---
+
+## Atualização: painel consolidado da aba Vendedores
+
+Objetivo: reduzir troca de aba para as ações mais comuns do admin sobre um
+vendedor específico. Cada card em "Vendedores" (`src/auth.js`,
+`renderSellers`/`mountSellers`) ganhou um botão "Gerenciar" que expande um
+painel inline com, tudo sem sair da aba:
+
+- saldo devedor do vendedor + últimos 5 lançamentos do ledger;
+- "Enviar estoque consignado" (produto + quantidade + preço) — chama
+  `C360.salesCart.sendConsignmentToSeller`, que reaproveita
+  `createAdminSellerConsignment`/`transferAdminStockToSeller` (mesma baixa de
+  estoque central, `stock_movements`, `consignments` e `seller_stock` que o
+  envio consignado feito pela aba Vendas);
+- estoque atual do vendedor (leitura de `seller_stock`);
+- "Registrar pagamento" — chama `C360.sellerLedger.registerPayment` (mesma
+  escrita usada pela aba "Débitos dos vendedores", extraída para ser
+  reaproveitável em vez de duplicada);
+- contadores de pedidos aguardando aprovação e devoluções pendentes, com
+  atalho (`C360.app.setTab`) para as abas correspondentes quando > 0.
+
+**Correção de bug encontrada nesta mudança**: `createAdminSellerConsignment`
+(`src/salesCart.js`, usado pela aba Vendas quando o admin escolhe forma de
+pagamento "Consignado" e um vendedor destino) baixava o estoque central e
+criava o registro em `consignments`, mas **nunca lançava o débito
+correspondente em `seller_account_entries`** — só a aprovação de carrinho via
+`approveCart()` fazia isso. Resultado: consignado enviado direto pelo admin
+(fora da fila de aprovação) não aparecia como dívida em "Débitos dos
+vendedores". Corrigido: agora lança `debit_replenishment` (mesma fórmula
+`quantidade × preço unitário` usada em `approveCart`) para qualquer envio de
+consignado admin→vendedor, direto ou via aprovação de carrinho.
+
+`window.C360.app` passou a exportar `setTab` (antes só `refresh`/`toast`) e
+`window.C360.sellerLedger` passou a exportar `balanceFor`/`entriesForSeller`/
+`registerPayment`, para este painel poder reaproveitar as duas telas sem
+duplicar lógica de negócio.
