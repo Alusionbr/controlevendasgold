@@ -99,6 +99,34 @@
     );
   }
 
+  // Reaproveitado pelo painel consolidado da aba Vendedores (src/auth.js) —
+  // mesma escrita que o formulario de pagamento aqui, sem duplicar a regra
+  // de negocio (pagamento sempre vira um credito no ledger, nunca sobrescreve
+  // saldo).
+  async function registerPayment(sellerId, { amount, method, notes } = {}) {
+    const value = U.number(amount);
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    const payment = await S().add('sellerPayments', {
+      sellerId,
+      amount: value,
+      paymentDate: U.today(),
+      method: method || null,
+      notes: notes || '',
+      receivedBy: user()?.id || null,
+    });
+    await S().add('sellerAccountEntries', {
+      sellerId,
+      type: 'payment',
+      direction: 'credit',
+      amount: value,
+      sourceType: 'seller_payment',
+      sourceId: payment?.id || null,
+      notes: notes || '',
+    });
+    await S().refresh();
+    return payment;
+  }
+
   function mountAdmin(container, options = {}) {
     if (!container) return;
     let feedback = null;
@@ -113,27 +141,8 @@
       event.preventDefault();
       const sellerId = form.dataset.sellerId;
       const data = U.formData(form);
-      const amount = U.number(data.amount);
       try {
-        if (amount <= 0) throw new Error('Informe um valor maior que zero.');
-        const payment = await S().add('sellerPayments', {
-          sellerId,
-          amount,
-          paymentDate: U.today(),
-          method: data.method || null,
-          notes: data.notes || '',
-          receivedBy: user()?.id || null,
-        });
-        await S().add('sellerAccountEntries', {
-          sellerId,
-          type: 'payment',
-          direction: 'credit',
-          amount,
-          sourceType: 'seller_payment',
-          sourceId: payment?.id || null,
-          notes: data.notes || '',
-        });
-        await S().refresh();
+        await registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes });
         feedback = { message: 'Pagamento registrado.', type: 'success' };
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -182,5 +191,5 @@
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountAdmin, mountSeller };
+  window.C360.sellerLedger = { mountAdmin, mountSeller, balanceFor, entriesForSeller, registerPayment };
 })();

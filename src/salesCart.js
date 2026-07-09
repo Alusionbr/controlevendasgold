@@ -682,6 +682,23 @@
         unitPrice: item.unitPrice,
         cartId: cart.id,
       });
+      // Consignado gera divida do vendedor com o admin, igual a aprovacao de
+      // carrinho via approveCart() — sem isto, envio direto (fora da fila de
+      // aprovacao) baixava estoque e criava o consignments, mas o saldo em
+      // "Debitos dos vendedores" nunca refletia o valor enviado.
+      const itemDebt = U.number(item.quantity) * U.number(item.unitPrice);
+      if (itemDebt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await S().add('sellerAccountEntries', {
+          sellerId: targetSellerId,
+          type: 'debit_replenishment',
+          direction: 'debit',
+          amount: itemDebt,
+          sourceType: 'sale_cart',
+          sourceId: cart.id,
+          notes: `Consignado enviado direto pelo admin via carrinho ${cart.id}`,
+        });
+      }
     }
     await S().refresh();
     return cart;
@@ -702,6 +719,25 @@
       grossProfit,
       margin: grossRevenue > 0 ? grossProfit / grossRevenue : 0,
     };
+  }
+
+  // Usado pelo painel consolidado da aba Vendedores (src/auth.js): envio de
+  // consignado de um unico item sem passar pela tela de montagem de
+  // carrinho (aba Vendas) — mesma logica de createAdminSellerConsignment
+  // (baixa de estoque central, consignments, divida no ledger), so que
+  // chamavel diretamente com os 4 campos do mini-formulario do painel.
+  async function sendConsignmentToSeller({ sellerId, productId, quantity, unitPrice }) {
+    return createAdminSellerConsignment({
+      targetSellerId: sellerId,
+      items: [{ productId, quantity: U.number(quantity), unitPrice: U.number(unitPrice) }],
+      source: 'admin_stock',
+      paymentMode: 'consignado',
+      channel: 'Painel vendedores',
+      customerName: '',
+      notes: 'Enviado pelo painel consolidado da aba Vendedores',
+      paidInitialAmount: '0',
+      expiresHours: '48',
+    });
   }
 
   async function convertOwnStockCart(cart) {
@@ -1141,5 +1177,5 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic };
+  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic, sendConsignmentToSeller };
 })();

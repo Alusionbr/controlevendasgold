@@ -1249,6 +1249,21 @@ pre {
   margin-top: 0.9rem;
 }
 .seller-ledger-card { display: grid; gap: 0.7rem; }
+.seller-manage-panel {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--line);
+}
+.seller-manage-panel h3 { font-size: 0.92rem; margin: 0.4rem 0 0; }
+.seller-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+.ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
+.ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
 .seller-permission-card {
   display: grid;
   gap: 0.65rem;

@@ -1941,7 +1941,7 @@
     }, 3200);
   }
 
-  window.C360.app = { refresh: renderAll, toast };
+  window.C360.app = { refresh: renderAll, toast, setTab };
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
