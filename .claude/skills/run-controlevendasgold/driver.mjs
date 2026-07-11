@@ -99,7 +99,7 @@ const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], prod
   gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
   origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}], saleCarts: [], saleCartItems: [] };
+}], saleCarts: [], saleCartItems: [], orders: [] };
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
 
@@ -211,6 +211,27 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       return json(route, DB.saleCartItems);
+    }
+    if (p === '/rest/v1/orders') {
+      if (method === 'POST') {
+        const row = { id: nextId('order'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), converted_sale_id: null, ...req.postDataJSON() };
+        if (row.status === undefined) row.status = 'pendente';
+        DB.orders.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.orders.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      if (method === 'DELETE') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const idx = DB.orders.findIndex((item) => item.id === idFilter);
+        if (idx !== -1) DB.orders.splice(idx, 1);
+        return json(route, []);
+      }
+      return json(route, DB.orders);
     }
     if (p === '/rest/v1/seller_account_entries') {
       if (method === 'POST') {

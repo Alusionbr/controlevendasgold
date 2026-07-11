@@ -51,8 +51,8 @@
     channels: ['Direto', 'WhatsApp', 'Instagram', 'Site', 'Marketplace', 'Consignado', 'Outro'],
     orderStatuses: [
       { value: 'pendente', label: 'Pendente' },
-      { value: 'em_preparo', label: 'Em preparo' },
-      { value: 'pronto', label: 'Pronto' },
+      { value: 'em_preparo', label: 'Em montagem' },
+      { value: 'pronto', label: 'Pronto (caixa montada)' },
       { value: 'despachado', label: 'Despachado' },
       { value: 'concluido', label: 'Concluído' },
     ],

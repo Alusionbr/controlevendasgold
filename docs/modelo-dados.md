@@ -184,15 +184,25 @@ Quantidade negativa = saída.
   quantity,
   unitPrice,
   dueDate,
-  status,          // logística: pendente|em_preparo|pronto|despachado|concluido
+  status,          // logística/esteira: pendente|em_preparo(=Em montagem)|pronto|despachado|concluido
   notes,
   convertedSaleId,
-  sellerId,        // NOVO: dono do pedido (vendedor)
-  approvalStatus,  // NOVO: pendente_aprovacao|aprovado|rejeitado (aba Aprovações, admin)
+  sellerId,        // dono/destinatário do pedido: em 'propria' = admin; em 'revenda' = vendedor que recebe
+  approvalStatus,  // pendente_aprovacao|aprovado|rejeitado (pedido de reposição do vendedor aguarda aprovação na esteira)
+  saleType,        // 0016: 'propria' (venda minha, cliente final) | 'revenda' (venda ao revendedor)
+  paymentMode,     // 0016: null em 'propria'; 'avista'|'parcial'|'consignado' em 'revenda'
+  paidAmount,      // 0016: valor já pago no lançamento (parcial/à vista)
+  orderGroupId,    // 0016: agrupa as linhas de um mesmo carrinho (1 card na esteira, avançam juntas)
   createdAt,
   updatedAt
 }
 ```
+
+A esteira (aba Vendas unificada) é o destino de TODA venda lançada pelo
+carrinho. A materialização (baixa de estoque + venda/CMV ou consignado +
+dívida do vendedor) só acontece quando o admin move o grupo para
+`despachado` — ver `advanceOrderGroup()` em `src/salesCart.js`. Até lá o
+pedido só ocupa a esteira; `concluido` apenas confirma a entrega.
 
 ## consignments
 

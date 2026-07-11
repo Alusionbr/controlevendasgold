@@ -14,8 +14,8 @@
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'pedidos', 'consignado', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos', 'aprovacoes',
+    'fichas', 'producao', 'vendas', 'consignado', 'estoque',
+    'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
   ];
@@ -30,14 +30,12 @@
     fichas: 'Fichas e custos',
     producao: 'Produção',
     vendas: 'Vendas',
-    pedidos: 'Pedidos',
     consignado: 'Consignado',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
     precos: 'Preços',
-    aprovacoes: 'Aprovações',
     meusaldo: 'Meu saldo com admin',
     devolucoes: 'Devoluções, desperdícios e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
@@ -59,14 +57,12 @@
     fichas: ['admin'],
     producao: ['admin'],
     vendas: ['admin', 'vendedor'],
-    pedidos: ['admin', 'vendedor'],
     consignado: ['admin', 'vendedor'],
     estoque: ['vendedor'],
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
     precos: ['admin'],
-    aprovacoes: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: ['vendedor'],
@@ -285,16 +281,16 @@
 
     const quickActions = isAdminUser
       ? [
-          { tab: 'vendas', label: 'Nova venda' },
+          { tab: 'vendas', label: 'Nova venda / esteira' },
           { tab: 'clientes', label: 'Novo cliente' },
           { tab: 'produtos', label: 'Estoque' },
-          { tab: 'aprovacoes', label: 'Aprovações' },
+          { tab: 'vendedores', label: 'Vendedores' },
         ]
       : [
-          { tab: 'vendas', label: 'Vender' },
+          { tab: 'vendas', label: 'Vender / pedir' },
           { tab: 'clientes', label: 'Novo cliente' },
           { tab: 'estoque', label: 'Meu estoque' },
-          { tab: 'pedidos', label: 'Meus pedidos' },
+          { tab: 'meusaldo', label: 'Meu saldo' },
         ];
 
     const recentSales = U.sortByDateDesc(sales).slice(0, 5);
@@ -373,7 +369,6 @@
     fichas: renderRecipes,
     producao: renderProduction,
     vendas: renderSales,
-    pedidos: renderOrders,
     consignado: renderConsignments,
     tarefas: renderTasks,
     relatorios: renderReports,
@@ -394,7 +389,6 @@
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
-      if (activeTab === 'pedidos') mountOrdersCartPanel();
       return;
     }
     mountModuleTab(activeTab);
@@ -404,32 +398,25 @@
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        els.view.innerHTML = '<div id="sellersPanel"></div>';
+        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
+        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
+        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
+        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
+        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
-        }
-        break;
-      case 'precos':
-        els.view.innerHTML = '<div id="pricingPanel"></div>';
-        if (window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
-          window.C360.pricing.mountAdmin(document.getElementById('pricingPanel'));
-        }
-        break;
-      case 'aprovacoes':
-        // Reposição padronizada em carrinhos (docs/replication-v1/01-decisoes-de-produto.md,
-        // Decisão 2): a aprovação vive só aqui agora, via C360.salesCart —
-        // o antigo caminho binário de `orders` (C360.sellerStock.mountApprovals)
-        // foi aposentado da navegação. "Conceder estoque direto" continua
-        // sendo uma ferramenta separada (não é aprovação de pedido).
-        els.view.innerHTML = '<div id="approvalsPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
-        if (window.C360.salesCart && typeof window.C360.salesCart.mountApprovals === 'function') {
-          window.C360.salesCart.mountApprovals(document.getElementById('approvalsPanel'), { onDone: renderAll });
         }
         if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
           window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
         }
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
+        }
+        break;
+      case 'precos':
+        els.view.innerHTML = '<div id="pricingPanel"></div>';
+        if (window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
+          window.C360.pricing.mountAdmin(document.getElementById('pricingPanel'));
         }
         break;
       case 'meusaldo':
@@ -515,14 +502,6 @@
         },
       });
     }
-  }
-
-  // Aba Pedidos: mesmo carrinho de src/salesCart.js - quando a origem
-  // escolhida e "Estoque do administrador", o carrinho vira pedido
-  // (aguardando aprovacao do admin). O rascunho do carrinho e compartilhado
-  // com a aba Vendas (ver comentario de persistentDraft em salesCart.js).
-  function mountOrdersCartPanel() {
-    mountSalesCartPanel('ordersCartPanel');
   }
 
   function mountSalesCartPanel(containerId) {
@@ -847,7 +826,6 @@
 
   function renderSales() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
-    const products = currentProducts().filter((product) => product.type !== 'materia_prima' && product.type !== 'embalagem');
     const rows = U.sortByDateDesc(currentSales()).map((sale) => {
       const product = productById(sale.productId);
       const client = clientById(sale.clientId);
@@ -865,99 +843,15 @@
         isReturnOrScrap ? '—' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'Devolução/Desperdício')}</div>`,
       ];
     });
-    return UI.section('Vendas', 'Venda baixa estoque, calcula receita liquida, CMV e lucro bruto. Monte um carrinho com varios produtos abaixo, ou lance uma venda rapida de 1 produto no formulario.', `
+    const desc = S.isAdmin()
+      ? 'Escolha o tipo de venda, monte o carrinho e lance. O pedido entra na esteira em Pendente e você avança até Despachado (quando o estoque baixa e a venda conta).'
+      : 'Venda o que já está no seu estoque (baixa na hora) ou peça reposição ao admin. Acompanhe seus pedidos na esteira abaixo.';
+    return UI.section('Vendas', desc, `
       <div id="salesCartPanel"></div>
-      <h3>Venda rápida (1 produto)</h3>
-      <form id="saleForm" class="grid-form">
-        <label>Produto
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
-        </label>
-        <label>Quantidade
-          <input name="quantity" type="number" step="0.001" required>
-        </label>
-        <label>Preço unitário
-          <input name="unitPrice" type="number" step="0.01" required>
-        </label>
-        <label>Cliente
-          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
-        </label>
-        <div id="salePriceHint" class="full"></div>
-        <details class="full sale-more-options">
-          <summary>Mais opções (data, canal, desconto, taxas, observações)</summary>
-          <div class="grid-form">
-            <label>Data
-              <input name="date" type="date" required value="${U.today()}">
-            </label>
-            <label>${UI.fieldLabel('Canal', 'canal')}
-              <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
-            </label>
-            <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
-              <input name="discount" type="number" step="0.01" value="0">
-            </label>
-            <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
-              <input name="fixedFees" type="number" step="0.01" value="0">
-            </label>
-            <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
-              <input name="feePercent" type="number" step="0.01" value="0">
-            </label>
-            <label class="wide">Observações
-              <input name="notes" placeholder="Pedido, entrega, plataforma...">
-            </label>
-          </div>
-        </details>
-        <button type="submit" class="full">Lancar venda rapida</button>
-      </form>
+      <h3>Histórico de vendas</h3>
       ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
       <div id="returnsPanel"></div>
     `, 'cmv');
-  }
-
-  function renderOrders() {
-    if (!state().activeBusinessId) return activeBusinessRequiredHtml();
-    const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
-    const statuses = state().settings.orderStatuses;
-    const isAdminUser = S.isAdmin();
-    const cards = currentOrders().map((order) => {
-      const client = clientById(order.clientId);
-      const product = productById(order.productId);
-      const dispatchAction = order.convertedSaleId
-        ? UI.badge('venda lancada', 'ok')
-        : (isAdminUser ? UI.actionButton('convert-order-sale', order.id, 'Baixar venda') : UI.badge('aguardando administrador'));
-      return {
-        id: order.id,
-        status: order.status,
-        title: client?.name || 'Pedido sem cliente',
-        subtitle: product ? `${product.name} · ${U.qty(order.quantity, product.unit)}` : 'Produto removido',
-        detail: `Entrega: ${order.dueDate || 'sem data'} · Valor: ${U.money(U.number(order.quantity) * U.number(order.unitPrice))}`,
-        actions: `${dispatchAction} ${isAdminUser ? UI.actionButton('delete-order', order.id, 'Excluir', 'danger') : ''}`,
-      };
-    });
-
-    return UI.section('Pedidos', 'Controle pedidos pendentes, em preparo, prontos e despachados. Ao retirar, o pedido sempre comeca pendente - so o administrador muda o status, faz devolucoes e acertos.', `
-      <div id="ordersCartPanel"></div>
-      <form id="orderForm" class="grid-form">
-        <label>Cliente
-          <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
-        </label>
-        <label>Produto
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
-        </label>
-        <label>Quantidade
-          <input name="quantity" type="number" step="0.001" required>
-        </label>
-        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinado')}
-          <input name="unitPrice" type="number" step="0.01" required>
-        </label>
-        <label>Data de entrega/despacho
-          <input name="dueDate" type="date">
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Endereço, forma de pagamento, urgência...">
-        </label>
-        <button type="submit">Criar pedido (rapido, 1 produto)</button>
-      </form>
-      ${UI.kanban({ statuses, cards, type: 'orders', readOnly: !isAdminUser })}
-    `);
   }
 
   function renderConsignments() {
@@ -1563,9 +1457,6 @@
         case 'delete-consignment':
           if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
           break;
-        case 'convert-order-sale':
-          await convertOrderToSale(id);
-          break;
         case 'consign-sell':
           await consignmentSell(id);
           break;
@@ -1585,26 +1476,6 @@
     } catch (error) {
       alert(error.message);
     }
-  }
-
-  async function convertOrderToSale(orderId) {
-    if (!S.isAdmin()) throw new Error('Somente o administrador pode alterar o status do pedido e baixar a venda.');
-    const order = state().orders.find((item) => item.id === orderId);
-    if (!order) throw new Error('Pedido não encontrado.');
-    if (order.convertedSaleId) throw new Error('Pedido já foi convertido em venda.');
-    const sale = await addSale({
-      date: U.today(),
-      channel: 'Pedido',
-      clientId: order.clientId,
-      productId: order.productId,
-      quantity: order.quantity,
-      unitPrice: order.unitPrice,
-      discount: 0,
-      fixedFees: 0,
-      feePercent: 0,
-      notes: `Baixa automática do pedido ${order.id}`,
-    }, { origin: 'pedido', originId: order.id });
-    await S.update('orders', order.id, { convertedSaleId: sale.id, status: 'despachado' });
   }
 
   async function consignmentSell(id) {
@@ -1943,7 +1814,10 @@
     }, 3200);
   }
 
-  window.C360.app = { refresh: renderAll, toast, setTab };
+  // addSale é exposto para src/salesCart.js materializar a venda "propria"
+  // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
+  // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
+  window.C360.app = { refresh: renderAll, toast, setTab, addSale };
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
