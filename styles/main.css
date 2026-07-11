@@ -342,7 +342,11 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   .bottom-nav[hidden] { display: none; }
   .tabs { display: none; }
   #dashboard { display: none; }
-  .app-shell { padding-bottom: 5.2rem; }
+  /* Folga inferior = bottom-nav (~64px) + a calculadora flutuante (56px, no
+     canto inferior direito) + respiro, para o ultimo item de qualquer tela
+     (ex.: botao de acao de um card da esteira) nunca ficar escondido embaixo
+     do FAB. */
+  .app-shell { padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0)); }
 }
 .bottom-nav-set {
   display: flex;
