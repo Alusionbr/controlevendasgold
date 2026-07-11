@@ -6,7 +6,7 @@
   const UI = window.C360.ui;
   const Calc = window.C360.calc;
 
-  const STATUS_LABELS = {
+  const CART_STATUS_LABELS = {
     draft: 'Rascunho',
     shared: 'Link enviado',
     submitted: 'Enviado',
@@ -18,28 +18,36 @@
     expired: 'Expirado',
   };
 
+  const PAYMENT_MODE_LABELS = { avista: 'A vista', parcial: 'Parcial', consignado: 'Consignado' };
+
+  // ---------------------------------------------------------------------
   // Rascunho do carrinho vive fora de mount(): app.js recria o container do
-  // Vendas/Pedidos a cada renderAll() (qualquer acao na tela dispara isso),
-  // e mount() e chamado de novo - se o draft fosse uma variavel local do
-  // fecho de mount(), cada remount zeraria os itens ja adicionados ao
-  // carrinho. Mantendo o objeto no escopo do modulo, ele sobrevive a
-  // remounts (inclusive entre a aba Vendas e a aba Pedidos, que montam o
-  // mesmo carrinho).
+  // painel de Vendas a cada renderAll(), e mount() e chamado de novo. Mantendo
+  // o objeto no escopo do modulo, os itens ja adicionados sobrevivem aos
+  // remounts.
+  //
+  // draft.mode e o "tipo de venda" escolhido no topo do painel:
+  //   admin:    'propria'  (venda minha, cliente final)
+  //             'revenda'  (venda ao revendedor: a vista/parcial/consignado)
+  //   vendedor: 'own'      (vender o proprio estoque, baixa imediata)
+  //             'request'  (pedir estoque ao admin: entra na esteira p/ aprovar)
+  // ---------------------------------------------------------------------
   const persistentDraft = {
-    source: 'seller_stock',
+    mode: '',
     paymentMode: 'avista',
-    expiresHours: '48',
     targetSellerId: '',
-    customerName: '',
+    clientId: '',
     channel: 'WhatsApp',
     notes: '',
     paidInitialAmount: '0',
+    customerName: '',
+    expiresHours: '48',
     items: [],
     lastLink: '',
-    editingCartId: '',
   };
 
-  const PAYMENT_MODE_LABELS = { avista: 'A vista', parcial: 'Parcial', consignado: 'Consignado' };
+  // Estado local da esteira: qual grupo esta com o form de edicao aberto.
+  const boardState = { editGroupId: '' };
 
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
@@ -47,6 +55,10 @@
   function user() { return S().getCurrentUser(); }
   function isAdmin() { return S().isAdmin(); }
   function productById(id) { return (state().products || []).find((item) => String(item.id) === String(id)) || null; }
+  function clientName(id) {
+    const client = (state().clients || []).find((item) => String(item.id) === String(id));
+    return client ? client.name : '';
+  }
   function sellerName(id) {
     const profile = (state().profiles || []).find((item) => String(item.id) === String(id));
     return profile ? profile.name : 'Vendedor';
@@ -63,14 +75,6 @@
   function itemsForCart(cartId) {
     return (state().saleCartItems || []).filter((item) => String(item.cartId) === String(cartId));
   }
-  function statusBadge(status) {
-    const type = status === 'approved' || status === 'converted' ? 'ok' : status === 'rejected' ? 'danger' : '';
-    return UI.badge(STATUS_LABELS[status] || status, type);
-  }
-  function sourceLabel(source) {
-    return source === 'admin_stock' ? 'Estoque do admin' : 'Estoque proprio';
-  }
-
   function cartTotal(items) {
     return items.reduce((sum, item) => sum + U.number(item.quantity) * U.number(item.unitPrice), 0);
   }
@@ -102,9 +106,12 @@
     return product.defaultPrice || product.salePrice || 0;
   }
 
+  // Modo escolhido pelo papel -> filtra a lista de produtos disponivel.
+  function draftUsesOwnStock(draft) { return draft.mode === 'own'; }
+
   function productsForDraft(draft) {
     const base = (state().products || []).filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
-    if (!isAdmin() && draft.source === 'seller_stock') {
+    if (draftUsesOwnStock(draft)) {
       const ownStockIds = new Set((state().sellerStock || [])
         .filter((row) => String(row.sellerId) === String(user()?.id) && U.number(row.quantity) > 0)
         .map((row) => String(row.productId)));
@@ -136,82 +143,407 @@
     if (!keepLink) draft.lastLink = '';
     draft.customerName = '';
     draft.notes = '';
+    draft.clientId = '';
     draft.paidInitialAmount = '0';
-    draft.editingCartId = '';
   }
 
-  function loadDraftFromCart(draft, cart, asAdjustment = false) {
-    draft.source = cart.source || 'seller_stock';
-    draft.paymentMode = cart.paymentMode || 'avista';
-    draft.channel = cart.channel || 'WhatsApp';
-    draft.customerName = cart.customerName || '';
-    draft.notes = asAdjustment ? `Acerto do carrinho ${cart.id}` : (cart.notes || '');
-    draft.paidInitialAmount = cart.paidInitialAmount || '0';
-    draft.expiresHours = draft.expiresHours || '48';
-    draft.targetSellerId = isAdmin() ? (cart.sellerId || '') : '';
-    draft.editingCartId = asAdjustment ? '' : cart.id;
-    draft.items = itemsForCart(cart.id).map((item) => ({
-      productId: item.productId,
-      quantity: U.number(item.quantity),
-      unitPrice: U.number(item.unitPrice),
-    }));
+  function defaultModeForRole() {
+    return isAdmin() ? 'propria' : 'own';
   }
 
-  function canEditCart(cart) {
-    if (!cart) return false;
-    if (cart.status === 'converted') return true;
-    if (isAdmin()) return !['approved', 'partially_approved', 'rejected', 'expired'].includes(cart.status);
-    return String(cart.sellerId) === String(user()?.id) && ['draft', 'shared', 'submitted', 'pending_approval'].includes(cart.status);
+  // Modos que geram um pedido na esteira (via orders). 'own' e baixa imediata.
+  function isBoardMode(mode) { return mode === 'propria' || mode === 'revenda' || mode === 'request'; }
+  function isRevendaMode(mode) { return mode === 'revenda' || mode === 'request'; }
+
+  // =====================================================================
+  // Motores de estoque/dinheiro reaproveitados (nao mudam a regra de negocio,
+  // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
+  // =====================================================================
+
+  async function addToSellerStock(sellerId, productId, quantity) {
+    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
+    const nextQuantity = U.number(current?.quantity) + U.number(quantity);
+    if (current) await S().update('sellerStock', current.id, { quantity: nextQuantity });
+    else await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
   }
 
-  function canDeleteCart(cart) {
-    if (!cart || cart.status === 'converted') return false;
-    if (isAdmin()) return !['approved', 'partially_approved'].includes(cart.status);
-    return String(cart.sellerId) === String(user()?.id) && ['draft', 'shared', 'submitted', 'pending_approval'].includes(cart.status);
+  // Transfere estoque central -> estoque do vendedor, criando consignments +
+  // stock_movements + seller_stock. Devolve o consignment criado (usado como
+  // marcador de "ja materializado" no pedido). amountPaid = fatia ja quitada.
+  async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, amountPaid = 0, groupId, note }) {
+    const product = productById(productId);
+    const qty = U.number(quantity);
+    if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
+    if (product.type === 'servico') throw new Error('Servico nao pode ser enviado ao revendedor.');
+    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+    if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para despachar.`);
+
+    await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
+    await S().recordMovement({
+      date: U.today(),
+      type: 'saida_envio_consignado',
+      productId: product.id,
+      quantity: -qty,
+      unitCost: U.number(product.avgCost),
+      totalCost: -(qty * U.number(product.avgCost)),
+      notes: note || `Despacho ao vendedor ${sellerName(sellerId)}`,
+    });
+    await addToSellerStock(sellerId, product.id, qty);
+    const paid = U.number(amountPaid);
+    const consignment = await S().add('consignments', {
+      sellerId,
+      clientId: null,
+      productId: product.id,
+      quantitySent: qty,
+      quantitySold: 0,
+      quantityReturned: 0,
+      unitPrice,
+      costAtSend: U.number(product.avgCost),
+      amountPaid: paid,
+      status: 'com_cliente',
+      date: U.today(),
+      notes: `Revenda despachada${groupId ? ` (pedido ${groupId})` : ''}`,
+    });
+    if (consignment && consignment.id) {
+      await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'envio', date: U.today(), quantity: qty, amount: 0 });
+      if (paid > 0) await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'pagamento', date: U.today(), quantity: 0, amount: paid });
+    }
+    return consignment;
   }
 
-  function canConfirmOwnStockCart(cart) {
-    return cart
-      && cart.source === 'seller_stock'
-      && ['submitted', 'shared'].includes(cart.status)
-      && String(cart.sellerId) === String(user()?.id);
+  function saleMathForCart({ quantity, unitPrice, unitCost }) {
+    if (Calc && typeof Calc.saleMath === 'function') {
+      return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
+    }
+    const grossRevenue = U.number(quantity) * U.number(unitPrice);
+    const cogs = U.number(quantity) * U.number(unitCost);
+    const grossProfit = grossRevenue - cogs;
+    return { grossRevenue, netRevenue: grossRevenue, percentFees: 0, cogs, grossProfit, margin: grossRevenue > 0 ? grossProfit / grossRevenue : 0 };
+  }
+
+  // =====================================================================
+  // Carrinho de link publico (recurso avancado, mantido). createCart grava um
+  // sale_cart + itens; usado so pelo botao "Gerar link".
+  // =====================================================================
+
+  async function createCart(draft, status) {
+    const currentUser = user();
+    if (!currentUser) throw new Error('Entre na sua conta antes de criar carrinho.');
+    const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
+    const finalStatus = status || 'draft';
+    const cart = await S().add('saleCarts', {
+      sellerId: currentUser.id,
+      source: draftUsesOwnStock(draft) ? 'seller_stock' : 'admin_stock',
+      paymentMode: 'avista',
+      status: 'draft',
+      channel: draft.channel || 'WhatsApp',
+      customerName: draft.customerName || null,
+      publicExpiresAt: null,
+      paidInitialAmount: 0,
+      notes: draft.notes || '',
+    });
+    for (const item of draft.items) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().add('saleCartItems', { cartId: cart.id, productId: item.productId, quantity: U.number(item.quantity), unitPrice: U.number(item.unitPrice) });
+    }
+    const finalCart = finalStatus === 'draft' ? cart : await S().update('saleCarts', cart.id, {
+      status: finalStatus,
+      publicExpiresAt: finalStatus === 'shared' ? expiresAt : null,
+    });
+    await S().refresh();
+    return { ...cart, ...finalCart };
+  }
+
+  // Venda imediata do estoque proprio do vendedor (produto ja esta na mao):
+  // baixa seller_stock e grava a venda + o acerto (consignments) com o admin.
+  async function convertOwnStockCart(cart) {
+    const items = itemsForCart(cart.id);
+    for (const item of items) {
+      const product = productById(item.productId);
+      const quantity = U.number(item.quantity);
+      const unitPrice = U.number(item.unitPrice);
+      const unitCost = U.number(product?.avgCost);
+      // eslint-disable-next-line no-await-in-loop
+      await api().consumeSellerStock({ productId: item.productId, quantity });
+      const math = saleMathForCart({ quantity, unitPrice, unitCost });
+      // eslint-disable-next-line no-await-in-loop
+      const sale = await S().add('sales', {
+        date: U.today(),
+        channel: cart.channel || 'Meu estoque',
+        clientId: cart.clientId || null,
+        productId: item.productId,
+        quantity,
+        unitPrice,
+        discount: 0,
+        fixedFees: 0,
+        feePercent: 0,
+        unitCost,
+        ...math,
+        notes: `Venda do meu estoque${cart.customerName ? ` - ${cart.customerName}` : ''}`,
+        origin: 'meu_estoque',
+        originId: cart.id,
+      });
+      // eslint-disable-next-line no-await-in-loop
+      const consignment = await S().add('consignments', {
+        sellerId: cart.sellerId,
+        clientId: cart.clientId || null,
+        productId: item.productId,
+        quantitySent: quantity,
+        quantitySold: quantity,
+        quantityReturned: 0,
+        unitPrice,
+        costAtSend: unitCost,
+        amountPaid: 0,
+        status: 'com_cliente',
+        date: U.today(),
+        notes: `Venda do meu estoque ${cart.id}`,
+      });
+      if (consignment && consignment.id) {
+        // eslint-disable-next-line no-await-in-loop
+        await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'venda_cliente', date: U.today(), quantity, amount: quantity * unitPrice });
+      }
+      if (sale && sale.id) { /* venda gravada para painel/metas */ }
+    }
+    await S().update('saleCarts', cart.id, { status: 'converted' });
+    await S().refresh();
+  }
+
+  async function sellOwnStockNow(draft) {
+    if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    const cart = await createCart({ ...draft }, 'submitted');
+    await convertOwnStockCart({ ...cart, clientId: draft.clientId || null, customerName: draft.customerName });
+  }
+
+  // =====================================================================
+  // Esteira de pedidos (orders): lancamento a partir do carrinho.
+  // =====================================================================
+
+  // Valor pago no ato, distribuido por linha: a vista = total; consignado = 0;
+  // parcial = o que o usuario informou (proporcional entre as linhas).
+  function paidForRow(draft, rowTotal, cartTotalValue) {
+    if (!isRevendaMode(draft.mode)) return 0;
+    if (draft.paymentMode === 'avista') return rowTotal;
+    if (draft.paymentMode === 'consignado') return 0;
+    const cartPaid = Math.min(U.number(draft.paidInitialAmount), cartTotalValue);
+    return cartTotalValue > 0 ? (rowTotal / cartTotalValue) * cartPaid : 0;
+  }
+
+  async function launchOrderFromCart(draft) {
+    const currentUser = user();
+    if (!currentUser) throw new Error('Entre na sua conta antes de lancar.');
+    if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    const revenda = isRevendaMode(draft.mode);
+    const asRequest = draft.mode === 'request';
+    if (draft.mode === 'revenda' && !draft.targetSellerId) throw new Error('Selecione o vendedor que vai receber.');
+
+    const total = cartTotal(draft.items);
+    const groupId = crypto.randomUUID();
+    const sellerId = revenda
+      ? (asRequest ? currentUser.id : draft.targetSellerId)
+      : currentUser.id;
+    const approvalStatus = asRequest ? 'pendente_aprovacao' : 'aprovado';
+
+    for (const item of draft.items) {
+      const qty = U.number(item.quantity);
+      const price = U.number(item.unitPrice);
+      const rowTotal = qty * price;
+      // eslint-disable-next-line no-await-in-loop
+      await S().add('orders', {
+        sellerId,
+        clientId: revenda ? null : (draft.clientId || null),
+        productId: item.productId,
+        quantity: qty,
+        unitPrice: price,
+        dueDate: null,
+        status: 'pendente',
+        approvalStatus,
+        saleType: revenda ? 'revenda' : 'propria',
+        paymentMode: revenda ? draft.paymentMode : null,
+        paidAmount: paidForRow(draft, rowTotal, total),
+        orderGroupId: groupId,
+        notes: draft.notes || (draft.customerName || ''),
+        convertedSaleId: null,
+      });
+    }
+    await S().refresh();
+  }
+
+  // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
+  async function materializeOrder(order) {
+    if (order.convertedSaleId) return;
+    const quantity = U.number(order.quantity);
+    const unitPrice = U.number(order.unitPrice);
+    if (order.saleType === 'revenda') {
+      const total = quantity * unitPrice;
+      const paid = Math.min(U.number(order.paidAmount), total);
+      const consignment = await transferAdminStockToSeller({
+        sellerId: order.sellerId,
+        productId: order.productId,
+        quantity,
+        unitPrice,
+        amountPaid: paid,
+        groupId: order.orderGroupId || order.id,
+        note: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) para ${sellerName(order.sellerId)}`,
+      });
+      const debt = Math.max(total - paid, 0);
+      if (debt > 0) {
+        await S().add('sellerAccountEntries', {
+          sellerId: order.sellerId,
+          type: 'debit_replenishment',
+          direction: 'debit',
+          amount: debt,
+          sourceType: 'order',
+          sourceId: order.id,
+          notes: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) despachada - pedido ${order.orderGroupId || order.id}`,
+        });
+      }
+      await S().update('orders', order.id, { convertedSaleId: (consignment && consignment.id) || order.id });
+    } else {
+      // Venda minha (cliente final): baixa estoque central + CMV/lucro.
+      const sale = await window.C360.app.addSale({
+        date: U.today(),
+        channel: 'Pedido',
+        clientId: order.clientId || null,
+        productId: order.productId,
+        quantity,
+        unitPrice,
+        discount: 0,
+        fixedFees: 0,
+        feePercent: 0,
+        notes: `Venda despachada - pedido ${order.orderGroupId || order.id}${order.notes ? ` - ${order.notes}` : ''}`,
+      }, { origin: 'pedido', originId: order.id });
+      await S().update('orders', order.id, { convertedSaleId: sale.id });
+    }
+  }
+
+  function ordersInGroup(groupId) {
+    return (state().orders || []).filter((order) => String(order.orderGroupId || order.id) === String(groupId));
+  }
+
+  async function advanceOrderGroup(groupId, newStatus) {
+    if (!isAdmin()) throw new Error('Somente o administrador muda o status do pedido.');
+    const orders = ordersInGroup(groupId);
+    if (!orders.length) return;
+    if (orders.some((order) => order.approvalStatus === 'pendente_aprovacao')) {
+      throw new Error('Aprove o pedido antes de avancar o status.');
+    }
+    // Despacho/conclusao materializam a venda (estoque + financeiro).
+    if (newStatus === 'despachado' || newStatus === 'concluido') {
+      for (const order of orders) {
+        // eslint-disable-next-line no-await-in-loop
+        if (!order.convertedSaleId) await materializeOrder(order);
+      }
+    }
+    for (const order of orders) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().update('orders', order.id, { status: newStatus });
+    }
+    await S().refresh();
+  }
+
+  async function setGroupApproval(groupId, approvalStatus) {
+    const orders = ordersInGroup(groupId);
+    for (const order of orders) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().update('orders', order.id, { approvalStatus });
+    }
+    await S().refresh();
+  }
+
+  async function cancelGroup(groupId) {
+    const orders = ordersInGroup(groupId);
+    if (orders.some((order) => order.convertedSaleId)) {
+      throw new Error('Este pedido ja foi despachado. Use Devolucao/Desperdicio para reverter.');
+    }
+    for (const order of orders) {
+      // eslint-disable-next-line no-await-in-loop
+      await S().remove('orders', order.id);
+    }
+    await S().refresh();
+  }
+
+  async function saveGroupEdit(container, groupId) {
+    const orders = ordersInGroup(groupId);
+    if (orders.some((order) => order.convertedSaleId)) throw new Error('Pedido ja despachado nao pode ser editado.');
+    for (const order of orders) {
+      const qtyInput = container.querySelector(`[data-edit-qty="${CSS.escape(order.id)}"]`);
+      const priceInput = container.querySelector(`[data-edit-price="${CSS.escape(order.id)}"]`);
+      const qty = U.number(qtyInput?.value);
+      const price = U.number(priceInput?.value);
+      if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      // eslint-disable-next-line no-await-in-loop
+      await S().update('orders', order.id, { quantity: qty, unitPrice: price });
+    }
+    await S().refresh();
+  }
+
+  // =====================================================================
+  // Render: construtor unificado + esteira
+  // =====================================================================
+
+  function modeOptionsFor(role) {
+    return role === 'admin'
+      ? [{ v: 'propria', label: 'Venda minha (cliente final)' }, { v: 'revenda', label: 'Venda ao revendedor' }]
+      : [{ v: 'own', label: 'Vender meu estoque' }, { v: 'request', label: 'Pedir estoque ao admin' }];
+  }
+
+  function segmented(draft) {
+    const opts = modeOptionsFor(isAdmin() ? 'admin' : 'vendedor');
+    return `<div class="sale-type-switch">${opts.map((opt) => `
+      <button type="button" class="sale-type-option ${draft.mode === opt.v ? 'active' : ''}" data-cart-action="set-mode" data-mode="${opt.v}">${U.escapeHtml(opt.label)}</button>
+    `).join('')}</div>`;
+  }
+
+  function primaryLabel(mode) {
+    return { propria: 'Lancar venda', revenda: 'Lancar para revendedor', own: 'Vender agora', request: 'Pedir ao admin' }[mode] || 'Lancar';
+  }
+
+  function configFields(draft) {
+    const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    const settings = !isAdmin() ? settingForSeller(user()?.id) : null;
+    const rows = [];
+    if (draft.mode === 'propria' || draft.mode === 'own') {
+      rows.push(`<label>Cliente${draft.mode === 'own' ? ' (opcional)' : ''}
+        <select name="clientId">${UI.optionList((state().clients || []), draft.clientId || '', 'Opcional')}</select>
+      </label>`);
+    }
+    if (draft.mode === 'revenda') {
+      rows.push(`<label>Vendedor que recebe
+        <select name="targetSellerId" required>${UI.optionList(sellers, draft.targetSellerId || '', sellers.length ? 'Selecione o vendedor' : 'Nenhum vendedor ativo')}</select>
+      </label>`);
+    }
+    if (draft.mode === 'revenda' || draft.mode === 'request') {
+      const allowConsignment = isAdmin() || (settings && settings.allowConsignment);
+      const payOpts = [
+        '<option value="avista">A vista</option>',
+        draft.mode === 'revenda' ? '<option value="parcial">Parcial</option>' : '',
+        allowConsignment ? '<option value="consignado">Consignado</option>' : '',
+      ].join('');
+      rows.push(`<label>Pagamento
+        <select name="paymentMode">${payOpts}</select>
+      </label>`);
+      if (draft.mode === 'revenda' && draft.paymentMode === 'parcial') {
+        rows.push(`<label>Valor pago agora
+          <input name="paidInitialAmount" type="number" step="0.01" min="0" value="${U.escapeHtml(draft.paidInitialAmount || '0')}">
+        </label>`);
+      }
+    }
+    return rows.join('');
   }
 
   function renderBuilder(draft, feedback) {
-    const currentUser = user();
-    const settings = currentUser && currentUser.role === 'vendedor' ? settingForSeller(currentUser.id) : {
-      allowAdminStockSales: true,
-      allowConsignment: true,
-      allowPublicCartLinks: true,
-    };
     const products = productsForDraft(draft);
-    const allowAdminSource = isAdmin() || settings.allowAdminStockSales;
-    const allowConsignment = isAdmin() || settings.allowConsignment;
-    const sourceOptions = [
-      '<option value="seller_stock">Meu estoque</option>',
-      allowAdminSource ? '<option value="admin_stock">Estoque do administrador</option>' : '',
-    ].join('');
-    const paymentOptions = [
-      '<option value="avista">A vista</option>',
-      '<option value="parcial">Parcial</option>',
-      allowConsignment ? '<option value="consignado">Consignado</option>' : '',
-    ].join('');
-    const channelOptions = UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '');
-    const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
-    const editingCart = draft.editingCartId ? (state().saleCarts || []).find((cart) => String(cart.id) === String(draft.editingCartId)) : null;
-    const sellerTargetField = isAdmin() && draft.paymentMode === 'consignado'
-      ? `<label>Vendedor consignado
-          <select name="targetSellerId" required>${UI.optionList(sellers, draft.targetSellerId || '', sellers.length ? 'Selecione o vendedor' : 'Nenhum vendedor ativo')}</select>
-        </label>`
-      : '';
-    const paidInitialField = draft.paymentMode === 'parcial'
-      ? `<label>Valor pago agora
-          <input name="paidInitialAmount" type="number" step="0.01" min="0" value="${U.escapeHtml(draft.paidInitialAmount || '0')}">
-        </label>`
-      : '';
+    const revenda = isRevendaMode(draft.mode);
+    const modeHint = {
+      propria: 'Venda para o cliente final. Ao lancar, entra na esteira em Pendente; a baixa de estoque acontece no Despachado.',
+      revenda: 'Envio para um revendedor. Passa pela esteira; a divida/consignado do vendedor e registrada no Despachado.',
+      own: 'Voce vende um produto que ja esta no seu estoque. A baixa e imediata.',
+      request: 'Pedido de reposicao ao admin. Entra na esteira e o admin aprova antes de montar/despachar.',
+    }[draft.mode] || '';
+
     const productCards = products.slice(0, 18).map((product) => {
       const ownStock = ownStockForProduct(product.id);
-      const stockHint = !isAdmin() && draft.source === 'seller_stock'
+      const stockHint = draftUsesOwnStock(draft)
         ? `<small>${U.qty(ownStock?.quantity || 0, product.unit)} no seu estoque</small>`
         : (product.stockHidden ? '<small>Disponibilidade protegida</small>' : '');
       return `
@@ -219,9 +551,9 @@
           <strong>${U.escapeHtml(product.name)}</strong>
           <span>${U.money(resolvedUnitPrice(product))}</span>
           ${stockHint}
-        </button>
-      `;
+        </button>`;
     }).join('');
+
     const itemCards = draft.items.map((item, index) => {
       const product = productById(item.productId);
       const total = U.number(item.quantity) * U.number(item.unitPrice);
@@ -238,15 +570,16 @@
           </div>
           <strong>${U.money(total)}</strong>
           <button type="button" class="small danger" data-cart-action="remove-draft-item" data-index="${index}">Remover</button>
-        </article>
-      `;
+        </article>`;
     }).join('');
+
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
-    const modeHint = draft.source === 'admin_stock'
-      ? 'Este carrinho vira pedido para aprovacao do administrador.'
-      : 'Salve o carrinho e confirme a venda quando o produto for entregue ou enviado.';
+    const canShareLink = isAdmin() ? false : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
+    const parcialHint = (draft.mode === 'revenda' && draft.paymentMode === 'parcial')
+      ? `<p class="hint-inline">Fica devendo: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>`
+      : '';
 
     return `
       ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
@@ -255,41 +588,17 @@
         <article class="panel-card sales-cart-builder">
           <div class="cart-panel-head">
             <div>
-              <h3>${editingCart ? 'Editando carrinho' : 'Novo carrinho'}</h3>
+              <h3>Nova venda</h3>
               <p>${U.escapeHtml(modeHint)}</p>
             </div>
-            ${editingCart ? UI.badge('Edicao') : ''}
           </div>
+          ${segmented(draft)}
           <form data-cart-config class="cart-config-grid">
-            <label>Origem
-              <select name="source">${sourceOptions}</select>
-            </label>
-            <label>Pagamento
-              <select name="paymentMode">${paymentOptions}</select>
-            </label>
-            <label>Canal
-              <select name="channel">${channelOptions}</select>
-            </label>
-            <label>Cliente ou apelido
-              <input name="customerName" value="${U.escapeHtml(draft.customerName || '')}" placeholder="Nome para identificar">
-            </label>
-            ${sellerTargetField}
-            ${paidInitialField}
-            <label>Validade do link
-              <select name="expiresHours">
-                <option value="24">24 horas</option>
-                <option value="48" selected>48 horas</option>
-                <option value="72">72 horas</option>
-                <option value="168">7 dias</option>
-              </select>
-            </label>
-            <label class="wide">Observacoes
-              <input name="notes" value="${U.escapeHtml(draft.notes || '')}" placeholder="Entrega, combinado, ajuste, troca...">
-            </label>
+            ${configFields(draft)}
           </form>
 
           <div class="cart-product-grid">
-            ${productCards || '<div class="empty-state"><strong>Nenhum produto disponivel.</strong><span>Use estoque do admin ou peca reposicao.</span></div>'}
+            ${productCards || '<div class="empty-state"><strong>Nenhum produto disponivel.</strong><span>Cadastre produtos ou peca reposicao.</span></div>'}
           </div>
 
           <form data-cart-add-item class="cart-manual-add">
@@ -298,79 +607,309 @@
             <input name="unitPrice" type="number" step="0.01" min="0.01" placeholder="Preco">
             <button type="submit">Adicionar</button>
           </form>
+
+          <details class="sale-more-options">
+            <summary>Mais opcoes (canal, observacoes${canShareLink ? ', link publico' : ''})</summary>
+            <div class="cart-config-grid">
+              <label>Canal
+                <select name="channel" data-extra-channel>${UI.optionList(state().settings.channels, draft.channel || 'WhatsApp', '')}</select>
+              </label>
+              <label class="wide">Observacoes
+                <input name="notes" data-extra-notes value="${U.escapeHtml(draft.notes || '')}" placeholder="Entrega, combinado, apelido...">
+              </label>
+            </div>
+            ${canShareLink ? '<button type="button" class="secondary" data-cart-action="share-cart">Gerar link publico</button>' : ''}
+          </details>
         </article>
 
         <article class="panel-card sales-cart-summary">
           <div class="cart-panel-head">
             <div>
-              <h3>Carrinho atual</h3>
+              <h3>Carrinho</h3>
               <p>${draft.items.length} item(ns)</p>
             </div>
             <strong>${U.money(cartTotal(draft.items))}</strong>
           </div>
           <div class="cart-draft-list">${itemCards || '<div class="empty-state"><strong>Carrinho vazio.</strong><span>Toque em um produto para adicionar.</span></div>'}</div>
-          ${draft.paymentMode === 'parcial' ? `<p class="hint-inline">Fica devendo antes do ajuste do admin: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>` : ''}
+          ${parcialHint}
           <div class="actions cart-primary-actions">
-            <button type="button" data-cart-action="save-cart" ${draft.items.length ? '' : 'disabled'}>${editingCart ? 'Salvar alteracoes' : 'Salvar carrinho'}</button>
-            <button type="button" class="secondary" data-cart-action="share-cart" ${draft.items.length && draft.paymentMode === 'avista' && settings.allowPublicCartLinks ? '' : 'disabled'}>Gerar link</button>
+            <button type="button" data-cart-action="launch" ${draft.items.length ? '' : 'disabled'}>${primaryLabel(draft.mode)}</button>
             <button type="button" class="ghost" data-cart-action="clear-draft">Limpar</button>
           </div>
         </article>
-      </div>
-    `;
+      </div>`;
   }
 
-  function renderCartStats(carts) {
-    const sales = (state().sales || []).filter((sale) => String(sale.sellerId || '') === String(user()?.id || '') || isAdmin());
-    const openDebt = (state().sellerAccountEntries || []).reduce((sum, entry) => sum + (entry.direction === 'debit' ? U.number(entry.amount) : -U.number(entry.amount)), 0);
-    const saved = carts.filter((cart) => ['draft', 'submitted', 'shared'].includes(cart.status)).length;
-    const waiting = carts.filter((cart) => cart.status === 'pending_approval').length;
+  // ------- Esteira -------
+
+  function orderGroups() {
+    const map = new Map();
+    (state().orders || []).forEach((order) => {
+      const key = order.orderGroupId || order.id;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(order);
+    });
+    return [...map.entries()].map(([key, rows]) => {
+      const first = rows[0];
+      return {
+        key,
+        rows,
+        status: first.status,
+        approvalStatus: first.approvalStatus,
+        saleType: first.saleType || 'propria',
+        paymentMode: first.paymentMode,
+        sellerId: first.sellerId,
+        clientId: first.clientId,
+        total: rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0),
+        materialized: rows.some((order) => order.convertedSaleId),
+      };
+    });
+  }
+
+  function groupItemsHtml(group, editing) {
+    return `<ul class="board-card-items">${group.rows.map((order) => {
+      const product = productById(order.productId);
+      if (editing) {
+        return `<li class="board-edit-line">
+          <span>${U.escapeHtml(product ? product.name : 'Produto')}</span>
+          <input data-edit-qty="${U.escapeHtml(order.id)}" type="number" min="0.001" step="0.001" value="${U.escapeHtml(order.quantity)}" aria-label="Quantidade">
+          <input data-edit-price="${U.escapeHtml(order.id)}" type="number" min="0" step="0.01" value="${U.escapeHtml(order.unitPrice)}" aria-label="Preco">
+        </li>`;
+      }
+      return `<li><span>${U.escapeHtml(product ? product.name : 'Produto')}</span><strong>${U.qty(order.quantity, product?.unit)}</strong></li>`;
+    }).join('')}</ul>`;
+  }
+
+  function boardCard(group, admin, statuses) {
+    const revenda = group.saleType === 'revenda';
+    const who = revenda ? `Revenda: ${U.escapeHtml(sellerName(group.sellerId))}` : (U.escapeHtml(clientName(group.clientId) || 'Cliente final'));
+    const typeBadge = revenda
+      ? UI.badge(`Revenda · ${PAYMENT_MODE_LABELS[group.paymentMode] || group.paymentMode || ''}`)
+      : UI.badge('Venda minha', 'ok');
+    const pending = group.approvalStatus === 'pendente_aprovacao';
+    const editing = boardState.editGroupId === group.key;
+
+    let actions = '';
+    if (admin && pending) {
+      actions = `<div class="actions">
+        <button type="button" class="small" data-board-action="approve-group" data-group-id="${U.escapeHtml(group.key)}">Aprovar</button>
+        <button type="button" class="small danger" data-board-action="reject-group" data-group-id="${U.escapeHtml(group.key)}">Rejeitar</button>
+      </div>`;
+    } else if (admin && editing) {
+      actions = `<div class="actions">
+        <button type="button" class="small" data-board-action="save-edit-group" data-group-id="${U.escapeHtml(group.key)}">Salvar</button>
+        <button type="button" class="small ghost" data-board-action="cancel-edit-group">Cancelar</button>
+      </div>`;
+    } else if (admin) {
+      const moveSelect = `<label class="kanban-move"><span>Mover para</span>
+        <select data-board-move data-group-id="${U.escapeHtml(group.key)}">
+          ${statuses.map((st) => `<option value="${st.value}" ${st.value === group.status ? 'selected' : ''}>${U.escapeHtml(st.label)}</option>`).join('')}
+        </select></label>`;
+      const tools = group.materialized
+        ? UI.badge('Venda lancada', 'ok')
+        : `<button type="button" class="small secondary" data-board-action="edit-group" data-group-id="${U.escapeHtml(group.key)}">Editar</button>
+           <button type="button" class="small danger" data-board-action="cancel-group" data-group-id="${U.escapeHtml(group.key)}">Cancelar</button>`;
+      actions = `${moveSelect}<div class="actions">${tools}</div>`;
+    } else {
+      actions = pending ? UI.badge('Aguardando aprovacao') : '';
+    }
+
     return `
-      <div class="sales-cart-kpis">
-        ${UI.metric('Carrinhos salvos', String(saved))}
-        ${UI.metric('Aguardando admin', String(waiting))}
-        ${UI.metric('Faturamento', U.money(sales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0)))}
-        ${!isAdmin() ? UI.metric('Debito com central', U.money(Math.max(openDebt, 0))) : ''}
-      </div>
-    `;
+      <article class="kanban-card board-card ${pending ? 'board-card-pending' : ''}">
+        <div class="board-card-head">
+          <strong>${who}</strong>
+          ${typeBadge}
+        </div>
+        ${groupItemsHtml(group, admin && editing)}
+        <div class="board-card-foot"><span>Total</span><strong>${U.money(group.total)}</strong></div>
+        ${actions}
+      </article>`;
   }
 
-  function renderCarts() {
-    const carts = state().saleCarts || [];
-    const cards = carts.slice(0, 60).map((cart) => {
-      const items = itemsForCart(cart.id);
-      const itemText = items.map((item) => {
-        const product = productById(item.productId);
-        return `<li><span>${U.escapeHtml(product ? product.name : 'Produto')}</span><strong>${U.qty(item.quantity, product?.unit)}</strong></li>`;
-      }).join('');
-      const actions = [];
-      if (canConfirmOwnStockCart(cart)) actions.push(`<button type="button" class="small" data-cart-action="confirm-own-stock" data-cart-id="${U.escapeHtml(cart.id)}">Confirmar venda</button>`);
-      if (canEditCart(cart)) actions.push(`<button type="button" class="small secondary" data-cart-action="edit-cart" data-cart-id="${U.escapeHtml(cart.id)}">${cart.status === 'converted' ? 'Criar acerto' : 'Editar'}</button>`);
-      if (cart.publicToken) actions.push(`<button type="button" class="small secondary" data-cart-action="copy-link" data-cart-id="${U.escapeHtml(cart.id)}">Copiar link</button>`);
-      if (canDeleteCart(cart)) actions.push(`<button type="button" class="small danger" data-cart-action="delete-cart" data-cart-id="${U.escapeHtml(cart.id)}">Excluir</button>`);
-      return `
-        <article class="cart-saved-card">
-          <header>
-            <div>
-              <strong>${U.escapeHtml(cart.customerName || 'Carrinho sem nome')}</strong>
-              <span>${U.escapeHtml(sourceLabel(cart.source))} - ${U.escapeHtml(PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode)} - ${U.escapeHtml(cart.channel || 'Canal')}</span>
-            </div>
-            ${statusBadge(cart.status)}
-          </header>
-          <ul>${itemText || '<li><span>Sem itens</span></li>'}</ul>
-          <footer>
-            <strong>${U.money(cartTotal(items))}</strong>
-            <div class="actions">${actions.join('')}</div>
-          </footer>
-        </article>
-      `;
+  function renderBoard(feedback) {
+    const statuses = state().settings.orderStatuses;
+    const admin = isAdmin();
+    const groups = orderGroups().filter((group) => group.approvalStatus !== 'rejeitado');
+    const columns = statuses.map((st) => {
+      const inCol = groups.filter((group) => group.status === st.value);
+      const cards = inCol.map((group) => boardCard(group, admin, statuses)).join('');
+      return `<div class="kanban-column" data-status="${st.value}">
+        <h3>${U.escapeHtml(st.label)} ${UI.badge(String(inCol.length))}</h3>
+        <div class="kanban-dropzone">${cards || '<p class="hint-inline board-empty">—</p>'}</div>
+      </div>`;
     }).join('');
-    return UI.section(
-      'Carrinhos e vendas',
-      'Salve varios carrinhos, edite antes da aprovacao e confirme a venda quando entregar ou enviar.',
-      `${renderCartStats(carts)}<div class="cart-saved-grid">${cards || '<div class="empty-state"><strong>Nenhum carrinho ainda.</strong><span>Crie o primeiro carrinho acima.</span></div>'}</div>`
-    );
+    const desc = admin
+      ? 'So o administrador avanca o pedido. A venda baixa estoque e conta no faturamento ao chegar em Despachado.'
+      : 'Acompanhe o status dos seus pedidos. Quem avanca o status e o administrador.';
+    return UI.section('Esteira de pedidos', desc,
+      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}<div class="kanban board-kanban" data-board>${columns}</div>`);
   }
+
+  // =====================================================================
+  // mount() — painel unificado de Vendas
+  // =====================================================================
+
+  function mount(container, options = {}) {
+    const draft = persistentDraft;
+    // O rascunho sobrevive entre remounts e ate entre trocas de conta (admin
+    // <-> vendedor). Se o modo salvo nao existe para o papel atual (ex.:
+    // 'revenda' e so do admin), volta ao padrao do papel — senao nenhum botao
+    // do seletor fica ativo e os campos errados aparecem.
+    const allowedModes = modeOptionsFor(isAdmin() ? 'admin' : 'vendedor').map((opt) => opt.v);
+    if (!allowedModes.includes(draft.mode)) {
+      draft.mode = defaultModeForRole();
+      draft.items = [];
+      draft.targetSellerId = '';
+      draft.clientId = '';
+    }
+    let feedback = null;
+    let boardFeedback = null;
+
+    function paint() {
+      container.innerHTML = [renderBuilder(draft, feedback), renderBoard(boardFeedback)].join('');
+      const config = container.querySelector('[data-cart-config]');
+      if (config) {
+        if (config.clientId) config.clientId.value = draft.clientId || '';
+        if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
+        if (config.paymentMode) config.paymentMode.value = draft.paymentMode || 'avista';
+        if (config.paidInitialAmount) config.paidInitialAmount.value = draft.paidInitialAmount || '0';
+      }
+    }
+
+    function readConfig() {
+      const config = container.querySelector('[data-cart-config]');
+      if (config) {
+        if (config.clientId) draft.clientId = config.clientId.value || '';
+        if (config.targetSellerId) draft.targetSellerId = config.targetSellerId.value || '';
+        if (config.paymentMode) draft.paymentMode = config.paymentMode.value || 'avista';
+        if (config.paidInitialAmount) draft.paidInitialAmount = config.paidInitialAmount.value || '0';
+      }
+      const channelEl = container.querySelector('[data-extra-channel]');
+      if (channelEl) draft.channel = channelEl.value || 'WhatsApp';
+      const notesEl = container.querySelector('[data-extra-notes]');
+      if (notesEl) draft.notes = notesEl.value || '';
+    }
+
+    container.addEventListener('change', async (event) => {
+      if (event.target.closest('[data-cart-config]')) { readConfig(); paint(); return; }
+      const boardMove = event.target.closest('[data-board-move]');
+      if (boardMove) {
+        try {
+          await advanceOrderGroup(boardMove.dataset.groupId, boardMove.value);
+          boardFeedback = { message: 'Status atualizado.', type: 'success' };
+        } catch (error) {
+          boardFeedback = { message: error.message, type: 'danger' };
+        }
+        paint();
+        if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
+      const qtyInput = event.target.closest('[data-draft-qty]');
+      if (qtyInput) {
+        const item = draft.items[Number(qtyInput.dataset.draftQty)];
+        if (item) item.quantity = U.number(qtyInput.value);
+        draft.items = draft.items.filter((entry) => U.number(entry.quantity) > 0);
+        paint();
+        return;
+      }
+      const productSelect = event.target.closest('[data-cart-add-item] select[name="productId"]');
+      if (productSelect) {
+        const product = productById(productSelect.value);
+        const form = productSelect.closest('[data-cart-add-item]');
+        if (form && product && form.elements.unitPrice && !form.elements.unitPrice.dataset.touched) {
+          form.elements.unitPrice.value = resolvedUnitPrice(product);
+        }
+      }
+      if (event.target.closest('[data-cart-add-item] input[name="unitPrice"]')) event.target.dataset.touched = '1';
+    });
+
+    container.addEventListener('submit', (event) => {
+      const form = event.target.closest('[data-cart-add-item]');
+      if (!form) return;
+      event.preventDefault();
+      readConfig();
+      const data = U.formData(form);
+      const product = productById(data.productId);
+      if (!product) return;
+      addDraftItem(draft, { productId: data.productId, quantity: U.number(data.quantity), unitPrice: U.number(data.unitPrice || resolvedUnitPrice(product)) });
+      form.reset();
+      feedback = null;
+      paint();
+    });
+
+    container.addEventListener('click', async (event) => {
+      const boardButton = event.target.closest('[data-board-action]');
+      if (boardButton) {
+        const action = boardButton.dataset.boardAction;
+        const groupId = boardButton.dataset.groupId;
+        try {
+          if (action === 'approve-group') { await setGroupApproval(groupId, 'aprovado'); boardFeedback = { message: 'Pedido aprovado. Pode montar.', type: 'success' }; }
+          else if (action === 'reject-group') { if (!confirm('Rejeitar este pedido?')) return; await setGroupApproval(groupId, 'rejeitado'); boardFeedback = { message: 'Pedido rejeitado.', type: 'warning' }; }
+          else if (action === 'edit-group') { boardState.editGroupId = groupId; }
+          else if (action === 'cancel-edit-group') { boardState.editGroupId = ''; }
+          else if (action === 'save-edit-group') { await saveGroupEdit(container, groupId); boardState.editGroupId = ''; boardFeedback = { message: 'Pedido atualizado.', type: 'success' }; }
+          else if (action === 'cancel-group') { if (!confirm('Cancelar (excluir) este pedido?')) return; await cancelGroup(groupId); boardFeedback = { message: 'Pedido cancelado.', type: 'success' }; }
+        } catch (error) {
+          boardFeedback = { message: error.message, type: 'danger' };
+        }
+        paint();
+        if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
+
+      const button = event.target.closest('[data-cart-action]');
+      if (!button) return;
+      const action = button.dataset.cartAction;
+      try {
+        readConfig();
+        if (action === 'set-mode') {
+          draft.mode = button.dataset.mode;
+          if (draft.mode === 'request' && draft.paymentMode === 'parcial') draft.paymentMode = 'avista';
+        } else if (action === 'remove-draft-item') {
+          draft.items.splice(Number(button.dataset.index), 1);
+        } else if (action === 'inc-draft-item') {
+          const item = draft.items[Number(button.dataset.index)];
+          if (item) item.quantity = U.number(item.quantity) + 1;
+        } else if (action === 'dec-draft-item') {
+          const item = draft.items[Number(button.dataset.index)];
+          if (item) item.quantity = Math.max(U.number(item.quantity) - 1, 0);
+          if (item && U.number(item.quantity) <= 0) draft.items.splice(Number(button.dataset.index), 1);
+        } else if (action === 'quick-add-product') {
+          addDraftItem(draft, { productId: button.dataset.productId, quantity: 1 });
+        } else if (action === 'clear-draft') {
+          resetDraft(draft);
+        } else if (action === 'launch') {
+          if (draft.mode === 'own') {
+            await sellOwnStockNow(draft);
+            resetDraft(draft);
+            feedback = { message: 'Venda registrada. Seu estoque foi baixado.', type: 'success' };
+          } else {
+            await launchOrderFromCart(draft);
+            const msg = draft.mode === 'request'
+              ? 'Pedido enviado ao admin. Aparece na esteira aguardando aprovacao.'
+              : 'Pedido lancado. Acompanhe na esteira (Pendente).';
+            resetDraft(draft);
+            feedback = { message: msg, type: 'success' };
+          }
+        } else if (action === 'share-cart') {
+          const cart = await createCart(draft, 'shared');
+          resetDraft(draft, true);
+          draft.lastLink = publicUrl(cart);
+          feedback = { message: 'Link publico criado.', type: 'success' };
+        }
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+      if (typeof options.onDone === 'function') options.onDone();
+    });
+
+    paint();
+  }
+
+  // =====================================================================
+  // Permissoes dos vendedores (movido para a aba Vendedores) — mantido.
+  // =====================================================================
 
   function renderAdminSettings(settingsFeedback) {
     if (!isAdmin()) return '';
@@ -380,38 +919,25 @@
       const credits = U.number(settings.stockAdjustmentCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <div>
-            <strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong>
-            <p class="hint-inline">Configure o que aparece para este vendedor.</p>
-          </div>
-          <label><input type="checkbox" name="allowAdminStockSales" ${settings.allowAdminStockSales ? 'checked' : ''}> Pode pedir estoque do admin</label>
-          <label><input type="checkbox" name="allowConsignment" ${settings.allowConsignment ? 'checked' : ''}> Pode vender consignado</label>
+          <div><strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong><p class="hint-inline">Configure o que aparece para este vendedor.</p></div>
+          <label><input type="checkbox" name="allowConsignment" ${settings.allowConsignment ? 'checked' : ''}> Pode pedir consignado</label>
           <label><input type="checkbox" name="allowPublicCartLinks" ${settings.allowPublicCartLinks ? 'checked' : ''}> Pode gerar link publico</label>
-          <label>Desconto maximo (%)
-            <input name="maxDiscountPercent" type="number" min="0" max="100" step="0.01" value="${U.escapeHtml(settings.maxDiscountPercent || 0)}">
-          </label>
+          <label>Desconto maximo (%)<input name="maxDiscountPercent" type="number" min="0" max="100" step="0.01" value="${U.escapeHtml(settings.maxDiscountPercent || 0)}"></label>
           <button type="submit" class="small">Salvar permissao</button>
           <div class="seller-permission-stock-adjust">
             ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
             <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
           </div>
-        </form>
-      `;
+        </form>`;
     }).join('');
-    return UI.section(
-      'Permissoes dos vendedores',
-      'Controle quem pode usar consignado, estoque do admin e links publicos.',
-      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong><span>Crie vendedores para configurar permissoes.</span></div>'}</div><p class="hint-inline">"Liberar 1 acerto de estoque" da ao vendedor uma unica correcao do proprio estoque (util para quem ja tinha mercadoria mas nunca fez o acerto certo). Depois de usado, o credito zera e precisa ser liberado de novo.</p>`
-    );
+    return UI.section('Permissoes dos vendedores', 'Controle quem pode pedir consignado e gerar links publicos.',
+      `${settingsFeedback ? UI.formNotice(settingsFeedback.message, settingsFeedback.type) : ''}<div class="seller-permission-grid">${cards || '<div class="empty-state"><strong>Nenhum vendedor ativo.</strong></div>'}</div>`);
   }
 
   function mountSettings(container, options = {}) {
     if (!container) return null;
     let settingsFeedback = null;
-
-    function paint() {
-      container.innerHTML = renderAdminSettings(settingsFeedback);
-    }
+    function paint() { container.innerHTML = renderAdminSettings(settingsFeedback); }
 
     container.addEventListener('submit', async (event) => {
       const settingsForm = event.target.closest('[data-seller-settings-form]');
@@ -422,7 +948,7 @@
         const current = settingForSeller(sellerId);
         const payload = {
           sellerId,
-          allowAdminStockSales: !!settingsForm.elements.allowAdminStockSales.checked,
+          allowAdminStockSales: current.allowAdminStockSales !== false,
           allowConsignment: !!settingsForm.elements.allowConsignment.checked,
           allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
           maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
@@ -468,640 +994,42 @@
     return { refresh: paint };
   }
 
-  function renderAdminApprovals(feedback) {
-    if (!isAdmin()) return '';
-    const carts = (state().saleCarts || []).filter((cart) => cart.source === 'admin_stock' && cart.status === 'pending_approval');
-    const cards = carts.map((cart) => {
-      const items = itemsForCart(cart.id);
-      const itemRows = items.map((item) => {
-        const product = productById(item.productId);
-        const approved = item.approvedQuantity == null ? item.quantity : item.approvedQuantity;
-        return `
-          <label class="approval-line">
-            <span>${U.escapeHtml(product ? product.name : 'Produto removido')} <small>${U.qty(item.quantity, product?.unit)} pedido</small></span>
-            <input data-approve-item="${U.escapeHtml(item.id)}" type="number" min="0" step="0.001" max="${U.escapeHtml(item.quantity)}" value="${U.escapeHtml(approved)}">
-          </label>
-        `;
-      }).join('');
-      return `
-        <article class="approval-cart-card" data-approval-cart="${U.escapeHtml(cart.id)}">
-          <div class="approval-card-head">
-            <strong>${U.escapeHtml(cart.customerName || 'Cliente nao informado')}</strong>
-            ${statusBadge(cart.status)}
-          </div>
-          <p>Vendedor: <strong>${U.escapeHtml(sellerName(cart.sellerId))}</strong> - Total pedido: <strong>${U.money(cartTotal(items))}</strong></p>
-          <p>Pagamento: <strong>${U.escapeHtml(PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode)}</strong>${cart.paymentMode !== 'avista' ? ` - Pago no pedido: <strong>${U.money(cart.paidInitialAmount)}</strong>` : ''}</p>
-          <div class="approval-items">${itemRows}</div>
-          <label>Observacao para rejeicao/ajuste
-            <input data-rejection-note placeholder="Opcional">
-          </label>
-          <div class="actions">
-            <button type="button" data-cart-action="approve-cart" data-cart-id="${U.escapeHtml(cart.id)}">Aprovar liberado</button>
-            <button type="button" class="danger" data-cart-action="reject-cart" data-cart-id="${U.escapeHtml(cart.id)}">Rejeitar</button>
-          </div>
-        </article>
-      `;
-    });
-    return UI.section(
-      'Aprovacoes de carrinho',
-      'Pedidos feitos com estoque do administrador. Ajuste as quantidades antes de aprovar; o restante fica rejeitado.',
-      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}<div class="approval-cart-list">${cards.join('') || '<div class="empty-state"><strong>Nenhum carrinho aguardando aprovacao.</strong><span>Quando vendedor usar estoque do admin, aparece aqui.</span></div>'}</div>`
-    );
-  }
+  // =====================================================================
+  // Envio direto admin -> vendedor (usado pelo painel da aba Vendedores).
+  // Reaproveita a esteira: cria um pedido de revenda ja aprovado e o despacha
+  // na hora (baixa de estoque + consignado + divida iguais ao fluxo normal).
+  // =====================================================================
 
-  // ---------------------------------------------------------------------
-  // Regras de negocio do carrinho — vivem no escopo do modulo (nao dentro
-  // de mount()) para que mountApprovals() (aba "Aprovacoes", tela dedicada
-  // do admin) reuse a mesma logica sem duplicar codigo. Ver
-  // docs/replication-v1/03-fase2-reposicao-carrinhos.md.
-  // ---------------------------------------------------------------------
-
-  // Valor pago no ato do pedido: a vista = tudo; consignado = nada; parcial
-  // = o que o vendedor informar (nunca mais que o total do carrinho). Vira
-  // sale_carts.paid_initial_amount.
-  function resolvePaidInitialAmount(draft) {
-    const total = cartTotal(draft.items);
-    if (draft.paymentMode === 'avista') return total;
-    if (draft.paymentMode === 'parcial') return Math.min(U.number(draft.paidInitialAmount), total);
-    return 0;
-  }
-
-  async function createCart(draft, status) {
-    const currentUser = user();
-    if (!currentUser) throw new Error('Entre na sua conta antes de criar carrinho.');
-    const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
-    const finalStatus = status || 'draft';
-    const cart = await S().add('saleCarts', {
-      sellerId: isAdmin() && draft.targetSellerId ? draft.targetSellerId : currentUser.id,
-      source: draft.source,
-      paymentMode: draft.paymentMode,
-      status: 'draft',
-      channel: draft.channel || 'WhatsApp',
-      customerName: draft.customerName || null,
-      publicExpiresAt: null,
-      paidInitialAmount: resolvePaidInitialAmount(draft),
-      notes: draft.notes || '',
-    });
-    for (const item of draft.items) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().add('saleCartItems', {
-        cartId: cart.id,
-        productId: item.productId,
-        quantity: U.number(item.quantity),
-        unitPrice: U.number(item.unitPrice),
-      });
-    }
-    const finalPatch = {
-      status: finalStatus,
-      publicExpiresAt: finalStatus === 'shared' ? expiresAt : null,
-    };
-    const finalCart = finalStatus === 'draft' ? cart : await S().update('saleCarts', cart.id, finalPatch);
-    await S().refresh();
-    return { ...cart, ...finalCart };
-  }
-
-  async function replaceCartItems(cartId, items) {
-    const currentItems = itemsForCart(cartId);
-    for (const item of currentItems) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().remove('saleCartItems', item.id);
-    }
-    for (const item of items) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().add('saleCartItems', {
-        cartId,
-        productId: item.productId,
-        quantity: U.number(item.quantity),
-        unitPrice: U.number(item.unitPrice),
-      });
-    }
-  }
-
-  async function saveDraftAsCart(draft, status) {
-    if (!draft.editingCartId) return createCart(draft, status);
-    const currentUser = user();
-    const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
-    const cart = await S().update('saleCarts', draft.editingCartId, {
-      sellerId: isAdmin() && draft.targetSellerId ? draft.targetSellerId : currentUser.id,
-      source: draft.source,
-      paymentMode: draft.paymentMode,
-      status,
-      channel: draft.channel || 'WhatsApp',
-      customerName: draft.customerName || null,
-      publicExpiresAt: status === 'shared' ? expiresAt : null,
-      paidInitialAmount: resolvePaidInitialAmount(draft),
-      notes: draft.notes || '',
-    });
-    await replaceCartItems(draft.editingCartId, draft.items);
-    await S().refresh();
-    return cart;
-  }
-
-  async function addToSellerStock(sellerId, productId, quantity) {
-    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
-    const nextQuantity = U.number(current?.quantity) + U.number(quantity);
-    if (current) {
-      await S().update('sellerStock', current.id, { quantity: nextQuantity });
-    } else {
-      await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
-    }
-  }
-
-  // amountPaid: fatia ja quitada deste envio (0 para consignado puro; >0
-  // para reposicao parcial aprovada — ver approveCart). Registrado tanto no
-  // consignments.amount_paid quanto num consignment_events tipo 'pagamento',
-  // para o historico bater com o que o admin ve na tela de consignado.
-  async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, amountPaid = 0, cartId, note }) {
-    const product = productById(productId);
+  async function sendConsignmentToSeller({ sellerId, productId, quantity, unitPrice }) {
+    if (!isAdmin()) throw new Error('Somente o administrador pode enviar consignado ao vendedor.');
     const qty = U.number(quantity);
-    if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
-    if (product.type === 'servico') throw new Error('Servico nao pode ser enviado em consignado.');
+    const price = U.number(unitPrice);
     if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
-    if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para consignar.`);
-
-    await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
-    await S().recordMovement({
-      date: U.today(),
-      type: 'saida_envio_consignado',
-      productId: product.id,
-      quantity: -qty,
-      unitCost: U.number(product.avgCost),
-      totalCost: -(qty * U.number(product.avgCost)),
-      notes: note || `Consignado ao vendedor ${sellerName(sellerId)} via carrinho ${cartId}`,
-    });
-    await addToSellerStock(sellerId, product.id, qty);
-    const paid = U.number(amountPaid);
-    const consignment = await S().add('consignments', {
+    const groupId = crypto.randomUUID();
+    await S().add('orders', {
       sellerId,
       clientId: null,
-      productId: product.id,
-      quantitySent: qty,
-      quantitySold: 0,
-      quantityReturned: 0,
-      unitPrice,
-      costAtSend: U.number(product.avgCost),
-      amountPaid: paid,
-      status: 'com_cliente',
-      date: U.today(),
-      notes: `Consignado ao vendedor via carrinho ${cartId}`,
-    });
-    if (consignment && consignment.id) {
-      await S().add('consignmentEvents', {
-        consignmentId: consignment.id,
-        type: 'envio',
-        date: U.today(),
-        quantity: qty,
-        amount: 0,
-      });
-      if (paid > 0) {
-        await S().add('consignmentEvents', {
-          consignmentId: consignment.id,
-          type: 'pagamento',
-          date: U.today(),
-          quantity: 0,
-          amount: paid,
-        });
-      }
-    }
-  }
-
-  async function createAdminSellerConsignment(draft) {
-    if (!isAdmin()) throw new Error('Somente o administrador pode enviar consignado ao vendedor por aqui.');
-    if (!draft.targetSellerId) throw new Error('Selecione o vendedor que recebera o consignado.');
-    if (!draft.items.length) throw new Error('Adicione pelo menos um item ao carrinho.');
-    draft.source = 'admin_stock';
-    draft.paymentMode = 'consignado';
-    const targetSellerId = draft.targetSellerId;
-    const cart = await createCart(draft, 'converted');
-    for (const item of draft.items) {
-      // eslint-disable-next-line no-await-in-loop
-      await transferAdminStockToSeller({
-        sellerId: targetSellerId,
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        cartId: cart.id,
-      });
-      // Consignado gera divida do vendedor com o admin, igual a aprovacao de
-      // carrinho via approveCart() — sem isto, envio direto (fora da fila de
-      // aprovacao) baixava estoque e criava o consignments, mas o saldo em
-      // "Debitos dos vendedores" nunca refletia o valor enviado.
-      const itemDebt = U.number(item.quantity) * U.number(item.unitPrice);
-      if (itemDebt > 0) {
-        // eslint-disable-next-line no-await-in-loop
-        await S().add('sellerAccountEntries', {
-          sellerId: targetSellerId,
-          type: 'debit_replenishment',
-          direction: 'debit',
-          amount: itemDebt,
-          sourceType: 'sale_cart',
-          sourceId: cart.id,
-          notes: `Consignado enviado direto pelo admin via carrinho ${cart.id}`,
-        });
-      }
-    }
-    await S().refresh();
-    return cart;
-  }
-
-  function saleMathForCart({ quantity, unitPrice, unitCost }) {
-    if (Calc && typeof Calc.saleMath === 'function') {
-      return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
-    }
-    const grossRevenue = U.number(quantity) * U.number(unitPrice);
-    const cogs = U.number(quantity) * U.number(unitCost);
-    const grossProfit = grossRevenue - cogs;
-    return {
-      grossRevenue,
-      netRevenue: grossRevenue,
-      percentFees: 0,
-      cogs,
-      grossProfit,
-      margin: grossRevenue > 0 ? grossProfit / grossRevenue : 0,
-    };
-  }
-
-  // Usado pelo painel consolidado da aba Vendedores (src/auth.js): envio de
-  // consignado de um unico item sem passar pela tela de montagem de
-  // carrinho (aba Vendas) — mesma logica de createAdminSellerConsignment
-  // (baixa de estoque central, consignments, divida no ledger), so que
-  // chamavel diretamente com os 4 campos do mini-formulario do painel.
-  async function sendConsignmentToSeller({ sellerId, productId, quantity, unitPrice }) {
-    return createAdminSellerConsignment({
-      targetSellerId: sellerId,
-      items: [{ productId, quantity: U.number(quantity), unitPrice: U.number(unitPrice) }],
-      source: 'admin_stock',
+      productId,
+      quantity: qty,
+      unitPrice: price,
+      dueDate: null,
+      status: 'pendente',
+      approvalStatus: 'aprovado',
+      saleType: 'revenda',
       paymentMode: 'consignado',
-      channel: 'Painel vendedores',
-      customerName: '',
-      notes: 'Enviado pelo painel consolidado da aba Vendedores',
-      paidInitialAmount: '0',
-      expiresHours: '48',
-    });
-  }
-
-  // Usado pelo painel consolidado da tela "Meu estoque" (src/sellerStock.js):
-  // vendedor pedindo reposicao do estoque principal, a vista ou a prazo
-  // (consignado — gera divida, precisa aprovacao do admin), sem passar pela
-  // tela de montagem de carrinho (aba Pedidos) com seus campos irrelevantes
-  // pra esse pedido (canal, link publico, etc.). Mesma logica de sempre:
-  // vira um sale_cart com status pending_approval, so o admin decide quanto
-  // libera (ver approveCart).
-  async function requestStockFromAdmin({ productId, quantity, unitPrice, paymentMode }) {
-    if (isAdmin()) throw new Error('Admin envia estoque direto pelo painel da aba Vendedores.');
-    if (!user()) throw new Error('Entre na sua conta antes de pedir estoque.');
-    const qty = U.number(quantity);
-    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
-    const price = U.number(unitPrice);
-    if (price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
-    const mode = paymentMode === 'consignado' ? 'consignado' : 'avista';
-    return createCart({
-      source: 'admin_stock',
-      paymentMode: mode,
-      channel: 'Meu estoque',
-      customerName: '',
-      notes: 'Pedido de reposição via Meu estoque',
-      paidInitialAmount: '0',
-      expiresHours: '48',
-      targetSellerId: '',
-      items: [{ productId, quantity: qty, unitPrice: price }],
-    }, 'pending_approval');
-  }
-
-  async function convertOwnStockCart(cart) {
-    const items = itemsForCart(cart.id);
-    for (const item of items) {
-      const product = productById(item.productId);
-      const quantity = U.number(item.quantity);
-      const unitPrice = U.number(item.unitPrice);
-      const unitCost = U.number(product?.avgCost);
-      // eslint-disable-next-line no-await-in-loop
-      await api().consumeSellerStock({ productId: item.productId, quantity });
-      const math = saleMathForCart({ quantity, unitPrice, unitCost });
-      // eslint-disable-next-line no-await-in-loop
-      const sale = await S().add('sales', {
-        date: U.today(),
-        channel: cart.channel || 'Carrinho',
-        clientId: cart.clientId || null,
-        productId: item.productId,
-        quantity,
-        unitPrice,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        unitCost,
-        ...math,
-        notes: `Venda pelo carrinho ${cart.id}${cart.customerName ? ` - ${cart.customerName}` : ''}`,
-        origin: 'pedido',
-        originId: cart.id,
-      });
-      // eslint-disable-next-line no-await-in-loop
-      const consignment = await S().add('consignments', {
-        sellerId: cart.sellerId,
-        clientId: cart.clientId || null,
-        productId: item.productId,
-        quantitySent: quantity,
-        quantitySold: quantity,
-        quantityReturned: 0,
-        unitPrice,
-        costAtSend: unitCost,
-        amountPaid: 0,
-        status: 'com_cliente',
-        date: U.today(),
-        notes: `Venda pelo carrinho ${cart.id}`,
-      });
-      if (consignment && consignment.id) {
-        // eslint-disable-next-line no-await-in-loop
-        await S().add('consignmentEvents', {
-          consignmentId: consignment.id,
-          type: 'venda_cliente',
-          date: U.today(),
-          quantity,
-          amount: quantity * unitPrice,
-        });
-      }
-      if (sale && sale.id) {
-        // venda gravada para painel/metas; consignado guarda acerto com admin
-      }
-    }
-    await S().update('saleCarts', cart.id, { status: 'converted' });
-    await S().refresh();
-  }
-
-  // Aprovacao com ajuste/parcial: admin decide quanto de cada item libera
-  // (approvedQuantity), o financeiro usa sempre o total APROVADO (nunca o
-  // solicitado — regra central do pacote de replicacao). Reposicao
-  // consignado ou parcial vira consignacao admin->vendedor (com a fatia
-  // proporcional do que ja foi pago); a vista vira so um registro
-  // logistico em orders (sem divida).
-  async function approveCart(container, cartId, approvedByAdmin) {
-    const card = container.querySelector(`[data-approval-cart="${CSS.escape(cartId)}"]`);
-    const cart = (state().saleCarts || []).find((item) => String(item.id) === String(cartId));
-    if (!cart) throw new Error('Carrinho nao encontrado.');
-    const items = itemsForCart(cartId);
-    const note = card?.querySelector('[data-rejection-note]')?.value || '';
-
-    const approvedQuantities = items.map((item) => {
-      const input = card?.querySelector(`[data-approve-item="${CSS.escape(item.id)}"]`);
-      return approvedByAdmin ? Math.min(U.number(input?.value), U.number(item.quantity)) : 0;
-    });
-    const totalAprovado = items.reduce((sum, item, index) => sum + approvedQuantities[index] * U.number(item.unitPrice), 0);
-    const paidInitial = Math.min(U.number(cart.paidInitialAmount), totalAprovado);
-
-    let approvedAny = false;
-    let rejectedAny = false;
-    for (let index = 0; index < items.length; index += 1) {
-      const item = items[index];
-      const qty = approvedQuantities[index];
-      if (qty > 0) approvedAny = true;
-      if (qty < U.number(item.quantity)) rejectedAny = true;
-      // eslint-disable-next-line no-await-in-loop
-      await S().update('saleCartItems', item.id, {
-        approvedQuantity: qty,
-        rejectionReason: qty < U.number(item.quantity) ? (note || 'Quantidade nao liberada pelo admin.') : null,
-      });
-      if (qty > 0) {
-        const itemTotal = qty * U.number(item.unitPrice);
-        const itemPaid = totalAprovado > 0 ? (itemTotal / totalAprovado) * paidInitial : 0;
-        const itemDebt = Math.max(itemTotal - itemPaid, 0);
-        if (cart.paymentMode === 'consignado' || cart.paymentMode === 'parcial') {
-          // eslint-disable-next-line no-await-in-loop
-          await transferAdminStockToSeller({
-            sellerId: cart.sellerId,
-            productId: item.productId,
-            quantity: qty,
-            unitPrice: item.unitPrice,
-            amountPaid: itemPaid,
-            cartId: cart.id,
-            note: `${cart.paymentMode === 'parcial' ? 'Reposicao parcial' : 'Consignado'} aprovado para ${sellerName(cart.sellerId)} via carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
-          });
-          if (itemDebt > 0) {
-            // Fase 3 (ledger): a divida so entra sobre a quantidade
-            // APROVADA, nunca a solicitada. Ver docs/replication-v1/
-            // 04-fase3-ledger-vendedor.md.
-            // eslint-disable-next-line no-await-in-loop
-            await S().add('sellerAccountEntries', {
-              sellerId: cart.sellerId,
-              type: 'debit_replenishment',
-              direction: 'debit',
-              amount: itemDebt,
-              sourceType: 'sale_cart_item',
-              sourceId: item.id,
-              notes: `Reposicao (${PAYMENT_MODE_LABELS[cart.paymentMode] || cart.paymentMode}) via carrinho ${cart.id}`,
-            });
-          }
-        } else {
-          // eslint-disable-next-line no-await-in-loop
-          await S().add('orders', {
-            sellerId: cart.sellerId,
-            clientId: cart.clientId || null,
-            productId: item.productId,
-            quantity: qty,
-            unitPrice: item.unitPrice,
-            dueDate: null,
-            status: 'pendente',
-            notes: `Liberado pelo carrinho ${cart.id}${note ? ` - ${note}` : ''}`,
-            convertedSaleId: null,
-            approvalStatus: 'aprovado',
-          });
-        }
-      }
-    }
-    const status = approvedAny ? (rejectedAny ? 'partially_approved' : 'approved') : 'rejected';
-    await S().update('saleCarts', cartId, {
-      status,
-      approvedAt: approvedAny ? new Date().toISOString() : null,
-      approvedBy: approvedAny ? user().id : null,
+      paidAmount: 0,
+      orderGroupId: groupId,
+      notes: 'Consignado enviado pelo painel da aba Vendedores',
+      convertedSaleId: null,
     });
     await S().refresh();
+    await advanceOrderGroup(groupId, 'despachado');
   }
 
-  function mount(container, options = {}) {
-    const draft = persistentDraft;
-    let feedback = null;
 
-    function paint() {
-      container.innerHTML = [
-        renderBuilder(draft, feedback),
-        renderCarts(),
-      ].join('');
-      const config = container.querySelector('[data-cart-config]');
-      if (config) {
-        config.source.value = draft.source;
-        config.paymentMode.value = draft.paymentMode;
-        if (config.channel) config.channel.value = draft.channel || 'WhatsApp';
-        if (config.customerName) config.customerName.value = draft.customerName || '';
-        if (config.targetSellerId) config.targetSellerId.value = draft.targetSellerId || '';
-        if (config.paidInitialAmount) config.paidInitialAmount.value = draft.paidInitialAmount || '0';
-        config.expiresHours.value = draft.expiresHours;
-      }
-    }
-
-    function readConfig() {
-      const config = container.querySelector('[data-cart-config]');
-      if (!config) return;
-      const data = U.formData(config);
-      draft.source = data.source || 'seller_stock';
-      draft.paymentMode = data.paymentMode || 'avista';
-      draft.channel = data.channel || 'WhatsApp';
-      draft.customerName = data.customerName || '';
-      draft.expiresHours = data.expiresHours || '48';
-      draft.targetSellerId = data.targetSellerId || draft.targetSellerId || '';
-      draft.notes = data.notes || '';
-      draft.paidInitialAmount = data.paidInitialAmount || draft.paidInitialAmount || '0';
-      if (isAdmin() && draft.paymentMode === 'consignado') draft.source = 'admin_stock';
-      if (!isAdmin()) draft.targetSellerId = '';
-    }
-
-    container.addEventListener('change', (event) => {
-      if (event.target.closest('[data-cart-config]')) {
-        readConfig();
-        paint();
-        return;
-      }
-      const qtyInput = event.target.closest('[data-draft-qty]');
-      if (qtyInput) {
-        const item = draft.items[Number(qtyInput.dataset.draftQty)];
-        if (item) item.quantity = U.number(qtyInput.value);
-        draft.items = draft.items.filter((item) => U.number(item.quantity) > 0);
-        paint();
-        return;
-      }
-      const productSelect = event.target.closest('[data-cart-add-item] select[name="productId"]');
-      if (productSelect) {
-        const product = productById(productSelect.value);
-        const form = productSelect.closest('[data-cart-add-item]');
-        if (form && product && form.elements.unitPrice && !form.elements.unitPrice.dataset.touched) {
-          form.elements.unitPrice.value = resolvedUnitPrice(product);
-        }
-      }
-      if (event.target.closest('[data-cart-add-item] input[name="unitPrice"]')) {
-        event.target.dataset.touched = '1';
-      }
-    });
-
-    container.addEventListener('submit', async (event) => {
-      const form = event.target.closest('[data-cart-add-item]');
-      if (!form) return;
-      event.preventDefault();
-      readConfig();
-      const data = U.formData(form);
-      const product = productById(data.productId);
-      if (!product) return;
-      addDraftItem(draft, {
-        productId: data.productId,
-        quantity: U.number(data.quantity),
-        unitPrice: U.number(data.unitPrice || resolvedUnitPrice(product)),
-      });
-      form.reset();
-      feedback = null;
-      paint();
-    });
-
-    container.addEventListener('click', async (event) => {
-      const button = event.target.closest('[data-cart-action]');
-      if (!button) return;
-      const action = button.dataset.cartAction;
-      try {
-        readConfig();
-        if (action === 'remove-draft-item') {
-          draft.items.splice(Number(button.dataset.index), 1);
-        } else if (action === 'inc-draft-item') {
-          const item = draft.items[Number(button.dataset.index)];
-          if (item) item.quantity = U.number(item.quantity) + 1;
-        } else if (action === 'dec-draft-item') {
-          const item = draft.items[Number(button.dataset.index)];
-          if (item) item.quantity = Math.max(U.number(item.quantity) - 1, 0);
-          if (item && U.number(item.quantity) <= 0) draft.items.splice(Number(button.dataset.index), 1);
-        } else if (action === 'quick-add-product') {
-          addDraftItem(draft, { productId: button.dataset.productId, quantity: 1 });
-        } else if (action === 'clear-draft') {
-          resetDraft(draft);
-        } else if (action === 'save-cart') {
-          if (isAdmin() && draft.paymentMode === 'consignado' && !draft.editingCartId) {
-            await createAdminSellerConsignment(draft);
-            resetDraft(draft);
-            feedback = { message: 'Consignado enviado ao vendedor. Estoque central baixado e estoque proprio atualizado.', type: 'success' };
-          } else {
-            const status = draft.source === 'admin_stock' ? 'pending_approval' : 'submitted';
-            await saveDraftAsCart(draft, status);
-            resetDraft(draft);
-            feedback = { message: status === 'pending_approval' ? 'Pedido enviado para aprovacao do admin.' : 'Carrinho salvo. Confirme a venda quando entregar ou enviar.', type: 'success' };
-          }
-        } else if (action === 'share-cart') {
-          const cart = await saveDraftAsCart(draft, 'shared');
-          resetDraft(draft, true);
-          draft.lastLink = publicUrl(cart);
-          feedback = { message: 'Link publico criado. Ele expira no prazo escolhido.', type: 'success' };
-        } else if (action === 'copy-link') {
-          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
-          if (cart) await navigator.clipboard.writeText(publicUrl(cart));
-          feedback = { message: 'Link copiado.', type: 'success' };
-        } else if (action === 'confirm-own-stock' || action === 'convert-own-stock') {
-          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
-          if (cart) await convertOwnStockCart(cart);
-          feedback = { message: 'Venda confirmada. O estoque proprio foi baixado automaticamente.', type: 'success' };
-        } else if (action === 'edit-cart') {
-          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
-          if (cart) {
-            loadDraftFromCart(draft, cart, cart.status === 'converted');
-            feedback = { message: cart.status === 'converted' ? 'Carrinho vendido carregado como novo acerto.' : 'Carrinho carregado para edicao.', type: 'success' };
-          }
-        } else if (action === 'delete-cart') {
-          const cart = (state().saleCarts || []).find((item) => String(item.id) === String(button.dataset.cartId));
-          if (cart && confirm('Excluir este carrinho?')) {
-            await S().remove('saleCarts', cart.id);
-            await S().refresh();
-            feedback = { message: 'Carrinho excluido.', type: 'success' };
-          }
-        }
-      } catch (error) {
-        feedback = { message: error.message, type: 'danger' };
-      }
-      paint();
-      if (typeof options.onDone === 'function') options.onDone();
-    });
-
-    paint();
-  }
-
-  // Tela dedicada "Aprovações" (admin) — só a fila de carrinhos pendentes do
-  // estoque do administrador, com aprovação completa/ajustada/parcial ou
-  // rejeição. Substitui a antiga tela de aprovação binária de `orders`
-  // (Decisão 2, docs/replication-v1/01-decisoes-de-produto.md): reposição
-  // padronizada em carrinhos, então este é o único lugar onde o admin
-  // aprova pedidos de reposição do vendedor.
-  function mountApprovals(container, options = {}) {
-    let approvalFeedback = null;
-
-    function paint() {
-      container.innerHTML = renderAdminApprovals(approvalFeedback);
-    }
-
-    container.addEventListener('click', async (event) => {
-      const button = event.target.closest('[data-cart-action]');
-      if (!button) return;
-      const action = button.dataset.cartAction;
-      try {
-        if (action === 'approve-cart') {
-          await approveCart(container, button.dataset.cartId, true);
-          approvalFeedback = { message: 'Carrinho aprovado. Quantidades nao liberadas ficaram rejeitadas.', type: 'success' };
-        } else if (action === 'reject-cart') {
-          if (!confirm('Rejeitar este carrinho?')) return;
-          await approveCart(container, button.dataset.cartId, false);
-          approvalFeedback = { message: 'Carrinho rejeitado.', type: 'warning' };
-        } else {
-          return;
-        }
-      } catch (error) {
-        approvalFeedback = { message: error.message, type: 'danger' };
-      }
-      paint();
-      if (typeof options.onDone === 'function') options.onDone();
-    });
-
-    paint();
-  }
+  // =====================================================================
+  // Página pública do carrinho (link compartilhado) — mantida.
+  // =====================================================================
 
   async function mountPublic(container, token) {
     container.innerHTML = '<main class="public-cart-page"><div class="panel-card">Carregando carrinho...</div></main>';
@@ -1128,23 +1056,14 @@
             </article>
             <form class="panel-card public-cart-form" data-public-cart-form>
               <h2>Confirmar pedido</h2>
-              <label>Nome
-                <input name="customer_name" required value="${U.escapeHtml(data.cart.customer_name || '')}">
-              </label>
-              <label>WhatsApp
-                <input name="customer_phone" value="${U.escapeHtml(data.cart.customer_phone || '')}">
-              </label>
-              <label>Comprovante (imagem ou PDF)
-                <input name="payment_proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-              </label>
-              <label>Observacoes
-                <textarea name="customer_notes">${U.escapeHtml(data.cart.customer_notes || '')}</textarea>
-              </label>
+              <label>Nome<input name="customer_name" required value="${U.escapeHtml(data.cart.customer_name || '')}"></label>
+              <label>WhatsApp<input name="customer_phone" value="${U.escapeHtml(data.cart.customer_phone || '')}"></label>
+              <label>Comprovante (imagem ou PDF)<input name="payment_proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"></label>
+              <label>Observacoes<textarea name="customer_notes">${U.escapeHtml(data.cart.customer_notes || '')}</textarea></label>
               <button type="submit">Enviar pedido</button>
             </form>
           </section>
-        </main>
-      `;
+        </main>`;
       container.querySelector('[data-public-cart-form]').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.currentTarget;
@@ -1163,5 +1082,5 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountApprovals, mountSettings, mountPublic, sendConsignmentToSeller, requestStockFromAdmin };
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
 })();

@@ -158,3 +158,32 @@ Resultado: os próximos cadastros ficam vinculados ao negócio ativo.
    Vendas/Pedidos). O vendedor então vê, em **Meu estoque**, a seção
    "Acerto de estoque" para corrigir a quantidade de um produto com motivo
    obrigatório — usa o crédito uma única vez.
+
+## Fluxo 15 — Venda unificada + esteira (migração 0016)
+
+Substitui a duplicação Vendas/Pedidos por um único painel na aba **Vendas**.
+
+1. No topo do carrinho escolhe-se o **tipo de venda**:
+   - **Venda minha (cliente final)** → `orders.sale_type = 'propria'`,
+     `seller_id` = admin; campo Cliente disponível.
+   - **Venda ao revendedor** → `orders.sale_type = 'revenda'`, com pagamento
+     (À vista / Parcial / Consignado) e o vendedor de destino (`seller_id` =
+     vendedor).
+2. Monta-se o carrinho (vários produtos) e clica em **Lançar**. Cada item
+   vira uma linha em `orders` com o mesmo `order_group_id`, `status =
+   'pendente'`. Admin lança já `aprovado`; vendedor que pede reposição lança
+   `pendente_aprovacao` (aparece na esteira do admin como card a aprovar).
+3. **Só o admin** move o grupo pela esteira: Pendente → Em montagem → Pronto
+   → Despachado → Concluído (arrastar ou "Mover para"). O grupo inteiro anda
+   junto — ver `advanceOrderGroup()` em `src/salesCart.js`.
+4. **No Despachado** a venda materializa (idempotente por linha):
+   - `propria` → cria a venda (baixa estoque `saida_venda`, CMV, lucro);
+   - `revenda` consignado → `transferAdminStockToSeller` + débito no ledger
+     do vendedor (`seller_account_entries`);
+   - `revenda` à vista → transfer com `amountPaid = total`, sem débito;
+   - `revenda` parcial → transfer + débito de `total − paid_amount`.
+5. **Concluído** só confirma a entrega, sem novo efeito de estoque/financeiro.
+
+O vendedor vê a mesma esteira só leitura (status do que pediu) e continua
+podendo **vender o próprio estoque** (baixa imediata, produto já está na mão)
+direto na aba Vendas.
