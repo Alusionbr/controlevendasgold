@@ -72,6 +72,12 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Metodo nao suportado.' }, 405);
   }
 
+  // O link pode continuar consultavel depois do envio para exibir o status,
+  // mas os dados do cliente/comprovante so podem ser enviados uma vez.
+  if (lookup.cart.status !== 'shared') {
+    return jsonResponse({ error: 'Este carrinho ja foi enviado.' }, 409);
+  }
+
   const form = await req.formData().catch(() => null);
   if (!form) return jsonResponse({ error: 'Envie os dados como formulario.' }, 400);
 
@@ -114,14 +120,29 @@ Deno.serve(async (req: Request) => {
   };
   if (proofPath) patch.payment_proof_path = proofPath;
 
-  const { error: updateError } = await adminClient
+  const { data: updatedCart, error: updateError } = await adminClient
     .from('sale_carts')
     .update(patch)
-    .eq('id', cartId);
+    .eq('id', cartId)
+    .eq('status', 'shared')
+    .select('id')
+    .maybeSingle();
 
   if (updateError) {
     console.error('public-cart: update error', updateError);
     return jsonResponse({ error: 'Nao foi possivel enviar o carrinho.' }, 500);
+  }
+
+  // Protege contra dois POSTs simultaneos. Apenas o primeiro muda o status;
+  // o segundo nao encontra uma linha ainda em `shared`. Se ele ja tiver feito
+  // upload, remove o arquivo orfao antes de responder conflito.
+  if (!updatedCart) {
+    if (proofPath) {
+      await adminClient.storage.from('payment-proofs').remove([proofPath]).catch((cleanupError) => {
+        console.error('public-cart: falha removendo comprovante de envio duplicado', cleanupError);
+      });
+    }
+    return jsonResponse({ error: 'Este carrinho ja foi enviado.' }, 409);
   }
 
   return jsonResponse({
