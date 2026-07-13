@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-c9Acfg76m4gF59zNibKstQPOzc6ewVE/YuJDCeLi6JI=' 'sha256-OzYfhreLGT/dKIWVEWkay3Rshfraxn35B6/b3Ddxym0=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-3rXJOkx8VTb96cxQvL57tPzqNft/oO7crfitnhlmFTg=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-CxckywtAbr5RRoRZZ6Z54Vfdpp/Tt+DsF8d0WCz6l4A=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-naDZnEWXAMvtDpaf5UT971t1ZZx/T4CTCTZJX7uJwnY=' 'sha256-E2VncHo4nVPe1f99FPykF7cMfVaiCzZIT7VB84uAZ+4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-EpNq5pRH1EZyAEXsDwtEWx+z8yc2lO9b4L77q3H3OSk=' 'sha256-tnclARJhJ8Iv2lIQSyiwgVHocbn2tgnOEtDI2gvg2MI=' 'sha256-MtEUJebRo7KCAjoVlh7bqbEci1hNI5OV9V8stxqPs0Y=' 'sha256-4zrZEqYPTsuUr6clfBAGFotSYLubmZ03tEHGDefBVOs=' 'sha256-7V/02xbk0CuWRlUrvel7Rjuqvq/eUDdCf7DqUWFbeuM=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-dy6CxwyusHcguqZ7ku78enlUDE8YfB3kFRFfDYljhb0=' 'sha256-jOO/WgQqG06l8oCKG4UcthT8eJf0nevxEjVu6FSrt8c=' 'sha256-fNq9B3Zm8CiDwqUvyaib05nfTEcTapTpiMCNINgcOyI=' 'sha256-+n1bH6MjZd4prNDEG3lJqq8JhhTU+3upblx0oFOxCxo=' 'sha256-Qd51HvLcV2RZrbVnW0vIwHpnLnwODM+jqybwPcvD1Uw=' 'sha256-sne0znmyDRpkM0VtaKy8XwkxHbLHlXoLL9zgf+aYtOU=' 'sha256-wNZAS6WyNjNGJEE9xX8lXrxiQnF7XHVa7iXZj4f0ehQ=' 'sha256-C1eQBne7jhb22Q+fFjqU/pC04Wey3zuiIXVs88QlGQ4=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-q9Ek4iv8jNN2WD4cpfhbE1SEtfskRdXK2Av0A7jErwM=' 'sha256-Z6iZCmJfOr1jP7WFhQZRozVAChzdYx561mUS8OPLH1o='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1512,6 +1512,71 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .cart-stepper { grid-template-columns: 42px minmax(74px, 1fr) 42px; }
   .cart-saved-card header,
   .cart-saved-card footer { align-items: stretch; flex-direction: column; }
+}
+
+
+/* ---------- Resumo operacional e edição rápida do carrinho ---------- */
+.operations-snapshot {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 100%);
+  box-shadow: var(--shadow-sm);
+}
+.operations-snapshot-head { display: flex; align-items: start; justify-content: space-between; gap: 0.75rem; }
+.operations-snapshot-head span { color: var(--accent-deep); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.operations-snapshot-head h2 { margin: 0.18rem 0 0; font-size: 1.15rem; }
+.operations-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; }
+.operations-kpis article { display: grid; gap: 0.32rem; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.operations-kpis article.needs-attention { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.operations-kpis span { color: var(--muted); font-size: 0.72rem; font-weight: 750; letter-spacing: 0.05em; text-transform: uppercase; }
+.operations-kpis strong { font-family: var(--num); font-size: 1.2rem; }
+.operations-kpis small { color: var(--muted); min-height: 2.4em; }
+.link-button { justify-self: start; padding: 0; min-height: 0; border: 0; color: var(--accent-deep); background: transparent; font-weight: 750; }
+.link-button:hover { text-decoration: underline; background: transparent; }
+.sales-trend-card { display: grid; grid-template-columns: minmax(180px, 0.7fr) minmax(240px, 1.3fr); gap: 1rem; align-items: end; padding: 0.8rem; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); }
+.sales-trend-card h3, .sales-trend-card p { margin: 0; }
+.sales-trend-card p { color: var(--muted); font-size: 0.84rem; margin-top: 0.25rem; }
+.sales-bars { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 0.45rem; height: 118px; }
+.sales-bar { display: grid; grid-template-rows: 1fr auto; gap: 0.25rem; height: 100%; align-items: end; text-align: center; }
+.sales-bar i { width: 100%; min-height: 4px; border-radius: 6px 6px 2px 2px; background: var(--accent); }
+.sales-bar span { color: var(--muted); font-size: 0.7rem; text-transform: capitalize; }
+.cart-price-editor { display: grid; gap: 0.15rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; }
+.cart-price-editor input { width: 96px; padding: 0.38rem; text-align: right; }
+
+@media (max-width: 820px) {
+  .operations-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sales-trend-card { grid-template-columns: 1fr; }
+  .cart-price-editor input { width: 100%; }
+}
+@media (max-width: 420px) {
+  .operations-snapshot-head { align-items: stretch; flex-direction: column; }
+  .operations-kpis { grid-template-columns: 1fr; }
+}
+
+.product-editor-dialog {
+  width: min(760px, calc(100vw - 1.5rem));
+  max-height: min(760px, calc(100vh - 1.5rem));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.28);
+}
+.product-editor-dialog::backdrop { background: rgba(15, 23, 42, 0.52); }
+.product-editor-form { max-height: inherit; overflow: auto; padding: 1rem; }
+.product-editor-form header,
+.product-editor-form footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.product-editor-form header span { color: var(--accent-deep); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.product-editor-form header h2 { margin: 0.15rem 0 0; font-size: 1.2rem; }
+.product-editor-form footer { justify-content: flex-end; padding-top: 0.35rem; border-top: 1px solid var(--line); }
+@media (max-width: 540px) {
+  .product-editor-dialog { width: calc(100vw - 0.8rem); max-height: calc(100vh - 0.8rem); }
+  .product-editor-form footer { align-items: stretch; flex-direction: column-reverse; }
+  .product-editor-form footer button { width: 100%; }
 }
 
   </style>
@@ -6155,6 +6220,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return product.defaultPrice || product.salePrice || 0;
   }
 
+  function validateDraftPrice(productId, unitPrice) {
+    const price = U.number(unitPrice);
+    if (price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
+    if (isAdmin() || !Calc || typeof Calc.resolveSellerPrice !== 'function' || typeof Calc.validatePriceFloor !== 'function') return;
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const { floor } = Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceForProduct(productId) });
+    const check = Calc.validatePriceFloor({ unitPrice: price, floor });
+    if (!check.ok) throw new Error(check.message);
+  }
+
+  function validateDraftItems(draft) {
+    draft.items.forEach((item) => validateDraftPrice(item.productId, item.unitPrice));
+  }
+
   // Modo escolhido pelo papel -> filtra a lista de produtos disponivel.
   function draftUsesOwnStock(draft) { return draft.mode === 'own'; }
 
@@ -6359,6 +6439,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function sellOwnStockNow(draft) {
     if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    validateDraftItems(draft);
     const cart = await createCart({ ...draft }, 'submitted');
     await convertOwnStockCart({ ...cart, clientId: draft.clientId || null, customerName: draft.customerName });
   }
@@ -6381,6 +6462,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const currentUser = user();
     if (!currentUser) throw new Error('Entre na sua conta antes de lancar.');
     if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    validateDraftItems(draft);
     const revenda = isRevendaMode(draft.mode);
     const asRequest = draft.mode === 'request';
     if (draft.mode === 'revenda' && !draft.targetSellerId) throw new Error('Selecione o vendedor que vai receber.');
@@ -6520,6 +6602,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const qty = U.number(qtyInput?.value);
       const price = U.number(priceInput?.value);
       if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      validateDraftPrice(order.productId, price);
       // eslint-disable-next-line no-await-in-loop
       await S().update('orders', order.id, { quantity: qty, unitPrice: price });
     }
@@ -6610,7 +6693,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <article class="cart-draft-item">
           <div>
             <strong>${U.escapeHtml(product ? product.name : 'Produto')}</strong>
-            <span>${U.money(item.unitPrice)} cada</span>
+            <label class="cart-price-editor">Preço unitário<input data-draft-price="${index}" type="number" min="0.01" step="0.01" value="${U.escapeHtml(item.unitPrice)}" aria-label="Preço unitário"></label>
           </div>
           <div class="cart-stepper">
             <button type="button" class="small ghost" data-cart-action="dec-draft-item" data-index="${index}">-</button>
@@ -6739,15 +6822,16 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const editing = boardState.editGroupId === group.key;
 
     let actions = '';
-    if (admin && pending) {
-      actions = `<div class="actions">
-        <button type="button" class="small" data-board-action="approve-group" data-group-id="${U.escapeHtml(group.key)}">Aprovar</button>
-        <button type="button" class="small danger" data-board-action="reject-group" data-group-id="${U.escapeHtml(group.key)}">Rejeitar</button>
-      </div>`;
-    } else if (admin && editing) {
+    if (admin && editing) {
       actions = `<div class="actions">
         <button type="button" class="small" data-board-action="save-edit-group" data-group-id="${U.escapeHtml(group.key)}">Salvar</button>
         <button type="button" class="small ghost" data-board-action="cancel-edit-group">Cancelar</button>
+      </div>`;
+    } else if (admin && pending) {
+      actions = `<div class="actions">
+        <button type="button" class="small secondary" data-board-action="edit-group" data-group-id="${U.escapeHtml(group.key)}">Ajustar itens</button>
+        <button type="button" class="small" data-board-action="approve-group" data-group-id="${U.escapeHtml(group.key)}">Aprovar</button>
+        <button type="button" class="small danger" data-board-action="reject-group" data-group-id="${U.escapeHtml(group.key)}">Rejeitar</button>
       </div>`;
     } else if (admin) {
       const moveSelect = `<label class="kanban-move"><span>Mover para</span>
@@ -6851,6 +6935,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         }
         paint();
         if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
+      const priceInput = event.target.closest('[data-draft-price]');
+      if (priceInput) {
+        const item = draft.items[Number(priceInput.dataset.draftPrice)];
+        try {
+          if (item) {
+            validateDraftPrice(item.productId, priceInput.value);
+            item.unitPrice = U.number(priceInput.value);
+          }
+          feedback = null;
+        } catch (error) {
+          feedback = { message: error.message, type: 'danger' };
+        }
+        paint();
         return;
       }
       const qtyInput = event.target.closest('[data-draft-qty]');
@@ -9508,7 +9607,39 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
     `;
+  }
+
+  function renderOperationsSnapshot(baseState) {
+    const businessId = baseState.activeBusinessId;
+    const products = (baseState.products || []).filter((product) => product.businessId === businessId);
+    const productMap = new Map(products.map((product) => [String(product.id), product]));
+    const withSellers = (baseState.sellerStock || []).filter((row) => row.businessId === businessId)
+      .reduce((sum, row) => sum + U.number(row.quantity) * U.number(productMap.get(String(row.productId))?.avgCost), 0);
+    const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
+    const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
+    const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
+    const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
+    });
+    const daysByKey = new Map(days.map((day) => [day.key, day]));
+    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    const maxDay = Math.max(...days.map((day) => day.amount), 1);
+    return `
+      <section class='operations-snapshot' aria-label='Resumo operacional'>
+        <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
+        <div class='operations-kpis'>
+          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
+          <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
+        </div>
+        <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
+      </section>`;
   }
 
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
@@ -9573,6 +9704,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
+
+        ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
           <h3>Últimas vendas</h3>
@@ -9802,6 +9935,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
         `<div class="actions">
+          ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
           ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
@@ -10366,6 +10500,48 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     `);
   }
 
+  function openProductEditor(productId) {
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    document.getElementById('productEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'productEditor';
+    dialog.className = 'product-editor-dialog';
+    dialog.innerHTML = `
+      <form id='productEditForm' class='grid-form product-editor-form'>
+        <header><div><span>Editar produto</span><h2>${U.escapeHtml(product.name)}</h2></div><button type='button' class='ghost small' data-action='close-product-editor'>Fechar</button></header>
+        <input type='hidden' name='id' value='${U.escapeHtml(product.id)}'>
+        <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
+        <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
+        <label>Unidade<select name='unit' required>${UI.optionList(state().settings.units, product.unit, '')}</select></label>
+        <label>Preço de venda<input name='salePrice' type='number' min='0' step='0.01' value='${U.escapeHtml(product.salePrice || 0)}'></label>
+        <label>Piso de preço<input name='priceFloor' type='number' min='0' step='0.01' value='${U.escapeHtml(product.priceFloor ?? '')}'></label>
+        <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
+        <label>Margem desejada (%)<input name='targetMarginPercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.targetMarginPercent || 0)}'></label>
+        <label>Taxas (%)<input name='taxFeePercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.taxFeePercent || 0)}'></label>
+        <label class='full'>Observações<textarea name='notes'>${U.escapeHtml(product.notes || '')}</textarea></label>
+        <footer><button type='button' class='ghost' data-action='close-product-editor'>Cancelar</button><button type='submit'>Salvar alterações</button></footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  async function updateProduct(data) {
+    const business = S.activeBusiness();
+    await S.update('products', data.id, {
+      name: data.name.trim(),
+      type: data.type,
+      unit: data.unit,
+      salePrice: U.number(data.salePrice),
+      priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
+      minStock: U.number(data.minStock),
+      targetMarginPercent: U.number(data.targetMarginPercent ?? business?.defaultTargetMargin),
+      taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
+      notes: data.notes || '',
+    });
+  }
   async function updateBusiness(data) {
     const business = S.activeBusiness();
     if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
@@ -10658,6 +10834,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const handlers = {
         businessForm: updateBusiness,
         productForm: addProduct,
+        productEditForm: updateProduct,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
         purchaseForm: addPurchase,
@@ -10671,6 +10848,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const handler = handlers[form.id];
       if (!handler) return;
       await handler(data);
+      if (form.id === 'productEditForm') document.getElementById('productEditor')?.close();
       form.reset();
       renderAll();
     } catch (error) {
@@ -10683,6 +10861,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!button) return;
     const { action, id } = button.dataset;
     try {
+      if (action === 'edit-product') { openProductEditor(id); return; }
+      if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
       switch (action) {
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
