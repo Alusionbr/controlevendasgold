@@ -264,7 +264,39 @@
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
     `;
+  }
+
+  function renderOperationsSnapshot(baseState) {
+    const businessId = baseState.activeBusinessId;
+    const products = (baseState.products || []).filter((product) => product.businessId === businessId);
+    const productMap = new Map(products.map((product) => [String(product.id), product]));
+    const withSellers = (baseState.sellerStock || []).filter((row) => row.businessId === businessId)
+      .reduce((sum, row) => sum + U.number(row.quantity) * U.number(productMap.get(String(row.productId))?.avgCost), 0);
+    const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
+    const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
+    const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
+    const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
+    });
+    const daysByKey = new Map(days.map((day) => [day.key, day]));
+    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    const maxDay = Math.max(...days.map((day) => day.amount), 1);
+    return `
+      <section class='operations-snapshot' aria-label='Resumo operacional'>
+        <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
+        <div class='operations-kpis'>
+          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
+          <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
+        </div>
+        <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
+      </section>`;
   }
 
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
@@ -329,6 +361,8 @@
             ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
+
+        ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
           <h3>Últimas vendas</h3>
