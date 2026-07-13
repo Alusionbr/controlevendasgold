@@ -1548,3 +1548,25 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .operations-snapshot-head { align-items: stretch; flex-direction: column; }
   .operations-kpis { grid-template-columns: 1fr; }
 }
+
+.product-editor-dialog {
+  width: min(760px, calc(100vw - 1.5rem));
+  max-height: min(760px, calc(100vh - 1.5rem));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.28);
+}
+.product-editor-dialog::backdrop { background: rgba(15, 23, 42, 0.52); }
+.product-editor-form { max-height: inherit; overflow: auto; padding: 1rem; }
+.product-editor-form header,
+.product-editor-form footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.product-editor-form header span { color: var(--accent-deep); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.product-editor-form header h2 { margin: 0.15rem 0 0; font-size: 1.2rem; }
+.product-editor-form footer { justify-content: flex-end; padding-top: 0.35rem; border-top: 1px solid var(--line); }
+@media (max-width: 540px) {
+  .product-editor-dialog { width: calc(100vw - 0.8rem); max-height: calc(100vh - 0.8rem); }
+  .product-editor-form footer { align-items: stretch; flex-direction: column-reverse; }
+  .product-editor-form footer button { width: 100%; }
+}
