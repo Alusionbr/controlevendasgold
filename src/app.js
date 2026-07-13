@@ -592,6 +592,7 @@
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
         `<div class="actions">
+          ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
           ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
@@ -1156,6 +1157,48 @@
     `);
   }
 
+  function openProductEditor(productId) {
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    document.getElementById('productEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'productEditor';
+    dialog.className = 'product-editor-dialog';
+    dialog.innerHTML = `
+      <form id='productEditForm' class='grid-form product-editor-form'>
+        <header><div><span>Editar produto</span><h2>${U.escapeHtml(product.name)}</h2></div><button type='button' class='ghost small' data-action='close-product-editor'>Fechar</button></header>
+        <input type='hidden' name='id' value='${U.escapeHtml(product.id)}'>
+        <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
+        <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
+        <label>Unidade<select name='unit' required>${UI.optionList(state().settings.units, product.unit, '')}</select></label>
+        <label>Preço de venda<input name='salePrice' type='number' min='0' step='0.01' value='${U.escapeHtml(product.salePrice || 0)}'></label>
+        <label>Piso de preço<input name='priceFloor' type='number' min='0' step='0.01' value='${U.escapeHtml(product.priceFloor ?? '')}'></label>
+        <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
+        <label>Margem desejada (%)<input name='targetMarginPercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.targetMarginPercent || 0)}'></label>
+        <label>Taxas (%)<input name='taxFeePercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.taxFeePercent || 0)}'></label>
+        <label class='full'>Observações<textarea name='notes'>${U.escapeHtml(product.notes || '')}</textarea></label>
+        <footer><button type='button' class='ghost' data-action='close-product-editor'>Cancelar</button><button type='submit'>Salvar alterações</button></footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  async function updateProduct(data) {
+    const business = S.activeBusiness();
+    await S.update('products', data.id, {
+      name: data.name.trim(),
+      type: data.type,
+      unit: data.unit,
+      salePrice: U.number(data.salePrice),
+      priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
+      minStock: U.number(data.minStock),
+      targetMarginPercent: U.number(data.targetMarginPercent ?? business?.defaultTargetMargin),
+      taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
+      notes: data.notes || '',
+    });
+  }
   async function updateBusiness(data) {
     const business = S.activeBusiness();
     if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
@@ -1448,6 +1491,7 @@
       const handlers = {
         businessForm: updateBusiness,
         productForm: addProduct,
+        productEditForm: updateProduct,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
         purchaseForm: addPurchase,
@@ -1461,6 +1505,7 @@
       const handler = handlers[form.id];
       if (!handler) return;
       await handler(data);
+      if (form.id === 'productEditForm') document.getElementById('productEditor')?.close();
       form.reset();
       renderAll();
     } catch (error) {
@@ -1473,6 +1518,8 @@
     if (!button) return;
     const { action, id } = button.dataset;
     try {
+      if (action === 'edit-product') { openProductEditor(id); return; }
+      if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
       switch (action) {
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
