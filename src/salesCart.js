@@ -106,6 +106,21 @@
     return product.defaultPrice || product.salePrice || 0;
   }
 
+  function validateDraftPrice(productId, unitPrice) {
+    const price = U.number(unitPrice);
+    if (price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
+    if (isAdmin() || !Calc || typeof Calc.resolveSellerPrice !== 'function' || typeof Calc.validatePriceFloor !== 'function') return;
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const { floor } = Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceForProduct(productId) });
+    const check = Calc.validatePriceFloor({ unitPrice: price, floor });
+    if (!check.ok) throw new Error(check.message);
+  }
+
+  function validateDraftItems(draft) {
+    draft.items.forEach((item) => validateDraftPrice(item.productId, item.unitPrice));
+  }
+
   // Modo escolhido pelo papel -> filtra a lista de produtos disponivel.
   function draftUsesOwnStock(draft) { return draft.mode === 'own'; }
 
@@ -310,6 +325,7 @@
 
   async function sellOwnStockNow(draft) {
     if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    validateDraftItems(draft);
     const cart = await createCart({ ...draft }, 'submitted');
     await convertOwnStockCart({ ...cart, clientId: draft.clientId || null, customerName: draft.customerName });
   }
@@ -332,6 +348,7 @@
     const currentUser = user();
     if (!currentUser) throw new Error('Entre na sua conta antes de lancar.');
     if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    validateDraftItems(draft);
     const revenda = isRevendaMode(draft.mode);
     const asRequest = draft.mode === 'request';
     if (draft.mode === 'revenda' && !draft.targetSellerId) throw new Error('Selecione o vendedor que vai receber.');
@@ -471,6 +488,7 @@
       const qty = U.number(qtyInput?.value);
       const price = U.number(priceInput?.value);
       if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      validateDraftPrice(order.productId, price);
       // eslint-disable-next-line no-await-in-loop
       await S().update('orders', order.id, { quantity: qty, unitPrice: price });
     }
@@ -561,7 +579,7 @@
         <article class="cart-draft-item">
           <div>
             <strong>${U.escapeHtml(product ? product.name : 'Produto')}</strong>
-            <span>${U.money(item.unitPrice)} cada</span>
+            <label class="cart-price-editor">Preço unitário<input data-draft-price="${index}" type="number" min="0.01" step="0.01" value="${U.escapeHtml(item.unitPrice)}" aria-label="Preço unitário"></label>
           </div>
           <div class="cart-stepper">
             <button type="button" class="small ghost" data-cart-action="dec-draft-item" data-index="${index}">-</button>
@@ -690,15 +708,16 @@
     const editing = boardState.editGroupId === group.key;
 
     let actions = '';
-    if (admin && pending) {
-      actions = `<div class="actions">
-        <button type="button" class="small" data-board-action="approve-group" data-group-id="${U.escapeHtml(group.key)}">Aprovar</button>
-        <button type="button" class="small danger" data-board-action="reject-group" data-group-id="${U.escapeHtml(group.key)}">Rejeitar</button>
-      </div>`;
-    } else if (admin && editing) {
+    if (admin && editing) {
       actions = `<div class="actions">
         <button type="button" class="small" data-board-action="save-edit-group" data-group-id="${U.escapeHtml(group.key)}">Salvar</button>
         <button type="button" class="small ghost" data-board-action="cancel-edit-group">Cancelar</button>
+      </div>`;
+    } else if (admin && pending) {
+      actions = `<div class="actions">
+        <button type="button" class="small secondary" data-board-action="edit-group" data-group-id="${U.escapeHtml(group.key)}">Ajustar itens</button>
+        <button type="button" class="small" data-board-action="approve-group" data-group-id="${U.escapeHtml(group.key)}">Aprovar</button>
+        <button type="button" class="small danger" data-board-action="reject-group" data-group-id="${U.escapeHtml(group.key)}">Rejeitar</button>
       </div>`;
     } else if (admin) {
       const moveSelect = `<label class="kanban-move"><span>Mover para</span>
@@ -802,6 +821,21 @@
         }
         paint();
         if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
+      const priceInput = event.target.closest('[data-draft-price]');
+      if (priceInput) {
+        const item = draft.items[Number(priceInput.dataset.draftPrice)];
+        try {
+          if (item) {
+            validateDraftPrice(item.productId, priceInput.value);
+            item.unitPrice = U.number(priceInput.value);
+          }
+          feedback = null;
+        } catch (error) {
+          feedback = { message: error.message, type: 'danger' };
+        }
+        paint();
         return;
       }
       const qtyInput = event.target.closest('[data-draft-qty]');
