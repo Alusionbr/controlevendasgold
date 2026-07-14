@@ -337,6 +337,21 @@
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  async function registerPurchaseGroup({ supplierId, date, dueDate, paymentMode, paidAmount, notes, items }) {
+    return restRequest('/rest/v1/rpc/register_purchase_group', {
+      method: 'POST',
+      body: {
+        p_supplier_id: supplierId || null,
+        p_date: date,
+        p_due_date: dueDate || date,
+        p_payment_mode: paymentMode || 'a_prazo',
+        p_paid_amount: Number(paidAmount || 0),
+        p_notes: notes || '',
+        p_items: items,
+      },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -493,6 +508,7 @@
     setSellerStock,
     consumeSellerStock,
     adjustOwnStock,
+    registerPurchaseGroup,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,

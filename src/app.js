@@ -14,7 +14,7 @@
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'consignado', 'estoque',
+    'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
@@ -31,6 +31,7 @@
     producao: 'Produção',
     vendas: 'Vendas',
     consignado: 'Consignado',
+    financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
@@ -58,6 +59,7 @@
     producao: ['admin'],
     vendas: ['admin', 'vendedor'],
     consignado: ['admin', 'vendedor'],
+    financeiro: ['admin'],
     estoque: ['vendedor'],
     tarefas: ['admin'],
     relatorios: ['admin'],
@@ -75,10 +77,10 @@
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
-    admin: ['hoje', 'vendas', 'clientes', 'produtos'],
+    admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
     vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
   };
-  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque' };
+  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
@@ -149,6 +151,7 @@
   let dashboardEnd = U.today();
   let draggedCard = null;
   let openReturnsSaleId = null;
+  let purchaseDraft = [];
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -218,6 +221,7 @@
   function currentSales() { return businessScoped('sales'); }
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
+  function currentFinancialEntries() { return businessScoped('financialEntries'); }
   function currentTasks() { return businessScoped('tasks'); }
 
   function productById(id) { return state().products.find((product) => product.id === id) || null; }
@@ -264,7 +268,43 @@
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
     `;
+  }
+
+  function renderOperationsSnapshot(baseState) {
+    const businessId = baseState.activeBusinessId;
+    const products = (baseState.products || []).filter((product) => product.businessId === businessId);
+    const productMap = new Map(products.map((product) => [String(product.id), product]));
+    const withSellers = (baseState.sellerStock || []).filter((row) => row.businessId === businessId)
+      .reduce((sum, row) => sum + U.number(row.quantity) * U.number(productMap.get(String(row.productId))?.avgCost), 0);
+    const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
+    const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
+    const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
+    const financialOpen = (baseState.financialEntries || []).filter((entry) => entry.businessId === businessId && entry.status !== 'paid' && entry.status !== 'cancelled');
+    const overdueFinancial = financialOpen.filter((entry) => entry.dueDate && entry.dueDate < U.today());
+    const overdueFinancialValue = overdueFinancial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
+    const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
+    });
+    const daysByKey = new Map(days.map((day) => [day.key, day]));
+    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    const maxDay = Math.max(...days.map((day) => day.amount), 1);
+    return `
+      <section class='operations-snapshot' aria-label='Resumo operacional'>
+        <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
+        <div class='operations-kpis'>
+          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
+          <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
+          <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
+        </div>
+        <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
+      </section>`;
   }
 
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
@@ -330,6 +370,8 @@
           </div>
         </section>
 
+        ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
+
         <section class="today-section">
           <h3>Últimas vendas</h3>
           ${recentSalesHtml}
@@ -370,6 +412,7 @@
     producao: renderProduction,
     vendas: renderSales,
     consignado: renderConsignments,
+    financeiro: renderFinancial,
     tarefas: renderTasks,
     relatorios: renderReports,
     dados: renderData,
@@ -558,6 +601,7 @@
         UI.moneyCell(product.salePrice),
         `${U.number(product.targetMarginPercent)}%`,
         `<div class="actions">
+          ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
           ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
@@ -625,7 +669,7 @@
       U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
       U.escapeHtml(client.notes || '—'),
-      `<div class="actions">${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
+      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
       <form id="clientForm" class="grid-form">
@@ -680,42 +724,72 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
     const suppliers = currentSuppliers();
-    const rows = U.sortByDateDesc(currentPurchases()).map((purchase) => {
-      const product = productById(purchase.productId);
-      const supplier = supplierById(purchase.supplierId);
+    const groups = new Map();
+    U.sortByDateDesc(currentPurchases()).forEach((purchase) => {
+      const groupId = purchase.purchaseGroupId || purchase.id;
+      if (!groups.has(groupId)) groups.set(groupId, { ...purchase, items: [], total: 0, paid: 0 });
+      const group = groups.get(groupId);
+      group.items.push(purchase);
+      group.total += U.number(purchase.totalCost);
+      group.paid += U.number(purchase.paidAmount);
+    });
+    const rows = [...groups.values()].map((group) => {
+      const supplier = supplierById(group.supplierId);
+      const itemNames = group.items.map((item) => productById(item.productId)?.name || 'Produto removido').join(', ');
       return [
-        U.escapeHtml(purchase.date),
+        U.escapeHtml(group.date),
+        U.escapeHtml(group.dueDate || group.date),
         U.escapeHtml(supplier?.name || '—'),
-        UI.productName(product),
-        U.qty(purchase.quantity, product?.unit),
-        UI.moneyCell(purchase.totalCost),
-        UI.moneyCell(purchase.unitCost),
-        U.escapeHtml(purchase.notes || '—'),
+        U.escapeHtml(itemNames),
+        String(group.items.length),
+        UI.moneyCell(group.total),
+        UI.moneyCell(group.paid),
+        UI.badge(group.paid >= group.total ? 'Pago' : group.paid > 0 ? 'Parcial' : 'Em aberto'),
+        U.escapeHtml(group.notes || '—'),
       ];
     });
-    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo médio ponderado automaticamente.', `
-      <form id="purchaseForm" class="grid-form">
-        <label>Data
-          <input name="date" type="date" required value="${U.today()}">
-        </label>
-        <label>Fornecedor
-          <select name="supplierId">${UI.optionList(suppliers, '', 'Opcional')}</select>
-        </label>
-        <label>Produto comprado
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
-        </label>
-        <label>Quantidade
-          <input name="quantity" type="number" step="0.001" required>
-        </label>
-        <label>${UI.fieldLabel('Valor total da compra', 'valorTotalCompra')}
-          <input name="totalCost" type="number" step="0.01" required>
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Nota, lote, forma de pagamento...">
-        </label>
-        <button type="submit">Lançar compra</button>
-      </form>
-      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Obs.'], rows)}
+    const draftRows = purchaseDraft.map((item) => {
+      const product = productById(item.productId);
+      return [
+        UI.productName(product),
+        U.qty(item.quantity, product?.unit),
+        UI.moneyCell(item.totalCost),
+        UI.moneyCell(U.number(item.totalCost) / U.number(item.quantity)),
+        UI.actionButton('remove-purchase-draft', item.productId, 'Remover', 'danger'),
+      ];
+    });
+    const draftTotal = purchaseDraft.reduce((sum, item) => sum + U.number(item.totalCost), 0);
+
+    return UI.section('Compras', 'Monte uma compra com vários itens. Estoque, custo médio, movimentações e conta a pagar são atualizados juntos.', `
+      <div class="two-columns purchase-builder">
+        <section class="panel-card">
+          <h3>1. Adicionar produtos</h3>
+          <form id="purchaseItemForm" class="stack-form">
+            <label>Produto<select name="productId" required>${UI.optionList(products, '', 'Produto')}</select></label>
+            <label>Quantidade<input name="quantity" type="number" min="0.001" step="0.001" required></label>
+            <label>Valor total do item<input name="totalCost" type="number" min="0.01" step="0.01" required></label>
+            <button type="submit">Adicionar à compra</button>
+          </form>
+        </section>
+        <section class="panel-card purchase-draft-summary">
+          <div class="purchase-draft-head"><div><span>Compra atual</span><strong>${U.money(draftTotal)}</strong></div><small>${purchaseDraft.length} item(ns)</small></div>
+          ${UI.table(['Produto', 'Qtd.', 'Total', 'Custo unit.', 'Ação'], draftRows, 'Adicione produtos à compra.')}
+        </section>
+      </div>
+      <details class="panel-card purchase-finalize" ${purchaseDraft.length ? 'open' : ''}>
+        <summary>2. Fornecedor e pagamento</summary>
+        <form id="purchaseGroupForm" class="grid-form">
+          <label>Data<input name="date" type="date" required value="${U.today()}"></label>
+          <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
+          <label>Fornecedor<select name="supplierId">${UI.optionList(suppliers, '', 'Opcional')}</select></label>
+          <label>Pagamento<select name="paymentMode"><option value="a_prazo">A prazo</option><option value="a_vista">À vista</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="outro">Outro</option></select></label>
+          <label>Valor já pago<input name="paidAmount" type="number" min="0" max="${draftTotal}" step="0.01" value="0"></label>
+          <label class="wide">Observações<input name="notes" placeholder="Nota, lote, parcela, responsável..."></label>
+          <button type="submit" ${purchaseDraft.length ? '' : 'disabled'}>Finalizar compra de ${U.money(draftTotal)}</button>
+        </form>
+      </details>
+      <h3>Histórico de compras</h3>
+      ${UI.table(['Data', 'Vencimento', 'Fornecedor', 'Produtos', 'Itens', 'Total', 'Pago', 'Situação', 'Obs.'], rows, 'Nenhuma compra registrada.')}
     `);
   }
 
@@ -906,6 +980,77 @@
     `, 'consignado');
   }
 
+  function financialDisplayStatus(entry) {
+    if (entry.status === 'cancelled') return 'Cancelado';
+    if (entry.status === 'paid') return 'Pago';
+    if (entry.dueDate && entry.dueDate < U.today()) return 'Vencido';
+    if (entry.status === 'partial') return 'Parcial';
+    return 'Em aberto';
+  }
+
+  function financialCounterparty(entry) {
+    if (entry.clientId) return clientById(entry.clientId)?.name || 'Cliente removido';
+    if (entry.supplierId) return supplierById(entry.supplierId)?.name || 'Fornecedor removido';
+    if (entry.sellerId) return sellerName(entry.sellerId);
+    return '—';
+  }
+
+  function renderFinancial() {
+    if (!state().activeBusinessId) return activeBusinessRequiredHtml();
+    const entries = currentFinancialEntries();
+    const active = entries.filter((entry) => entry.status !== 'cancelled');
+    const remaining = (entry) => Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount));
+    const receivable = active.filter((entry) => entry.direction === 'receivable').reduce((sum, entry) => sum + remaining(entry), 0);
+    const payable = active.filter((entry) => entry.direction === 'payable').reduce((sum, entry) => sum + remaining(entry), 0);
+    const overdue = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + remaining(entry), 0);
+    const cashResult = active.reduce((sum, entry) => sum + (entry.direction === 'receivable' ? 1 : -1) * U.number(entry.paidAmount), 0);
+    const rows = [...entries].sort((a, b) => String(a.dueDate || a.issueDate).localeCompare(String(b.dueDate || b.issueDate))).map((entry) => {
+      const canCancel = entry.status !== 'cancelled' && U.number(entry.paidAmount) === 0;
+      return [
+        U.escapeHtml(entry.dueDate || entry.issueDate),
+        UI.badge(entry.direction === 'receivable' ? 'Receber' : 'Pagar'),
+        U.escapeHtml(entry.description),
+        U.escapeHtml(financialCounterparty(entry)),
+        UI.moneyCell(entry.amount),
+        UI.moneyCell(entry.paidAmount),
+        UI.moneyCell(remaining(entry)),
+        UI.badge(financialDisplayStatus(entry)),
+        '<div class="actions">' +
+          (entry.status !== 'paid' && entry.status !== 'cancelled' ? UI.actionButton('financial-pay', entry.id, entry.direction === 'receivable' ? 'Receber' : 'Pagar') : '') +
+          (canCancel ? UI.actionButton('financial-cancel', entry.id, 'Cancelar', 'danger') : '') +
+          (entry.status === 'cancelled' ? UI.actionButton('financial-restore', entry.id, 'Reabrir') : '') +
+        '</div>',
+      ];
+    });
+
+    return UI.section('Financeiro', 'Contas a pagar e receber conectadas à operação. Compras novas geram uma conta automaticamente.', `
+      <div class="metric-grid finance-metrics">
+        <article><span>A receber</span><strong>${U.money(receivable)}</strong><small>Saldo ainda não recebido.</small></article>
+        <article><span>A pagar</span><strong>${U.money(payable)}</strong><small>Saldo ainda não pago.</small></article>
+        <article class="${overdue > 0 ? 'needs-attention' : ''}"><span>Vencido</span><strong>${U.money(overdue)}</strong><small>Exige cobrança ou pagamento.</small></article>
+        <article><span>Caixa realizado</span><strong>${U.money(cashResult)}</strong><small>Recebido menos pago.</small></article>
+      </div>
+      <details class="panel-card finance-entry-create">
+        <summary>Novo lançamento manual</summary>
+        <form id="financialEntryForm" class="grid-form">
+          <label>Tipo<select name="direction"><option value="receivable">Conta a receber</option><option value="payable">Conta a pagar</option></select></label>
+          <label>Categoria<select name="category"><option value="sale">Venda</option><option value="purchase">Compra</option><option value="consignment">Consignado</option><option value="commission">Comissão</option><option value="operational">Operacional</option><option value="other">Outro</option></select></label>
+          <label class="wide">Descrição<input name="description" required placeholder="Ex.: aluguel, venda balcão, material de embalagem"></label>
+          <label>Emissão<input name="issueDate" type="date" required value="${U.today()}"></label>
+          <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
+          <label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label>
+          <label>Valor já pago<input name="paidAmount" type="number" min="0" step="0.01" value="0"></label>
+          <label>Cliente<select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select></label>
+          <label>Fornecedor<select name="supplierId">${UI.optionList(currentSuppliers(), '', 'Opcional')}</select></label>
+          <label>Forma de pagamento<input name="paymentMethod" placeholder="Pix, dinheiro, cartão..."></label>
+          <label class="wide">Observações<input name="notes" placeholder="Referência, parcela, responsável..."></label>
+          <button type="submit">Salvar lançamento</button>
+        </form>
+      </details>
+      ${UI.table(['Vencimento', 'Tipo', 'Descrição', 'Pessoa', 'Valor', 'Pago', 'Saldo', 'Situação', 'Ações'], rows, 'Nenhum lançamento financeiro.')}
+    `);
+  }
+
   function renderTasks() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const statuses = state().settings.taskStatuses;
@@ -940,6 +1085,22 @@
   function renderReports() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts();
+    const inPeriod = (date) => (!dashboardStart || String(date || '') >= dashboardStart) && (!dashboardEnd || String(date || '') <= dashboardEnd);
+    const periodSales = currentSales().filter((sale) => inPeriod(sale.date));
+    const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
+    const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
+    const salesTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
+    const profitTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.grossProfit), 0);
+    const ticket = periodSales.length ? salesTotal / new Set(periodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const financialReceived = periodFinancial.filter((entry) => entry.direction === 'receivable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const financialPaid = periodFinancial.filter((entry) => entry.direction === 'payable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const byProduct = new Map();
+    periodSales.forEach((sale) => {
+      const key = String(sale.productId);
+      const row = byProduct.get(key) || { product: productById(sale.productId), quantity: 0, revenue: 0, profit: 0 };
+      row.quantity += U.number(sale.quantity); row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); byProduct.set(key, row);
+    });
+    const topProductRows = [...byProduct.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 12).map((row) => [UI.productName(row.product), U.qty(row.quantity, row.product?.unit), UI.moneyCell(row.revenue), UI.moneyCell(row.profit), row.revenue ? `${((row.profit / row.revenue) * 100).toFixed(1)}%` : '0%']);
     const costRows = products.filter((product) => ['produto_final', 'kit'].includes(product.type)).map((product) => {
       const cost = Calc.calculateRecipeCost(product.id, state());
       return [
@@ -958,7 +1119,7 @@
       UI.moneyCell(product.avgCost),
       UI.moneyCell(U.number(product.currentStock) * U.number(product.avgCost)),
     ]);
-    const movementRows = U.sortByDateDesc(currentMovements()).slice(0, 80).map((mov) => {
+    const movementRows = U.sortByDateDesc(periodMovements).slice(0, 80).map((mov) => {
       const product = productById(mov.productId);
       return [
         U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || '—'),
@@ -970,7 +1131,19 @@
       ];
     });
 
-    return UI.section('Relatórios', 'Leitura rápida para revisão: custo de produto, estoque atual e movimentações.', `
+    return UI.section('Relatórios', 'Indicadores filtráveis de vendas, financeiro, produtos, estoque e movimentações.', `
+      <div class="panel-card report-period-bar">
+        <div><span>Período analisado</span><strong>${U.escapeHtml(dashboardStart || 'Início')} até ${U.escapeHtml(dashboardEnd || 'Hoje')}</strong></div>
+        <label>De<input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}"></label>
+        <label>Até<input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}"></label>
+      </div>
+      <div class="metric-grid report-metrics">
+        <article><span>Receita líquida</span><strong>${U.money(salesTotal)}</strong><small>${periodSales.length} item(ns) vendidos.</small></article>
+        <article><span>Lucro bruto</span><strong>${U.money(profitTotal)}</strong><small>${salesTotal ? ((profitTotal / salesTotal) * 100).toFixed(1) : '0'}% de margem.</small></article>
+        <article><span>Ticket médio</span><strong>${U.money(ticket)}</strong><small>Por venda ou pedido.</small></article>
+        <article><span>Caixa no período</span><strong>${U.money(financialReceived - financialPaid)}</strong><small>${U.money(financialReceived)} recebido · ${U.money(financialPaid)} pago.</small></article>
+      </div>
+      <div class="panel-card"><h3>Produtos mais vendidos</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
       <div class="three-columns">
         <div class="panel-card"><h3>Produtos finais e preço</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'Preço sugerido', 'Preço usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
         <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
@@ -1122,6 +1295,177 @@
     `);
   }
 
+  function openClientEditor(clientId, focusEdit = false) {
+    const client = clientById(clientId);
+    if (!client) throw new Error('Cliente não encontrado.');
+    const sales = currentSales().filter((sale) => String(sale.clientId) === String(client.id) && U.number(sale.quantity) > 0);
+    const orders = currentOrders().filter((order) => String(order.clientId) === String(client.id));
+    const consignments = currentConsignments().filter((item) => String(item.clientId) === String(client.id));
+    const financial = currentFinancialEntries().filter((entry) => String(entry.clientId) === String(client.id) && entry.status !== 'cancelled');
+    const sold = sales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
+    const openConsignment = consignments.reduce((sum, item) => sum + Calc.consignmentOpenAmount(item), 0);
+    const openFinancial = financial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
+    const recentRows = sales.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 8).map((sale) => [
+      U.escapeHtml(sale.date),
+      UI.productName(productById(sale.productId)),
+      U.qty(sale.quantity, productById(sale.productId)?.unit),
+      UI.moneyCell(sale.netRevenue),
+    ]);
+    document.getElementById('clientEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'clientEditor';
+    dialog.className = 'product-editor-dialog client-editor-dialog';
+    dialog.innerHTML = `
+      <div class="client-editor-shell">
+        <header><div><span>Cliente 360°</span><h2>${U.escapeHtml(client.name)}</h2></div><button type="button" class="ghost small" data-action="close-client-editor">Fechar</button></header>
+        <div class="metric-grid client-history-metrics">
+          <article><span>Vendas</span><strong>${U.money(sold)}</strong><small>${sales.length} itens vendidos.</small></article>
+          <article><span>Pedidos</span><strong>${orders.length}</strong><small>${orders.filter((order) => !['despachado', 'concluido'].includes(order.status)).length} em andamento.</small></article>
+          <article><span>Consignado</span><strong>${U.money(openConsignment)}</strong><small>Vendido e ainda não pago.</small></article>
+          <article><span>A receber</span><strong>${U.money(openFinancial)}</strong><small>Contas financeiras abertas.</small></article>
+        </div>
+        <div class="two-columns client-editor-columns">
+          <section class="panel-card">
+            <h3>Dados do cliente</h3>
+            <form id="clientEditForm" class="stack-form">
+              <input type="hidden" name="id" value="${U.escapeHtml(client.id)}">
+              <label>Nome<input name="name" required value="${U.escapeHtml(client.name)}"></label>
+              <label>Telefone / WhatsApp<input name="phone" value="${U.escapeHtml(client.phone || '')}"></label>
+              <label>Tipo<select name="type">
+                <option value="cliente" ${client.type === 'cliente' ? 'selected' : ''}>Cliente</option>
+                <option value="consignado" ${client.type === 'consignado' ? 'selected' : ''}>Consignado</option>
+                <option value="ambos" ${client.type === 'ambos' ? 'selected' : ''}>Ambos</option>
+              </select></label>
+              <label>Observações<textarea name="notes">${U.escapeHtml(client.notes || '')}</textarea></label>
+              <button type="submit">Salvar alterações</button>
+            </form>
+          </section>
+          <section class="panel-card">
+            <h3>Últimas vendas</h3>
+            ${UI.table(['Data', 'Produto', 'Qtd.', 'Valor'], recentRows, 'Nenhuma venda registrada.')}
+          </section>
+        </div>
+      </div>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+    if (focusEdit) dialog.querySelector('[name="name"]')?.focus();
+  }
+
+  async function updateClient(data) {
+    await S.update('clients', data.id, {
+      name: data.name.trim(),
+      phone: data.phone || '',
+      type: data.type || 'cliente',
+      notes: data.notes || '',
+    });
+  }
+
+  function openProductEditor(productId) {
+    const product = productById(productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const movements = currentMovements().filter((item) => String(item.productId) === String(product.id)).slice().sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt))).slice(0, 12);
+    const sellerQuantity = (state().sellerStock || []).filter((item) => String(item.productId) === String(product.id)).reduce((sum, item) => sum + U.number(item.quantity), 0);
+    const consignedQuantity = currentConsignments().filter((item) => String(item.productId) === String(product.id)).reduce((sum, item) => sum + Calc.consignmentAvailableWithClient(item), 0);
+    const pendingQuantity = currentOrders().filter((item) => String(item.productId) === String(product.id) && !['despachado', 'concluido'].includes(item.status)).reduce((sum, item) => sum + U.number(item.quantity), 0);
+    const movementRows = movements.map((item) => [U.escapeHtml(item.date || item.createdAt?.slice(0, 10) || '—'), U.escapeHtml(item.type), U.qty(item.quantity, product.unit), UI.moneyCell(item.unitCost), U.escapeHtml(item.notes || '—')]);
+    document.getElementById('productEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'productEditor';
+    dialog.className = 'product-editor-dialog';
+    dialog.innerHTML = `
+      <form id='productEditForm' class='grid-form product-editor-form'>
+        <header><div><span>Produto 360°</span><h2>${U.escapeHtml(product.name)}</h2></div><button type='button' class='ghost small' data-action='close-product-editor'>Fechar</button></header>
+        <div class='full metric-grid product-history-metrics'>
+          <article><span>Estoque central</span><strong>${U.qty(product.currentStock, product.unit)}</strong><small>${U.money(U.number(product.currentStock) * U.number(product.avgCost))} pelo custo.</small></article>
+          <article><span>Com vendedores</span><strong>${U.qty(sellerQuantity, product.unit)}</strong><small>Estoque distribuído à equipe.</small></article>
+          <article><span>Com clientes</span><strong>${U.qty(consignedQuantity, product.unit)}</strong><small>Consignado ainda disponível.</small></article>
+          <article><span>Em pedidos</span><strong>${U.qty(pendingQuantity, product.unit)}</strong><small>Ainda não concluído.</small></article>
+        </div>
+        <details class='full panel-card product-movement-history'><summary>Últimas movimentações</summary>${UI.table(['Data', 'Tipo', 'Qtd.', 'Custo', 'Observação'], movementRows, 'Nenhuma movimentação registrada.')}</details>
+        <input type='hidden' name='id' value='${U.escapeHtml(product.id)}'>
+        <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
+        <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
+        <label>Unidade<select name='unit' required>${UI.optionList(state().settings.units, product.unit, '')}</select></label>
+        <label>Preço de venda<input name='salePrice' type='number' min='0' step='0.01' value='${U.escapeHtml(product.salePrice || 0)}'></label>
+        <label>Piso de preço<input name='priceFloor' type='number' min='0' step='0.01' value='${U.escapeHtml(product.priceFloor ?? '')}'></label>
+        <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
+        <label>Margem desejada (%)<input name='targetMarginPercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.targetMarginPercent || 0)}'></label>
+        <label>Taxas (%)<input name='taxFeePercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.taxFeePercent || 0)}'></label>
+        <label class='full'>Observações<textarea name='notes'>${U.escapeHtml(product.notes || '')}</textarea></label>
+        <footer><button type='button' class='ghost' data-action='close-product-editor'>Cancelar</button><button type='submit'>Salvar alterações</button></footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  function openFinancialPayment(entryId) {
+    const entry = currentFinancialEntries().find((item) => item.id === entryId);
+    if (!entry) throw new Error('Lançamento financeiro não encontrado.');
+    const remaining = Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount));
+    document.getElementById('financialPaymentEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'financialPaymentEditor';
+    dialog.className = 'product-editor-dialog financial-payment-dialog';
+    dialog.innerHTML = `
+      <form id="financialPaymentForm" class="stack-form product-editor-form">
+        <header><div><span>Baixar lançamento</span><h2>${U.escapeHtml(entry.description)}</h2></div><button type="button" class="ghost small" data-action="close-financial-payment">Fechar</button></header>
+        <input type="hidden" name="id" value="${U.escapeHtml(entry.id)}">
+        <div class="notice">Saldo atual: <strong>${U.money(remaining)}</strong></div>
+        <label>Valor desta baixa<input name="amount" type="number" min="0.01" max="${remaining}" step="0.01" required value="${remaining}"></label>
+        <label>Forma de pagamento<input name="paymentMethod" value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <footer><button type="button" class="ghost" data-action="close-financial-payment">Cancelar</button><button type="submit">Confirmar baixa</button></footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  }
+
+  async function addFinancialEntry(data) {
+    U.assertPositive(data.amount, 'Valor');
+    const amount = U.number(data.amount);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > amount) throw new Error('Valor pago precisa ficar entre zero e o valor total.');
+    await S.add('financialEntries', {
+      direction: data.direction,
+      category: data.category || 'other',
+      description: data.description.trim(),
+      issueDate: data.issueDate || U.today(),
+      dueDate: data.dueDate || null,
+      amount,
+      paidAmount,
+      clientId: data.clientId || null,
+      supplierId: data.supplierId || null,
+      paymentMethod: data.paymentMethod || null,
+      notes: data.notes || '',
+    });
+  }
+
+  async function applyFinancialPayment(data) {
+    const entry = currentFinancialEntries().find((item) => item.id === data.id);
+    if (!entry) throw new Error('Lançamento financeiro não encontrado.');
+    U.assertPositive(data.amount, 'Valor da baixa');
+    const nextPaid = U.number(entry.paidAmount) + U.number(data.amount);
+    if (nextPaid > U.number(entry.amount) + 0.001) throw new Error('A baixa não pode superar o saldo do lançamento.');
+    await S.update('financialEntries', entry.id, { paidAmount: nextPaid, paymentMethod: data.paymentMethod || entry.paymentMethod || null });
+  }
+
+  async function updateProduct(data) {
+    const business = S.activeBusiness();
+    await S.update('products', data.id, {
+      name: data.name.trim(),
+      type: data.type,
+      unit: data.unit,
+      salePrice: U.number(data.salePrice),
+      priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
+      minStock: U.number(data.minStock),
+      targetMarginPercent: U.number(data.targetMarginPercent ?? business?.defaultTargetMargin),
+      taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
+      notes: data.notes || '',
+    });
+  }
   async function updateBusiness(data) {
     const business = S.activeBusiness();
     if (!business) throw new Error('Sua conta ainda não está vinculada a um negócio.');
@@ -1153,6 +1497,38 @@
     });
   }
 
+  async function addPurchaseDraftItem(data) {
+    U.assertPositive(data.quantity, 'Quantidade');
+    U.assertPositive(data.totalCost, 'Valor do item');
+    const product = productById(data.productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const existing = purchaseDraft.find((item) => String(item.productId) === String(data.productId));
+    if (existing) {
+      existing.quantity = U.number(existing.quantity) + U.number(data.quantity);
+      existing.totalCost = U.number(existing.totalCost) + U.number(data.totalCost);
+    } else {
+      purchaseDraft.push({ productId: data.productId, quantity: U.number(data.quantity), totalCost: U.number(data.totalCost) });
+    }
+  }
+
+  async function finalizePurchaseGroup(data) {
+    if (!purchaseDraft.length) throw new Error('Adicione pelo menos um produto à compra.');
+    const total = purchaseDraft.reduce((sum, item) => sum + U.number(item.totalCost), 0);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > total) throw new Error('Valor pago precisa ficar entre zero e o total da compra.');
+    await window.C360.api.registerPurchaseGroup({
+      supplierId: data.supplierId || null,
+      date: data.date,
+      dueDate: data.dueDate || data.date,
+      paymentMode: data.paymentMode || 'a_prazo',
+      paidAmount,
+      notes: data.notes || '',
+      items: purchaseDraft.map((item) => ({ productId: item.productId, quantity: item.quantity, totalCost: item.totalCost })),
+    });
+    purchaseDraft = [];
+    await S.refresh();
+  }
+
   async function addPurchase(data) {
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.totalCost, 'Valor total');
@@ -1160,6 +1536,8 @@
     if (!product) throw new Error('Produto não encontrado.');
     const quantity = U.number(data.quantity);
     const totalCost = U.number(data.totalCost);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > totalCost) throw new Error('Valor pago precisa ficar entre zero e o total da compra.');
     const unitCost = totalCost / quantity;
     const nextAvg = Calc.weightedAverageCost(product.currentStock, product.avgCost, quantity, totalCost);
     await S.update('products', product.id, {
@@ -1174,6 +1552,9 @@
       totalCost,
       unitCost,
       notes: data.notes || '',
+      dueDate: data.dueDate || data.date,
+      paymentMode: data.paymentMode || 'a_prazo',
+      paidAmount,
     });
     await S.recordMovement({
       date: data.date,
@@ -1184,6 +1565,7 @@
       totalCost,
       notes: data.notes || '',
     });
+    await S.refresh();
   }
 
   async function addRecipe(data) {
@@ -1414,9 +1796,14 @@
       const handlers = {
         businessForm: updateBusiness,
         productForm: addProduct,
+        productEditForm: updateProduct,
+        clientEditForm: updateClient,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
-        purchaseForm: addPurchase,
+        purchaseItemForm: addPurchaseDraftItem,
+        purchaseGroupForm: finalizePurchaseGroup,
+        financialEntryForm: addFinancialEntry,
+        financialPaymentForm: applyFinancialPayment,
         recipeForm: addRecipe,
         productionForm: addProduction,
         saleForm: submitSale,
@@ -1427,6 +1814,9 @@
       const handler = handlers[form.id];
       if (!handler) return;
       await handler(data);
+      if (form.id === 'productEditForm') document.getElementById('productEditor')?.close();
+      if (form.id === 'clientEditForm') document.getElementById('clientEditor')?.close();
+      if (form.id === 'financialPaymentForm') document.getElementById('financialPaymentEditor')?.close();
       form.reset();
       renderAll();
     } catch (error) {
@@ -1439,6 +1829,15 @@
     if (!button) return;
     const { action, id } = button.dataset;
     try {
+      if (action === 'edit-product') { openProductEditor(id); return; }
+      if (action === 'client-history') { openClientEditor(id, false); return; }
+      if (action === 'edit-client') { openClientEditor(id, true); return; }
+      if (action === 'close-client-editor') { document.getElementById('clientEditor')?.close(); return; }
+      if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
+      if (action === 'financial-pay') { openFinancialPayment(id); return; }
+      if (action === 'close-financial-payment') { document.getElementById('financialPaymentEditor')?.close(); return; }
+      if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
+      if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
@@ -1448,6 +1847,9 @@
           break;
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
+        case 'remove-purchase-draft':
+          purchaseDraft = purchaseDraft.filter((item) => String(item.productId) !== String(id));
+          break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
         case 'delete-order':
           if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
