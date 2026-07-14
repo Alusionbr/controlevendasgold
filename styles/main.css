@@ -1759,3 +1759,53 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Relatórios filtráveis */
+.report-period-bar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.report-period-bar > div {
+  margin-right: auto;
+}
+
+.report-period-bar span {
+  display: block;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-period-bar strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+}
+
+.report-period-bar label {
+  min-width: 150px;
+}
+
+.report-metrics {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 760px) {
+  .report-period-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-period-bar > div {
+    margin-right: 0;
+  }
+
+  .report-period-bar label {
+    min-width: 0;
+  }
+}
