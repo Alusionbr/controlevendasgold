@@ -724,11 +724,13 @@
       const supplier = supplierById(purchase.supplierId);
       return [
         U.escapeHtml(purchase.date),
+        U.escapeHtml(purchase.dueDate || purchase.date),
         U.escapeHtml(supplier?.name || '—'),
         UI.productName(product),
         U.qty(purchase.quantity, product?.unit),
         UI.moneyCell(purchase.totalCost),
         UI.moneyCell(purchase.unitCost),
+        UI.badge(U.number(purchase.paidAmount) >= U.number(purchase.totalCost) ? 'Pago' : U.number(purchase.paidAmount) > 0 ? 'Parcial' : 'Em aberto'),
         U.escapeHtml(purchase.notes || '—'),
       ];
     });
@@ -763,7 +765,7 @@
         </label>
         <button type="submit">Lançar compra</button>
       </form>
-      ${UI.table(['Data', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Obs.'], rows)}
+      ${UI.table(['Data', 'Vencimento', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Pagamento', 'Obs.'], rows)}
     `);
   }
 
@@ -1401,6 +1403,7 @@
       totalCost,
       notes: data.notes || '',
     });
+    await S.refresh();
   }
 
   async function addRecipe(data) {
