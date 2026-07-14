@@ -97,6 +97,7 @@
       // Fase 3 (conta corrente do vendedor):
       sellerAccountEntries: [],
       sellerPayments: [],
+      financialEntries: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
       profile: null,
@@ -257,6 +258,7 @@
     saleCartItems: 'sale_cart_items',
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
+    financialEntries: 'financial_entries',
     operationalMovements: 'operational_movements',
     profiles: 'profiles',
   };
@@ -368,7 +370,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, operationalMovements,
+      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -391,6 +393,7 @@
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
@@ -416,6 +419,7 @@
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
@@ -464,6 +468,7 @@
     state.saleCartItems = saleCartItems;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.financialEntries = [];
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
     // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
