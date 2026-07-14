@@ -35,6 +35,9 @@
     paymentProofPath: 'Comprovante', customerName: 'Cliente', customerPhone: 'Telefone do cliente', customerNotes: 'Obs. do cliente',
     cartId: 'ID do carrinho', approvedQuantity: 'Qtd. aprovada', rejectionReason: 'Motivo rejeicao',
     allowAdminStockSales: 'Pode estoque admin', allowConsignment: 'Pode consignado', allowPublicCartLinks: 'Pode link publico', maxDiscountPercent: 'Desconto maximo (%)',
+    direction: 'Direção', category: 'Categoria', description: 'Descrição', issueDate: 'Emissão',
+    paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
+    sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -47,7 +50,7 @@
     'paidAmount',
   ]);
 
-  const DATE_KEYS = new Set(['date', 'dueDate', 'publicExpiresAt', 'submittedAt', 'approvedAt']);
+  const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt', 'submittedAt', 'approvedAt']);
 
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
@@ -55,13 +58,14 @@
     { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'clients', sheet: 'Clientes', fields: ['id', 'businessId', 'name', 'phone', 'type', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'suppliers', sheet: 'Fornecedores', fields: ['id', 'businessId', 'name', 'phone', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'date', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'purchaseGroupId', 'date', 'dueDate', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'paymentMode', 'paidAmount', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
+    { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sellerSettings', sheet: 'Permissoes vendedores', fields: ['id', 'businessId', 'sellerId', 'allowAdminStockSales', 'allowConsignment', 'allowPublicCartLinks', 'maxDiscountPercent', 'notes', 'createdAt', 'updatedAt'] },
