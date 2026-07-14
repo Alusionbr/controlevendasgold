@@ -280,6 +280,9 @@
     const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
     const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
     const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
+    const financialOpen = (baseState.financialEntries || []).filter((entry) => entry.businessId === businessId && entry.status !== 'paid' && entry.status !== 'cancelled');
+    const overdueFinancial = financialOpen.filter((entry) => entry.dueDate && entry.dueDate < U.today());
+    const overdueFinancialValue = overdueFinancial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
     const days = Array.from({ length: 7 }, (_, index) => {
       const date = new Date();
@@ -297,6 +300,7 @@
           <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
+          <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
         </div>
         <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
       </section>`;
@@ -1312,13 +1316,25 @@
   function openProductEditor(productId) {
     const product = productById(productId);
     if (!product) throw new Error('Produto não encontrado.');
+    const movements = currentMovements().filter((item) => String(item.productId) === String(product.id)).slice().sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt))).slice(0, 12);
+    const sellerQuantity = (state().sellerStock || []).filter((item) => String(item.productId) === String(product.id)).reduce((sum, item) => sum + U.number(item.quantity), 0);
+    const consignedQuantity = currentConsignments().filter((item) => String(item.productId) === String(product.id)).reduce((sum, item) => sum + Calc.consignmentAvailableWithClient(item), 0);
+    const pendingQuantity = currentOrders().filter((item) => String(item.productId) === String(product.id) && !['despachado', 'concluido'].includes(item.status)).reduce((sum, item) => sum + U.number(item.quantity), 0);
+    const movementRows = movements.map((item) => [U.escapeHtml(item.date || item.createdAt?.slice(0, 10) || '—'), U.escapeHtml(item.type), U.qty(item.quantity, product.unit), UI.moneyCell(item.unitCost), U.escapeHtml(item.notes || '—')]);
     document.getElementById('productEditor')?.remove();
     const dialog = document.createElement('dialog');
     dialog.id = 'productEditor';
     dialog.className = 'product-editor-dialog';
     dialog.innerHTML = `
       <form id='productEditForm' class='grid-form product-editor-form'>
-        <header><div><span>Editar produto</span><h2>${U.escapeHtml(product.name)}</h2></div><button type='button' class='ghost small' data-action='close-product-editor'>Fechar</button></header>
+        <header><div><span>Produto 360°</span><h2>${U.escapeHtml(product.name)}</h2></div><button type='button' class='ghost small' data-action='close-product-editor'>Fechar</button></header>
+        <div class='full metric-grid product-history-metrics'>
+          <article><span>Estoque central</span><strong>${U.qty(product.currentStock, product.unit)}</strong><small>${U.money(U.number(product.currentStock) * U.number(product.avgCost))} pelo custo.</small></article>
+          <article><span>Com vendedores</span><strong>${U.qty(sellerQuantity, product.unit)}</strong><small>Estoque distribuído à equipe.</small></article>
+          <article><span>Com clientes</span><strong>${U.qty(consignedQuantity, product.unit)}</strong><small>Consignado ainda disponível.</small></article>
+          <article><span>Em pedidos</span><strong>${U.qty(pendingQuantity, product.unit)}</strong><small>Ainda não concluído.</small></article>
+        </div>
+        <details class='full panel-card product-movement-history'><summary>Últimas movimentações</summary>${UI.table(['Data', 'Tipo', 'Qtd.', 'Custo', 'Observação'], movementRows, 'Nenhuma movimentação registrada.')}</details>
         <input type='hidden' name='id' value='${U.escapeHtml(product.id)}'>
         <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
         <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
