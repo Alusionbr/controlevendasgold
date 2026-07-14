@@ -151,6 +151,7 @@
   let dashboardEnd = U.today();
   let draggedCard = null;
   let openReturnsSaleId = null;
+  let purchaseDraft = [];
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -723,53 +724,72 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
     const suppliers = currentSuppliers();
-    const rows = U.sortByDateDesc(currentPurchases()).map((purchase) => {
-      const product = productById(purchase.productId);
-      const supplier = supplierById(purchase.supplierId);
+    const groups = new Map();
+    U.sortByDateDesc(currentPurchases()).forEach((purchase) => {
+      const groupId = purchase.purchaseGroupId || purchase.id;
+      if (!groups.has(groupId)) groups.set(groupId, { ...purchase, items: [], total: 0, paid: 0 });
+      const group = groups.get(groupId);
+      group.items.push(purchase);
+      group.total += U.number(purchase.totalCost);
+      group.paid += U.number(purchase.paidAmount);
+    });
+    const rows = [...groups.values()].map((group) => {
+      const supplier = supplierById(group.supplierId);
+      const itemNames = group.items.map((item) => productById(item.productId)?.name || 'Produto removido').join(', ');
       return [
-        U.escapeHtml(purchase.date),
-        U.escapeHtml(purchase.dueDate || purchase.date),
+        U.escapeHtml(group.date),
+        U.escapeHtml(group.dueDate || group.date),
         U.escapeHtml(supplier?.name || '—'),
-        UI.productName(product),
-        U.qty(purchase.quantity, product?.unit),
-        UI.moneyCell(purchase.totalCost),
-        UI.moneyCell(purchase.unitCost),
-        UI.badge(U.number(purchase.paidAmount) >= U.number(purchase.totalCost) ? 'Pago' : U.number(purchase.paidAmount) > 0 ? 'Parcial' : 'Em aberto'),
-        U.escapeHtml(purchase.notes || '—'),
+        U.escapeHtml(itemNames),
+        String(group.items.length),
+        UI.moneyCell(group.total),
+        UI.moneyCell(group.paid),
+        UI.badge(group.paid >= group.total ? 'Pago' : group.paid > 0 ? 'Parcial' : 'Em aberto'),
+        U.escapeHtml(group.notes || '—'),
       ];
     });
-    return UI.section('Compras', 'Compra aumenta estoque e recalcula custo médio ponderado automaticamente.', `
-      <form id="purchaseForm" class="grid-form">
-        <label>Data
-          <input name="date" type="date" required value="${U.today()}">
-        </label>
-        <label>Fornecedor
-          <select name="supplierId">${UI.optionList(suppliers, '', 'Opcional')}</select>
-        </label>
-        <label>Vencimento
-          <input name="dueDate" type="date" value="${U.today()}">
-        </label>
-        <label>Pagamento
-          <select name="paymentMode"><option value="a_prazo">A prazo</option><option value="a_vista">À vista</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="outro">Outro</option></select>
-        </label>
-        <label>Valor já pago
-          <input name="paidAmount" type="number" min="0" step="0.01" value="0">
-        </label>
-        <label>Produto comprado
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
-        </label>
-        <label>Quantidade
-          <input name="quantity" type="number" step="0.001" required>
-        </label>
-        <label>${UI.fieldLabel('Valor total da compra', 'valorTotalCompra')}
-          <input name="totalCost" type="number" step="0.01" required>
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Nota, lote, forma de pagamento...">
-        </label>
-        <button type="submit">Lançar compra</button>
-      </form>
-      ${UI.table(['Data', 'Vencimento', 'Fornecedor', 'Produto', 'Qtd.', 'Valor total', 'Custo unitário', 'Pagamento', 'Obs.'], rows)}
+    const draftRows = purchaseDraft.map((item) => {
+      const product = productById(item.productId);
+      return [
+        UI.productName(product),
+        U.qty(item.quantity, product?.unit),
+        UI.moneyCell(item.totalCost),
+        UI.moneyCell(U.number(item.totalCost) / U.number(item.quantity)),
+        UI.actionButton('remove-purchase-draft', item.productId, 'Remover', 'danger'),
+      ];
+    });
+    const draftTotal = purchaseDraft.reduce((sum, item) => sum + U.number(item.totalCost), 0);
+
+    return UI.section('Compras', 'Monte uma compra com vários itens. Estoque, custo médio, movimentações e conta a pagar são atualizados juntos.', `
+      <div class="two-columns purchase-builder">
+        <section class="panel-card">
+          <h3>1. Adicionar produtos</h3>
+          <form id="purchaseItemForm" class="stack-form">
+            <label>Produto<select name="productId" required>${UI.optionList(products, '', 'Produto')}</select></label>
+            <label>Quantidade<input name="quantity" type="number" min="0.001" step="0.001" required></label>
+            <label>Valor total do item<input name="totalCost" type="number" min="0.01" step="0.01" required></label>
+            <button type="submit">Adicionar à compra</button>
+          </form>
+        </section>
+        <section class="panel-card purchase-draft-summary">
+          <div class="purchase-draft-head"><div><span>Compra atual</span><strong>${U.money(draftTotal)}</strong></div><small>${purchaseDraft.length} item(ns)</small></div>
+          ${UI.table(['Produto', 'Qtd.', 'Total', 'Custo unit.', 'Ação'], draftRows, 'Adicione produtos à compra.')}
+        </section>
+      </div>
+      <details class="panel-card purchase-finalize" ${purchaseDraft.length ? 'open' : ''}>
+        <summary>2. Fornecedor e pagamento</summary>
+        <form id="purchaseGroupForm" class="grid-form">
+          <label>Data<input name="date" type="date" required value="${U.today()}"></label>
+          <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
+          <label>Fornecedor<select name="supplierId">${UI.optionList(suppliers, '', 'Opcional')}</select></label>
+          <label>Pagamento<select name="paymentMode"><option value="a_prazo">A prazo</option><option value="a_vista">À vista</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="outro">Outro</option></select></label>
+          <label>Valor já pago<input name="paidAmount" type="number" min="0" max="${draftTotal}" step="0.01" value="0"></label>
+          <label class="wide">Observações<input name="notes" placeholder="Nota, lote, parcela, responsável..."></label>
+          <button type="submit" ${purchaseDraft.length ? '' : 'disabled'}>Finalizar compra de ${U.money(draftTotal)}</button>
+        </form>
+      </details>
+      <h3>Histórico de compras</h3>
+      ${UI.table(['Data', 'Vencimento', 'Fornecedor', 'Produtos', 'Itens', 'Total', 'Pago', 'Situação', 'Obs.'], rows, 'Nenhuma compra registrada.')}
     `);
   }
 
@@ -1449,6 +1469,38 @@
     });
   }
 
+  async function addPurchaseDraftItem(data) {
+    U.assertPositive(data.quantity, 'Quantidade');
+    U.assertPositive(data.totalCost, 'Valor do item');
+    const product = productById(data.productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const existing = purchaseDraft.find((item) => String(item.productId) === String(data.productId));
+    if (existing) {
+      existing.quantity = U.number(existing.quantity) + U.number(data.quantity);
+      existing.totalCost = U.number(existing.totalCost) + U.number(data.totalCost);
+    } else {
+      purchaseDraft.push({ productId: data.productId, quantity: U.number(data.quantity), totalCost: U.number(data.totalCost) });
+    }
+  }
+
+  async function finalizePurchaseGroup(data) {
+    if (!purchaseDraft.length) throw new Error('Adicione pelo menos um produto à compra.');
+    const total = purchaseDraft.reduce((sum, item) => sum + U.number(item.totalCost), 0);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > total) throw new Error('Valor pago precisa ficar entre zero e o total da compra.');
+    await window.C360.api.registerPurchaseGroup({
+      supplierId: data.supplierId || null,
+      date: data.date,
+      dueDate: data.dueDate || data.date,
+      paymentMode: data.paymentMode || 'a_prazo',
+      paidAmount,
+      notes: data.notes || '',
+      items: purchaseDraft.map((item) => ({ productId: item.productId, quantity: item.quantity, totalCost: item.totalCost })),
+    });
+    purchaseDraft = [];
+    await S.refresh();
+  }
+
   async function addPurchase(data) {
     U.assertPositive(data.quantity, 'Quantidade');
     U.assertPositive(data.totalCost, 'Valor total');
@@ -1720,7 +1772,8 @@
         clientEditForm: updateClient,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
-        purchaseForm: addPurchase,
+        purchaseItemForm: addPurchaseDraftItem,
+        purchaseGroupForm: finalizePurchaseGroup,
         financialEntryForm: addFinancialEntry,
         financialPaymentForm: applyFinancialPayment,
         recipeForm: addRecipe,
@@ -1766,6 +1819,9 @@
           break;
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
+        case 'remove-purchase-draft':
+          purchaseDraft = purchaseDraft.filter((item) => String(item.productId) !== String(id));
+          break;
         case 'delete-recipe': await deleteRecord('recipes', id); break;
         case 'delete-order':
           if (!S.isAdmin()) throw new Error('Somente o administrador pode excluir pedidos.');
