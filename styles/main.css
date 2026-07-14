@@ -1570,3 +1570,53 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .product-editor-form footer { align-items: stretch; flex-direction: column-reverse; }
   .product-editor-form footer button { width: 100%; }
 }
+
+
+/* Núcleo financeiro */
+.finance-metrics {
+  margin-bottom: 18px;
+}
+
+.finance-metrics article {
+  min-height: 132px;
+}
+
+.finance-metrics article.needs-attention {
+  border-color: rgba(220, 38, 38, .38);
+  background: linear-gradient(145deg, rgba(254, 242, 242, .96), rgba(255, 255, 255, .96));
+}
+
+.finance-entry-create {
+  margin: 0 0 18px;
+}
+
+.finance-entry-create > summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--primary);
+  list-style-position: inside;
+}
+
+.finance-entry-create[open] > summary {
+  margin-bottom: 16px;
+}
+
+.financial-payment-dialog {
+  max-width: 520px;
+}
+
+@media (max-width: 760px) {
+  .finance-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .financial-payment-dialog {
+    width: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 440px) {
+  .finance-metrics {
+    grid-template-columns: 1fr;
+  }
+}
