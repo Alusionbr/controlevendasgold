@@ -145,7 +145,7 @@ create or replace function public.create_sale_receivable()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $sale_receivable$
 declare
   v_description text;
 begin
@@ -167,7 +167,7 @@ begin
 
   return new;
 end;
-$;
+$sale_receivable$;
 
 drop trigger if exists trg_sales_create_receivable on public.sales;
 create trigger trg_sales_create_receivable
