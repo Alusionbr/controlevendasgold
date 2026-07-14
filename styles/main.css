@@ -1620,3 +1620,57 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Visão 360 do cliente */
+.client-editor-dialog {
+  max-width: 1040px;
+}
+
+.client-editor-shell > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.client-editor-shell > header span {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.client-editor-shell > header h2 {
+  margin: 4px 0 0;
+}
+
+.client-history-metrics {
+  margin-bottom: 18px;
+}
+
+.client-editor-columns {
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .client-editor-dialog {
+    width: calc(100% - 18px);
+  }
+
+  .client-history-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-editor-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 440px) {
+  .client-history-metrics {
+    grid-template-columns: 1fr;
+  }
+}
