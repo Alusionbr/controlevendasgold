@@ -1706,3 +1706,56 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Compras com vários itens */
+.purchase-builder {
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.purchase-draft-summary {
+  min-width: 0;
+}
+
+.purchase-draft-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.purchase-draft-head span,
+.purchase-draft-head small {
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.purchase-draft-head strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--primary);
+  font-size: 1.55rem;
+}
+
+.purchase-finalize {
+  margin-bottom: 22px;
+}
+
+.purchase-finalize > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.purchase-finalize[open] > summary {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .purchase-builder {
+    grid-template-columns: 1fr;
+  }
+}
