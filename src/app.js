@@ -1085,6 +1085,22 @@
   function renderReports() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts();
+    const inPeriod = (date) => (!dashboardStart || String(date || '') >= dashboardStart) && (!dashboardEnd || String(date || '') <= dashboardEnd);
+    const periodSales = currentSales().filter((sale) => inPeriod(sale.date));
+    const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
+    const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
+    const salesTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
+    const profitTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.grossProfit), 0);
+    const ticket = periodSales.length ? salesTotal / new Set(periodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const financialReceived = periodFinancial.filter((entry) => entry.direction === 'receivable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const financialPaid = periodFinancial.filter((entry) => entry.direction === 'payable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const byProduct = new Map();
+    periodSales.forEach((sale) => {
+      const key = String(sale.productId);
+      const row = byProduct.get(key) || { product: productById(sale.productId), quantity: 0, revenue: 0, profit: 0 };
+      row.quantity += U.number(sale.quantity); row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); byProduct.set(key, row);
+    });
+    const topProductRows = [...byProduct.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 12).map((row) => [UI.productName(row.product), U.qty(row.quantity, row.product?.unit), UI.moneyCell(row.revenue), UI.moneyCell(row.profit), row.revenue ? `${((row.profit / row.revenue) * 100).toFixed(1)}%` : '0%']);
     const costRows = products.filter((product) => ['produto_final', 'kit'].includes(product.type)).map((product) => {
       const cost = Calc.calculateRecipeCost(product.id, state());
       return [
@@ -1103,7 +1119,7 @@
       UI.moneyCell(product.avgCost),
       UI.moneyCell(U.number(product.currentStock) * U.number(product.avgCost)),
     ]);
-    const movementRows = U.sortByDateDesc(currentMovements()).slice(0, 80).map((mov) => {
+    const movementRows = U.sortByDateDesc(periodMovements).slice(0, 80).map((mov) => {
       const product = productById(mov.productId);
       return [
         U.escapeHtml(mov.date || mov.createdAt?.slice(0, 10) || '—'),
@@ -1115,7 +1131,19 @@
       ];
     });
 
-    return UI.section('Relatórios', 'Leitura rápida para revisão: custo de produto, estoque atual e movimentações.', `
+    return UI.section('Relatórios', 'Indicadores filtráveis de vendas, financeiro, produtos, estoque e movimentações.', `
+      <div class="panel-card report-period-bar">
+        <div><span>Período analisado</span><strong>${U.escapeHtml(dashboardStart || 'Início')} até ${U.escapeHtml(dashboardEnd || 'Hoje')}</strong></div>
+        <label>De<input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}"></label>
+        <label>Até<input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}"></label>
+      </div>
+      <div class="metric-grid report-metrics">
+        <article><span>Receita líquida</span><strong>${U.money(salesTotal)}</strong><small>${periodSales.length} item(ns) vendidos.</small></article>
+        <article><span>Lucro bruto</span><strong>${U.money(profitTotal)}</strong><small>${salesTotal ? ((profitTotal / salesTotal) * 100).toFixed(1) : '0'}% de margem.</small></article>
+        <article><span>Ticket médio</span><strong>${U.money(ticket)}</strong><small>Por venda ou pedido.</small></article>
+        <article><span>Caixa no período</span><strong>${U.money(financialReceived - financialPaid)}</strong><small>${U.money(financialReceived)} recebido · ${U.money(financialPaid)} pago.</small></article>
+      </div>
+      <div class="panel-card"><h3>Produtos mais vendidos</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
       <div class="three-columns">
         <div class="panel-card"><h3>Produtos finais e preço</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'Preço sugerido', 'Preço usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
         <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
