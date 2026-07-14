@@ -141,6 +141,40 @@ create trigger trg_purchases_create_payable
   after insert on public.purchases
   for each row execute function public.create_purchase_payable();
 
+create or replace function public.create_sale_receivable()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+declare
+  v_description text;
+begin
+  if new.seller_id is not null or coalesce(new.origin, '') = 'consignado' or coalesce(new.net_revenue, 0) <= 0 then
+    return new;
+  end if;
+
+  select 'Venda - ' || p.name into v_description
+  from public.products p where p.id = new.product_id;
+
+  insert into public.financial_entries (
+    business_id, direction, category, description, issue_date, due_date,
+    amount, paid_amount, client_id, source_type, source_id, payment_method, notes, created_by
+  ) values (
+    new.business_id, 'receivable', 'sale', coalesce(v_description, 'Venda'), new.date, new.date,
+    new.net_revenue, 0, new.client_id, 'sale', new.id, null, coalesce(new.notes, ''), auth.uid()
+  )
+  on conflict (business_id, source_type, source_id) where source_id is not null do nothing;
+
+  return new;
+end;
+$;
+
+drop trigger if exists trg_sales_create_receivable on public.sales;
+create trigger trg_sales_create_receivable
+  after insert on public.sales
+  for each row execute function public.create_sale_receivable();
+
 revoke all on function public.sync_financial_entry_status() from public, anon;
 revoke all on function public.create_purchase_payable() from public, anon;
+revoke all on function public.create_sale_receivable() from public, anon;
 
