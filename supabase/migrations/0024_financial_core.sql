@@ -55,6 +55,10 @@ create index if not exists idx_financial_entries_business_direction
 create unique index if not exists idx_financial_entries_source_unique
   on public.financial_entries (business_id, source_type, source_id)
   where source_id is not null;
+create index if not exists idx_financial_entries_client on public.financial_entries (client_id);
+create index if not exists idx_financial_entries_supplier on public.financial_entries (supplier_id);
+create index if not exists idx_financial_entries_seller on public.financial_entries (seller_id);
+create index if not exists idx_financial_entries_created_by on public.financial_entries (created_by);
 
 create or replace function public.sync_financial_entry_status()
 returns trigger
