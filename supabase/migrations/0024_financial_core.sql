@@ -124,7 +124,7 @@ begin
   ) values (
     new.business_id, 'payable', 'purchase', coalesce(v_description, 'Compra'), new.date,
     coalesce(new.due_date, new.date), new.total_cost, new.paid_amount, new.supplier_id,
-    'purchase', new.id, new.payment_mode, new.notes, auth.uid()
+    'purchase', new.id, coalesce(new.payment_mode, 'a_prazo'), coalesce(new.notes, ''), auth.uid()
   )
   on conflict (business_id, source_type, source_id) where source_id is not null do nothing;
 
