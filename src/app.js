@@ -14,7 +14,7 @@
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'consignado', 'estoque',
+    'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
@@ -31,6 +31,7 @@
     producao: 'Produção',
     vendas: 'Vendas',
     consignado: 'Consignado',
+    financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
@@ -58,6 +59,7 @@
     producao: ['admin'],
     vendas: ['admin', 'vendedor'],
     consignado: ['admin', 'vendedor'],
+    financeiro: ['admin'],
     estoque: ['vendedor'],
     tarefas: ['admin'],
     relatorios: ['admin'],
@@ -75,10 +77,10 @@
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
-    admin: ['hoje', 'vendas', 'clientes', 'produtos'],
+    admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
     vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
   };
-  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque' };
+  const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
@@ -218,6 +220,7 @@
   function currentSales() { return businessScoped('sales'); }
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
+  function currentFinancialEntries() { return businessScoped('financialEntries'); }
   function currentTasks() { return businessScoped('tasks'); }
 
   function productById(id) { return state().products.find((product) => product.id === id) || null; }
@@ -404,6 +407,7 @@
     producao: renderProduction,
     vendas: renderSales,
     consignado: renderConsignments,
+    financeiro: renderFinancial,
     tarefas: renderTasks,
     relatorios: renderReports,
     dados: renderData,
@@ -736,6 +740,15 @@
         <label>Fornecedor
           <select name="supplierId">${UI.optionList(suppliers, '', 'Opcional')}</select>
         </label>
+        <label>Vencimento
+          <input name="dueDate" type="date" value="${U.today()}">
+        </label>
+        <label>Pagamento
+          <select name="paymentMode"><option value="a_prazo">A prazo</option><option value="a_vista">À vista</option><option value="pix">Pix</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option><option value="outro">Outro</option></select>
+        </label>
+        <label>Valor já pago
+          <input name="paidAmount" type="number" min="0" step="0.01" value="0">
+        </label>
         <label>Produto comprado
           <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
         </label>
@@ -939,6 +952,77 @@
       </form>
       ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'Ações'], rows)}
     `, 'consignado');
+  }
+
+  function financialDisplayStatus(entry) {
+    if (entry.status === 'cancelled') return 'Cancelado';
+    if (entry.status === 'paid') return 'Pago';
+    if (entry.dueDate && entry.dueDate < U.today()) return 'Vencido';
+    if (entry.status === 'partial') return 'Parcial';
+    return 'Em aberto';
+  }
+
+  function financialCounterparty(entry) {
+    if (entry.clientId) return clientById(entry.clientId)?.name || 'Cliente removido';
+    if (entry.supplierId) return supplierById(entry.supplierId)?.name || 'Fornecedor removido';
+    if (entry.sellerId) return sellerName(entry.sellerId);
+    return '—';
+  }
+
+  function renderFinancial() {
+    if (!state().activeBusinessId) return activeBusinessRequiredHtml();
+    const entries = currentFinancialEntries();
+    const active = entries.filter((entry) => entry.status !== 'cancelled');
+    const remaining = (entry) => Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount));
+    const receivable = active.filter((entry) => entry.direction === 'receivable').reduce((sum, entry) => sum + remaining(entry), 0);
+    const payable = active.filter((entry) => entry.direction === 'payable').reduce((sum, entry) => sum + remaining(entry), 0);
+    const overdue = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + remaining(entry), 0);
+    const cashResult = active.reduce((sum, entry) => sum + (entry.direction === 'receivable' ? 1 : -1) * U.number(entry.paidAmount), 0);
+    const rows = [...entries].sort((a, b) => String(a.dueDate || a.issueDate).localeCompare(String(b.dueDate || b.issueDate))).map((entry) => {
+      const canCancel = entry.status !== 'cancelled' && U.number(entry.paidAmount) === 0;
+      return [
+        U.escapeHtml(entry.dueDate || entry.issueDate),
+        UI.badge(entry.direction === 'receivable' ? 'Receber' : 'Pagar'),
+        U.escapeHtml(entry.description),
+        U.escapeHtml(financialCounterparty(entry)),
+        UI.moneyCell(entry.amount),
+        UI.moneyCell(entry.paidAmount),
+        UI.moneyCell(remaining(entry)),
+        UI.badge(financialDisplayStatus(entry)),
+        '<div class="actions">' +
+          (entry.status !== 'paid' && entry.status !== 'cancelled' ? UI.actionButton('financial-pay', entry.id, entry.direction === 'receivable' ? 'Receber' : 'Pagar') : '') +
+          (canCancel ? UI.actionButton('financial-cancel', entry.id, 'Cancelar', 'danger') : '') +
+          (entry.status === 'cancelled' ? UI.actionButton('financial-restore', entry.id, 'Reabrir') : '') +
+        '</div>',
+      ];
+    });
+
+    return UI.section('Financeiro', 'Contas a pagar e receber conectadas à operação. Compras novas geram uma conta automaticamente.', `
+      <div class="metric-grid finance-metrics">
+        <article><span>A receber</span><strong>${U.money(receivable)}</strong><small>Saldo ainda não recebido.</small></article>
+        <article><span>A pagar</span><strong>${U.money(payable)}</strong><small>Saldo ainda não pago.</small></article>
+        <article class="${overdue > 0 ? 'needs-attention' : ''}"><span>Vencido</span><strong>${U.money(overdue)}</strong><small>Exige cobrança ou pagamento.</small></article>
+        <article><span>Caixa realizado</span><strong>${U.money(cashResult)}</strong><small>Recebido menos pago.</small></article>
+      </div>
+      <details class="panel-card finance-entry-create">
+        <summary>Novo lançamento manual</summary>
+        <form id="financialEntryForm" class="grid-form">
+          <label>Tipo<select name="direction"><option value="receivable">Conta a receber</option><option value="payable">Conta a pagar</option></select></label>
+          <label>Categoria<select name="category"><option value="sale">Venda</option><option value="purchase">Compra</option><option value="consignment">Consignado</option><option value="commission">Comissão</option><option value="operational">Operacional</option><option value="other">Outro</option></select></label>
+          <label class="wide">Descrição<input name="description" required placeholder="Ex.: aluguel, venda balcão, material de embalagem"></label>
+          <label>Emissão<input name="issueDate" type="date" required value="${U.today()}"></label>
+          <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
+          <label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label>
+          <label>Valor já pago<input name="paidAmount" type="number" min="0" step="0.01" value="0"></label>
+          <label>Cliente<select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select></label>
+          <label>Fornecedor<select name="supplierId">${UI.optionList(currentSuppliers(), '', 'Opcional')}</select></label>
+          <label>Forma de pagamento<input name="paymentMethod" placeholder="Pix, dinheiro, cartão..."></label>
+          <label class="wide">Observações<input name="notes" placeholder="Referência, parcela, responsável..."></label>
+          <button type="submit">Salvar lançamento</button>
+        </form>
+      </details>
+      ${UI.table(['Vencimento', 'Tipo', 'Descrição', 'Pessoa', 'Valor', 'Pago', 'Saldo', 'Situação', 'Ações'], rows, 'Nenhum lançamento financeiro.')}
+    `);
   }
 
   function renderTasks() {
@@ -1185,6 +1269,57 @@
     else dialog.setAttribute('open', '');
   }
 
+  function openFinancialPayment(entryId) {
+    const entry = currentFinancialEntries().find((item) => item.id === entryId);
+    if (!entry) throw new Error('Lançamento financeiro não encontrado.');
+    const remaining = Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount));
+    document.getElementById('financialPaymentEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'financialPaymentEditor';
+    dialog.className = 'product-editor-dialog financial-payment-dialog';
+    dialog.innerHTML = `
+      <form id="financialPaymentForm" class="stack-form product-editor-form">
+        <header><div><span>Baixar lançamento</span><h2>${U.escapeHtml(entry.description)}</h2></div><button type="button" class="ghost small" data-action="close-financial-payment">Fechar</button></header>
+        <input type="hidden" name="id" value="${U.escapeHtml(entry.id)}">
+        <div class="notice">Saldo atual: <strong>${U.money(remaining)}</strong></div>
+        <label>Valor desta baixa<input name="amount" type="number" min="0.01" max="${remaining}" step="0.01" required value="${remaining}"></label>
+        <label>Forma de pagamento<input name="paymentMethod" value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <footer><button type="button" class="ghost" data-action="close-financial-payment">Cancelar</button><button type="submit">Confirmar baixa</button></footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  }
+
+  async function addFinancialEntry(data) {
+    U.assertPositive(data.amount, 'Valor');
+    const amount = U.number(data.amount);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > amount) throw new Error('Valor pago precisa ficar entre zero e o valor total.');
+    await S.add('financialEntries', {
+      direction: data.direction,
+      category: data.category || 'other',
+      description: data.description.trim(),
+      issueDate: data.issueDate || U.today(),
+      dueDate: data.dueDate || null,
+      amount,
+      paidAmount,
+      clientId: data.clientId || null,
+      supplierId: data.supplierId || null,
+      paymentMethod: data.paymentMethod || null,
+      notes: data.notes || '',
+    });
+  }
+
+  async function applyFinancialPayment(data) {
+    const entry = currentFinancialEntries().find((item) => item.id === data.id);
+    if (!entry) throw new Error('Lançamento financeiro não encontrado.');
+    U.assertPositive(data.amount, 'Valor da baixa');
+    const nextPaid = U.number(entry.paidAmount) + U.number(data.amount);
+    if (nextPaid > U.number(entry.amount) + 0.001) throw new Error('A baixa não pode superar o saldo do lançamento.');
+    await S.update('financialEntries', entry.id, { paidAmount: nextPaid, paymentMethod: data.paymentMethod || entry.paymentMethod || null });
+  }
+
   async function updateProduct(data) {
     const business = S.activeBusiness();
     await S.update('products', data.id, {
@@ -1237,6 +1372,8 @@
     if (!product) throw new Error('Produto não encontrado.');
     const quantity = U.number(data.quantity);
     const totalCost = U.number(data.totalCost);
+    const paidAmount = U.number(data.paidAmount);
+    if (paidAmount < 0 || paidAmount > totalCost) throw new Error('Valor pago precisa ficar entre zero e o total da compra.');
     const unitCost = totalCost / quantity;
     const nextAvg = Calc.weightedAverageCost(product.currentStock, product.avgCost, quantity, totalCost);
     await S.update('products', product.id, {
@@ -1251,6 +1388,9 @@
       totalCost,
       unitCost,
       notes: data.notes || '',
+      dueDate: data.dueDate || data.date,
+      paymentMode: data.paymentMode || 'a_prazo',
+      paidAmount,
     });
     await S.recordMovement({
       date: data.date,
@@ -1495,6 +1635,8 @@
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
         purchaseForm: addPurchase,
+        financialEntryForm: addFinancialEntry,
+        financialPaymentForm: applyFinancialPayment,
         recipeForm: addRecipe,
         productionForm: addProduction,
         saleForm: submitSale,
@@ -1506,6 +1648,7 @@
       if (!handler) return;
       await handler(data);
       if (form.id === 'productEditForm') document.getElementById('productEditor')?.close();
+      if (form.id === 'financialPaymentForm') document.getElementById('financialPaymentEditor')?.close();
       form.reset();
       renderAll();
     } catch (error) {
@@ -1520,6 +1663,10 @@
     try {
       if (action === 'edit-product') { openProductEditor(id); return; }
       if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
+      if (action === 'financial-pay') { openFinancialPayment(id); return; }
+      if (action === 'close-financial-payment') { document.getElementById('financialPaymentEditor')?.close(); return; }
+      if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
+      if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
         case 'delete-product':
           if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
