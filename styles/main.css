@@ -1674,3 +1674,35 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Visão 360 do produto */
+.product-history-metrics {
+  margin-bottom: 4px;
+}
+
+.product-movement-history {
+  margin: 4px 0 8px;
+}
+
+.product-movement-history > summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.product-movement-history[open] > summary {
+  margin-bottom: 14px;
+}
+
+@media (max-width: 760px) {
+  .product-history-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 440px) {
+  .product-history-metrics {
+    grid-template-columns: 1fr;
+  }
+}
