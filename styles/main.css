@@ -317,6 +317,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
 
+/* Sub-barra (#subTabsBar): abas do grupo escolhido em .tabs (#tabsBar).
+   Mesma base visual, só um pouco mais discreta/compacta. */
+.subtabs {
+  margin-top: -0.6rem;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding-left: 0.1rem;
+}
+.subtabs .tab-button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.85rem;
+  min-height: 38px;
+  font-size: 0.88rem;
+}
+.subtabs .tab-button.active { background: var(--accent); border-color: transparent; color: var(--accent-contrast); }
+.subtabs[hidden] { display: none; }
+
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
    no rodapé assume: 4 destinos principais por perfil + "Mais" para o
@@ -403,8 +422,21 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
   display: grid;
+  gap: 0.7rem;
+}
+.more-menu-group {
+  display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 800;
 }
 .more-menu-item {
   text-align: left;

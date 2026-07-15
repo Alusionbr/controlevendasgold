@@ -76,16 +76,36 @@
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  // Escolhidos a dedo (não derivados 1:1 dos grupos abaixo) porque só há
+  // espaço para 4 atalhos na barra fixa do celular.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
     vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
+  // Agrupa as ~20 abas (admin) / ~9 (vendedor) em ~6 seções: a barra de topo
+  // do desktop mostra os grupos, e escolher um abre uma sub-barra
+  // (#subTabsBar) só com as abas daquele grupo. Reduz o que aparece de uma
+  // vez sem remover nenhuma aba — só reorganiza (ver TAB_ORDER/TAB_ROLES,
+  // que continuam a fonte de verdade de existência/permissão de cada aba).
+  const TAB_GROUPS = [
+    { id: 'operacao', label: 'Operação', tabs: ['hoje', 'vendas', 'consignado', 'estoque', 'meusaldo', 'minhasdevolucoes', 'tarefas'] },
+    { id: 'cadastros', label: 'Cadastros', tabs: ['produtos', 'clientes', 'fornecedores'] },
+    { id: 'estoqueProducao', label: 'Estoque e Produção', tabs: ['compras', 'fichas', 'producao'] },
+    { id: 'vendedoresGrupo', label: 'Vendedores', tabs: ['vendedores', 'precos', 'devolucoes'] },
+    { id: 'financeiro', label: 'Financeiro', tabs: ['financeiro', 'relatorios', 'metas'] },
+    { id: 'config', label: 'Config', tabs: ['negocios', 'dados', 'calculadora', 'ajuda'] },
+  ];
+
+  function groupForTab(tab) {
+    return TAB_GROUPS.find((group) => group.tabs.includes(tab)) || TAB_GROUPS[0];
+  }
+
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `<button class="tab-button" data-group="${group.id}">${U.escapeHtml(group.label)}</button>`).join('');
   }
 
   function buildBottomNav() {
@@ -113,10 +133,19 @@
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <h4 class="more-menu-group-label">${U.escapeHtml(group.label)}</h4>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -141,6 +170,7 @@
     authRoot: document.getElementById('authRoot'),
     businessBar: document.querySelector('.business-bar'),
     tabs: [...document.querySelectorAll('.tab-button')],
+    subTabsBar: document.getElementById('subTabsBar'),
     bottomNav: document.getElementById('bottomNav'),
     moreMenu: document.getElementById('moreMenu'),
   };
@@ -172,10 +202,41 @@
     return TAB_ORDER.find(tabAllowed) || 'hoje';
   }
 
+  function groupAllowed(groupId) {
+    const group = TAB_GROUPS.find((item) => item.id === groupId);
+    return !!group && group.tabs.some(tabAllowed);
+  }
+
+  function firstAllowedTabInGroup(groupId) {
+    const group = TAB_GROUPS.find((item) => item.id === groupId);
+    return (group && group.tabs.find(tabAllowed)) || firstAllowedTab();
+  }
+
+  // Sub-barra (#subTabsBar) com as abas do grupo da aba ativa, filtradas por
+  // papel. Escondida quando o grupo tem 0-1 aba permitida (nada a escolher).
+  function renderSubNav() {
+    if (!els.subTabsBar) return;
+    const tabs = groupForTab(activeTab).tabs.filter(tabAllowed);
+    if (tabs.length <= 1) {
+      els.subTabsBar.hidden = true;
+      els.subTabsBar.innerHTML = '';
+      return;
+    }
+    els.subTabsBar.hidden = false;
+    els.subTabsBar.innerHTML = tabs.map((tab) => `
+      <button type="button" class="tab-button ${tab === activeTab ? 'active' : ''}" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>
+    `).join('');
+  }
+
   function syncActiveNav() {
-    document.querySelectorAll('.tab-button, .bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
+    const activeGroupId = groupForTab(activeTab).id;
+    document.querySelectorAll('#tabsBar [data-group]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.group === activeGroupId);
+    });
+    document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
       button.classList.toggle('active', button.dataset.tab === activeTab);
     });
+    renderSubNav();
   }
 
   function openMoreMenu() {
@@ -189,8 +250,7 @@
   function applyRoleVisibility() {
     const role = currentRole();
     els.tabs.forEach((button) => {
-      const allowed = tabAllowed(button.dataset.tab);
-      button.hidden = !allowed;
+      button.hidden = !groupAllowed(button.dataset.group);
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {
@@ -424,6 +484,14 @@
     syncActiveNav();
     closeMoreMenu();
     renderTab();
+  }
+
+  // Clique num grupo da barra de topo (#tabsBar): se a aba ativa já é desse
+  // grupo, só mantém (não reseta pra primeira aba); senão entra no grupo
+  // pela primeira aba permitida.
+  function onGroupClick(groupId) {
+    if (groupForTab(activeTab).id === groupId) return;
+    setTab(firstAllowedTabInGroup(groupId));
   }
 
   // Abre o cockpit de pagina inteira de um vendedor (chamado pelo botao
@@ -2181,9 +2249,16 @@
 
   function bindEvents() {
     bindHelpTips();
-    els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    els.tabs.forEach((button) => button.addEventListener('click', () => onGroupClick(button.dataset.group)));
     document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
       button.addEventListener('click', () => setTab(button.dataset.tab));
+    });
+    // #subTabsBar é reconstruída a cada troca de aba/grupo (renderSubNav),
+    // então precisa de delegação em vez de listener por botão (os botões
+    // criados antes do último innerHTML já não existem mais no DOM).
+    document.addEventListener('click', (event) => {
+      const subButton = event.target.closest('#subTabsBar [data-tab]');
+      if (subButton) setTab(subButton.dataset.tab);
     });
     document.addEventListener('click', (event) => {
       if (event.target.closest('[data-more-menu-open]')) openMoreMenu();
