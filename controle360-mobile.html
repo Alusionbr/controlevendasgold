@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-cscOeja+yN/Mij9fMEn5NA0EGVvPJqPmVuORZ6UcHJA=' 'sha256-DX0Kk6ZpyEOXgyDo5Nr0gpuPJV8FX0mc6s9Rfw/CqkM=' 'sha256-MtEUJebRo7KCAjoVlh7bqbEci1hNI5OV9V8stxqPs0Y=' 'sha256-4zrZEqYPTsuUr6clfBAGFotSYLubmZ03tEHGDefBVOs=' 'sha256-7V/02xbk0CuWRlUrvel7Rjuqvq/eUDdCf7DqUWFbeuM=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-dy6CxwyusHcguqZ7ku78enlUDE8YfB3kFRFfDYljhb0=' 'sha256-jOO/WgQqG06l8oCKG4UcthT8eJf0nevxEjVu6FSrt8c=' 'sha256-fNq9B3Zm8CiDwqUvyaib05nfTEcTapTpiMCNINgcOyI=' 'sha256-+n1bH6MjZd4prNDEG3lJqq8JhhTU+3upblx0oFOxCxo=' 'sha256-Qd51HvLcV2RZrbVnW0vIwHpnLnwODM+jqybwPcvD1Uw=' 'sha256-sne0znmyDRpkM0VtaKy8XwkxHbLHlXoLL9zgf+aYtOU=' 'sha256-wNZAS6WyNjNGJEE9xX8lXrxiQnF7XHVa7iXZj4f0ehQ=' 'sha256-C1eQBne7jhb22Q+fFjqU/pC04Wey3zuiIXVs88QlGQ4=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-/HuQybjQUxHh/InDr963ww1hprVncWOOVmQx8qKZt/c=' 'sha256-e9aqr7WDACQo+mDeKpu+CaSabAWEa0RTJ5MJ2MrAJSw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-nAtazdrXfi52Dmy0SuieS+7ctSrUdwGtWpJL2CYT3Ng=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-fkWEtGqsGnX5BweRaHWqg7JwtxGM/bJICjNu78w6ncE=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-uK6QKoGJi7RA8zR/BwJJtIOn7IRt6mPMLM86ohPxWM8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-DiSjtMiakJmyzM0FdZ/7J5ZYprh7fc2ZlAi+WNsYX8c='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1816,6 +1816,58 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .report-period-bar label {
     min-width: 0;
   }
+}
+
+/* ==========================================================================
+   Cockpit do vendedor (src/sellerCockpit.js) — tela cheia por vendedor
+   ========================================================================== */
+.cockpit { display: grid; gap: 1rem; }
+.cockpit-head { display: grid; gap: 0.35rem; }
+.cockpit-title { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.cockpit-title h2 { margin: 0; font-size: 1.35rem; }
+.cockpit-title p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.cockpit-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.6rem;
+}
+.cockpit-tab {
+  padding: 0.5rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.cockpit-tab:hover { border-color: var(--accent); }
+.cockpit-tab.active { border-color: var(--accent); background: var(--accent); color: #1c1403; }
+.cockpit-body { display: grid; gap: 0.6rem; }
+.cockpit-body h3 { font-size: 0.98rem; margin: 0.5rem 0 0.1rem; }
+.cockpit-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+.cockpit-hint { font-size: 0.84rem; color: var(--muted); margin: 0.2rem 0; }
+.cockpit-order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.7rem;
+}
+.cockpit-order-card { display: grid; gap: 0.5rem; }
+
+/* Filtros do dashboard (vendedor/canal) — mesma pegada do card de período */
+.dashboard-filter-card { display: grid; gap: 0.3rem; }
+.dashboard-filter-card span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.dashboard-filter-card select { width: 100%; padding: 0.4rem 0.5rem; }
+
+@media (max-width: 560px) {
+  .cockpit-order-grid { grid-template-columns: 1fr; }
 }
 
   </style>
@@ -3786,125 +3838,20 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   // ---------------------------------------------------------------------
-  // Tela de gestão de vendedores (admin) — painel consolidado: cada vendedor
-  // vira um card expansível ("Gerenciar") com saldo/pagamento, estoque e
-  // envio de consignado ali mesmo, sem trocar de aba. Reaproveita a lógica
-  // já existente em C360.sellerLedger (saldo/pagamento) e C360.salesCart
-  // (envio de consignado com débito no ledger) em vez de duplicá-la.
+  // Tela de gestão de vendedores (admin) — lista de vendedores. O botão
+  // "Abrir painel" leva ao cockpit de página inteira (src/sellerCockpit.js),
+  // onde ficam saldo/pagamento, estoque, envio de consignado, vendas e
+  // aprovação de pedidos daquele vendedor num só lugar — reaproveitando a
+  // lógica de C360.sellerLedger e C360.salesCart, sem duplicá-la.
   // ---------------------------------------------------------------------
-  function fullState() {
-    return (window.C360.state && window.C360.state.getState()) || {};
-  }
-
   function ledger() { return window.C360.sellerLedger || null; }
 
-  function stockRowsForSeller(sellerId) {
-    const st = fullState();
-    return (st.sellerStock || [])
-      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
-      .map((row) => {
-        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
-        return [
-          product ? U.escapeHtml(product.name) : 'Produto removido',
-          U.qty(row.quantity, product ? product.unit : ''),
-        ];
-      });
-  }
-
-  function pendingCartsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
-  }
-
-  function pendingReturnsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.operationalMovements || []).filter((movement) => String(movement.sellerId) === String(sellerId)
-      && ['a_devolver', 'pending'].includes(movement.status)).length;
-  }
-
-  function productOptionsForConsignment() {
-    return (fullState().products || []).filter((product) => product.type !== 'servico');
-  }
-
-  function sellerManagePanel(seller, feedback) {
-    const L = ledger();
-    const balance = L ? L.balanceFor(seller.id) : 0;
-    const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
-    const stockRows = stockRowsForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
-    const products = productOptionsForConsignment();
-
-    return `
-      <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
-        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
-        <div class="seller-manage-grid">
-          ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
-          ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
-          ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
-        </div>
-        ${pendingCarts > 0 || pendingReturns > 0 ? `
-          <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
-            ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
-          </p>` : ''}
-
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
-
-        <h3>Estoque atual do vendedor</h3>
-        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
-
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
-        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
-          const label = ({
-            debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
-            manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
-          })[entry.type] || entry.type;
-          const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
-          return [
-            (entry.createdAt || '').slice(0, 10),
-            U.escapeHtml(label),
-            UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
-            U.escapeHtml(entry.notes || ''),
-            `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
-          ];
-        }), 'Nenhum lançamento ainda.')}
-      </div>
-    `;
-  }
-
-  function sellerRow(seller, expandedId, feedback) {
+  function sellerRow(seller) {
     const isActive = seller.active !== false;
     const statusBadge = isActive ? UI.badge('Ativo', 'ok') : UI.badge('Inativo', 'warn');
     const toggleAction = isActive ? 'deactivate-seller' : 'activate-seller';
     const toggleLabel = isActive ? 'Desativar' : 'Reativar';
     const toggleClass = isActive ? 'danger' : 'secondary';
-    const isExpanded = String(expandedId) === String(seller.id);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
 
@@ -3916,10 +3863,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </div>
         <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
+          <button type="button" class="small" data-action="open-cockpit" data-id="${U.escapeHtml(seller.id)}">Abrir painel</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
-        ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
       </article>
     `;
   }
@@ -3930,7 +3876,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const listHtml = loading
       ? UI.formNotice('Carregando vendedores...', 'info')
       : (sellers.length
-        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
+        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller)).join('')}</div>`
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
     const L = ledger();
@@ -3940,7 +3886,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
     return UI.section(
       'Vendedores',
-      'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
+      'Crie contas e clique em "Abrir painel" para ver e gerenciar tudo de um vendedor num só lugar: vendas, estoque, saldo, pagamentos e pedidos.',
       `
         ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
         <div id="authSellersError"></div>
@@ -3966,11 +3912,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
     let sellers = [];
     let loading = true;
-    let expandedId = null;
-    let manageFeedback = null;
 
     function paint() {
-      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback });
+      container.innerHTML = renderSellers({ sellers, loading });
     }
 
     function errorHost() {
@@ -4009,8 +3953,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
     container.addEventListener('submit', async (event) => {
       const createForm = event.target.closest('#authCreateSellerForm');
-      const consignForm = event.target.closest('[data-consign-form]');
-      const paymentForm = event.target.closest('[data-ledger-payment-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -4054,61 +3996,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         }
         return;
       }
-
-      if (consignForm && container.contains(consignForm)) {
-        event.preventDefault();
-        const sellerId = consignForm.dataset.sellerId;
-        const data = U.formData(consignForm);
-        const submitButton = consignForm.querySelector('button[type="submit"]');
-        if (submitButton) submitButton.disabled = true;
-        try {
-          if (!window.C360.salesCart || typeof window.C360.salesCart.sendConsignmentToSeller !== 'function') {
-            throw new Error('Envio de consignado indisponível no momento.');
-          }
-          await window.C360.salesCart.sendConsignmentToSeller({
-            sellerId,
-            productId: data.productId,
-            quantity: data.quantity,
-            unitPrice: data.unitPrice,
-          });
-          manageFeedback = { message: 'Consignado enviado. Estoque baixado e dívida lançada no saldo do vendedor.', type: 'success' };
-        } catch (error) {
-          manageFeedback = { message: (error && error.message) || 'Não foi possível enviar o consignado.', type: 'danger' };
-        }
-        paint();
-        return;
-      }
-
-      if (paymentForm && container.contains(paymentForm)) {
-        event.preventDefault();
-        const sellerId = paymentForm.dataset.sellerId;
-        const data = U.formData(paymentForm);
-        try {
-          const L = ledger();
-          if (!L || typeof L.registerPayment !== 'function') throw new Error('Registro de pagamento indisponível no momento.');
-          await L.registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes });
-          manageFeedback = { message: 'Pagamento registrado.', type: 'success' };
-        } catch (error) {
-          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
-        }
-        paint();
-      }
     });
 
     container.addEventListener('click', async (event) => {
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
-      const { action, id, tab } = button.dataset;
+      const { action, id } = button.dataset;
 
-      if (action === 'toggle-manage') {
-        expandedId = String(expandedId) === String(id) ? null : id;
-        manageFeedback = null;
-        paint();
-        return;
-      }
-
-      if (action === 'goto-tab') {
-        if (window.C360.app && typeof window.C360.app.setTab === 'function') window.C360.app.setTab(tab);
+      if (action === 'open-cockpit') {
+        if (window.C360.app && typeof window.C360.app.openSellerCockpit === 'function') {
+          window.C360.app.openSellerCockpit(id);
+        }
         return;
       }
 
@@ -7490,7 +7388,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
   }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
+  // Aprovar/rejeitar um grupo de pedido a partir de fora da esteira (ex.: o
+  // cockpit do vendedor em src/sellerCockpit.js). Reaproveita setGroupApproval
+  // — a mesma escrita que a esteira usa — sem duplicar a lógica de aprovação.
+  async function approveGroup(groupId) { await setGroupApproval(groupId, 'aprovado'); }
+  async function rejectGroup(groupId) { await setGroupApproval(groupId, 'rejeitado'); }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, approveGroup, rejectGroup };
 })();
 </script>
   <script>
@@ -7618,6 +7522,425 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+})();
+</script>
+  <script>
+(function () {
+  'use strict';
+
+  window.C360 = window.C360 || {};
+  const U = window.C360.utils;
+  const UI = window.C360.ui;
+  const Calc = window.C360.calc;
+
+  // ==========================================================================
+  // Cockpit do vendedor — página inteira com TUDO de um vendedor num só lugar,
+  // sem trocar de aba (pedido explícito do usuário: "clico no vendedor e abre
+  // vendas, estoque, dívidas, lançar pagamento, criar venda").
+  //
+  // Não implementa regra de negócio nova: só recompõe, numa tela com
+  // sub-seções, a lógica JÁ existente e exportada por outros módulos:
+  //   - saldo/pagamento:   C360.sellerLedger.balanceFor / entriesForSeller /
+  //                        registerPayment
+  //   - envio consignado:  C360.salesCart.sendConsignmentToSeller
+  //   - aprovar/rejeitar:  C360.salesCart.approveGroup / rejectGroup
+  //   - devoluções:        atalho para a aba de conferência (C360.app.setTab)
+  //
+  // Montado por src/app.js (mountModuleTab, aba "vendedores") quando há um
+  // vendedor selecionado (C360.app.openSellerCockpit(id)).
+  // ==========================================================================
+
+  const SECTIONS = [
+    { id: 'resumo', label: 'Resumo' },
+    { id: 'vendas', label: 'Vendas' },
+    { id: 'estoque', label: 'Estoque' },
+    { id: 'saldo', label: 'Saldo e pagamentos' },
+    { id: 'pedidos', label: 'Pedidos' },
+    { id: 'devolucoes', label: 'Devoluções' },
+  ];
+
+  // Preservado entre remounts (um renderAll() global re-monta o cockpit): a
+  // sub-seção aberta só volta a "resumo" quando muda o vendedor.
+  let activeSection = 'resumo';
+  let activeSellerId = null;
+
+  function S() { return window.C360.state; }
+  function state() { return S().getState(); }
+  function ledger() { return window.C360.sellerLedger || null; }
+  function cart() { return window.C360.salesCart || null; }
+
+  function productById(id) {
+    return (state().products || []).find((item) => String(item.id) === String(id)) || null;
+  }
+  function clientById(id) {
+    return (state().clients || []).find((item) => String(item.id) === String(id)) || null;
+  }
+  function sellerProfile(sellerId) {
+    return (state().profiles || state().sellers || []).find((item) => String(item.id) === String(sellerId))
+      || (state().sellers || []).find((item) => String(item.id) === String(sellerId))
+      || null;
+  }
+
+  // ---------------------------------------------------------------------
+  // Coletas de dados por vendedor (leitura pura do cache)
+  // ---------------------------------------------------------------------
+  function salesFor(sellerId) {
+    return (state().sales || []).filter((sale) => String(sale.sellerId) === String(sellerId));
+  }
+  function consignmentsFor(sellerId) {
+    return (state().consignments || []).filter((row) => String(row.sellerId) === String(sellerId));
+  }
+  function stockFor(sellerId) {
+    return (state().sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0);
+  }
+  function movementsFor(sellerId) {
+    return (state().operationalMovements || []).filter((row) => String(row.sellerId) === String(sellerId));
+  }
+  function pendingReturnsFor(sellerId) {
+    return movementsFor(sellerId).filter((row) => ['a_devolver', 'pending'].includes(row.status));
+  }
+  function stockValueFor(sellerId) {
+    return stockFor(sellerId).reduce((sum, row) => {
+      const product = productById(row.productId);
+      return sum + U.number(row.quantity) * U.number(product && product.avgCost);
+    }, 0);
+  }
+
+  // Agrupa os pedidos (orders) do vendedor pelo orderGroupId — mesma chave que
+  // a esteira de src/salesCart.js usa, para os botões Aprovar/Rejeitar baterem.
+  function groupsFor(sellerId) {
+    const map = new Map();
+    (state().orders || [])
+      .filter((order) => String(order.sellerId) === String(sellerId))
+      .forEach((order) => {
+        const key = order.orderGroupId || order.id;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(order);
+      });
+    return [...map.entries()].map(([key, rows]) => {
+      const first = rows[0];
+      return {
+        key,
+        rows,
+        status: first.status,
+        approvalStatus: first.approvalStatus,
+        paymentMode: first.paymentMode,
+        total: rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0),
+      };
+    });
+  }
+  function pendingGroupsFor(sellerId) {
+    return groupsFor(sellerId).filter((group) => group.approvalStatus === 'pendente_aprovacao');
+  }
+
+  function productOptionsForConsignment() {
+    return (state().products || []).filter((product) => product.type !== 'servico');
+  }
+
+  // ---------------------------------------------------------------------
+  // Render de cada sub-seção
+  // ---------------------------------------------------------------------
+  function renderResumo(sellerId) {
+    const L = ledger();
+    const balance = L ? L.balanceFor(sellerId) : 0;
+    const sales = salesFor(sellerId);
+    const salesTotal = sales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
+    const pendingCount = pendingGroupsFor(sellerId).length;
+    const returnsCount = pendingReturnsFor(sellerId).length;
+    return `
+      <div class="cockpit-metrics">
+        ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
+        ${UI.metric('Valor em estoque com ele', U.money(stockValueFor(sellerId)), 'valorEstoque')}
+        ${UI.metric('Vendas registradas', U.money(salesTotal), 'receitaLiquida')}
+        ${UI.metric('Pedidos aguardando aprovação', String(pendingCount), null)}
+        ${UI.metric('Devoluções pendentes', String(returnsCount), null)}
+      </div>
+      <p class="cockpit-hint">Use as seções acima para ver vendas, mexer no estoque, registrar pagamento e aprovar pedidos deste vendedor sem sair desta tela.</p>
+    `;
+  }
+
+  function renderVendas(sellerId) {
+    const sales = U.sortByDateDesc(salesFor(sellerId));
+    const rows = sales.map((sale) => {
+      const product = productById(sale.productId);
+      const client = clientById(sale.clientId);
+      return [
+        U.escapeHtml(sale.date),
+        U.escapeHtml(sale.channel || '—'),
+        U.escapeHtml(client ? client.name : '—'),
+        UI.productName(product),
+        U.qty(sale.quantity, product && product.unit),
+        UI.moneyCell(sale.netRevenue),
+        UI.moneyCell(sale.cogs),
+        UI.moneyCell(sale.grossProfit),
+      ];
+    });
+    const consignments = consignmentsFor(sellerId).filter((row) => U.number(row.quantitySent) > 0);
+    const consRows = consignments.map((item) => {
+      const product = productById(item.productId);
+      return [
+        U.escapeHtml(item.date || '—'),
+        UI.productName(product),
+        U.qty(item.quantitySent, product && product.unit),
+        U.qty(item.quantitySold, product && product.unit),
+        UI.moneyCell(Calc.consignmentOpenAmount(item)),
+      ];
+    });
+    return `
+      <h3>Vendas do vendedor</h3>
+      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro'], rows, 'Este vendedor ainda não tem vendas.')}
+      <h3>Consignações</h3>
+      ${UI.table(['Data', 'Produto', 'Enviado', 'Vendido', 'Em aberto'], consRows, 'Nenhuma consignação com este vendedor.')}
+    `;
+  }
+
+  function renderEstoque(sellerId) {
+    const stockRows = stockFor(sellerId).map((row) => {
+      const product = productById(row.productId);
+      return [
+        product ? U.escapeHtml(product.name) : 'Produto removido',
+        U.qty(row.quantity, product ? product.unit : ''),
+      ];
+    });
+    const products = productOptionsForConsignment();
+    return `
+      <h3>Enviar estoque consignado</h3>
+      <p class="cockpit-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
+      <form class="grid-form compact-form" data-cockpit-consign>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantity" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label>Preço unitário (dívida)
+          <input name="unitPrice" type="number" step="0.01" min="0" required>
+        </label>
+        <button type="submit" class="small">Enviar consignado</button>
+      </form>
+      <h3>Estoque atual do vendedor</h3>
+      ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
+    `;
+  }
+
+  function renderSaldo(sellerId) {
+    const L = ledger();
+    const balance = L ? L.balanceFor(sellerId) : 0;
+    const entries = L ? L.entriesForSeller(sellerId).slice(0, 20) : [];
+    const payments = (state().sellerPayments || [])
+      .filter((payment) => String(payment.sellerId) === String(sellerId)).slice(0, 10);
+    const typeLabel = {
+      debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
+      manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
+    };
+    const entryRows = entries.map((entry) => {
+      const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
+      return [
+        (entry.createdAt || '').slice(0, 10),
+        U.escapeHtml(typeLabel[entry.type] || entry.type),
+        UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
+        U.escapeHtml(entry.notes || ''),
+        `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
+      ];
+    });
+    return `
+      ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
+      <h3>Registrar pagamento recebido</h3>
+      <form class="grid-form compact-form" data-cockpit-payment>
+        <label>Valor recebido
+          <input name="amount" type="number" step="0.01" min="0.01" required>
+        </label>
+        <label>Forma
+          <input name="method" placeholder="Pix, dinheiro...">
+        </label>
+        <label class="wide">Observação
+          <input name="notes" placeholder="Opcional">
+        </label>
+        <button type="submit" class="small">Registrar pagamento</button>
+      </form>
+      <h3>Histórico do saldo</h3>
+      ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entryRows, 'Nenhum lançamento ainda.')}
+      <h3>Pagamentos registrados</h3>
+      ${UI.table(['Data', 'Forma', 'Nota', 'Valor'], payments.map((payment) => [
+        (payment.paymentDate || '').slice(0, 10),
+        U.escapeHtml(payment.method || '—'),
+        U.escapeHtml(payment.notes || ''),
+        UI.moneyCell(payment.amount),
+      ]), 'Nenhum pagamento registrado ainda.')}
+    `;
+  }
+
+  function renderPedidos(sellerId) {
+    const groups = groupsFor(sellerId);
+    const statusLabel = {
+      pendente: 'Pendente', em_preparo: 'Em montagem', pronto: 'Pronto',
+      despachado: 'Despachado', concluido: 'Concluído',
+    };
+    const cards = groups
+      .filter((group) => group.approvalStatus !== 'rejeitado')
+      .map((group) => {
+        const pending = group.approvalStatus === 'pendente_aprovacao';
+        const items = group.rows.map((order) => {
+          const product = productById(order.productId);
+          return `<li><span>${U.escapeHtml(product ? product.name : 'Produto')}</span><strong>${U.qty(order.quantity, product && product.unit)}</strong></li>`;
+        }).join('');
+        const actions = pending
+          ? `<div class="actions">
+              <button type="button" class="small" data-cockpit-approve="${U.escapeHtml(group.key)}">Aprovar</button>
+              <button type="button" class="small danger" data-cockpit-reject="${U.escapeHtml(group.key)}">Rejeitar</button>
+            </div>`
+          : UI.badge(statusLabel[group.status] || group.status, group.status === 'concluido' ? 'ok' : '');
+        return `
+          <article class="panel-card cockpit-order-card ${pending ? 'board-card-pending' : ''}">
+            <div class="approval-card-head">
+              <strong>${U.escapeHtml(({ avista: 'À vista', parcial: 'Parcial', consignado: 'Consignado' })[group.paymentMode] || 'Pedido')}</strong>
+              ${pending ? UI.badge('Aguardando aprovação', 'warn') : ''}
+            </div>
+            <ul class="board-card-items">${items}</ul>
+            <div class="board-card-foot"><span>Total</span><strong>${U.money(group.total)}</strong></div>
+            ${actions}
+          </article>`;
+      }).join('');
+    return `
+      <h3>Pedidos do vendedor</h3>
+      <p class="cockpit-hint">Aprove ou rejeite as reposições pedidas por este vendedor. Depois de aprovado, o despacho acontece na esteira em Vendas.</p>
+      ${cards ? `<div class="cockpit-order-grid">${cards}</div>` : UI.formNotice('Nenhum pedido deste vendedor.', 'info')}
+    `;
+  }
+
+  function renderDevolucoes(sellerId) {
+    const movements = movementsFor(sellerId).slice(0, 20);
+    const kindLabel = { devolucao: 'Devolução', desperdicio: 'Desperdício', brinde: 'Brinde' };
+    const statusLabel = { a_devolver: 'A devolver', pending: 'Aguardando', reviewed: 'Conferido', rejected: 'Rejeitado' };
+    const rows = movements.map((movement) => {
+      const product = productById(movement.productId);
+      return [
+        (movement.createdAt || '').slice(0, 10),
+        U.escapeHtml(kindLabel[movement.kind] || movement.kind || '—'),
+        UI.productName(product),
+        U.qty(movement.quantity, product && product.unit),
+        UI.badge(statusLabel[movement.status] || movement.status || '—', ['a_devolver', 'pending'].includes(movement.status) ? 'warn' : 'ok'),
+      ];
+    });
+    return `
+      <h3>Devoluções, desperdícios e brindes</h3>
+      ${UI.table(['Data', 'Tipo', 'Produto', 'Qtd.', 'Status'], rows, 'Nada registrado para este vendedor.')}
+      <p class="cockpit-hint">A conferência (que dá baixa no estoque/dívida) é feita na fila do admin.</p>
+      <button type="button" class="small secondary" data-cockpit-goto="devolucoes">Abrir fila de conferência</button>
+    `;
+  }
+
+  function renderSection(sellerId) {
+    switch (activeSection) {
+      case 'vendas': return renderVendas(sellerId);
+      case 'estoque': return renderEstoque(sellerId);
+      case 'saldo': return renderSaldo(sellerId);
+      case 'pedidos': return renderPedidos(sellerId);
+      case 'devolucoes': return renderDevolucoes(sellerId);
+      default: return renderResumo(sellerId);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Montagem
+  // ---------------------------------------------------------------------
+  function mount(container, sellerId, options = {}) {
+    if (!container) return;
+    if (String(sellerId) !== String(activeSellerId)) {
+      activeSellerId = sellerId;
+      activeSection = 'resumo';
+    }
+    let feedback = null;
+
+    function paint() {
+      const seller = sellerProfile(sellerId);
+      const L = ledger();
+      const balance = L ? L.balanceFor(sellerId) : 0;
+      const nav = SECTIONS.map((section) => `
+        <button type="button" class="cockpit-tab ${section.id === activeSection ? 'active' : ''}" data-cockpit-section="${section.id}">${U.escapeHtml(section.label)}</button>
+      `).join('');
+      container.innerHTML = `
+        <div class="cockpit">
+          <div class="cockpit-head">
+            <button type="button" class="link-button" data-cockpit-back>← Voltar aos vendedores</button>
+            <div class="cockpit-title">
+              <h2>${U.escapeHtml((seller && seller.name) || 'Vendedor')}</h2>
+              <p>${U.escapeHtml((seller && seller.email) || '')}${balance > 0 ? ` · ${UI.badge('Deve ' + U.money(balance), 'danger')}` : ` · ${UI.badge('Em dia', 'ok')}`}</p>
+            </div>
+          </div>
+          <nav class="cockpit-nav">${nav}</nav>
+          ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+          <div class="cockpit-body">${renderSection(sellerId)}</div>
+        </div>
+      `;
+    }
+
+    async function withFeedback(fn, okMessage) {
+      try {
+        await fn();
+        feedback = { message: okMessage, type: 'success' };
+      } catch (error) {
+        feedback = { message: (error && error.message) || 'Não foi possível concluir a ação.', type: 'danger' };
+      }
+      paint();
+    }
+
+    container.addEventListener('click', async (event) => {
+      const back = event.target.closest('[data-cockpit-back]');
+      if (back) { if (typeof options.onBack === 'function') options.onBack(); return; }
+
+      const tab = event.target.closest('[data-cockpit-section]');
+      if (tab) { activeSection = tab.dataset.cockpitSection; feedback = null; paint(); return; }
+
+      const goto = event.target.closest('[data-cockpit-goto]');
+      if (goto) {
+        if (window.C360.app && typeof window.C360.app.setTab === 'function') window.C360.app.setTab(goto.dataset.cockpitGoto);
+        return;
+      }
+
+      const approve = event.target.closest('[data-cockpit-approve]');
+      if (approve) {
+        await withFeedback(() => cart().approveGroup(approve.dataset.cockpitApprove), 'Pedido aprovado. Pode despachar na esteira (Vendas).');
+        return;
+      }
+      const reject = event.target.closest('[data-cockpit-reject]');
+      if (reject) {
+        if (!confirm('Rejeitar este pedido?')) return;
+        await withFeedback(() => cart().rejectGroup(reject.dataset.cockpitReject), 'Pedido rejeitado.');
+        return;
+      }
+    });
+
+    container.addEventListener('submit', async (event) => {
+      const consignForm = event.target.closest('[data-cockpit-consign]');
+      if (consignForm) {
+        event.preventDefault();
+        const data = U.formData(consignForm);
+        await withFeedback(() => cart().sendConsignmentToSeller({
+          sellerId,
+          productId: data.productId,
+          quantity: data.quantity,
+          unitPrice: data.unitPrice,
+        }), 'Consignado enviado. Estoque baixado e dívida lançada no saldo do vendedor.');
+        return;
+      }
+
+      const paymentForm = event.target.closest('[data-cockpit-payment]');
+      if (paymentForm) {
+        event.preventDefault();
+        const data = U.formData(paymentForm);
+        const L = ledger();
+        if (!L || typeof L.registerPayment !== 'function') { feedback = { message: 'Registro de pagamento indisponível.', type: 'danger' }; paint(); return; }
+        await withFeedback(() => L.registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes }), 'Pagamento registrado.');
+        return;
+      }
+    });
+
+    paint();
+  }
+
+  window.C360.sellerCockpit = { mount };
 })();
 </script>
   <script>
@@ -9756,9 +10079,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   const todayDate = new Date();
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
+  let dashboardSellerId = '';
+  let dashboardChannel = '';
   let draggedCard = null;
   let openReturnsSaleId = null;
   let purchaseDraft = [];
+  // Vendedor selecionado para o cockpit de pagina inteira (aba Vendedores).
+  // null = mostra a lista; setado = mostra o cockpit desse vendedor.
+  let cockpitSellerId = null;
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -9851,14 +10179,29 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     els.activeBusiness.disabled = businesses.length === 0;
   }
 
+  // Filtros de vendedor/canal (sem data): usados pelo gráfico de 7 dias, que
+  // tem janela própria (últimos 7 dias) e não deve respeitar o período.
+  function saleMatchesSellerChannel(sale) {
+    if (dashboardSellerId && String(sale.sellerId) !== String(dashboardSellerId)) return false;
+    if (dashboardChannel && (sale.channel || '') !== dashboardChannel) return false;
+    return true;
+  }
+
+  // Aplica os filtros do dashboard (período + vendedor + canal) a uma venda.
+  function saleMatchesDashboardFilters(sale) {
+    const date = sale.date || '';
+    if (dashboardStart && date < dashboardStart) return false;
+    if (dashboardEnd && date > dashboardEnd) return false;
+    return saleMatchesSellerChannel(sale);
+  }
+
   function renderDashboard() {
     const baseState = state();
-    const periodSales = baseState.sales.filter((sale) => {
-      const date = sale.date || '';
-      return (!dashboardStart || date >= dashboardStart) && (!dashboardEnd || date <= dashboardEnd);
-    });
+    const periodSales = baseState.sales.filter(saleMatchesDashboardFilters);
     const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales });
     const stockMetrics = Calc.businessMetrics(baseState);
+    const sellers = (baseState.sellers || []).filter((seller) => seller.active !== false);
+    const channels = (baseState.settings && baseState.settings.channels) || [];
     els.dashboard.innerHTML = `
       <article class="metric-card dashboard-period-card">
         <span>Periodo</span>
@@ -9867,6 +10210,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}" aria-label="Fim do periodo">
         </div>
       </article>
+      ${S.isAdmin() ? `
+      <article class="metric-card dashboard-filter-card">
+        <span>Filtros</span>
+        <select data-dashboard-filter="seller" aria-label="Filtrar por vendedor">
+          <option value="">Todos os vendedores</option>
+          ${sellers.map((seller) => `<option value="${U.escapeHtml(seller.id)}" ${String(dashboardSellerId) === String(seller.id) ? 'selected' : ''}>${U.escapeHtml(seller.name || 'Vendedor')}</option>`).join('')}
+        </select>
+        <select data-dashboard-filter="channel" aria-label="Filtrar por canal">
+          <option value="">Todos os canais</option>
+          ${channels.map((channel) => `<option value="${U.escapeHtml(channel)}" ${dashboardChannel === channel ? 'selected' : ''}>${U.escapeHtml(channel)}</option>`).join('')}
+        </select>
+      </article>` : ''}
       ${[
         UI.metric('Vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
@@ -9875,11 +10230,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
-      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState, baseState.sales.filter(saleMatchesSellerChannel)) : ''}
     `;
   }
 
-  function renderOperationsSnapshot(baseState) {
+  function renderOperationsSnapshot(baseState, salesForTrend = baseState.sales) {
     const businessId = baseState.activeBusinessId;
     const products = (baseState.products || []).filter((product) => product.businessId === businessId);
     const productMap = new Map(products.map((product) => [String(product.id), product]));
@@ -9898,7 +10253,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
     });
     const daysByKey = new Map(days.map((day) => [day.key, day]));
-    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    (salesForTrend || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
     const maxDay = Math.max(...days.map((day) => day.amount), 1);
     return `
       <section class='operations-snapshot' aria-label='Resumo operacional'>
@@ -9993,9 +10348,22 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   function setTab(tab) {
+    // Sair da aba Vendedores fecha o cockpit: voltar depois mostra a lista.
+    if (tab !== 'vendedores') cockpitSellerId = null;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
+    renderTab();
+  }
+
+  // Abre o cockpit de pagina inteira de um vendedor (chamado pelo botao
+  // "Abrir painel" de cada card em src/auth.js).
+  function openSellerCockpit(sellerId) {
+    cockpitSellerId = sellerId;
+    if (activeTab !== 'vendedores') {
+      setTab('vendedores');
+      cockpitSellerId = sellerId; // setTab limpa ao trocar de aba; re-seta aqui
+    }
     renderTab();
   }
 
@@ -10048,10 +10416,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
+        // Aba unica do admin para tudo sobre vendedores. Com um vendedor
+        // selecionado (C360.app.openSellerCockpit), abre o cockpit de pagina
+        // inteira (src/sellerCockpit.js) com vendas/estoque/saldo/pedidos dele
+        // num so lugar. Sem selecao, mostra a lista + permissoes + concessao
+        // direta de estoque.
+        if (cockpitSellerId && window.C360.sellerCockpit && typeof window.C360.sellerCockpit.mount === 'function') {
+          els.view.innerHTML = '<div id="sellerCockpitPanel"></div>';
+          window.C360.sellerCockpit.mount(document.getElementById('sellerCockpitPanel'), cockpitSellerId, {
+            onBack: () => { cockpitSellerId = null; renderTab(); },
+          });
+          break;
+        }
         els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
@@ -11774,6 +12150,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     document.addEventListener('change', handleFileInputs);
     document.addEventListener('change', handleSalePriceHint);
     document.addEventListener('change', handleDashboardPeriod);
+    document.addEventListener('change', handleDashboardFilter);
     document.addEventListener('submit', handleCostPreview, true);
     document.addEventListener('dragstart', handleKanbanDragStart);
     document.addEventListener('dragover', handleKanbanDragOver);
@@ -11787,6 +12164,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!input) return;
     if (input.dataset.dashboardDate === 'start') dashboardStart = input.value || '';
     if (input.dataset.dashboardDate === 'end') dashboardEnd = input.value || '';
+    renderDashboard();
+  }
+
+  function handleDashboardFilter(event) {
+    const select = event.target.closest('[data-dashboard-filter]');
+    if (!select) return;
+    if (select.dataset.dashboardFilter === 'seller') dashboardSellerId = select.value || '';
+    if (select.dataset.dashboardFilter === 'channel') dashboardChannel = select.value || '';
     renderDashboard();
   }
 
@@ -11826,7 +12211,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // addSale é exposto para src/salesCart.js materializar a venda "propria"
   // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
-  window.C360.app = { refresh: renderAll, toast, setTab, addSale };
+  window.C360.app = { refresh: renderAll, toast, setTab, addSale, openSellerCockpit };
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é

@@ -342,125 +342,20 @@
   }
 
   // ---------------------------------------------------------------------
-  // Tela de gestão de vendedores (admin) — painel consolidado: cada vendedor
-  // vira um card expansível ("Gerenciar") com saldo/pagamento, estoque e
-  // envio de consignado ali mesmo, sem trocar de aba. Reaproveita a lógica
-  // já existente em C360.sellerLedger (saldo/pagamento) e C360.salesCart
-  // (envio de consignado com débito no ledger) em vez de duplicá-la.
+  // Tela de gestão de vendedores (admin) — lista de vendedores. O botão
+  // "Abrir painel" leva ao cockpit de página inteira (src/sellerCockpit.js),
+  // onde ficam saldo/pagamento, estoque, envio de consignado, vendas e
+  // aprovação de pedidos daquele vendedor num só lugar — reaproveitando a
+  // lógica de C360.sellerLedger e C360.salesCart, sem duplicá-la.
   // ---------------------------------------------------------------------
-  function fullState() {
-    return (window.C360.state && window.C360.state.getState()) || {};
-  }
-
   function ledger() { return window.C360.sellerLedger || null; }
 
-  function stockRowsForSeller(sellerId) {
-    const st = fullState();
-    return (st.sellerStock || [])
-      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
-      .map((row) => {
-        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
-        return [
-          product ? U.escapeHtml(product.name) : 'Produto removido',
-          U.qty(row.quantity, product ? product.unit : ''),
-        ];
-      });
-  }
-
-  function pendingCartsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
-  }
-
-  function pendingReturnsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.operationalMovements || []).filter((movement) => String(movement.sellerId) === String(sellerId)
-      && ['a_devolver', 'pending'].includes(movement.status)).length;
-  }
-
-  function productOptionsForConsignment() {
-    return (fullState().products || []).filter((product) => product.type !== 'servico');
-  }
-
-  function sellerManagePanel(seller, feedback) {
-    const L = ledger();
-    const balance = L ? L.balanceFor(seller.id) : 0;
-    const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
-    const stockRows = stockRowsForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
-    const products = productOptionsForConsignment();
-
-    return `
-      <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
-        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
-        <div class="seller-manage-grid">
-          ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
-          ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
-          ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
-        </div>
-        ${pendingCarts > 0 || pendingReturns > 0 ? `
-          <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
-            ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
-          </p>` : ''}
-
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
-
-        <h3>Estoque atual do vendedor</h3>
-        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
-
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
-        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
-          const label = ({
-            debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
-            manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
-          })[entry.type] || entry.type;
-          const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
-          return [
-            (entry.createdAt || '').slice(0, 10),
-            U.escapeHtml(label),
-            UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
-            U.escapeHtml(entry.notes || ''),
-            `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
-          ];
-        }), 'Nenhum lançamento ainda.')}
-      </div>
-    `;
-  }
-
-  function sellerRow(seller, expandedId, feedback) {
+  function sellerRow(seller) {
     const isActive = seller.active !== false;
     const statusBadge = isActive ? UI.badge('Ativo', 'ok') : UI.badge('Inativo', 'warn');
     const toggleAction = isActive ? 'deactivate-seller' : 'activate-seller';
     const toggleLabel = isActive ? 'Desativar' : 'Reativar';
     const toggleClass = isActive ? 'danger' : 'secondary';
-    const isExpanded = String(expandedId) === String(seller.id);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
 
@@ -472,10 +367,9 @@
         </div>
         <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
+          <button type="button" class="small" data-action="open-cockpit" data-id="${U.escapeHtml(seller.id)}">Abrir painel</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
-        ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
       </article>
     `;
   }
@@ -486,7 +380,7 @@
     const listHtml = loading
       ? UI.formNotice('Carregando vendedores...', 'info')
       : (sellers.length
-        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
+        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller)).join('')}</div>`
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
     const L = ledger();
@@ -496,7 +390,7 @@
 
     return UI.section(
       'Vendedores',
-      'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
+      'Crie contas e clique em "Abrir painel" para ver e gerenciar tudo de um vendedor num só lugar: vendas, estoque, saldo, pagamentos e pedidos.',
       `
         ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
         <div id="authSellersError"></div>
@@ -522,11 +416,9 @@
 
     let sellers = [];
     let loading = true;
-    let expandedId = null;
-    let manageFeedback = null;
 
     function paint() {
-      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback });
+      container.innerHTML = renderSellers({ sellers, loading });
     }
 
     function errorHost() {
@@ -565,8 +457,6 @@
 
     container.addEventListener('submit', async (event) => {
       const createForm = event.target.closest('#authCreateSellerForm');
-      const consignForm = event.target.closest('[data-consign-form]');
-      const paymentForm = event.target.closest('[data-ledger-payment-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -610,61 +500,17 @@
         }
         return;
       }
-
-      if (consignForm && container.contains(consignForm)) {
-        event.preventDefault();
-        const sellerId = consignForm.dataset.sellerId;
-        const data = U.formData(consignForm);
-        const submitButton = consignForm.querySelector('button[type="submit"]');
-        if (submitButton) submitButton.disabled = true;
-        try {
-          if (!window.C360.salesCart || typeof window.C360.salesCart.sendConsignmentToSeller !== 'function') {
-            throw new Error('Envio de consignado indisponível no momento.');
-          }
-          await window.C360.salesCart.sendConsignmentToSeller({
-            sellerId,
-            productId: data.productId,
-            quantity: data.quantity,
-            unitPrice: data.unitPrice,
-          });
-          manageFeedback = { message: 'Consignado enviado. Estoque baixado e dívida lançada no saldo do vendedor.', type: 'success' };
-        } catch (error) {
-          manageFeedback = { message: (error && error.message) || 'Não foi possível enviar o consignado.', type: 'danger' };
-        }
-        paint();
-        return;
-      }
-
-      if (paymentForm && container.contains(paymentForm)) {
-        event.preventDefault();
-        const sellerId = paymentForm.dataset.sellerId;
-        const data = U.formData(paymentForm);
-        try {
-          const L = ledger();
-          if (!L || typeof L.registerPayment !== 'function') throw new Error('Registro de pagamento indisponível no momento.');
-          await L.registerPayment(sellerId, { amount: data.amount, method: data.method, notes: data.notes });
-          manageFeedback = { message: 'Pagamento registrado.', type: 'success' };
-        } catch (error) {
-          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
-        }
-        paint();
-      }
     });
 
     container.addEventListener('click', async (event) => {
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
-      const { action, id, tab } = button.dataset;
+      const { action, id } = button.dataset;
 
-      if (action === 'toggle-manage') {
-        expandedId = String(expandedId) === String(id) ? null : id;
-        manageFeedback = null;
-        paint();
-        return;
-      }
-
-      if (action === 'goto-tab') {
-        if (window.C360.app && typeof window.C360.app.setTab === 'function') window.C360.app.setTab(tab);
+      if (action === 'open-cockpit') {
+        if (window.C360.app && typeof window.C360.app.openSellerCockpit === 'function') {
+          window.C360.app.openSellerCockpit(id);
+        }
         return;
       }
 

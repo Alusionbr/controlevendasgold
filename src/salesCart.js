@@ -1116,5 +1116,11 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
+  // Aprovar/rejeitar um grupo de pedido a partir de fora da esteira (ex.: o
+  // cockpit do vendedor em src/sellerCockpit.js). Reaproveita setGroupApproval
+  // — a mesma escrita que a esteira usa — sem duplicar a lógica de aprovação.
+  async function approveGroup(groupId) { await setGroupApproval(groupId, 'aprovado'); }
+  async function rejectGroup(groupId) { await setGroupApproval(groupId, 'rejeitado'); }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, approveGroup, rejectGroup };
 })();

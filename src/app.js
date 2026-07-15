@@ -149,9 +149,14 @@
   const todayDate = new Date();
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
+  let dashboardSellerId = '';
+  let dashboardChannel = '';
   let draggedCard = null;
   let openReturnsSaleId = null;
   let purchaseDraft = [];
+  // Vendedor selecionado para o cockpit de pagina inteira (aba Vendedores).
+  // null = mostra a lista; setado = mostra o cockpit desse vendedor.
+  let cockpitSellerId = null;
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -244,14 +249,29 @@
     els.activeBusiness.disabled = businesses.length === 0;
   }
 
+  // Filtros de vendedor/canal (sem data): usados pelo gráfico de 7 dias, que
+  // tem janela própria (últimos 7 dias) e não deve respeitar o período.
+  function saleMatchesSellerChannel(sale) {
+    if (dashboardSellerId && String(sale.sellerId) !== String(dashboardSellerId)) return false;
+    if (dashboardChannel && (sale.channel || '') !== dashboardChannel) return false;
+    return true;
+  }
+
+  // Aplica os filtros do dashboard (período + vendedor + canal) a uma venda.
+  function saleMatchesDashboardFilters(sale) {
+    const date = sale.date || '';
+    if (dashboardStart && date < dashboardStart) return false;
+    if (dashboardEnd && date > dashboardEnd) return false;
+    return saleMatchesSellerChannel(sale);
+  }
+
   function renderDashboard() {
     const baseState = state();
-    const periodSales = baseState.sales.filter((sale) => {
-      const date = sale.date || '';
-      return (!dashboardStart || date >= dashboardStart) && (!dashboardEnd || date <= dashboardEnd);
-    });
+    const periodSales = baseState.sales.filter(saleMatchesDashboardFilters);
     const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales });
     const stockMetrics = Calc.businessMetrics(baseState);
+    const sellers = (baseState.sellers || []).filter((seller) => seller.active !== false);
+    const channels = (baseState.settings && baseState.settings.channels) || [];
     els.dashboard.innerHTML = `
       <article class="metric-card dashboard-period-card">
         <span>Periodo</span>
@@ -260,6 +280,18 @@
           <input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}" aria-label="Fim do periodo">
         </div>
       </article>
+      ${S.isAdmin() ? `
+      <article class="metric-card dashboard-filter-card">
+        <span>Filtros</span>
+        <select data-dashboard-filter="seller" aria-label="Filtrar por vendedor">
+          <option value="">Todos os vendedores</option>
+          ${sellers.map((seller) => `<option value="${U.escapeHtml(seller.id)}" ${String(dashboardSellerId) === String(seller.id) ? 'selected' : ''}>${U.escapeHtml(seller.name || 'Vendedor')}</option>`).join('')}
+        </select>
+        <select data-dashboard-filter="channel" aria-label="Filtrar por canal">
+          <option value="">Todos os canais</option>
+          ${channels.map((channel) => `<option value="${U.escapeHtml(channel)}" ${dashboardChannel === channel ? 'selected' : ''}>${U.escapeHtml(channel)}</option>`).join('')}
+        </select>
+      </article>` : ''}
       ${[
         UI.metric('Vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
@@ -268,11 +300,11 @@
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
-      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState, baseState.sales.filter(saleMatchesSellerChannel)) : ''}
     `;
   }
 
-  function renderOperationsSnapshot(baseState) {
+  function renderOperationsSnapshot(baseState, salesForTrend = baseState.sales) {
     const businessId = baseState.activeBusinessId;
     const products = (baseState.products || []).filter((product) => product.businessId === businessId);
     const productMap = new Map(products.map((product) => [String(product.id), product]));
@@ -291,7 +323,7 @@
       return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
     });
     const daysByKey = new Map(days.map((day) => [day.key, day]));
-    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    (salesForTrend || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
     const maxDay = Math.max(...days.map((day) => day.amount), 1);
     return `
       <section class='operations-snapshot' aria-label='Resumo operacional'>
@@ -386,9 +418,22 @@
   }
 
   function setTab(tab) {
+    // Sair da aba Vendedores fecha o cockpit: voltar depois mostra a lista.
+    if (tab !== 'vendedores') cockpitSellerId = null;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
+    renderTab();
+  }
+
+  // Abre o cockpit de pagina inteira de um vendedor (chamado pelo botao
+  // "Abrir painel" de cada card em src/auth.js).
+  function openSellerCockpit(sellerId) {
+    cockpitSellerId = sellerId;
+    if (activeTab !== 'vendedores') {
+      setTab('vendedores');
+      cockpitSellerId = sellerId; // setTab limpa ao trocar de aba; re-seta aqui
+    }
     renderTab();
   }
 
@@ -441,10 +486,18 @@
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
+        // Aba unica do admin para tudo sobre vendedores. Com um vendedor
+        // selecionado (C360.app.openSellerCockpit), abre o cockpit de pagina
+        // inteira (src/sellerCockpit.js) com vendas/estoque/saldo/pedidos dele
+        // num so lugar. Sem selecao, mostra a lista + permissoes + concessao
+        // direta de estoque.
+        if (cockpitSellerId && window.C360.sellerCockpit && typeof window.C360.sellerCockpit.mount === 'function') {
+          els.view.innerHTML = '<div id="sellerCockpitPanel"></div>';
+          window.C360.sellerCockpit.mount(document.getElementById('sellerCockpitPanel'), cockpitSellerId, {
+            onBack: () => { cockpitSellerId = null; renderTab(); },
+          });
+          break;
+        }
         els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
@@ -2167,6 +2220,7 @@
     document.addEventListener('change', handleFileInputs);
     document.addEventListener('change', handleSalePriceHint);
     document.addEventListener('change', handleDashboardPeriod);
+    document.addEventListener('change', handleDashboardFilter);
     document.addEventListener('submit', handleCostPreview, true);
     document.addEventListener('dragstart', handleKanbanDragStart);
     document.addEventListener('dragover', handleKanbanDragOver);
@@ -2180,6 +2234,14 @@
     if (!input) return;
     if (input.dataset.dashboardDate === 'start') dashboardStart = input.value || '';
     if (input.dataset.dashboardDate === 'end') dashboardEnd = input.value || '';
+    renderDashboard();
+  }
+
+  function handleDashboardFilter(event) {
+    const select = event.target.closest('[data-dashboard-filter]');
+    if (!select) return;
+    if (select.dataset.dashboardFilter === 'seller') dashboardSellerId = select.value || '';
+    if (select.dataset.dashboardFilter === 'channel') dashboardChannel = select.value || '';
     renderDashboard();
   }
 
@@ -2219,7 +2281,7 @@
   // addSale é exposto para src/salesCart.js materializar a venda "propria"
   // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
-  window.C360.app = { refresh: renderAll, toast, setTab, addSale };
+  window.C360.app = { refresh: renderAll, toast, setTab, addSale, openSellerCockpit };
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
