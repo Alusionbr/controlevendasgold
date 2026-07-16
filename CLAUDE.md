@@ -785,3 +785,57 @@ aba removida, o total agregado aparece corretamente na aba Vendedores,
 "Registrar pagamento" (mesmo `registerPayment` reaproveitado) continua
 funcionando ali, e "Meu saldo com admin" (visão do vendedor) continua
 batendo com o saldo do lado do admin.
+
+---
+
+## Atualização: revisão da comunicação admin↔vendedor + "Vendedores devem"
+
+Pedido do usuário: ao mandar consignado do admin pro vendedor, "o valor de
+consignados em aberto não altera", "na interface do vendedor não notei
+mudanças", e "as vendas parecem não estar funcionando no painel de controle".
+A revisão achou **três** causas distintas (as duas primeiras já eram os
+sintomas relatados; a terceira apareceu na auditoria):
+
+1. **Deploy travado (causa raiz do relato).** O GitHub Pages
+   (`.github/workflows/pages.yml`) publica só de `main`, e a `main` estava
+   antes de todos os consertos da sessão anterior (consignado que despacha na
+   hora, cockpit, "um número só"). O usuário testava a versão antiga, onde a
+   revenda do admin ficava "Pendente" pra sempre. Resolvido levando tudo pra
+   `main` via PR.
+
+2. **Dívida do vendedor invisível no painel.** Por decisão "um número só", a
+   dívida vive só no ledger (`seller_account_entries`), e
+   `businessMetrics.consignmentsOpen` exclui consignação de vendedor — então
+   nenhum número do dashboard se mexia ao enviar consignado. Nova função pura
+   `Calc.sellersTotalDebt(state)` (soma o saldo devedor de cada vendedor ativo,
+   **mesma fonte** do ledger, sem duplicar). `src/app.js` ganhou a métrica
+   **"Vendedores devem"** no `renderDashboard` e um card no
+   `renderOperationsSnapshot`; "Consignado em aberto"/"A receber" viraram
+   "Consignado com clientes"/"A receber de clientes" pra deixar claro que são
+   só consignação a **cliente**.
+
+3. **Bugs de venda do estoque próprio do vendedor (migração `0027`).**
+   - `convertOwnStockCart` gravava `origin = 'meu_estoque'`, mas o
+     `sales_origin_check` (de `0003`) não aceitava esse valor → **o INSERT em
+     `sales` era rejeitado pelo Postgres** e, como `consumeSellerStock` roda
+     antes, o estoque do vendedor sumia sem venda registrada. `0027` inclui
+     `'meu_estoque'` no check.
+   - O vendedor não vê `products.avg_cost` (RLS), então a venda ia com
+     `unit_cost = 0`, zerando CMV e inflando "Lucro bruto" no painel do admin.
+     `0027` adiciona um trigger `SECURITY DEFINER` `fill_seller_sale_cost` em
+     `sales` que recompõe `unit_cost/cogs/gross_profit/margin` a partir do
+     custo real no servidor (mesmo padrão do `0005`), sem expor custo ao
+     cliente.
+
+**Blindagem (bug de pedido órfão).** `salesCart.js` criava as linhas de
+`orders` **antes** do despacho; se faltasse estoque central,
+`transferAdminStockToSeller` lançava depois, deixando pedido "pendente/aprovado"
+órfão + erro técnico. Novo `assertCentralStockForItems` pré-checa o estoque
+central no início de `launchOrderFromCart` (revenda) e de
+`sendConsignmentToSeller` — sem estoque, **nada** é criado e a mensagem é clara.
+
+Verificado via `run-controlevendasgold` (mock): admin envia consignado →
+"Vendedores devem" sobe pra R$ 100, estoque central cai 100→96, ledger com
+débito R$ 100, seller_stock 4; vendedor vê "Devo ao admin R$ 100" e "Meu
+estoque". Estoque insuficiente → mensagem clara, nenhum pedido órfão. Migração
+`0027` aplicada e conferida no Postgres (constraint + trigger presentes).

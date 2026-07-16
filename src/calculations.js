@@ -94,6 +94,21 @@
     return Math.max(soldValue - number(consignment.amountPaid), 0);
   }
 
+  // Total que os vendedores devem ao admin — a dívida de revenda a prazo mora
+  // no ledger (`seller_account_entries`), NÃO em `consignments` (decisão "um
+  // número só", ver businessMetrics abaixo). Some o saldo devedor (positivo) de
+  // cada vendedor ativo. Fonte única: os mesmos lançamentos que a aba
+  // Vendedores usa — aqui só é agregado para o painel do admin, onde antes esse
+  // valor não aparecia (o admin mandava consignado e nenhum número do dashboard
+  // se mexia). Reaproveita sellerBalance; não recalcula nada.
+  function sellersTotalDebt(state) {
+    const sellers = (state.profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    return sellers.reduce((sum, seller) => {
+      const entries = (state.sellerAccountEntries || []).filter((entry) => String(entry.sellerId) === String(seller.id));
+      return sum + Math.max(sellerBalance(entries), 0);
+    }, 0);
+  }
+
   function consignmentAvailableWithClient(consignment) {
     return number(consignment.quantitySent) - number(consignment.quantitySold) - number(consignment.quantityReturned);
   }
@@ -171,6 +186,7 @@
     saleMath,
     sellerBalance,
     consignmentOpenAmount,
+    sellersTotalDebt,
     consignmentAvailableWithClient,
     businessMetrics,
     resolveSellerPrice,

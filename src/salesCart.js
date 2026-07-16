@@ -175,6 +175,27 @@
   // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
   // =====================================================================
 
+  // Soma a quantidade exigida por produto e confirma que o estoque central
+  // aguenta ANTES de criar qualquer `order`. Sem isto, um despacho que falha no
+  // meio (transferAdminStockToSeller lança em estoque insuficiente) deixa um
+  // pedido órfão "pendente/aprovado" na esteira + um erro técnico. Usado só nos
+  // envios admin->vendedor que despacham na hora.
+  function assertCentralStockForItems(items) {
+    const needed = new Map();
+    items.forEach((item) => {
+      const key = String(item.productId);
+      needed.set(key, U.number(needed.get(key)) + U.number(item.quantity));
+    });
+    needed.forEach((qty, productId) => {
+      const product = productById(productId);
+      if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
+      if (product.type === 'servico') throw new Error(`${product.name}: servico nao pode ser enviado ao revendedor.`);
+      if (U.number(product.currentStock) < qty) {
+        throw new Error(`Estoque central insuficiente de ${product.name} (tem ${U.qty(product.currentStock, product.unit)}, precisa de ${U.qty(qty, product.unit)}). Nada foi enviado.`);
+      }
+    });
+  }
+
   async function addToSellerStock(sellerId, productId, quantity) {
     const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
     const nextQuantity = U.number(current?.quantity) + U.number(quantity);
@@ -352,6 +373,12 @@
     const revenda = isRevendaMode(draft.mode);
     const asRequest = draft.mode === 'request';
     if (draft.mode === 'revenda' && !draft.targetSellerId) throw new Error('Selecione o vendedor que vai receber.');
+
+    // Envio admin->vendedor despacha na hora (baixa estoque central). Confere o
+    // estoque ANTES de criar os pedidos, para não deixar pedido órfão se faltar.
+    // (Pedido do vendedor — asRequest — só baixa estoque na aprovação, então
+    // não checa aqui.)
+    if (revenda && !asRequest) assertCentralStockForItems(draft.items);
 
     const total = cartTotal(draft.items);
     const groupId = crypto.randomUUID();
@@ -1055,6 +1082,9 @@
     const qty = U.number(quantity);
     const price = U.number(unitPrice);
     if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+    // Confere o estoque central antes de criar o pedido (mesmo motivo do
+    // launchOrderFromCart: não deixar pedido órfão se o despacho falhar).
+    assertCentralStockForItems([{ productId, quantity: qty }]);
     const groupId = crypto.randomUUID();
     await S().add('orders', {
       sellerId,

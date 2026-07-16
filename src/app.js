@@ -385,7 +385,12 @@
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
         UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
         UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
-        UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+        // Duas dívidas distintas, cada uma na sua fonte: consignação a CLIENTE
+        // (consignments) e o que os VENDEDORES devem (ledger). Antes só a
+        // primeira aparecia, então mandar consignado pro vendedor não mexia
+        // nenhum número do painel.
+        UI.metric('Consignado com clientes', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+        UI.metric('Vendedores devem', U.money(Calc.sellersTotalDebt(baseState)), null),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ] : [
         // Métricas do vendedor: as do admin (valor em estoque a custo, alertas,
@@ -425,8 +430,9 @@
       <section class='operations-snapshot' aria-label='Resumo operacional'>
         <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
         <div class='operations-kpis'>
-          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
-          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article><span>Vendedores devem</span><strong>${U.money(Calc.sellersTotalDebt(baseState))}</strong><small>Revenda a prazo ainda não paga (saldo dos vendedores).</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>Estoque com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>A receber de clientes</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Consignado a cliente já vendido e não pago.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
