@@ -60,7 +60,12 @@
     fichas: ['admin'],
     producao: ['admin'],
     vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    // Consignado (admin->cliente) é só do admin. O vendedor não consigna para
+    // cliente: ele vende do próprio estoque (aba "Meu estoque"), que já é
+    // rastreado como dívida no ledger ("Meu saldo com admin"). Deixar a aba
+    // para o vendedor só mostrava uma tela vazia (as consignações dele são
+    // filtradas por serem dívida de vendedor, não "a receber").
+    consignado: ['admin'],
     financeiro: ['admin'],
     estoque: ['vendedor'],
     tarefas: ['admin'],
@@ -288,6 +293,27 @@
   function currentSales() { return businessScoped('sales'); }
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
+
+  // Quanto o vendedor logado deve ao admin (saldo do ledger, nunca negativo).
+  // Fonte única de dívida do vendedor no modelo "um número só".
+  function sellerDebt() {
+    const u = S.getCurrentUser();
+    if (!u || S.isAdmin() || !window.C360.sellerLedger || typeof window.C360.sellerLedger.balanceFor !== 'function') return 0;
+    return Math.max(window.C360.sellerLedger.balanceFor(u.id), 0);
+  }
+
+  // Valor total do estoque na mão do vendedor logado (quantidade × preço de
+  // repasse do consignado que ainda tem em consignments abertos). O vendedor
+  // não enxerga custo médio, então usamos o preço combinado como referência.
+  function sellerStockValue() {
+    const u = S.getCurrentUser();
+    if (!u) return 0;
+    const rows = (state().sellerStock || []).filter((r) => String(r.sellerId) === String(u.id));
+    return rows.reduce((sum, r) => {
+      const consign = (state().consignments || []).find((c) => String(c.sellerId) === String(u.id) && String(c.productId) === String(r.productId));
+      return sum + U.number(r.quantity) * U.number(consign?.unitPrice);
+    }, 0);
+  }
   function currentFinancialEntries() { return businessScoped('financialEntries'); }
   function currentTasks() { return businessScoped('tasks'); }
 
@@ -354,14 +380,22 @@
           ${channels.map((channel) => `<option value="${U.escapeHtml(channel)}" ${dashboardChannel === channel ? 'selected' : ''}>${U.escapeHtml(channel)}</option>`).join('')}
         </select>
       </article>` : ''}
-      ${[
+      ${(S.isAdmin() ? [
         UI.metric('Vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
         UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
         UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
-      ].join('')}
+      ] : [
+        // Métricas do vendedor: as do admin (valor em estoque a custo, alertas,
+        // consignado a receber) não fazem sentido pra ele. O que importa é o
+        // que vendeu, o que deve ao admin e o valor do estoque na mão dele.
+        UI.metric('Minhas vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
+        UI.metric('Devo ao admin', U.money(sellerDebt()), null),
+        UI.metric('Meu estoque (valor)', U.money(sellerStockValue()), null),
+        UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+      ]).join('')}
       ${S.isAdmin() ? renderOperationsSnapshot(baseState, baseState.sales.filter(saleMatchesSellerChannel)) : ''}
     `;
   }
@@ -447,14 +481,20 @@
     return `
       <div class="today-screen">
         <div class="dashboard">
-          ${[
-            UI.metric(isAdminUser ? 'Vendas hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+          ${(isAdminUser ? [
+            UI.metric('Vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
             UI.metric('Lucro bruto hoje', U.money(todayMetrics.grossProfit), 'lucroBruto'),
-            isAdminUser
-              ? UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque')
-              : UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+            UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
             UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
-          ].join('')}
+          ] : [
+            // Vendedor: sem "lucro bruto" (o custo é do admin, sairia errado)
+            // nem "consignado em aberto" (sempre 0 no modelo um-número-só). O
+            // que importa: minhas vendas, quanto devo, valor do meu estoque.
+            UI.metric('Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+            UI.metric('Devo ao admin', U.money(sellerDebt()), null),
+            UI.metric('Meu estoque (valor)', U.money(sellerStockValue()), null),
+            UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+          ]).join('')}
         </div>
 
         <section class="today-section">
