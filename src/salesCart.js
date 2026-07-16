@@ -175,6 +175,27 @@
   // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
   // =====================================================================
 
+  // Soma a quantidade exigida por produto e confirma que o estoque central
+  // aguenta ANTES de criar qualquer `order`. Sem isto, um despacho que falha no
+  // meio (transferAdminStockToSeller lança em estoque insuficiente) deixa um
+  // pedido órfão "pendente/aprovado" na esteira + um erro técnico. Usado só nos
+  // envios admin->vendedor que despacham na hora.
+  function assertCentralStockForItems(items) {
+    const needed = new Map();
+    items.forEach((item) => {
+      const key = String(item.productId);
+      needed.set(key, U.number(needed.get(key)) + U.number(item.quantity));
+    });
+    needed.forEach((qty, productId) => {
+      const product = productById(productId);
+      if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
+      if (product.type === 'servico') throw new Error(`${product.name}: servico nao pode ser enviado ao revendedor.`);
+      if (U.number(product.currentStock) < qty) {
+        throw new Error(`Estoque central insuficiente de ${product.name} (tem ${U.qty(product.currentStock, product.unit)}, precisa de ${U.qty(qty, product.unit)}). Nada foi enviado.`);
+      }
+    });
+  }
+
   async function addToSellerStock(sellerId, productId, quantity) {
     const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
     const nextQuantity = U.number(current?.quantity) + U.number(quantity);
@@ -353,6 +374,12 @@
     const asRequest = draft.mode === 'request';
     if (draft.mode === 'revenda' && !draft.targetSellerId) throw new Error('Selecione o vendedor que vai receber.');
 
+    // Envio admin->vendedor despacha na hora (baixa estoque central). Confere o
+    // estoque ANTES de criar os pedidos, para não deixar pedido órfão se faltar.
+    // (Pedido do vendedor — asRequest — só baixa estoque na aprovação, então
+    // não checa aqui.)
+    if (revenda && !asRequest) assertCentralStockForItems(draft.items);
+
     const total = cartTotal(draft.items);
     const groupId = crypto.randomUUID();
     const sellerId = revenda
@@ -383,6 +410,20 @@
       });
     }
     await S().refresh();
+
+    // Admin enviando revenda já aprovada = "entregar estoque ao vendedor
+    // agora": despacha na hora (baixa estoque central + cria consignado +
+    // seller_stock + dívida no ledger), exatamente como o envio consignado do
+    // cockpit (sendConsignmentToSeller). Antes o pedido ficava parado em
+    // "Pendente" na esteira e NADA aparecia no sistema do vendedor até o admin
+    // avançar a mão pelo kanban — origem do bug "consignado não entra pro
+    // vendedor". Requests de vendedor (pendente_aprovacao) e venda própria
+    // continuam passando pela esteira normalmente.
+    if (revenda && !asRequest) {
+      await advanceOrderGroup(groupId, 'despachado');
+      return { dispatched: true };
+    }
+    return { dispatched: false };
   }
 
   // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
@@ -554,7 +595,7 @@
     const revenda = isRevendaMode(draft.mode);
     const modeHint = {
       propria: 'Venda para o cliente final. Ao lancar, entra na esteira em Pendente; a baixa de estoque acontece no Despachado.',
-      revenda: 'Envio para um revendedor. Passa pela esteira; a divida/consignado do vendedor e registrada no Despachado.',
+      revenda: 'Envio para um revendedor. Ao lancar, o estoque vai direto pro vendedor e a divida/consignado ja aparece no saldo dele.',
       own: 'Voce vende um produto que ja esta no seu estoque. A baixa e imediata.',
       request: 'Pedido de reposicao ao admin. Entra na esteira e o admin aprova antes de montar/despachar.',
     }[draft.mode] || '';
@@ -877,7 +918,7 @@
         const action = boardButton.dataset.boardAction;
         const groupId = boardButton.dataset.groupId;
         try {
-          if (action === 'approve-group') { await setGroupApproval(groupId, 'aprovado'); boardFeedback = { message: 'Pedido aprovado. Pode montar.', type: 'success' }; }
+          if (action === 'approve-group') { await approveGroup(groupId); boardFeedback = { message: 'Pedido aprovado e despachado. O estoque ja esta com o vendedor.', type: 'success' }; }
           else if (action === 'reject-group') { if (!confirm('Rejeitar este pedido?')) return; await setGroupApproval(groupId, 'rejeitado'); boardFeedback = { message: 'Pedido rejeitado.', type: 'warning' }; }
           else if (action === 'edit-group') { boardState.editGroupId = groupId; }
           else if (action === 'cancel-edit-group') { boardState.editGroupId = ''; }
@@ -918,10 +959,12 @@
             resetDraft(draft);
             feedback = { message: 'Venda registrada. Seu estoque foi baixado.', type: 'success' };
           } else {
-            await launchOrderFromCart(draft);
+            const result = await launchOrderFromCart(draft);
             const msg = draft.mode === 'request'
               ? 'Pedido enviado ao admin. Aparece na esteira aguardando aprovacao.'
-              : 'Pedido lancado. Acompanhe na esteira (Pendente).';
+              : (result && result.dispatched
+                ? 'Enviado ao vendedor. Estoque baixado e consignado/divida lancados no saldo dele.'
+                : 'Pedido lancado. Acompanhe na esteira (Pendente).');
             resetDraft(draft);
             feedback = { message: msg, type: 'success' };
           }
@@ -1039,6 +1082,9 @@
     const qty = U.number(quantity);
     const price = U.number(unitPrice);
     if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+    // Confere o estoque central antes de criar o pedido (mesmo motivo do
+    // launchOrderFromCart: não deixar pedido órfão se o despacho falhar).
+    assertCentralStockForItems([{ productId, quantity: qty }]);
     const groupId = crypto.randomUUID();
     await S().add('orders', {
       sellerId,
@@ -1116,5 +1162,46 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
+  // Aprovar/rejeitar um grupo de pedido a partir de fora da esteira (ex.: o
+  // cockpit do vendedor em src/sellerCockpit.js). Reaproveita setGroupApproval
+  // — a mesma escrita que a esteira usa — sem duplicar a lógica de aprovação.
+  //
+  // Aprovar já despacha: "aprovado" passa a significar que o estoque foi para
+  // o vendedor de fato (baixa central + consignado/seller_stock + dívida no
+  // ledger). Antes o pedido aprovado ficava em "Pendente" na esteira e o
+  // estoque só chegava ao vendedor quando o admin avançava a mão pelo kanban —
+  // o vendedor via o pedido "aprovado" mas sem estoque nenhum (mesmo bug do
+  // consignado direto). Se faltar estoque central, advanceOrderGroup lança um
+  // erro claro e a aprovação não acontece (correto: não dá pra entregar o que
+  // não existe).
+  async function approveGroup(groupId) {
+    await setGroupApproval(groupId, 'aprovado');
+    await advanceOrderGroup(groupId, 'despachado');
+  }
+  async function rejectGroup(groupId) { await setGroupApproval(groupId, 'rejeitado'); }
+
+  // Chamado por src/orderDrafts.js ao "Lançar" um rascunho: joga os dados
+  // pro carrinho persistente (sobrevive ao próximo mount() da aba Vendas)
+  // em vez de criar a venda direto — quem confere preço/cliente/modo antes
+  // de confirmar continua sendo a pessoa, não o rascunho.
+  function prefillFromDraft({ productId, quantity, notes, clientName } = {}) {
+    // mount() zera draft.items se draft.mode ainda não é válido pro papel
+    // atual (guarda contra modo salvo de outra conta) — se ninguém visitou
+    // Vendas nesta sessão ainda, draft.mode está '' e o item que acabamos de
+    // empurrar seria descartado no primeiro mount(). Fixa o modo padrão do
+    // papel atual primeiro para não cair nesse reset.
+    const allowedModes = modeOptionsFor(isAdmin() ? 'admin' : 'vendedor').map((opt) => opt.v);
+    if (!allowedModes.includes(persistentDraft.mode)) persistentDraft.mode = defaultModeForRole();
+    if (productId) addDraftItem(persistentDraft, { productId, quantity: quantity || 1 });
+    // customerName só aparece na UI quando o modo gera link público — o
+    // texto do rascunho pode se perder de vista nos outros modos (ex.:
+    // "Venda minha" usa um <select> de cliente cadastrado, não texto livre).
+    // Duplicar em notes (sempre visível em "Mais opções") garante que o
+    // nome anotado não suma, mesmo que o admin não troque de modo.
+    if (clientName) persistentDraft.customerName = clientName;
+    const combinedNotes = [clientName ? `Cliente: ${clientName}` : '', notes].filter(Boolean).join(' | ');
+    if (combinedNotes) persistentDraft.notes = persistentDraft.notes ? `${persistentDraft.notes} | ${combinedNotes}` : combinedNotes;
+  }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, approveGroup, rejectGroup, prefillFromDraft };
 })();

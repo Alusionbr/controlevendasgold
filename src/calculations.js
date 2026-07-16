@@ -94,6 +94,21 @@
     return Math.max(soldValue - number(consignment.amountPaid), 0);
   }
 
+  // Total que os vendedores devem ao admin — a dívida de revenda a prazo mora
+  // no ledger (`seller_account_entries`), NÃO em `consignments` (decisão "um
+  // número só", ver businessMetrics abaixo). Some o saldo devedor (positivo) de
+  // cada vendedor ativo. Fonte única: os mesmos lançamentos que a aba
+  // Vendedores usa — aqui só é agregado para o painel do admin, onde antes esse
+  // valor não aparecia (o admin mandava consignado e nenhum número do dashboard
+  // se mexia). Reaproveita sellerBalance; não recalcula nada.
+  function sellersTotalDebt(state) {
+    const sellers = (state.profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    return sellers.reduce((sum, seller) => {
+      const entries = (state.sellerAccountEntries || []).filter((entry) => String(entry.sellerId) === String(seller.id));
+      return sum + Math.max(sellerBalance(entries), 0);
+    }, 0);
+  }
+
   function consignmentAvailableWithClient(consignment) {
     return number(consignment.quantitySent) - number(consignment.quantitySold) - number(consignment.quantityReturned);
   }
@@ -121,7 +136,13 @@
       lowStockCount: products.filter((product) => number(product.minStock) > 0 && number(product.currentStock) <= number(product.minStock)).length,
       netRevenue: sales.reduce((sum, sale) => sum + number(sale.netRevenue), 0),
       grossProfit: sales.reduce((sum, sale) => sum + number(sale.grossProfit), 0),
-      consignmentsOpen: consignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
+      // "A receber" / "Consignado em aberto" conta SÓ consignação admin->CLIENTE
+      // (sem sellerId). A dívida do vendedor — tanto o consignado que o admin
+      // manda pro vendedor quanto a venda que o vendedor faz do próprio estoque
+      // — vive no ledger (seller_account_entries / "Meu saldo com admin"), não
+      // aqui. Senão o mesmo valor apareceria em dois lugares que não se abatem
+      // (decisão "um número só" para a dívida do vendedor).
+      consignmentsOpen: consignments.filter((item) => !item.sellerId).reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
       pendingOrders: orders.filter((order) => !['despachado', 'concluido'].includes(order.status)).length,
     };
   }
@@ -165,6 +186,7 @@
     saleMath,
     sellerBalance,
     consignmentOpenAmount,
+    sellersTotalDebt,
     consignmentAvailableWithClient,
     businessMetrics,
     resolveSellerPrice,

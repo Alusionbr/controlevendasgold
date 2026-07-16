@@ -13,7 +13,7 @@
   // index.html e aqui (fonte antiga do bug de dessincronização).
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
-    'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
+    'hoje', 'rascunhos', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
@@ -22,6 +22,7 @@
 
   const TAB_LABELS = {
     hoje: 'Hoje',
+    rascunhos: 'Rascunho de pedidos',
     negocios: 'Negócios',
     produtos: 'Produtos',
     clientes: 'Clientes',
@@ -50,6 +51,7 @@
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
     hoje: ['admin', 'vendedor'],
+    rascunhos: ['admin', 'vendedor'],
     negocios: ['admin'],
     produtos: ['admin'],
     clientes: ['admin', 'vendedor'],
@@ -58,7 +60,12 @@
     fichas: ['admin'],
     producao: ['admin'],
     vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    // Consignado (admin->cliente) é só do admin. O vendedor não consigna para
+    // cliente: ele vende do próprio estoque (aba "Meu estoque"), que já é
+    // rastreado como dívida no ledger ("Meu saldo com admin"). Deixar a aba
+    // para o vendedor só mostrava uma tela vazia (as consignações dele são
+    // filtradas por serem dívida de vendedor, não "a receber").
+    consignado: ['admin'],
     financeiro: ['admin'],
     estoque: ['vendedor'],
     tarefas: ['admin'],
@@ -76,16 +83,36 @@
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  // Escolhidos a dedo (não derivados 1:1 dos grupos abaixo) porque só há
+  // espaço para 4 atalhos na barra fixa do celular.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
     vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
+  // Agrupa as ~20 abas (admin) / ~9 (vendedor) em ~6 seções: a barra de topo
+  // do desktop mostra os grupos, e escolher um abre uma sub-barra
+  // (#subTabsBar) só com as abas daquele grupo. Reduz o que aparece de uma
+  // vez sem remover nenhuma aba — só reorganiza (ver TAB_ORDER/TAB_ROLES,
+  // que continuam a fonte de verdade de existência/permissão de cada aba).
+  const TAB_GROUPS = [
+    { id: 'operacao', label: 'Operação', tabs: ['hoje', 'rascunhos', 'vendas', 'consignado', 'estoque', 'meusaldo', 'minhasdevolucoes', 'tarefas'] },
+    { id: 'cadastros', label: 'Cadastros', tabs: ['produtos', 'clientes', 'fornecedores'] },
+    { id: 'estoqueProducao', label: 'Estoque e Produção', tabs: ['compras', 'fichas', 'producao'] },
+    { id: 'vendedoresGrupo', label: 'Vendedores', tabs: ['vendedores', 'precos', 'devolucoes'] },
+    { id: 'financeiro', label: 'Financeiro', tabs: ['financeiro', 'relatorios', 'metas'] },
+    { id: 'config', label: 'Config', tabs: ['negocios', 'dados', 'calculadora', 'ajuda'] },
+  ];
+
+  function groupForTab(tab) {
+    return TAB_GROUPS.find((group) => group.tabs.includes(tab)) || TAB_GROUPS[0];
+  }
+
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `<button class="tab-button" data-group="${group.id}">${U.escapeHtml(group.label)}</button>`).join('');
   }
 
   function buildBottomNav() {
@@ -113,10 +140,19 @@
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <h4 class="more-menu-group-label">${U.escapeHtml(group.label)}</h4>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -141,6 +177,7 @@
     authRoot: document.getElementById('authRoot'),
     businessBar: document.querySelector('.business-bar'),
     tabs: [...document.querySelectorAll('.tab-button')],
+    subTabsBar: document.getElementById('subTabsBar'),
     bottomNav: document.getElementById('bottomNav'),
     moreMenu: document.getElementById('moreMenu'),
   };
@@ -149,9 +186,14 @@
   const todayDate = new Date();
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
+  let dashboardSellerId = '';
+  let dashboardChannel = '';
   let draggedCard = null;
   let openReturnsSaleId = null;
   let purchaseDraft = [];
+  // Vendedor selecionado para o cockpit de pagina inteira (aba Vendedores).
+  // null = mostra a lista; setado = mostra o cockpit desse vendedor.
+  let cockpitSellerId = null;
 
   function currentRole() {
     const user = S.getCurrentUser();
@@ -167,10 +209,41 @@
     return TAB_ORDER.find(tabAllowed) || 'hoje';
   }
 
+  function groupAllowed(groupId) {
+    const group = TAB_GROUPS.find((item) => item.id === groupId);
+    return !!group && group.tabs.some(tabAllowed);
+  }
+
+  function firstAllowedTabInGroup(groupId) {
+    const group = TAB_GROUPS.find((item) => item.id === groupId);
+    return (group && group.tabs.find(tabAllowed)) || firstAllowedTab();
+  }
+
+  // Sub-barra (#subTabsBar) com as abas do grupo da aba ativa, filtradas por
+  // papel. Escondida quando o grupo tem 0-1 aba permitida (nada a escolher).
+  function renderSubNav() {
+    if (!els.subTabsBar) return;
+    const tabs = groupForTab(activeTab).tabs.filter(tabAllowed);
+    if (tabs.length <= 1) {
+      els.subTabsBar.hidden = true;
+      els.subTabsBar.innerHTML = '';
+      return;
+    }
+    els.subTabsBar.hidden = false;
+    els.subTabsBar.innerHTML = tabs.map((tab) => `
+      <button type="button" class="tab-button ${tab === activeTab ? 'active' : ''}" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>
+    `).join('');
+  }
+
   function syncActiveNav() {
-    document.querySelectorAll('.tab-button, .bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
+    const activeGroupId = groupForTab(activeTab).id;
+    document.querySelectorAll('#tabsBar [data-group]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.group === activeGroupId);
+    });
+    document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item').forEach((button) => {
       button.classList.toggle('active', button.dataset.tab === activeTab);
     });
+    renderSubNav();
   }
 
   function openMoreMenu() {
@@ -184,8 +257,7 @@
   function applyRoleVisibility() {
     const role = currentRole();
     els.tabs.forEach((button) => {
-      const allowed = tabAllowed(button.dataset.tab);
-      button.hidden = !allowed;
+      button.hidden = !groupAllowed(button.dataset.group);
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {
@@ -221,6 +293,27 @@
   function currentSales() { return businessScoped('sales'); }
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
+
+  // Quanto o vendedor logado deve ao admin (saldo do ledger, nunca negativo).
+  // Fonte única de dívida do vendedor no modelo "um número só".
+  function sellerDebt() {
+    const u = S.getCurrentUser();
+    if (!u || S.isAdmin() || !window.C360.sellerLedger || typeof window.C360.sellerLedger.balanceFor !== 'function') return 0;
+    return Math.max(window.C360.sellerLedger.balanceFor(u.id), 0);
+  }
+
+  // Valor total do estoque na mão do vendedor logado (quantidade × preço de
+  // repasse do consignado que ainda tem em consignments abertos). O vendedor
+  // não enxerga custo médio, então usamos o preço combinado como referência.
+  function sellerStockValue() {
+    const u = S.getCurrentUser();
+    if (!u) return 0;
+    const rows = (state().sellerStock || []).filter((r) => String(r.sellerId) === String(u.id));
+    return rows.reduce((sum, r) => {
+      const consign = (state().consignments || []).find((c) => String(c.sellerId) === String(u.id) && String(c.productId) === String(r.productId));
+      return sum + U.number(r.quantity) * U.number(consign?.unitPrice);
+    }, 0);
+  }
   function currentFinancialEntries() { return businessScoped('financialEntries'); }
   function currentTasks() { return businessScoped('tasks'); }
 
@@ -244,14 +337,29 @@
     els.activeBusiness.disabled = businesses.length === 0;
   }
 
+  // Filtros de vendedor/canal (sem data): usados pelo gráfico de 7 dias, que
+  // tem janela própria (últimos 7 dias) e não deve respeitar o período.
+  function saleMatchesSellerChannel(sale) {
+    if (dashboardSellerId && String(sale.sellerId) !== String(dashboardSellerId)) return false;
+    if (dashboardChannel && (sale.channel || '') !== dashboardChannel) return false;
+    return true;
+  }
+
+  // Aplica os filtros do dashboard (período + vendedor + canal) a uma venda.
+  function saleMatchesDashboardFilters(sale) {
+    const date = sale.date || '';
+    if (dashboardStart && date < dashboardStart) return false;
+    if (dashboardEnd && date > dashboardEnd) return false;
+    return saleMatchesSellerChannel(sale);
+  }
+
   function renderDashboard() {
     const baseState = state();
-    const periodSales = baseState.sales.filter((sale) => {
-      const date = sale.date || '';
-      return (!dashboardStart || date >= dashboardStart) && (!dashboardEnd || date <= dashboardEnd);
-    });
+    const periodSales = baseState.sales.filter(saleMatchesDashboardFilters);
     const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales });
     const stockMetrics = Calc.businessMetrics(baseState);
+    const sellers = (baseState.sellers || []).filter((seller) => seller.active !== false);
+    const channels = (baseState.settings && baseState.settings.channels) || [];
     els.dashboard.innerHTML = `
       <article class="metric-card dashboard-period-card">
         <span>Periodo</span>
@@ -260,19 +368,44 @@
           <input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}" aria-label="Fim do periodo">
         </div>
       </article>
-      ${[
+      ${S.isAdmin() ? `
+      <article class="metric-card dashboard-filter-card">
+        <span>Filtros</span>
+        <select data-dashboard-filter="seller" aria-label="Filtrar por vendedor">
+          <option value="">Todos os vendedores</option>
+          ${sellers.map((seller) => `<option value="${U.escapeHtml(seller.id)}" ${String(dashboardSellerId) === String(seller.id) ? 'selected' : ''}>${U.escapeHtml(seller.name || 'Vendedor')}</option>`).join('')}
+        </select>
+        <select data-dashboard-filter="channel" aria-label="Filtrar por canal">
+          <option value="">Todos os canais</option>
+          ${channels.map((channel) => `<option value="${U.escapeHtml(channel)}" ${dashboardChannel === channel ? 'selected' : ''}>${U.escapeHtml(channel)}</option>`).join('')}
+        </select>
+      </article>` : ''}
+      ${(S.isAdmin() ? [
         UI.metric('Vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
         UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
         UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
-        UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+        // Duas dívidas distintas, cada uma na sua fonte: consignação a CLIENTE
+        // (consignments) e o que os VENDEDORES devem (ledger). Antes só a
+        // primeira aparecia, então mandar consignado pro vendedor não mexia
+        // nenhum número do painel.
+        UI.metric('Consignado com clientes', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+        UI.metric('Vendedores devem', U.money(Calc.sellersTotalDebt(baseState)), null),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
-      ].join('')}
-      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
+      ] : [
+        // Métricas do vendedor: as do admin (valor em estoque a custo, alertas,
+        // consignado a receber) não fazem sentido pra ele. O que importa é o
+        // que vendeu, o que deve ao admin e o valor do estoque na mão dele.
+        UI.metric('Minhas vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
+        UI.metric('Devo ao admin', U.money(sellerDebt()), null),
+        UI.metric('Meu estoque (valor)', U.money(sellerStockValue()), null),
+        UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+      ]).join('')}
+      ${S.isAdmin() ? renderOperationsSnapshot(baseState, baseState.sales.filter(saleMatchesSellerChannel)) : ''}
     `;
   }
 
-  function renderOperationsSnapshot(baseState) {
+  function renderOperationsSnapshot(baseState, salesForTrend = baseState.sales) {
     const businessId = baseState.activeBusinessId;
     const products = (baseState.products || []).filter((product) => product.businessId === businessId);
     const productMap = new Map(products.map((product) => [String(product.id), product]));
@@ -291,14 +424,15 @@
       return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
     });
     const daysByKey = new Map(days.map((day) => [day.key, day]));
-    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    (salesForTrend || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
     const maxDay = Math.max(...days.map((day) => day.amount), 1);
     return `
       <section class='operations-snapshot' aria-label='Resumo operacional'>
         <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
         <div class='operations-kpis'>
-          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
-          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article><span>Vendedores devem</span><strong>${U.money(Calc.sellersTotalDebt(baseState))}</strong><small>Revenda a prazo ainda não paga (saldo dos vendedores).</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>Estoque com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
+          <article><span>A receber de clientes</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Consignado a cliente já vendido e não pago.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
@@ -353,14 +487,20 @@
     return `
       <div class="today-screen">
         <div class="dashboard">
-          ${[
-            UI.metric(isAdminUser ? 'Vendas hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+          ${(isAdminUser ? [
+            UI.metric('Vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
             UI.metric('Lucro bruto hoje', U.money(todayMetrics.grossProfit), 'lucroBruto'),
-            isAdminUser
-              ? UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque')
-              : UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+            UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
             UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
-          ].join('')}
+          ] : [
+            // Vendedor: sem "lucro bruto" (o custo é do admin, sairia errado)
+            // nem "consignado em aberto" (sempre 0 no modelo um-número-só). O
+            // que importa: minhas vendas, quanto devo, valor do meu estoque.
+            UI.metric('Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+            UI.metric('Devo ao admin', U.money(sellerDebt()), null),
+            UI.metric('Meu estoque (valor)', U.money(sellerStockValue()), null),
+            UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+          ]).join('')}
         </div>
 
         <section class="today-section">
@@ -386,9 +526,30 @@
   }
 
   function setTab(tab) {
+    // Sair da aba Vendedores fecha o cockpit: voltar depois mostra a lista.
+    if (tab !== 'vendedores') cockpitSellerId = null;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
+    renderTab();
+  }
+
+  // Clique num grupo da barra de topo (#tabsBar): se a aba ativa já é desse
+  // grupo, só mantém (não reseta pra primeira aba); senão entra no grupo
+  // pela primeira aba permitida.
+  function onGroupClick(groupId) {
+    if (groupForTab(activeTab).id === groupId) return;
+    setTab(firstAllowedTabInGroup(groupId));
+  }
+
+  // Abre o cockpit de pagina inteira de um vendedor (chamado pelo botao
+  // "Abrir painel" de cada card em src/auth.js).
+  function openSellerCockpit(sellerId) {
+    cockpitSellerId = sellerId;
+    if (activeTab !== 'vendedores') {
+      setTab('vendedores');
+      cockpitSellerId = sellerId; // setTab limpa ao trocar de aba; re-seta aqui
+    }
     renderTab();
   }
 
@@ -441,19 +602,30 @@
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
-        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
+        // Aba unica do admin para tudo sobre vendedores. Com um vendedor
+        // selecionado (C360.app.openSellerCockpit), abre o cockpit de pagina
+        // inteira (src/sellerCockpit.js) com vendas/estoque/saldo/pedidos dele
+        // num so lugar. Sem selecao, mostra a lista + permissoes + concessao
+        // direta de estoque.
+        if (cockpitSellerId && window.C360.sellerCockpit && typeof window.C360.sellerCockpit.mount === 'function') {
+          els.view.innerHTML = '<div id="sellerCockpitPanel"></div>';
+          window.C360.sellerCockpit.mount(document.getElementById('sellerCockpitPanel'), cockpitSellerId, {
+            onBack: () => { cockpitSellerId = null; renderTab(); },
+          });
+          break;
+        }
+        // "Repassar estoque a vendedor" (grantStockPanel) foi removido: era um
+        // SET cru do estoque do vendedor, sem baixar o central nem gerar
+        // dívida — abria um buraco no controle ("um número só": todo estoque
+        // entregue ao vendedor tem que virar dívida). A entrega correta é o
+        // "Enviar estoque consignado" do painel de cada vendedor
+        // (sendConsignmentToSeller), que baixa o central e lança a dívida.
+        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
         }
         if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
           window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
-        }
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
-          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
       case 'precos':
@@ -484,6 +656,12 @@
         els.view.innerHTML = '<div id="myStockPanel"></div>';
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountMyStock === 'function') {
           window.C360.sellerStock.mountMyStock(document.getElementById('myStockPanel'));
+        }
+        break;
+      case 'rascunhos':
+        els.view.innerHTML = '<div id="orderDraftsPanel"></div>';
+        if (window.C360.orderDrafts && typeof window.C360.orderDrafts.mount === 'function') {
+          window.C360.orderDrafts.mount(document.getElementById('orderDraftsPanel'));
         }
         break;
       case 'calculadora':
@@ -931,7 +1109,11 @@
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    const rows = currentConsignments().map((item) => {
+    // Só consignação admin->CLIENTE aqui (sem sellerId). O que envolve vendedor
+    // (consignado mandado a vendedor e venda do estoque próprio dele) é dívida
+    // de vendedor: fica em Vendedores / "Meu saldo com admin" (ledger), não
+    // nesta aba — evita mostrar a mesma dívida em dois lugares.
+    const rows = currentConsignments().filter((item) => !item.sellerId).map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);
@@ -2128,9 +2310,16 @@
 
   function bindEvents() {
     bindHelpTips();
-    els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    els.tabs.forEach((button) => button.addEventListener('click', () => onGroupClick(button.dataset.group)));
     document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
       button.addEventListener('click', () => setTab(button.dataset.tab));
+    });
+    // #subTabsBar é reconstruída a cada troca de aba/grupo (renderSubNav),
+    // então precisa de delegação em vez de listener por botão (os botões
+    // criados antes do último innerHTML já não existem mais no DOM).
+    document.addEventListener('click', (event) => {
+      const subButton = event.target.closest('#subTabsBar [data-tab]');
+      if (subButton) setTab(subButton.dataset.tab);
     });
     document.addEventListener('click', (event) => {
       if (event.target.closest('[data-more-menu-open]')) openMoreMenu();
@@ -2167,6 +2356,7 @@
     document.addEventListener('change', handleFileInputs);
     document.addEventListener('change', handleSalePriceHint);
     document.addEventListener('change', handleDashboardPeriod);
+    document.addEventListener('change', handleDashboardFilter);
     document.addEventListener('submit', handleCostPreview, true);
     document.addEventListener('dragstart', handleKanbanDragStart);
     document.addEventListener('dragover', handleKanbanDragOver);
@@ -2180,6 +2370,14 @@
     if (!input) return;
     if (input.dataset.dashboardDate === 'start') dashboardStart = input.value || '';
     if (input.dataset.dashboardDate === 'end') dashboardEnd = input.value || '';
+    renderDashboard();
+  }
+
+  function handleDashboardFilter(event) {
+    const select = event.target.closest('[data-dashboard-filter]');
+    if (!select) return;
+    if (select.dataset.dashboardFilter === 'seller') dashboardSellerId = select.value || '';
+    if (select.dataset.dashboardFilter === 'channel') dashboardChannel = select.value || '';
     renderDashboard();
   }
 
@@ -2219,7 +2417,7 @@
   // addSale é exposto para src/salesCart.js materializar a venda "propria"
   // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
-  window.C360.app = { refresh: renderAll, toast, setTab, addSale };
+  window.C360.app = { refresh: renderAll, toast, setTab, addSale, openSellerCockpit };
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é

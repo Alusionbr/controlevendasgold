@@ -99,12 +99,28 @@ const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], prod
   gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
   origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}], saleCarts: [], saleCartItems: [], orders: [] };
+}], saleCarts: [], saleCartItems: [], orders: [], orderDrafts: [],
+  consignments: [], consignmentEvents: [], stockMovements: [] };
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
 
 function json(route, body, status = 200) {
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+}
+
+// Apply the PostgREST-style eq. filters a caller passes as query params so
+// the mock mimics real row-level filtering (e.g. a seller only ever gets
+// back rows where seller_id=eq.<their uid>). Without this, GETs return every
+// row and the "seller can't see the admin's consignment" bug is invisible in
+// testing. Only the handful of columns the app actually filters on.
+function applyEqFilters(rows, params) {
+  const cols = ['seller_id', 'created_by', 'business_id', 'id', 'product_id', 'status'];
+  return rows.filter((row) => cols.every((col) => {
+    const raw = params.get(col);
+    if (!raw) return true;
+    const val = raw.replace(/^eq\./, '');
+    return String(row[col]) === val;
+  }));
 }
 
 async function installMocks(pg) {
@@ -172,7 +188,13 @@ async function installMocks(pg) {
     }
     if (p === '/rest/v1/seller_stock') {
       if (method === 'POST') {
-        const row = { id: nextId('sstock'), ...req.postDataJSON() };
+        // setSellerStock usa upsert (Prefer: resolution=merge-duplicates,
+        // on_conflict=seller_id,product_id) — o mock precisa fazer o mesmo,
+        // senão cria linha duplicada em vez de atualizar o saldo do vendedor.
+        const payload = req.postDataJSON();
+        const existing = DB.sellerStock.find((r) => String(r.seller_id) === String(payload.seller_id) && String(r.product_id) === String(payload.product_id));
+        if (existing) { Object.assign(existing, payload); return json(route, [existing]); }
+        const row = { id: nextId('sstock'), ...payload };
         DB.sellerStock.push(row);
         return json(route, [row]);
       }
@@ -182,7 +204,21 @@ async function installMocks(pg) {
         if (row) Object.assign(row, req.postDataJSON());
         return json(route, [row]);
       }
-      return json(route, DB.sellerStock);
+      return json(route, applyEqFilters(DB.sellerStock, params));
+    }
+    if (p === '/rest/v1/consignments') {
+      if (method === 'POST') {
+        const row = { id: nextId('consig'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.consignments.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'PATCH') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const row = DB.consignments.find((item) => item.id === idFilter);
+        if (row) Object.assign(row, req.postDataJSON());
+        return json(route, [row]);
+      }
+      return json(route, applyEqFilters(DB.consignments, params));
     }
     if (p === '/rest/v1/sale_carts') {
       if (method === 'POST') {
@@ -226,12 +262,16 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       if (method === 'DELETE') {
+        // api.remove() (src/api.js) treats an empty response array as "0 rows
+        // deleted" and throws — PostgREST echoes the deleted row(s) back by
+        // default, so the mock needs to match that or every S().remove(...)
+        // call in the app looks like a permission/not-found error.
         const idFilter = (params.get('id') || '').replace('eq.', '');
         const idx = DB.orders.findIndex((item) => item.id === idFilter);
-        if (idx !== -1) DB.orders.splice(idx, 1);
-        return json(route, []);
+        const [removed] = idx !== -1 ? DB.orders.splice(idx, 1) : [];
+        return json(route, removed ? [removed] : []);
       }
-      return json(route, DB.orders);
+      return json(route, applyEqFilters(DB.orders, params));
     }
     if (p === '/rest/v1/seller_account_entries') {
       if (method === 'POST') {
@@ -239,7 +279,26 @@ async function installMocks(pg) {
         DB.sellerAccountEntries.push(row);
         return json(route, [row]);
       }
-      return json(route, [...DB.sellerAccountEntries].reverse());
+      return json(route, applyEqFilters([...DB.sellerAccountEntries].reverse(), params));
+    }
+    if (p === '/rest/v1/seller_settings') {
+      // Um registro por vendedor com consignado liberado, para exercitar o
+      // fluxo pedir-consignado -> aprovar -> dívida. Sem isso o vendedor cai
+      // no default allowConsignment:false e o modo consignado nem aparece.
+      const rows = SELLER_ROSTER.map((s) => ({
+        id: 'set-' + s.id, business_id: BUSINESS_ID, seller_id: s.id,
+        allow_admin_stock_sales: true, allow_consignment: true,
+        allow_public_cart_links: true, max_discount_percent: 0, stock_adjustment_credits: 0,
+      }));
+      return json(route, applyEqFilters(rows, params));
+    }
+    if (p === '/rest/v1/stock_movements') {
+      if (method === 'POST') {
+        const row = { id: nextId('mov'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.stockMovements.push(row);
+        return json(route, [row]);
+      }
+      return json(route, applyEqFilters(DB.stockMovements, params));
     }
     if (p === '/rest/v1/seller_payments') {
       if (method === 'POST') {
@@ -248,6 +307,31 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       return json(route, [...DB.sellerPayments].reverse());
+    }
+    if (p === '/rest/v1/order_drafts') {
+      if (method === 'POST') {
+        const row = { id: nextId('draft'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.orderDrafts.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'DELETE') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const idx = DB.orderDrafts.findIndex((item) => item.id === idFilter);
+        const [removed] = idx !== -1 ? DB.orderDrafts.splice(idx, 1) : [];
+        return json(route, removed ? [removed] : []);
+      }
+      return json(route, [...DB.orderDrafts].reverse());
+    }
+    if (p === '/rest/v1/rpc/consume_seller_stock') {
+      // Baixa o estoque próprio do vendedor logado (usado pela venda de
+      // estoque próprio). Espelha o RPC real: decrementa seller_stock do
+      // seller_id = usuário atual e devolve a linha atualizada.
+      const body = req.postDataJSON() || {};
+      const pid = body.p_product_id;
+      const qty = Number(body.p_quantity || 0);
+      const row = DB.sellerStock.find((r) => String(r.seller_id) === String(currentFixture.uid) && String(r.product_id) === String(pid));
+      if (row) row.quantity = Number(row.quantity) - qty;
+      return json(route, row || null);
     }
     if (p.startsWith('/rest/v1/rpc/')) return json(route, null);
     if (method === 'POST' && p.startsWith('/rest/v1/')) {

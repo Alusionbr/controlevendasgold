@@ -317,6 +317,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
 
+/* Sub-barra (#subTabsBar): abas do grupo escolhido em .tabs (#tabsBar).
+   Mesma base visual, só um pouco mais discreta/compacta. */
+.subtabs {
+  margin-top: -0.6rem;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding-left: 0.1rem;
+}
+.subtabs .tab-button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.85rem;
+  min-height: 38px;
+  font-size: 0.88rem;
+}
+.subtabs .tab-button.active { background: var(--accent); border-color: transparent; color: var(--accent-contrast); }
+.subtabs[hidden] { display: none; }
+
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
    no rodapé assume: 4 destinos principais por perfil + "Mais" para o
@@ -403,8 +422,21 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
   display: grid;
+  gap: 0.7rem;
+}
+.more-menu-group {
+  display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 800;
 }
 .more-menu-item {
   text-align: left;
@@ -1311,6 +1343,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.6rem;
 }
 .ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
+.order-draft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.9rem;
+}
+.order-draft-card { display: grid; gap: 0.4rem; }
+.od-summary { margin: 0; font-weight: 650; }
+.od-notes { margin: 0; color: var(--muted, #5d6f6d); font-size: 0.9rem; }
 .ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
 .seller-permission-card {
   display: grid;
@@ -1808,4 +1849,56 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .report-period-bar label {
     min-width: 0;
   }
+}
+
+/* ==========================================================================
+   Cockpit do vendedor (src/sellerCockpit.js) — tela cheia por vendedor
+   ========================================================================== */
+.cockpit { display: grid; gap: 1rem; }
+.cockpit-head { display: grid; gap: 0.35rem; }
+.cockpit-title { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.cockpit-title h2 { margin: 0; font-size: 1.35rem; }
+.cockpit-title p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.cockpit-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.6rem;
+}
+.cockpit-tab {
+  padding: 0.5rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.cockpit-tab:hover { border-color: var(--accent); }
+.cockpit-tab.active { border-color: var(--accent); background: var(--accent); color: #1c1403; }
+.cockpit-body { display: grid; gap: 0.6rem; }
+.cockpit-body h3 { font-size: 0.98rem; margin: 0.5rem 0 0.1rem; }
+.cockpit-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+.cockpit-hint { font-size: 0.84rem; color: var(--muted); margin: 0.2rem 0; }
+.cockpit-order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.7rem;
+}
+.cockpit-order-card { display: grid; gap: 0.5rem; }
+
+/* Filtros do dashboard (vendedor/canal) — mesma pegada do card de período */
+.dashboard-filter-card { display: grid; gap: 0.3rem; }
+.dashboard-filter-card span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.dashboard-filter-card select { width: 100%; padding: 0.4rem 0.5rem; }
+
+@media (max-width: 560px) {
+  .cockpit-order-grid { grid-template-columns: 1fr; }
 }
