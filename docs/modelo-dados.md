@@ -8,6 +8,15 @@
 > fonte de verdade. Coleções novas trazidas pelo backend: `sellerPrices`,
 > `sellerStock`, `salesGoals`, `goalsProgress`, `profile`/`profiles`/`sellers`
 > (ver `docs/goals-contract.md` para `salesGoals`/`goalsProgress`).
+>
+> `orderDrafts` (tabela `order_drafts`, ver
+> `supabase/migrations/0026_order_drafts.sql`): bloco de notas para anotar um
+> pedido combinado antes de virar venda — `{ id, businessId, createdBy,
+> clientName, productId, quantity, notes, createdAt }`. Sem status/arquivo:
+> "Lançar" (joga pro carrinho de vendas, `src/salesCart.js`
+> `prefillFromDraft`) ou "Descartar" simplesmente apagam a linha. Admin vê
+> todos os rascunhos do negócio; vendedor só os próprios (RLS por
+> `created_by`).
 
 ## Estado raiz
 

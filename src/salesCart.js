@@ -1122,5 +1122,28 @@
   async function approveGroup(groupId) { await setGroupApproval(groupId, 'aprovado'); }
   async function rejectGroup(groupId) { await setGroupApproval(groupId, 'rejeitado'); }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, approveGroup, rejectGroup };
+  // Chamado por src/orderDrafts.js ao "Lançar" um rascunho: joga os dados
+  // pro carrinho persistente (sobrevive ao próximo mount() da aba Vendas)
+  // em vez de criar a venda direto — quem confere preço/cliente/modo antes
+  // de confirmar continua sendo a pessoa, não o rascunho.
+  function prefillFromDraft({ productId, quantity, notes, clientName } = {}) {
+    // mount() zera draft.items se draft.mode ainda não é válido pro papel
+    // atual (guarda contra modo salvo de outra conta) — se ninguém visitou
+    // Vendas nesta sessão ainda, draft.mode está '' e o item que acabamos de
+    // empurrar seria descartado no primeiro mount(). Fixa o modo padrão do
+    // papel atual primeiro para não cair nesse reset.
+    const allowedModes = modeOptionsFor(isAdmin() ? 'admin' : 'vendedor').map((opt) => opt.v);
+    if (!allowedModes.includes(persistentDraft.mode)) persistentDraft.mode = defaultModeForRole();
+    if (productId) addDraftItem(persistentDraft, { productId, quantity: quantity || 1 });
+    // customerName só aparece na UI quando o modo gera link público — o
+    // texto do rascunho pode se perder de vista nos outros modos (ex.:
+    // "Venda minha" usa um <select> de cliente cadastrado, não texto livre).
+    // Duplicar em notes (sempre visível em "Mais opções") garante que o
+    // nome anotado não suma, mesmo que o admin não troque de modo.
+    if (clientName) persistentDraft.customerName = clientName;
+    const combinedNotes = [clientName ? `Cliente: ${clientName}` : '', notes].filter(Boolean).join(' | ');
+    if (combinedNotes) persistentDraft.notes = persistentDraft.notes ? `${persistentDraft.notes} | ${combinedNotes}` : combinedNotes;
+  }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, approveGroup, rejectGroup, prefillFromDraft };
 })();

@@ -100,6 +100,8 @@
       financialEntries: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
+      // Rascunho de pedidos (bloco de notas, não mexe em estoque/financeiro):
+      orderDrafts: [],
       profile: null,
       profiles: [],
       sellers: [],
@@ -260,6 +262,7 @@
     sellerPayments: 'seller_payments',
     financialEntries: 'financial_entries',
     operationalMovements: 'operational_movements',
+    orderDrafts: 'order_drafts',
     profiles: 'profiles',
   };
 
@@ -370,7 +373,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements,
+      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements, orderDrafts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -395,6 +398,7 @@
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('order_drafts', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -421,6 +425,7 @@
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
+    state.orderDrafts = orderDrafts.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),
@@ -435,7 +440,7 @@
     const [
       businesses, sellerProducts, clients, sales, orders, consignments,
       consignmentEvents, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, operationalMovements,
+      sellerAccountEntries, sellerPayments, operationalMovements, orderDrafts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -452,6 +457,7 @@
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('operational_movements', { seller_id: userId, _order: 'created_at.desc' }),
+      api.list('order_drafts', { created_by: userId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -470,6 +476,7 @@
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.financialEntries = [];
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
+    state.orderDrafts = orderDrafts.map(toCamelCaseRow);
 
     // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
     // o round-trip de rede e já deixamos vazio.

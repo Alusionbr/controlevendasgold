@@ -99,7 +99,7 @@ const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], prod
   gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
   origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
   created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}], saleCarts: [], saleCartItems: [], orders: [] };
+}], saleCarts: [], saleCartItems: [], orders: [], orderDrafts: [] };
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
 
@@ -226,10 +226,14 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       if (method === 'DELETE') {
+        // api.remove() (src/api.js) treats an empty response array as "0 rows
+        // deleted" and throws — PostgREST echoes the deleted row(s) back by
+        // default, so the mock needs to match that or every S().remove(...)
+        // call in the app looks like a permission/not-found error.
         const idFilter = (params.get('id') || '').replace('eq.', '');
         const idx = DB.orders.findIndex((item) => item.id === idFilter);
-        if (idx !== -1) DB.orders.splice(idx, 1);
-        return json(route, []);
+        const [removed] = idx !== -1 ? DB.orders.splice(idx, 1) : [];
+        return json(route, removed ? [removed] : []);
       }
       return json(route, DB.orders);
     }
@@ -248,6 +252,20 @@ async function installMocks(pg) {
         return json(route, [row]);
       }
       return json(route, [...DB.sellerPayments].reverse());
+    }
+    if (p === '/rest/v1/order_drafts') {
+      if (method === 'POST') {
+        const row = { id: nextId('draft'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), ...req.postDataJSON() };
+        DB.orderDrafts.push(row);
+        return json(route, [row]);
+      }
+      if (method === 'DELETE') {
+        const idFilter = (params.get('id') || '').replace('eq.', '');
+        const idx = DB.orderDrafts.findIndex((item) => item.id === idFilter);
+        const [removed] = idx !== -1 ? DB.orderDrafts.splice(idx, 1) : [];
+        return json(route, removed ? [removed] : []);
+      }
+      return json(route, [...DB.orderDrafts].reverse());
     }
     if (p.startsWith('/rest/v1/rpc/')) return json(route, null);
     if (method === 'POST' && p.startsWith('/rest/v1/')) {

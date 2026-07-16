@@ -13,7 +13,7 @@
   // index.html e aqui (fonte antiga do bug de dessincronização).
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
-    'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
+    'hoje', 'rascunhos', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
@@ -22,6 +22,7 @@
 
   const TAB_LABELS = {
     hoje: 'Hoje',
+    rascunhos: 'Rascunho de pedidos',
     negocios: 'Negócios',
     produtos: 'Produtos',
     clientes: 'Clientes',
@@ -50,6 +51,7 @@
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
     hoje: ['admin', 'vendedor'],
+    rascunhos: ['admin', 'vendedor'],
     negocios: ['admin'],
     produtos: ['admin'],
     clientes: ['admin', 'vendedor'],
@@ -90,7 +92,7 @@
   // vez sem remover nenhuma aba — só reorganiza (ver TAB_ORDER/TAB_ROLES,
   // que continuam a fonte de verdade de existência/permissão de cada aba).
   const TAB_GROUPS = [
-    { id: 'operacao', label: 'Operação', tabs: ['hoje', 'vendas', 'consignado', 'estoque', 'meusaldo', 'minhasdevolucoes', 'tarefas'] },
+    { id: 'operacao', label: 'Operação', tabs: ['hoje', 'rascunhos', 'vendas', 'consignado', 'estoque', 'meusaldo', 'minhasdevolucoes', 'tarefas'] },
     { id: 'cadastros', label: 'Cadastros', tabs: ['produtos', 'clientes', 'fornecedores'] },
     { id: 'estoqueProducao', label: 'Estoque e Produção', tabs: ['compras', 'fichas', 'producao'] },
     { id: 'vendedoresGrupo', label: 'Vendedores', tabs: ['vendedores', 'precos', 'devolucoes'] },
@@ -605,6 +607,12 @@
         els.view.innerHTML = '<div id="myStockPanel"></div>';
         if (window.C360.sellerStock && typeof window.C360.sellerStock.mountMyStock === 'function') {
           window.C360.sellerStock.mountMyStock(document.getElementById('myStockPanel'));
+        }
+        break;
+      case 'rascunhos':
+        els.view.innerHTML = '<div id="orderDraftsPanel"></div>';
+        if (window.C360.orderDrafts && typeof window.C360.orderDrafts.mount === 'function') {
+          window.C360.orderDrafts.mount(document.getElementById('orderDraftsPanel'));
         }
         break;
       case 'calculadora':
