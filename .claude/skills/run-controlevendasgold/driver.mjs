@@ -188,7 +188,13 @@ async function installMocks(pg) {
     }
     if (p === '/rest/v1/seller_stock') {
       if (method === 'POST') {
-        const row = { id: nextId('sstock'), ...req.postDataJSON() };
+        // setSellerStock usa upsert (Prefer: resolution=merge-duplicates,
+        // on_conflict=seller_id,product_id) — o mock precisa fazer o mesmo,
+        // senão cria linha duplicada em vez de atualizar o saldo do vendedor.
+        const payload = req.postDataJSON();
+        const existing = DB.sellerStock.find((r) => String(r.seller_id) === String(payload.seller_id) && String(r.product_id) === String(payload.product_id));
+        if (existing) { Object.assign(existing, payload); return json(route, [existing]); }
+        const row = { id: nextId('sstock'), ...payload };
         DB.sellerStock.push(row);
         return json(route, [row]);
       }
@@ -315,6 +321,17 @@ async function installMocks(pg) {
         return json(route, removed ? [removed] : []);
       }
       return json(route, [...DB.orderDrafts].reverse());
+    }
+    if (p === '/rest/v1/rpc/consume_seller_stock') {
+      // Baixa o estoque próprio do vendedor logado (usado pela venda de
+      // estoque próprio). Espelha o RPC real: decrementa seller_stock do
+      // seller_id = usuário atual e devolve a linha atualizada.
+      const body = req.postDataJSON() || {};
+      const pid = body.p_product_id;
+      const qty = Number(body.p_quantity || 0);
+      const row = DB.sellerStock.find((r) => String(r.seller_id) === String(currentFixture.uid) && String(r.product_id) === String(pid));
+      if (row) row.quantity = Number(row.quantity) - qty;
+      return json(route, row || null);
     }
     if (p.startsWith('/rest/v1/rpc/')) return json(route, null);
     if (method === 'POST' && p.startsWith('/rest/v1/')) {

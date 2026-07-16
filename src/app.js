@@ -568,15 +568,18 @@
           });
           break;
         }
-        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
+        // "Repassar estoque a vendedor" (grantStockPanel) foi removido: era um
+        // SET cru do estoque do vendedor, sem baixar o central nem gerar
+        // dívida — abria um buraco no controle ("um número só": todo estoque
+        // entregue ao vendedor tem que virar dívida). A entrega correta é o
+        // "Enviar estoque consignado" do painel de cada vendedor
+        // (sendConsignmentToSeller), que baixa o central e lança a dívida.
+        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
         }
         if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
           window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
-        }
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
-          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
       case 'precos':
@@ -1060,7 +1063,11 @@
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    const rows = currentConsignments().map((item) => {
+    // Só consignação admin->CLIENTE aqui (sem sellerId). O que envolve vendedor
+    // (consignado mandado a vendedor e venda do estoque próprio dele) é dívida
+    // de vendedor: fica em Vendedores / "Meu saldo com admin" (ledger), não
+    // nesta aba — evita mostrar a mesma dívida em dois lugares.
+    const rows = currentConsignments().filter((item) => !item.sellerId).map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);

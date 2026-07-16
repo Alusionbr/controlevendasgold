@@ -121,7 +121,13 @@
       lowStockCount: products.filter((product) => number(product.minStock) > 0 && number(product.currentStock) <= number(product.minStock)).length,
       netRevenue: sales.reduce((sum, sale) => sum + number(sale.netRevenue), 0),
       grossProfit: sales.reduce((sum, sale) => sum + number(sale.grossProfit), 0),
-      consignmentsOpen: consignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
+      // "A receber" / "Consignado em aberto" conta SÓ consignação admin->CLIENTE
+      // (sem sellerId). A dívida do vendedor — tanto o consignado que o admin
+      // manda pro vendedor quanto a venda que o vendedor faz do próprio estoque
+      // — vive no ledger (seller_account_entries / "Meu saldo com admin"), não
+      // aqui. Senão o mesmo valor apareceria em dois lugares que não se abatem
+      // (decisão "um número só" para a dívida do vendedor).
+      consignmentsOpen: consignments.filter((item) => !item.sellerId).reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
       pendingOrders: orders.filter((order) => !['despachado', 'concluido'].includes(order.status)).length,
     };
   }
