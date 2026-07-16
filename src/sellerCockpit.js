@@ -374,7 +374,7 @@
 
       const approve = event.target.closest('[data-cockpit-approve]');
       if (approve) {
-        await withFeedback(() => cart().approveGroup(approve.dataset.cockpitApprove), 'Pedido aprovado. Pode despachar na esteira (Vendas).');
+        await withFeedback(() => cart().approveGroup(approve.dataset.cockpitApprove), 'Pedido aprovado e despachado. O estoque ja esta com o vendedor.');
         return;
       }
       const reject = event.target.closest('[data-cockpit-reject]');
