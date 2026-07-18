@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-cscOeja+yN/Mij9fMEn5NA0EGVvPJqPmVuORZ6UcHJA=' 'sha256-DX0Kk6ZpyEOXgyDo5Nr0gpuPJV8FX0mc6s9Rfw/CqkM=' 'sha256-MtEUJebRo7KCAjoVlh7bqbEci1hNI5OV9V8stxqPs0Y=' 'sha256-4zrZEqYPTsuUr6clfBAGFotSYLubmZ03tEHGDefBVOs=' 'sha256-7V/02xbk0CuWRlUrvel7Rjuqvq/eUDdCf7DqUWFbeuM=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-dy6CxwyusHcguqZ7ku78enlUDE8YfB3kFRFfDYljhb0=' 'sha256-jOO/WgQqG06l8oCKG4UcthT8eJf0nevxEjVu6FSrt8c=' 'sha256-fNq9B3Zm8CiDwqUvyaib05nfTEcTapTpiMCNINgcOyI=' 'sha256-+n1bH6MjZd4prNDEG3lJqq8JhhTU+3upblx0oFOxCxo=' 'sha256-Qd51HvLcV2RZrbVnW0vIwHpnLnwODM+jqybwPcvD1Uw=' 'sha256-sne0znmyDRpkM0VtaKy8XwkxHbLHlXoLL9zgf+aYtOU=' 'sha256-wNZAS6WyNjNGJEE9xX8lXrxiQnF7XHVa7iXZj4f0ehQ=' 'sha256-C1eQBne7jhb22Q+fFjqU/pC04Wey3zuiIXVs88QlGQ4=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-/HuQybjQUxHh/InDr963ww1hprVncWOOVmQx8qKZt/c=' 'sha256-e9aqr7WDACQo+mDeKpu+CaSabAWEa0RTJ5MJ2MrAJSw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-gxXOTAxnYQsufWw8BljPnS3ZaNhp0mrllG66sH4v/eY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-8NQUFnfnkL8+9XuBepfrlQIHJPPR++sp4W4S72cO2sI=' 'sha256-MP/xk4QkqIFpgIyWJO1E6razDOi1ykd/0VTbYlar91w=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-J5toxkDWVkamphFlFuJntxS8Z1u/chnIx0UkQSXHHyk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1830,7 +1830,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     <div class="header-actions" id="headerActions" hidden>
       <button id="btnExport" class="secondary">Baixar Excel</button>
       <button id="btnDataTab" class="ghost">Backup</button>
-      <button id="btnHelp" class="ghost">Ajuda</button>
       <button id="btnLogout" class="ghost">Sair</button>
     </div>
   </header>
@@ -3811,15 +3810,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       });
   }
 
-  function pendingCartsCountForSeller(sellerId) {
+  // Opções de produto para o form de devolução/desperdício/brinde — só o que
+  // o vendedor tem de fato em mãos (mesma fonte de stockRowsForSeller).
+  function sellerStockOptions(sellerId) {
     const st = fullState();
-    return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
-  }
-
-  function pendingReturnsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.operationalMovements || []).filter((movement) => String(movement.sellerId) === String(sellerId)
-      && ['a_devolver', 'pending'].includes(movement.status)).length;
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return product ? { id: product.id, name: `${product.name} (${U.qty(row.quantity, product.unit)} com o vendedor)`, avgCost: product.avgCost } : null;
+      })
+      .filter(Boolean);
   }
 
   function productOptionsForConsignment() {
@@ -3831,23 +3832,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const balance = L ? L.balanceFor(seller.id) : 0;
     const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
     const stockRows = stockRowsForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
+    const heldProducts = sellerStockOptions(seller.id);
 
     return `
       <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         <div class="seller-manage-grid">
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
-          ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
-          ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
         </div>
-        ${pendingCarts > 0 || pendingReturns > 0 ? `
-          <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
-            ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
-          </p>` : ''}
 
         <h3>Enviar estoque consignado</h3>
         <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
@@ -3867,6 +3860,32 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <h3>Estoque atual do vendedor</h3>
         ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
 
+        <h3>Devolver, desperdício ou brinde</h3>
+        <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
+        <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
+          <label>Tipo
+            <select name="type">
+              <option value="return">Devolução ao estoque central</option>
+              <option value="waste">Desperdício</option>
+              <option value="gift">Brinde</option>
+            </select>
+          </label>
+          <label>Produto
+            <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
+          </label>
+          <label>Quantidade
+            <input name="quantity" type="number" step="0.001" min="0.001" required>
+          </label>
+          <label data-return-credit-field>Valor unitário (para o crédito)
+            <input name="unitValue" type="number" step="0.01" min="0">
+          </label>
+          <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
+          <label class="wide">Motivo
+            <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+          </label>
+          <button type="submit" class="small">Registrar</button>
+        </form>
+
         <h3>Saldo com o admin</h3>
         <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
           <label>Valor recebido
@@ -3880,18 +3899,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           </label>
           <button type="submit" class="small">Registrar pagamento</button>
         </form>
-        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
+
+        <h3>Ajuste manual / correção</h3>
+        <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
+        <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+          <label>Valor
+            <input name="amount" type="number" step="0.01" min="0.01" required>
+          </label>
+          <label>Direção
+            <select name="direction">
+              <option value="debit">Aumentar dívida</option>
+              <option value="credit">Reduzir dívida</option>
+            </select>
+          </label>
+          <label class="wide">Motivo
+            <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
+          </label>
+          <button type="submit" class="small">Lançar ajuste</button>
+        </form>
+
+        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor', ''], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
             manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
           })[entry.type] || entry.type;
           const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
+          const oppositeDirection = entry.direction === 'credit' ? 'debit' : 'credit';
+          const correctNotes = `Correção do lançamento de ${(entry.createdAt || '').slice(0, 10)} (${label})`;
           return [
             (entry.createdAt || '').slice(0, 10),
             U.escapeHtml(label),
             UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
             U.escapeHtml(entry.notes || ''),
             `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
+            `<button type="button" class="small secondary" data-action="prefill-correction"
+              data-amount="${U.escapeHtml(entry.amount)}" data-direction="${oppositeDirection}"
+              data-notes="${U.escapeHtml(correctNotes)}">Corrigir</button>`,
           ];
         }), 'Nenhum lançamento ainda.')}
       </div>
@@ -4011,6 +4054,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const returnForm = event.target.closest('[data-return-form]');
+      const adjustForm = event.target.closest('[data-adjust-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -4092,13 +4137,65 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
         }
         paint();
+        return;
       }
+
+      if (returnForm && container.contains(returnForm)) {
+        event.preventDefault();
+        const sellerId = returnForm.dataset.sellerId;
+        const data = U.formData(returnForm);
+        try {
+          const OM = window.C360.operationalMovements;
+          if (!OM || typeof OM.adminRecordMovement !== 'function') throw new Error('Registro de devolução indisponível no momento.');
+          await OM.adminRecordMovement({
+            sellerId,
+            productId: data.productId,
+            type: data.type,
+            quantity: data.quantity,
+            unitValue: data.unitValue,
+            affectsFinance: !!data.affectsFinance,
+            reason: data.reason,
+          });
+          manageFeedback = { message: 'Movimentação registrada e aplicada.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar a movimentação.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
+      if (adjustForm && container.contains(adjustForm)) {
+        event.preventDefault();
+        const sellerId = adjustForm.dataset.sellerId;
+        const data = U.formData(adjustForm);
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerAdjustment !== 'function') throw new Error('Ajuste manual indisponível no momento.');
+          await L.registerAdjustment(sellerId, { amount: data.amount, direction: data.direction, notes: data.notes });
+          manageFeedback = { message: 'Ajuste lançado.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível lançar o ajuste.', type: 'danger' };
+        }
+        paint();
+      }
+    });
+
+    container.addEventListener('change', (event) => {
+      const select = event.target.closest('[data-return-form] select[name="type"]');
+      if (!select) return;
+      const form = select.closest('[data-return-form]');
+      const isReturn = select.value === 'return';
+      // .grid-form label tem display:flex (mais específico que [hidden]),
+      // então o toggle precisa ser via style inline, não o atributo hidden.
+      form.querySelectorAll('[data-return-credit-field]').forEach((field) => {
+        field.style.display = isReturn ? '' : 'none';
+      });
     });
 
     container.addEventListener('click', async (event) => {
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
-      const { action, id, tab } = button.dataset;
+      const { action, id } = button.dataset;
 
       if (action === 'toggle-manage') {
         expandedId = String(expandedId) === String(id) ? null : id;
@@ -4107,8 +4204,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         return;
       }
 
-      if (action === 'goto-tab') {
-        if (window.C360.app && typeof window.C360.app.setTab === 'function') window.C360.app.setTab(tab);
+      if (action === 'prefill-correction') {
+        const form = button.closest('.seller-manage-panel')?.querySelector('[data-adjust-form]');
+        if (form) {
+          form.querySelector('[name="amount"]').value = button.dataset.amount || '';
+          form.querySelector('[name="direction"]').value = button.dataset.direction || 'debit';
+          form.querySelector('[name="notes"]').value = button.dataset.notes || '';
+          form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          form.querySelector('[name="notes"]').focus();
+        }
         return;
       }
 
@@ -7580,8 +7684,51 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return payment;
   }
 
+  // Ajuste manual / correção de lançamento — nunca edita ou apaga um
+  // lançamento existente (mesmo princípio de `ajuste_manual` em
+  // stockMovements, CLAUDE.md): toda correção é um novo lançamento tipo
+  // 'manual_adjustment' com motivo obrigatório, na direção escolhida pelo
+  // admin. Reaproveitado tanto pelo formulário "Ajuste manual" quanto pelo
+  // botão "Corrigir" de um lançamento específico (src/auth.js), que só
+  // pré-preenche direção/valor invertidos — a escrita é sempre esta mesma.
+  async function registerAdjustment(sellerId, { amount, direction, notes, sourceId } = {}) {
+    const value = U.number(amount);
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    if (direction !== 'debit' && direction !== 'credit') throw new Error('Selecione se o ajuste aumenta ou reduz a dívida.');
+    if (!notes || !notes.trim()) throw new Error('Informe o motivo do ajuste.');
+    const entry = await S().add('sellerAccountEntries', {
+      sellerId,
+      type: 'manual_adjustment',
+      direction,
+      amount: value,
+      sourceType: sourceId ? 'entry_correction' : 'manual',
+      sourceId: sourceId || null,
+      notes: notes.trim(),
+    });
+    await S().refresh();
+    return entry;
+  }
+
+  // Leitura do que está fisicamente com o vendedor (mesmo filtro de
+  // stockRowsForSeller em src/auth.js, aplicado ao próprio usuário). Sem
+  // formulário, sem botão de venda — é só o vendedor conseguir conferir o
+  // que embasa a dívida que ele vê acima.
+  function ownStockRows(sellerId) {
+    const st = state();
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return [
+          product ? U.escapeHtml(product.name) : 'Produto removido',
+          U.qty(row.quantity, product ? product.unit : ''),
+        ];
+      });
+  }
+
   // ---------------------------------------------------------------------
-  // Vendedor — só o próprio saldo e histórico, sem escrita
+  // Vendedor — só o próprio saldo, histórico e o que está com ele, sem
+  // escrita nenhuma (nenhuma opção de venda ou pedido neste painel).
   // ---------------------------------------------------------------------
   function renderSeller() {
     const currentUser = user();
@@ -7589,12 +7736,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
     const payments = paymentsForSeller(currentUser.id).slice(0, 10);
+    const stockRows = ownStockRows(currentUser.id);
 
     return UI.section(
-      'Meu saldo com admin',
-      'Reposição consignado/parcial vira débito aqui; pagamentos recebidos abatem o saldo.',
+      'Minha conta',
+      'Reposição consignado/parcial vira débito aqui; pagamentos e ajustes do admin abatem o saldo.',
       `
         ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
+        <h3>O que está com você</h3>
+        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque consignado com você no momento.')}
         <h3>Histórico</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
         <h3>Pagamentos já registrados</h3>
@@ -7617,7 +7767,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment, registerAdjustment };
 })();
 </script>
   <script>
@@ -7975,7 +8125,38 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     paint();
   }
 
-  window.C360.operationalMovements = { mountAdmin, mountSeller };
+  // ---------------------------------------------------------------------
+  // Admin — registrar e já efetivar (devolução ao central / desperdício /
+  // brinde) num passo só, direto do painel "Vendedores". Antes o vendedor
+  // abria a solicitação (status 'a_devolver'/'pending') e o admin só
+  // conferia depois; a solicitação self-service saiu do painel do
+  // vendedor (que agora é só leitura), então o admin cria já com o efeito
+  // aplicado — reaproveita a mesma `confirmMovement` da fila antiga, sem
+  // duplicar a regra de estoque/ledger.
+  // ---------------------------------------------------------------------
+  async function adminRecordMovement({ sellerId, productId, type, quantity, unitValue, affectsFinance, reason }) {
+    if (!sellerId) throw new Error('Selecione o vendedor.');
+    if (!productId) throw new Error('Selecione o produto.');
+    if (!['return', 'waste', 'gift'].includes(type)) throw new Error('Tipo de movimentação inválido.');
+    const qty = U.number(quantity);
+    if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
+    if (!reason || !reason.trim()) throw new Error('Informe o motivo.');
+    assertSellerStockAvailable(sellerId, productId, qty);
+
+    const movement = await S().add('operationalMovements', {
+      type,
+      status: type === 'return' ? 'a_devolver' : 'pending',
+      productId,
+      sellerId,
+      quantityDeclared: qty,
+      reason: reason.trim(),
+      affectsStock: true,
+    });
+    await confirmMovement(movement, { quantityReceived: qty, unitValue, affectsFinance: type === 'return' && affectsFinance });
+    return movement;
+  }
+
+  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement };
 })();
 </script>
   <script>
@@ -9618,13 +9799,23 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // A barra de abas do desktop, a bottom-nav mobile e o menu "Mais" são
   // todos gerados a partir deste mapa, em vez de listas duplicadas em
   // index.html e aqui (fonte antiga do bug de dessincronização).
+  //
+  // Reestruturação (estoque central + consignado a revendedor): o escopo do
+  // app encolheu para o essencial (central -> consignado ou venda à vista,
+  // dívida em aberto, correção de lançamento). Módulos fora desse escopo
+  // (produção, fichas técnicas, tarefas, metas, calculadora, ajuda,
+  // "Preços" por vendedor e as filas antigas de devolução self-service)
+  // saíram da navegação dos dois papéis — código e tabelas continuam
+  // intactos, só não aparecem mais aqui. O painel do vendedor virou
+  // somente-leitura: uma única aba (meusaldo) com saldo, histórico e o que
+  // está com ele; toda escrita (envio consignado, pagamento, ajuste,
+  // devolução ao central) passou a ser ação do admin no painel "Vendedores".
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos',
-    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
-    'ajuda', 'dados',
+    'vendas', 'consignado', 'financeiro',
+    'relatorios', 'vendedores',
+    'meusaldo', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -9634,58 +9825,39 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     clientes: 'Clientes',
     fornecedores: 'Fornecedores',
     compras: 'Compras',
-    fichas: 'Fichas e custos',
-    producao: 'Produção',
     vendas: 'Vendas',
     consignado: 'Consignado',
     financeiro: 'Financeiro',
-    estoque: 'Meu estoque',
-    tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
-    precos: 'Preços',
-    meusaldo: 'Meu saldo com admin',
-    devolucoes: 'Devoluções, desperdícios e brindes',
-    minhasdevolucoes: 'Devoluções e brindes',
-    calculadora: 'Calculadora',
-    metas: 'Metas',
-    ajuda: 'Ajuda',
+    meusaldo: 'Minha conta',
     dados: 'Dados',
   };
 
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
-    hoje: ['admin', 'vendedor'],
+    hoje: ['admin'],
     negocios: ['admin'],
     produtos: ['admin'],
-    clientes: ['admin', 'vendedor'],
+    clientes: ['admin'],
     fornecedores: ['admin'],
     compras: ['admin'],
-    fichas: ['admin'],
-    producao: ['admin'],
-    vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    vendas: ['admin'],
+    consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: ['vendedor'],
-    tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
-    precos: ['admin'],
     meusaldo: ['vendedor'],
-    devolucoes: ['admin'],
-    minhasdevolucoes: ['vendedor'],
-    calculadora: ['admin', 'vendedor'],
-    metas: ['admin', 'vendedor'],
-    ajuda: ['admin', 'vendedor'],
     dados: ['admin'],
   };
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  // Vendedor só tem uma aba (meusaldo, somente leitura) — sem "Mais".
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+    vendedor: ['meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -9739,7 +9911,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     activeBusiness: document.getElementById('activeBusiness'),
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
-    btnHelp: document.getElementById('btnHelp'),
     btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
@@ -9919,6 +10090,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
   // ações rápidas e listas curtas para não exigir rolar as abas completas.
   function renderToday() {
+    // 'hoje' só é alcançável pelo admin (TAB_ROLES) — o vendedor tem uma
+    // única aba, só leitura (meusaldo). isAdminUser fica sempre true aqui;
+    // mantido só porque o restante da função ainda o referencia em textos.
     const isAdminUser = S.isAdmin();
     const todayStr = U.today();
     const sales = currentSales();
@@ -9926,19 +10100,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales });
     const stockMetrics = Calc.businessMetrics(state());
 
-    const quickActions = isAdminUser
-      ? [
-          { tab: 'vendas', label: 'Nova venda / esteira' },
-          { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'produtos', label: 'Estoque' },
-          { tab: 'vendedores', label: 'Vendedores' },
-        ]
-      : [
-          { tab: 'vendas', label: 'Vender / pedir' },
-          { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'estoque', label: 'Meu estoque' },
-          { tab: 'meusaldo', label: 'Meu saldo' },
-        ];
+    const quickActions = [
+      { tab: 'vendas', label: 'Nova venda / esteira' },
+      { tab: 'clientes', label: 'Novo cliente' },
+      { tab: 'produtos', label: 'Estoque' },
+      { tab: 'vendedores', label: 'Vendedores' },
+    ];
 
     const recentSales = U.sortByDateDesc(sales).slice(0, 5);
     const recentSalesHtml = recentSales.length
@@ -10015,12 +10182,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     clientes: renderClients,
     fornecedores: renderSuppliers,
     compras: renderPurchases,
-    fichas: renderRecipes,
-    producao: renderProduction,
     vendas: renderSales,
     consignado: renderConsignments,
     financeiro: renderFinancial,
-    tarefas: renderTasks,
     relatorios: renderReports,
     dados: renderData,
   };
@@ -10045,13 +10209,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   function mountModuleTab(tab) {
-    const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
+        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio,
+        // ajuste manual, correcao de lancamento e devolucao ao estoque
+        // central (painel "Gerenciar" de auth.js), permissoes e concessao
+        // direta de estoque.
         els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
@@ -10063,59 +10226,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
-      case 'precos':
-        els.view.innerHTML = '<div id="pricingPanel"></div>';
-        if (window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
-          window.C360.pricing.mountAdmin(document.getElementById('pricingPanel'));
-        }
-        break;
       case 'meusaldo':
+        // Unica aba do vendedor: somente leitura (saldo, historico, o que
+        // esta com ele). Nenhuma escrita acontece aqui.
         els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
         if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
           window.C360.sellerLedger.mountSeller(document.getElementById('sellerLedgerPanel'));
-        }
-        break;
-      case 'devolucoes':
-        els.view.innerHTML = '<div id="operationalMovementsAdminPanel"></div>';
-        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountAdmin === 'function') {
-          window.C360.operationalMovements.mountAdmin(document.getElementById('operationalMovementsAdminPanel'), { onDone: renderAll });
-        }
-        break;
-      case 'minhasdevolucoes':
-        els.view.innerHTML = '<div id="operationalMovementsPanel"></div>';
-        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountSeller === 'function') {
-          window.C360.operationalMovements.mountSeller(document.getElementById('operationalMovementsPanel'));
-        }
-        break;
-      case 'estoque':
-        els.view.innerHTML = '<div id="myStockPanel"></div>';
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountMyStock === 'function') {
-          window.C360.sellerStock.mountMyStock(document.getElementById('myStockPanel'));
-        }
-        break;
-      case 'calculadora':
-        if (window.C360.calculator) {
-          els.view.innerHTML = window.C360.calculator.render();
-          window.C360.calculator.mount(els.view);
-        } else {
-          els.view.innerHTML = UI.formNotice('Calculadora indisponível.', 'warning');
-        }
-        break;
-      case 'metas':
-        els.view.innerHTML = '<div id="goalsPanel"></div>';
-        if (window.C360.goals) {
-          const panel = document.getElementById('goalsPanel');
-          if (isAdminUser && typeof window.C360.goals.mountAdmin === 'function') {
-            window.C360.goals.mountAdmin(panel);
-          } else if (!isAdminUser && typeof window.C360.goals.mountSeller === 'function') {
-            window.C360.goals.mountSeller(panel);
-          }
-        }
-        break;
-      case 'ajuda':
-        els.view.innerHTML = '';
-        if (window.C360.sellerHelp && typeof window.C360.sellerHelp.mount === 'function') {
-          window.C360.sellerHelp.mount(els.view);
         }
         break;
       default:
@@ -11747,7 +11863,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
-    if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
     els.btnReset.addEventListener('click', () => {
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();

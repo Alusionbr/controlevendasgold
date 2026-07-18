@@ -54,6 +54,15 @@ Use este checklist antes de considerar uma alteração aprovada.
 - [ ] Devolução volta para estoque.
 - [ ] Pagamento reduz valor em aberto.
 
+## Vendedores — consignado, ajuste e correção (pós-reestruturação)
+
+- [ ] Vendedor logado só vê a aba "Minha conta" (sem venda/pedido em lugar nenhum).
+- [ ] "Minha conta" mostra saldo, "O que está com você" (leitura) e histórico batendo com o lado do admin.
+- [ ] Admin → Vendedores → Gerenciar → "Enviar estoque consignado" baixa o central, sobe o estoque do vendedor e gera dívida.
+- [ ] "Devolver, desperdício ou brinde" (tipo Devolução) sobe `products.currentStock`, baixa o estoque do vendedor e credita o ledger quando marcado.
+- [ ] "Ajuste manual" (crédito e débito, motivo obrigatório) muda o saldo e aparece no histórico.
+- [ ] "Corrigir" num lançamento pré-preenche o ajuste manual com direção/valor invertidos; nenhum lançamento antigo é editado ou apagado.
+
 ## Backup
 
 - [ ] Exportar backup gera JSON.

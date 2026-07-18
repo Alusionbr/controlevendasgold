@@ -352,5 +352,36 @@
     paint();
   }
 
-  window.C360.operationalMovements = { mountAdmin, mountSeller };
+  // ---------------------------------------------------------------------
+  // Admin — registrar e já efetivar (devolução ao central / desperdício /
+  // brinde) num passo só, direto do painel "Vendedores". Antes o vendedor
+  // abria a solicitação (status 'a_devolver'/'pending') e o admin só
+  // conferia depois; a solicitação self-service saiu do painel do
+  // vendedor (que agora é só leitura), então o admin cria já com o efeito
+  // aplicado — reaproveita a mesma `confirmMovement` da fila antiga, sem
+  // duplicar a regra de estoque/ledger.
+  // ---------------------------------------------------------------------
+  async function adminRecordMovement({ sellerId, productId, type, quantity, unitValue, affectsFinance, reason }) {
+    if (!sellerId) throw new Error('Selecione o vendedor.');
+    if (!productId) throw new Error('Selecione o produto.');
+    if (!['return', 'waste', 'gift'].includes(type)) throw new Error('Tipo de movimentação inválido.');
+    const qty = U.number(quantity);
+    if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
+    if (!reason || !reason.trim()) throw new Error('Informe o motivo.');
+    assertSellerStockAvailable(sellerId, productId, qty);
+
+    const movement = await S().add('operationalMovements', {
+      type,
+      status: type === 'return' ? 'a_devolver' : 'pending',
+      productId,
+      sellerId,
+      quantityDeclared: qty,
+      reason: reason.trim(),
+      affectsStock: true,
+    });
+    await confirmMovement(movement, { quantityReceived: qty, unitValue, affectsFinance: type === 'return' && affectsFinance });
+    return movement;
+  }
+
+  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement };
 })();

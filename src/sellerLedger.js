@@ -84,8 +84,51 @@
     return payment;
   }
 
+  // Ajuste manual / correção de lançamento — nunca edita ou apaga um
+  // lançamento existente (mesmo princípio de `ajuste_manual` em
+  // stockMovements, CLAUDE.md): toda correção é um novo lançamento tipo
+  // 'manual_adjustment' com motivo obrigatório, na direção escolhida pelo
+  // admin. Reaproveitado tanto pelo formulário "Ajuste manual" quanto pelo
+  // botão "Corrigir" de um lançamento específico (src/auth.js), que só
+  // pré-preenche direção/valor invertidos — a escrita é sempre esta mesma.
+  async function registerAdjustment(sellerId, { amount, direction, notes, sourceId } = {}) {
+    const value = U.number(amount);
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    if (direction !== 'debit' && direction !== 'credit') throw new Error('Selecione se o ajuste aumenta ou reduz a dívida.');
+    if (!notes || !notes.trim()) throw new Error('Informe o motivo do ajuste.');
+    const entry = await S().add('sellerAccountEntries', {
+      sellerId,
+      type: 'manual_adjustment',
+      direction,
+      amount: value,
+      sourceType: sourceId ? 'entry_correction' : 'manual',
+      sourceId: sourceId || null,
+      notes: notes.trim(),
+    });
+    await S().refresh();
+    return entry;
+  }
+
+  // Leitura do que está fisicamente com o vendedor (mesmo filtro de
+  // stockRowsForSeller em src/auth.js, aplicado ao próprio usuário). Sem
+  // formulário, sem botão de venda — é só o vendedor conseguir conferir o
+  // que embasa a dívida que ele vê acima.
+  function ownStockRows(sellerId) {
+    const st = state();
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return [
+          product ? U.escapeHtml(product.name) : 'Produto removido',
+          U.qty(row.quantity, product ? product.unit : ''),
+        ];
+      });
+  }
+
   // ---------------------------------------------------------------------
-  // Vendedor — só o próprio saldo e histórico, sem escrita
+  // Vendedor — só o próprio saldo, histórico e o que está com ele, sem
+  // escrita nenhuma (nenhuma opção de venda ou pedido neste painel).
   // ---------------------------------------------------------------------
   function renderSeller() {
     const currentUser = user();
@@ -93,12 +136,15 @@
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
     const payments = paymentsForSeller(currentUser.id).slice(0, 10);
+    const stockRows = ownStockRows(currentUser.id);
 
     return UI.section(
-      'Meu saldo com admin',
-      'Reposição consignado/parcial vira débito aqui; pagamentos recebidos abatem o saldo.',
+      'Minha conta',
+      'Reposição consignado/parcial vira débito aqui; pagamentos e ajustes do admin abatem o saldo.',
       `
         ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
+        <h3>O que está com você</h3>
+        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque consignado com você no momento.')}
         <h3>Histórico</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
         <h3>Pagamentos já registrados</h3>
@@ -121,5 +167,5 @@
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment, registerAdjustment };
 })();
