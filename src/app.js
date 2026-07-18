@@ -11,13 +11,23 @@
   // A barra de abas do desktop, a bottom-nav mobile e o menu "Mais" são
   // todos gerados a partir deste mapa, em vez de listas duplicadas em
   // index.html e aqui (fonte antiga do bug de dessincronização).
+  //
+  // Reestruturação (estoque central + consignado a revendedor): o escopo do
+  // app encolheu para o essencial (central -> consignado ou venda à vista,
+  // dívida em aberto, correção de lançamento). Módulos fora desse escopo
+  // (produção, fichas técnicas, tarefas, metas, calculadora, ajuda,
+  // "Preços" por vendedor e as filas antigas de devolução self-service)
+  // saíram da navegação dos dois papéis — código e tabelas continuam
+  // intactos, só não aparecem mais aqui. O painel do vendedor virou
+  // somente-leitura: uma única aba (meusaldo) com saldo, histórico e o que
+  // está com ele; toda escrita (envio consignado, pagamento, ajuste,
+  // devolução ao central) passou a ser ação do admin no painel "Vendedores".
   // ---------------------------------------------------------------------
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos',
-    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
-    'ajuda', 'dados',
+    'vendas', 'consignado', 'financeiro',
+    'relatorios', 'vendedores',
+    'meusaldo', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -27,58 +37,39 @@
     clientes: 'Clientes',
     fornecedores: 'Fornecedores',
     compras: 'Compras',
-    fichas: 'Fichas e custos',
-    producao: 'Produção',
     vendas: 'Vendas',
     consignado: 'Consignado',
     financeiro: 'Financeiro',
-    estoque: 'Meu estoque',
-    tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
-    precos: 'Preços',
-    meusaldo: 'Meu saldo com admin',
-    devolucoes: 'Devoluções, desperdícios e brindes',
-    minhasdevolucoes: 'Devoluções e brindes',
-    calculadora: 'Calculadora',
-    metas: 'Metas',
-    ajuda: 'Ajuda',
+    meusaldo: 'Minha conta',
     dados: 'Dados',
   };
 
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
-    hoje: ['admin', 'vendedor'],
+    hoje: ['admin'],
     negocios: ['admin'],
     produtos: ['admin'],
-    clientes: ['admin', 'vendedor'],
+    clientes: ['admin'],
     fornecedores: ['admin'],
     compras: ['admin'],
-    fichas: ['admin'],
-    producao: ['admin'],
-    vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    vendas: ['admin'],
+    consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: ['vendedor'],
-    tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
-    precos: ['admin'],
     meusaldo: ['vendedor'],
-    devolucoes: ['admin'],
-    minhasdevolucoes: ['vendedor'],
-    calculadora: ['admin', 'vendedor'],
-    metas: ['admin', 'vendedor'],
-    ajuda: ['admin', 'vendedor'],
     dados: ['admin'],
   };
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
+  // Vendedor só tem uma aba (meusaldo, somente leitura) — sem "Mais".
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+    vendedor: ['meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -132,7 +123,6 @@
     activeBusiness: document.getElementById('activeBusiness'),
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
-    btnHelp: document.getElementById('btnHelp'),
     btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
@@ -188,6 +178,8 @@
       button.hidden = !allowed;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    if (els.btnExport) els.btnExport.hidden = role !== 'admin';
+    if (els.btnDataTab) els.btnDataTab.hidden = role !== 'admin';
     if (els.bottomNav) {
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
@@ -312,6 +304,9 @@
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
   // ações rápidas e listas curtas para não exigir rolar as abas completas.
   function renderToday() {
+    // 'hoje' só é alcançável pelo admin (TAB_ROLES) — o vendedor tem uma
+    // única aba, só leitura (meusaldo). isAdminUser fica sempre true aqui;
+    // mantido só porque o restante da função ainda o referencia em textos.
     const isAdminUser = S.isAdmin();
     const todayStr = U.today();
     const sales = currentSales();
@@ -319,19 +314,12 @@
     const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales });
     const stockMetrics = Calc.businessMetrics(state());
 
-    const quickActions = isAdminUser
-      ? [
-          { tab: 'vendas', label: 'Nova venda / esteira' },
-          { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'produtos', label: 'Estoque' },
-          { tab: 'vendedores', label: 'Vendedores' },
-        ]
-      : [
-          { tab: 'vendas', label: 'Vender / pedir' },
-          { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'estoque', label: 'Meu estoque' },
-          { tab: 'meusaldo', label: 'Meu saldo' },
-        ];
+    const quickActions = [
+      { tab: 'vendas', label: 'Nova venda / esteira' },
+      { tab: 'clientes', label: 'Novo cliente' },
+      { tab: 'produtos', label: 'Estoque' },
+      { tab: 'vendedores', label: 'Vendedores' },
+    ];
 
     const recentSales = U.sortByDateDesc(sales).slice(0, 5);
     const recentSalesHtml = recentSales.length
@@ -408,12 +396,9 @@
     clientes: renderClients,
     fornecedores: renderSuppliers,
     compras: renderPurchases,
-    fichas: renderRecipes,
-    producao: renderProduction,
     vendas: renderSales,
     consignado: renderConsignments,
     financeiro: renderFinancial,
-    tarefas: renderTasks,
     relatorios: renderReports,
     dados: renderData,
   };
@@ -438,13 +423,12 @@
   }
 
   function mountModuleTab(tab) {
-    const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
+        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio,
+        // ajuste manual, correcao de lancamento e devolucao ao estoque
+        // central (painel "Gerenciar" de auth.js), permissoes e concessao
+        // direta de estoque.
         els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
@@ -456,59 +440,12 @@
           window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
-      case 'precos':
-        els.view.innerHTML = '<div id="pricingPanel"></div>';
-        if (window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
-          window.C360.pricing.mountAdmin(document.getElementById('pricingPanel'));
-        }
-        break;
       case 'meusaldo':
+        // Unica aba do vendedor: somente leitura (saldo, historico, o que
+        // esta com ele). Nenhuma escrita acontece aqui.
         els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
         if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
           window.C360.sellerLedger.mountSeller(document.getElementById('sellerLedgerPanel'));
-        }
-        break;
-      case 'devolucoes':
-        els.view.innerHTML = '<div id="operationalMovementsAdminPanel"></div>';
-        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountAdmin === 'function') {
-          window.C360.operationalMovements.mountAdmin(document.getElementById('operationalMovementsAdminPanel'), { onDone: renderAll });
-        }
-        break;
-      case 'minhasdevolucoes':
-        els.view.innerHTML = '<div id="operationalMovementsPanel"></div>';
-        if (window.C360.operationalMovements && typeof window.C360.operationalMovements.mountSeller === 'function') {
-          window.C360.operationalMovements.mountSeller(document.getElementById('operationalMovementsPanel'));
-        }
-        break;
-      case 'estoque':
-        els.view.innerHTML = '<div id="myStockPanel"></div>';
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountMyStock === 'function') {
-          window.C360.sellerStock.mountMyStock(document.getElementById('myStockPanel'));
-        }
-        break;
-      case 'calculadora':
-        if (window.C360.calculator) {
-          els.view.innerHTML = window.C360.calculator.render();
-          window.C360.calculator.mount(els.view);
-        } else {
-          els.view.innerHTML = UI.formNotice('Calculadora indisponível.', 'warning');
-        }
-        break;
-      case 'metas':
-        els.view.innerHTML = '<div id="goalsPanel"></div>';
-        if (window.C360.goals) {
-          const panel = document.getElementById('goalsPanel');
-          if (isAdminUser && typeof window.C360.goals.mountAdmin === 'function') {
-            window.C360.goals.mountAdmin(panel);
-          } else if (!isAdminUser && typeof window.C360.goals.mountSeller === 'function') {
-            window.C360.goals.mountSeller(panel);
-          }
-        }
-        break;
-      case 'ajuda':
-        els.view.innerHTML = '';
-        if (window.C360.sellerHelp && typeof window.C360.sellerHelp.mount === 'function') {
-          window.C360.sellerHelp.mount(els.view);
         }
         break;
       default:
@@ -2140,7 +2077,6 @@
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
-    if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
     els.btnReset.addEventListener('click', () => {
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
@@ -2258,9 +2194,9 @@
       eventsBound = true;
     }
     applyRoleVisibility();
-    if (window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
-      window.C360.calculator.mountFloating();
-    }
+    // A calculadora saiu da navegação (fora do novo escopo) — o botão
+    // flutuante (calculator.mountFloating) não é mais montado, senão
+    // seria um atalho pra uma tela que não existe mais em TAB_ORDER.
     renderAll();
   }
 

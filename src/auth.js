@@ -367,15 +367,17 @@
       });
   }
 
-  function pendingCartsCountForSeller(sellerId) {
+  // Opções de produto para o form de devolução/desperdício/brinde — só o que
+  // o vendedor tem de fato em mãos (mesma fonte de stockRowsForSeller).
+  function sellerStockOptions(sellerId) {
     const st = fullState();
-    return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
-  }
-
-  function pendingReturnsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.operationalMovements || []).filter((movement) => String(movement.sellerId) === String(sellerId)
-      && ['a_devolver', 'pending'].includes(movement.status)).length;
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return product ? { id: product.id, name: `${product.name} (${U.qty(row.quantity, product.unit)} com o vendedor)`, avgCost: product.avgCost } : null;
+      })
+      .filter(Boolean);
   }
 
   function productOptionsForConsignment() {
@@ -387,67 +389,118 @@
     const balance = L ? L.balanceFor(seller.id) : 0;
     const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
     const stockRows = stockRowsForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
+    const heldProducts = sellerStockOptions(seller.id);
 
     return `
       <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         <div class="seller-manage-grid">
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
-          ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
-          ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
         </div>
-        ${pendingCarts > 0 || pendingReturns > 0 ? `
-          <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
-            ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
-          </p>` : ''}
-
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
 
         <h3>Estoque atual do vendedor</h3>
         ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
-        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
+        <details class="seller-manage-section">
+          <summary>Enviar estoque consignado</summary>
+          <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
+          <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Produto
+              <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label>Preço unitário (dívida)
+              <input name="unitPrice" type="number" step="0.01" min="0" required>
+            </label>
+            <button type="submit" class="small">Enviar consignado</button>
+          </form>
+        </details>
+
+        <details class="seller-manage-section">
+          <summary>Registrar pagamento</summary>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Registrar pagamento</button>
+          </form>
+        </details>
+
+        <details class="seller-manage-section">
+          <summary>Devolver, desperdício ou brinde</summary>
+          <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
+          <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Tipo
+              <select name="type">
+                <option value="return">Devolução ao estoque central</option>
+                <option value="waste">Desperdício</option>
+                <option value="gift">Brinde</option>
+              </select>
+            </label>
+            <label>Produto
+              <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label data-return-credit-field>Valor unitário (para o crédito)
+              <input name="unitValue" type="number" step="0.01" min="0">
+            </label>
+            <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
+            <label class="wide">Motivo
+              <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+            </label>
+            <button type="submit" class="small">Registrar</button>
+          </form>
+        </details>
+
+        <details class="seller-manage-section" data-adjust-details>
+          <summary>Ajuste manual / correção</summary>
+          <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
+          <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Direção
+              <select name="direction">
+                <option value="debit">Aumentar dívida</option>
+                <option value="credit">Reduzir dívida</option>
+              </select>
+            </label>
+            <label class="wide">Motivo
+              <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
+            </label>
+            <button type="submit" class="small">Lançar ajuste</button>
+          </form>
+        </details>
+
+        <h3>Histórico de lançamentos</h3>
+        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor', ''], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
             manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
           })[entry.type] || entry.type;
           const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
+          const oppositeDirection = entry.direction === 'credit' ? 'debit' : 'credit';
+          const correctNotes = `Correção do lançamento de ${(entry.createdAt || '').slice(0, 10)} (${label})`;
           return [
             (entry.createdAt || '').slice(0, 10),
             U.escapeHtml(label),
             UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
             U.escapeHtml(entry.notes || ''),
             `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
+            `<button type="button" class="small secondary" data-action="prefill-correction"
+              data-amount="${U.escapeHtml(entry.amount)}" data-direction="${oppositeDirection}"
+              data-notes="${U.escapeHtml(correctNotes)}">Corrigir</button>`,
           ];
         }), 'Nenhum lançamento ainda.')}
       </div>
@@ -567,6 +620,8 @@
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const returnForm = event.target.closest('[data-return-form]');
+      const adjustForm = event.target.closest('[data-adjust-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -648,13 +703,65 @@
           manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
         }
         paint();
+        return;
       }
+
+      if (returnForm && container.contains(returnForm)) {
+        event.preventDefault();
+        const sellerId = returnForm.dataset.sellerId;
+        const data = U.formData(returnForm);
+        try {
+          const OM = window.C360.operationalMovements;
+          if (!OM || typeof OM.adminRecordMovement !== 'function') throw new Error('Registro de devolução indisponível no momento.');
+          await OM.adminRecordMovement({
+            sellerId,
+            productId: data.productId,
+            type: data.type,
+            quantity: data.quantity,
+            unitValue: data.unitValue,
+            affectsFinance: !!data.affectsFinance,
+            reason: data.reason,
+          });
+          manageFeedback = { message: 'Movimentação registrada e aplicada.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar a movimentação.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
+      if (adjustForm && container.contains(adjustForm)) {
+        event.preventDefault();
+        const sellerId = adjustForm.dataset.sellerId;
+        const data = U.formData(adjustForm);
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerAdjustment !== 'function') throw new Error('Ajuste manual indisponível no momento.');
+          await L.registerAdjustment(sellerId, { amount: data.amount, direction: data.direction, notes: data.notes });
+          manageFeedback = { message: 'Ajuste lançado.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível lançar o ajuste.', type: 'danger' };
+        }
+        paint();
+      }
+    });
+
+    container.addEventListener('change', (event) => {
+      const select = event.target.closest('[data-return-form] select[name="type"]');
+      if (!select) return;
+      const form = select.closest('[data-return-form]');
+      const isReturn = select.value === 'return';
+      // .grid-form label tem display:flex (mais específico que [hidden]),
+      // então o toggle precisa ser via style inline, não o atributo hidden.
+      form.querySelectorAll('[data-return-credit-field]').forEach((field) => {
+        field.style.display = isReturn ? '' : 'none';
+      });
     });
 
     container.addEventListener('click', async (event) => {
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
-      const { action, id, tab } = button.dataset;
+      const { action, id } = button.dataset;
 
       if (action === 'toggle-manage') {
         expandedId = String(expandedId) === String(id) ? null : id;
@@ -663,8 +770,18 @@
         return;
       }
 
-      if (action === 'goto-tab') {
-        if (window.C360.app && typeof window.C360.app.setTab === 'function') window.C360.app.setTab(tab);
+      if (action === 'prefill-correction') {
+        const panel = button.closest('.seller-manage-panel');
+        const details = panel?.querySelector('[data-adjust-details]');
+        const form = panel?.querySelector('[data-adjust-form]');
+        if (form) {
+          if (details) details.open = true;
+          form.querySelector('[name="amount"]').value = button.dataset.amount || '';
+          form.querySelector('[name="direction"]').value = button.dataset.direction || 'debit';
+          form.querySelector('[name="notes"]').value = button.dataset.notes || '';
+          form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          form.querySelector('[name="notes"]').focus();
+        }
         return;
       }
 

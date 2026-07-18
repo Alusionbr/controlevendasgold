@@ -482,6 +482,12 @@ A visibilidade de aba por papel fica em `TAB_ROLES` (`src/app.js`) — é só
 defesa em profundidade de interface; a garantia real de acesso é a RLS no
 banco.
 
+> Tabela histórica (papéis e módulos do momento da integração
+> multiusuário). Depois de "Atualização: reestruturação — estoque
+> central, consignado a revendedor, painel do vendedor só leitura" (fim
+> deste arquivo), várias dessas abas saíram da navegação — `TAB_ORDER` em
+> `src/app.js` é sempre a fonte da verdade do que está visível hoje.
+
 ### Devolução, desperdício e piso de preço
 
 - Cada linha de venda (aba Vendas) ganhou um botão "Devolução/Desperdício"
@@ -785,3 +791,92 @@ aba removida, o total agregado aparece corretamente na aba Vendedores,
 "Registrar pagamento" (mesmo `registerPayment` reaproveitado) continua
 funcionando ali, e "Meu saldo com admin" (visão do vendedor) continua
 batendo com o saldo do lado do admin.
+
+---
+
+## Atualização: reestruturação — estoque central, consignado a revendedor,
+## painel do vendedor só leitura
+
+Pedido explícito do usuário: o app gira em torno de um único estoque
+**central** do admin. Sai do central de duas formas — **consignado** para
+um revendedor (vira dívida em aberto, paga parcialmente ao longo do tempo)
+ou **venda à vista** direto ao cliente final. O admin precisa poder
+**corrigir/ajustar** lançamentos e pagamentos errados. O painel do
+vendedor deixou de ter qualquer opção de venda ou pedido — vira **só
+leitura**: saldo em aberto, histórico de lançamentos e o que está
+fisicamente com ele.
+
+A base de dados para isso já existia (estoque central, `seller_stock`,
+o ledger `seller_account_entries`/`seller_payments`, `consignments` com
+`seller_id`) — não foi criada nenhuma migração nova. A mudança foi de
+navegação e de duas funcionalidades novas no painel "Gerenciar" (aba
+Vendedores).
+
+- **`src/app.js`**: `TAB_ORDER`/`TAB_LABELS`/`TAB_ROLES`/
+  `BOTTOM_NAV_PRIMARY` encolheram para o essencial. Vendedor passa a ver
+  **uma única aba** ("Minha conta" = `meusaldo`, só leitura). Saíram da
+  navegação dos dois papéis (código e tabelas continuam intactos, só não
+  aparecem mais): `fichas`, `producao`, `tarefas`, `metas`, `calculadora`,
+  `ajuda`, `precos` (preço por vendedor só fazia sentido quando ele
+  revendia), `devolucoes`/`minhasdevolucoes` (a fila de devolução
+  self-service do vendedor virou ação direta do admin — ver abaixo). A
+  aba "Consignado" legada (por cliente final, `consignments.client_id`,
+  distinta do fluxo de revendedor) continua existindo, mas só para admin —
+  antes o vendedor também tinha acesso e, pela RLS já existente
+  (`consignments_insert_seller`/`update_seller`), conseguia registrar
+  venda/devolução/pagamento do que estava consignado com ele por ali. O
+  botão "Ajuda" do cabeçalho (`btnHelp`) saiu junto, já que a aba que ele
+  abria não existe mais.
+- **`src/sellerLedger.js`**: `renderSeller()` ganhou a seção "O que está
+  com você" (leitura de `sellerStock` filtrado pelo próprio usuário, mesmo
+  filtro de `stockRowsForSeller` em `src/auth.js`). Nova função
+  `registerAdjustment(sellerId, {amount, direction, notes})`, exportada —
+  mesmo padrão de `registerPayment`: cria um lançamento
+  `seller_account_entries` tipo `manual_adjustment` (tipo que já existia
+  no `CHECK` da tabela desde `0011_seller_account_ledger.sql`, sem uso até
+  agora) na direção escolhida, com motivo obrigatório. **Nunca edita ou
+  apaga um lançamento existente** — mesmo princípio do `ajuste_manual` em
+  `stockMovements`.
+- **`src/auth.js`** (painel "Gerenciar" de cada vendedor,
+  `sellerManagePanel`): três seções novas, nesta ordem —
+  1. **"Devolver, desperdício ou brinde"**: form com Tipo (devolução ao
+     central / desperdício / brinde), Produto (só o que o vendedor tem em
+     mãos), Quantidade, Valor unitário e "Abater da dívida" (só para
+     devolução) e Motivo. Chama `operationalMovements.adminRecordMovement`
+     (novo, item abaixo). Substitui o fluxo antigo (vendedor abria pedido
+     em `minhasdevolucoes`, admin conferia depois em `devolucoes`) por um
+     passo só, porque o vendedor não tem mais como abrir esse pedido.
+  2. **"Ajuste manual / correção"**: Valor, Direção (aumentar/reduzir
+     dívida) e Motivo → `sellerLedger.registerAdjustment`.
+  3. Cada linha do histórico de lançamentos ganhou um botão **"Corrigir"**
+     que só pré-preenche o form de ajuste manual acima com a
+     direção/valor invertidos e uma nota `Correção do lançamento de
+     {data} ({tipo})` — o admin ajusta e confirma. É sempre um novo
+     lançamento, nunca uma edição do original.
+  As métricas antigas "Pedidos aguardando aprovação"/"Devoluções
+  pendentes" saíram do painel (link ia para abas — `aprovacoes` e
+  `devolucoes` — que não existem mais na navegação).
+- **`src/operationalMovements.js`**: nova função exportada
+  `adminRecordMovement({sellerId, productId, type, quantity, unitValue,
+  affectsFinance, reason})` — cria a movimentação e já aplica o efeito
+  (baixa `seller_stock`; se `type: 'return'`, credita
+  `products.currentStock` e grava `stock_movements`
+  `entrada_devolucao_consignado`; se `affectsFinance`, credita o ledger
+  com `return_credit`) na mesma chamada, reaproveitando 100% de
+  `applyMovementEffects`/`confirmMovement` já existentes — sem fila
+  `a_devolver` pendente, porque só o admin cria isso agora.
+
+Verificado via a skill `run-controlevendasgold` (mock de admin e
+vendedor): nav do admin mostra só os módulos do novo escopo; nav do
+vendedor mostra só "Minha conta" com saldo, "O que está com você" e
+histórico, sem nenhum botão de venda ou pedido; no painel "Gerenciar",
+"Ajuste manual" (crédito e débito) muda o saldo e aparece no histórico,
+"Corrigir" pré-preenche certo, e "Devolver ao estoque central" baixa o
+estoque do vendedor e credita o ledger. Nenhum erro de console na sequência
+completa. (Achado à parte, não é bug: o mock de teste do driver não tem uma
+rota de PATCH para `operational_movements`, então o passo final de
+`confirmMovement` — atualizar o status da movimentação — lança um erro
+local nesse ambiente simulado; a RLS real do Supabase já dá acesso total
+ao admin nessa tabela, então isso não acontece contra o backend de
+produção. Estoque e ledger já tinham sido aplicados corretamente antes
+desse passo.)
