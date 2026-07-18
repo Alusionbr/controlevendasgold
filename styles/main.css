@@ -1310,6 +1310,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.6rem;
 }
+.seller-manage-section {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+.seller-manage-section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--brand-deep);
+}
+.seller-manage-section[open] > summary { margin-bottom: 0.4rem; }
+.seller-manage-section .grid-form {
+  margin: 0.5rem 0 0;
+}
 .ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
 .ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
 .seller-permission-card {

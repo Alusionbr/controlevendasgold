@@ -178,6 +178,8 @@
       button.hidden = !allowed;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    if (els.btnExport) els.btnExport.hidden = role !== 'admin';
+    if (els.btnDataTab) els.btnDataTab.hidden = role !== 'admin';
     if (els.bottomNav) {
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
@@ -2192,9 +2194,9 @@
       eventsBound = true;
     }
     applyRoleVisibility();
-    if (window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
-      window.C360.calculator.mountFloating();
-    }
+    // A calculadora saiu da navegação (fora do novo escopo) — o botão
+    // flutuante (calculator.mountFloating) não é mais montado, senão
+    // seria um atalho pra uma tela que não existe mais em TAB_ORDER.
     renderAll();
   }
 

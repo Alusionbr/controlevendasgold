@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-gxXOTAxnYQsufWw8BljPnS3ZaNhp0mrllG66sH4v/eY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-8NQUFnfnkL8+9XuBepfrlQIHJPPR++sp4W4S72cO2sI=' 'sha256-MP/xk4QkqIFpgIyWJO1E6razDOi1ykd/0VTbYlar91w=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-J5toxkDWVkamphFlFuJntxS8Z1u/chnIx0UkQSXHHyk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-c5X0EWM7OHS6R/nTQz/PX1YTO9PMTrLQFbkMSL/j6G0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-8NQUFnfnkL8+9XuBepfrlQIHJPPR++sp4W4S72cO2sI=' 'sha256-MP/xk4QkqIFpgIyWJO1E6razDOi1ykd/0VTbYlar91w=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-PqYD9XRzkPpR1Z9/WcXC6PWBVTUUFqOcLsXW/REZvIc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1317,6 +1317,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.6rem;
+}
+.seller-manage-section {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+.seller-manage-section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--brand-deep);
+}
+.seller-manage-section[open] > summary { margin-bottom: 0.4rem; }
+.seller-manage-section .grid-form {
+  margin: 0.5rem 0 0;
 }
 .ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
 .ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
@@ -3842,82 +3857,91 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
         </div>
 
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
-
         <h3>Estoque atual do vendedor</h3>
         ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
 
-        <h3>Devolver, desperdício ou brinde</h3>
-        <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
-        <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Tipo
-            <select name="type">
-              <option value="return">Devolução ao estoque central</option>
-              <option value="waste">Desperdício</option>
-              <option value="gift">Brinde</option>
-            </select>
-          </label>
-          <label>Produto
-            <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label data-return-credit-field>Valor unitário (para o crédito)
-            <input name="unitValue" type="number" step="0.01" min="0">
-          </label>
-          <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
-          <label class="wide">Motivo
-            <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
-          </label>
-          <button type="submit" class="small">Registrar</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Enviar estoque consignado</summary>
+          <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
+          <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Produto
+              <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label>Preço unitário (dívida)
+              <input name="unitPrice" type="number" step="0.01" min="0" required>
+            </label>
+            <button type="submit" class="small">Enviar consignado</button>
+          </form>
+        </details>
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Registrar pagamento</summary>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Registrar pagamento</button>
+          </form>
+        </details>
 
-        <h3>Ajuste manual / correção</h3>
-        <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
-        <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Direção
-            <select name="direction">
-              <option value="debit">Aumentar dívida</option>
-              <option value="credit">Reduzir dívida</option>
-            </select>
-          </label>
-          <label class="wide">Motivo
-            <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
-          </label>
-          <button type="submit" class="small">Lançar ajuste</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Devolver, desperdício ou brinde</summary>
+          <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
+          <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Tipo
+              <select name="type">
+                <option value="return">Devolução ao estoque central</option>
+                <option value="waste">Desperdício</option>
+                <option value="gift">Brinde</option>
+              </select>
+            </label>
+            <label>Produto
+              <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label data-return-credit-field>Valor unitário (para o crédito)
+              <input name="unitValue" type="number" step="0.01" min="0">
+            </label>
+            <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
+            <label class="wide">Motivo
+              <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+            </label>
+            <button type="submit" class="small">Registrar</button>
+          </form>
+        </details>
 
+        <details class="seller-manage-section" data-adjust-details>
+          <summary>Ajuste manual / correção</summary>
+          <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
+          <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Direção
+              <select name="direction">
+                <option value="debit">Aumentar dívida</option>
+                <option value="credit">Reduzir dívida</option>
+              </select>
+            </label>
+            <label class="wide">Motivo
+              <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
+            </label>
+            <button type="submit" class="small">Lançar ajuste</button>
+          </form>
+        </details>
+
+        <h3>Histórico de lançamentos</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor', ''], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
@@ -4205,8 +4229,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       }
 
       if (action === 'prefill-correction') {
-        const form = button.closest('.seller-manage-panel')?.querySelector('[data-adjust-form]');
+        const panel = button.closest('.seller-manage-panel');
+        const details = panel?.querySelector('[data-adjust-details]');
+        const form = panel?.querySelector('[data-adjust-form]');
         if (form) {
+          if (details) details.open = true;
           form.querySelector('[name="amount"]').value = button.dataset.amount || '';
           form.querySelector('[name="direction"]').value = button.dataset.direction || 'debit';
           form.querySelector('[name="notes"]').value = button.dataset.notes || '';
@@ -9966,6 +9993,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       button.hidden = !allowed;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    if (els.btnExport) els.btnExport.hidden = role !== 'admin';
+    if (els.btnDataTab) els.btnDataTab.hidden = role !== 'admin';
     if (els.bottomNav) {
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
@@ -11980,9 +12009,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       eventsBound = true;
     }
     applyRoleVisibility();
-    if (window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
-      window.C360.calculator.mountFloating();
-    }
+    // A calculadora saiu da navegação (fora do novo escopo) — o botão
+    // flutuante (calculator.mountFloating) não é mais montado, senão
+    // seria um atalho pra uma tela que não existe mais em TAB_ORDER.
     renderAll();
   }
 

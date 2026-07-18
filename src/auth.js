@@ -399,82 +399,91 @@
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
         </div>
 
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
-
         <h3>Estoque atual do vendedor</h3>
         ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
 
-        <h3>Devolver, desperdício ou brinde</h3>
-        <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
-        <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Tipo
-            <select name="type">
-              <option value="return">Devolução ao estoque central</option>
-              <option value="waste">Desperdício</option>
-              <option value="gift">Brinde</option>
-            </select>
-          </label>
-          <label>Produto
-            <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label data-return-credit-field>Valor unitário (para o crédito)
-            <input name="unitValue" type="number" step="0.01" min="0">
-          </label>
-          <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
-          <label class="wide">Motivo
-            <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
-          </label>
-          <button type="submit" class="small">Registrar</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Enviar estoque consignado</summary>
+          <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
+          <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Produto
+              <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label>Preço unitário (dívida)
+              <input name="unitPrice" type="number" step="0.01" min="0" required>
+            </label>
+            <button type="submit" class="small">Enviar consignado</button>
+          </form>
+        </details>
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Registrar pagamento</summary>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Registrar pagamento</button>
+          </form>
+        </details>
 
-        <h3>Ajuste manual / correção</h3>
-        <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
-        <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Direção
-            <select name="direction">
-              <option value="debit">Aumentar dívida</option>
-              <option value="credit">Reduzir dívida</option>
-            </select>
-          </label>
-          <label class="wide">Motivo
-            <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
-          </label>
-          <button type="submit" class="small">Lançar ajuste</button>
-        </form>
+        <details class="seller-manage-section">
+          <summary>Devolver, desperdício ou brinde</summary>
+          <p class="ss-hint">Tira do estoque do vendedor. "Devolução" volta pro estoque central; desperdício/brinde não voltam.</p>
+          <form class="grid-form compact-form" data-return-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Tipo
+              <select name="type">
+                <option value="return">Devolução ao estoque central</option>
+                <option value="waste">Desperdício</option>
+                <option value="gift">Brinde</option>
+              </select>
+            </label>
+            <label>Produto
+              <select name="productId" required>${UI.optionList(heldProducts, '', heldProducts.length ? 'Selecione o produto' : 'Nenhum estoque com este vendedor')}</select>
+            </label>
+            <label>Quantidade
+              <input name="quantity" type="number" step="0.001" min="0.001" required>
+            </label>
+            <label data-return-credit-field>Valor unitário (para o crédito)
+              <input name="unitValue" type="number" step="0.01" min="0">
+            </label>
+            <label class="wide" data-return-credit-field><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
+            <label class="wide">Motivo
+              <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+            </label>
+            <button type="submit" class="small">Registrar</button>
+          </form>
+        </details>
 
+        <details class="seller-manage-section" data-adjust-details>
+          <summary>Ajuste manual / correção</summary>
+          <p class="ss-hint">Cria um novo lançamento (nunca edita um antigo) — use para corrigir valor errado ou perdoar/ajustar dívida.</p>
+          <form class="grid-form compact-form" data-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor
+              <input name="amount" type="number" step="0.01" min="0.01" required>
+            </label>
+            <label>Direção
+              <select name="direction">
+                <option value="debit">Aumentar dívida</option>
+                <option value="credit">Reduzir dívida</option>
+              </select>
+            </label>
+            <label class="wide">Motivo
+              <input name="notes" required placeholder="Ex.: correção do lançamento de 10/07, valor lançado errado">
+            </label>
+            <button type="submit" class="small">Lançar ajuste</button>
+          </form>
+        </details>
+
+        <h3>Histórico de lançamentos</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor', ''], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
@@ -762,8 +771,11 @@
       }
 
       if (action === 'prefill-correction') {
-        const form = button.closest('.seller-manage-panel')?.querySelector('[data-adjust-form]');
+        const panel = button.closest('.seller-manage-panel');
+        const details = panel?.querySelector('[data-adjust-details]');
+        const form = panel?.querySelector('[data-adjust-form]');
         if (form) {
+          if (details) details.open = true;
           form.querySelector('[name="amount"]').value = button.dataset.amount || '';
           form.querySelector('[name="direction"]').value = button.dataset.direction || 'debit';
           form.querySelector('[name="notes"]').value = button.dataset.notes || '';
