@@ -346,6 +346,68 @@
       </section>`;
   }
 
+  // Metas da semana ativas (period_type != 'mes'), cobrindo a data de hoje.
+  // Lê do estado em cache (state().goalsProgress, populado por refresh) — sem
+  // chamada de rede, pois a tela "Hoje" é HTML síncrono.
+  function currentWeeklyGoals() {
+    const today = U.today();
+    return (state().goalsProgress || []).filter((row) => row.period_type !== 'mes'
+      && (!row.period_start || row.period_start <= today)
+      && (!row.period_end || row.period_end >= today));
+  }
+
+  function todayGoalBar(row, name) {
+    const pct = Math.max(0, Math.min(100, U.number(row.progress_pct)));
+    const achieved = U.number(row.achieved_amount);
+    const target = U.number(row.target_amount);
+    const done = !!row.is_achieved;
+    const remaining = Math.max(0, target - achieved);
+    return `
+      <div class="today-goal ${done ? 'is-done' : ''}">
+        <div class="today-goal-top">
+          <span class="today-goal-name">${U.escapeHtml(name || '')}</span>
+          <span class="today-goal-pct">${done ? '🏆 ' : ''}${pct.toFixed(0)}%</span>
+        </div>
+        <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+        <small>${U.money(achieved)} de ${U.money(target)}${done ? ' · meta batida!' : ` · faltam ${U.money(remaining)}`}</small>
+      </div>`;
+  }
+
+  // Resumo de metas na tela "Hoje": vendedor vê a própria meta da semana como
+  // barra de progresso; admin vê o agregado (quantas metas, quantas batidas,
+  // total atingido vs. alvo). Retorna '' quando não há meta ativa — nada de
+  // seção vazia poluindo a tela.
+  function renderTodayGoals(isAdminUser) {
+    const weekly = currentWeeklyGoals();
+    if (!weekly.length) return '';
+    if (isAdminUser) {
+      const target = weekly.reduce((sum, row) => sum + U.number(row.target_amount), 0);
+      const achieved = weekly.reduce((sum, row) => sum + U.number(row.achieved_amount), 0);
+      const done = weekly.filter((row) => row.is_achieved).length;
+      const pct = target > 0 ? Math.max(0, Math.min(100, (achieved / target) * 100)) : 0;
+      return `
+        <section class="today-section">
+          <h3>Metas da semana</h3>
+          <div class="today-goal ${done === weekly.length ? 'is-done' : ''}">
+            <div class="today-goal-top">
+              <span class="today-goal-name">${weekly.length} meta${weekly.length === 1 ? '' : 's'} · ${done} batida${done === 1 ? '' : 's'}</span>
+              <span class="today-goal-pct">${pct.toFixed(0)}%</span>
+            </div>
+            <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+            <small>${U.money(achieved)} de ${U.money(target)} no total da semana</small>
+          </div>
+        </section>`;
+    }
+    const currentUser = S.getCurrentUser();
+    const mine = weekly.filter((row) => String(row.seller_id) === String(currentUser && currentUser.id));
+    if (!mine.length) return '';
+    return `
+      <section class="today-section">
+        <h3>Minha meta da semana</h3>
+        ${mine.map((row) => todayGoalBar(row)).join('')}
+      </section>`;
+  }
+
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
@@ -409,6 +471,8 @@
           </div>
         </section>
 
+        ${renderTodayGoals(isAdminUser)}
+
         ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
@@ -467,6 +531,12 @@
       activeTab = firstAllowedTab();
       syncActiveNav();
     }
+    // No desktop o dashboard fixo (#dashboard) fica acima de toda aba como KPIs
+    // persistentes — mas na aba "Hoje" ele repetiria exatamente as métricas e a
+    // "Visão operacional" que a própria tela Hoje já mostra. Escondemos o fixo
+    // enquanto "Hoje" está ativa para não duplicar. (No celular #dashboard já é
+    // display:none pela CSS, então isto só afeta o desktop.)
+    if (els.dashboard) els.dashboard.hidden = activeTab === 'hoje';
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
       els.view.innerHTML = legacy();

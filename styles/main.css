@@ -248,6 +248,10 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   gap: 0.7rem;
   margin: 1.1rem 0;
 }
+/* Precisa vencer .dashboard{display:grid} — sem isto o atributo hidden (usado
+   para esconder o dashboard fixo na aba "Hoje", evitando duplicação) seria
+   ignorado. */
+.dashboard[hidden] { display: none; }
 .metric-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -474,6 +478,21 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   box-shadow: var(--shadow-sm);
 }
 .today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+
+/* Barra de progresso de meta na tela "Hoje" (metas semanais). Componente
+   próprio e leve — não depende do CSS injetado por src/goals.js, que só existe
+   quando a aba Metas foi montada. */
+.today-goal { display: flex; flex-direction: column; gap: 0.35rem; }
+.today-goal + .today-goal { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+.today-goal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.today-goal-name { font-weight: 650; color: var(--ink); }
+.today-goal-pct { font-weight: 700; color: var(--accent-deep); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today-goal-bar { height: 12px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.today-goal-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.4s ease; }
+.today-goal small { color: var(--muted); font-size: 0.8rem; }
+.today-goal.is-done .today-goal-bar i { background: var(--success); }
+.today-goal.is-done .today-goal-pct { color: var(--success); }
+
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
 @media (max-width: 720px) {
   /* A calculadora flutuante (.calc-fab) e' position:fixed no canto inferior
