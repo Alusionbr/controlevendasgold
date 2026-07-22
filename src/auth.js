@@ -367,6 +367,33 @@
       });
   }
 
+  // Resumo da mercadoria física em mãos do vendedor (seller_stock), avaliada
+  // pelo custo médio real do produto — o admin tem acesso a avg_cost pela RLS,
+  // então este valor bate com "Valor em estoque" do dashboard.
+  function sellerStockSummary(sellerId) {
+    const st = fullState();
+    const rows = (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0);
+    let value = 0;
+    let units = 0;
+    rows.forEach((row) => {
+      const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+      value += U.number(row.quantity) * U.number(product ? product.avgCost : 0);
+      units += U.number(row.quantity);
+    });
+    return { value, units, productCount: rows.length };
+  }
+
+  // Último pagamento recebido deste vendedor (seller_payments é a fonte —
+  // tem paymentDate; o ledger só espelha como crédito).
+  function lastPaymentForSeller(sellerId) {
+    const st = fullState();
+    const payments = (st.sellerPayments || [])
+      .filter((payment) => String(payment.sellerId) === String(sellerId))
+      .sort((a, b) => String(b.paymentDate || '').localeCompare(String(a.paymentDate || '')));
+    return payments[0] || null;
+  }
+
   function pendingCartsCountForSeller(sellerId) {
     const st = fullState();
     return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
@@ -463,16 +490,39 @@
     const isExpanded = String(expandedId) === String(seller.id);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
+    const stock = sellerStockSummary(seller.id);
+    const lastPayment = lastPaymentForSeller(seller.id);
+    const pendingCarts = pendingCartsCountForSeller(seller.id);
+    const pendingReturns = pendingReturnsCountForSeller(seller.id);
+    const pendingTotal = pendingCarts + pendingReturns;
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
         <div class="approval-card-head">
           <strong>${U.escapeHtml(seller.name || '—')}</strong>
           ${statusBadge}
+          ${pendingTotal > 0 ? UI.badge(`${pendingTotal} pendência${pendingTotal === 1 ? '' : 's'}`, 'warn') : ''}
         </div>
-        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
+        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}</p>
+        <div class="seller-stat-strip">
+          <div class="seller-stat">
+            <span>Mercadoria em mãos</span>
+            <strong>${U.money(stock.value)}</strong>
+            <small>${stock.productCount} produto${stock.productCount === 1 ? '' : 's'}</small>
+          </div>
+          <div class="seller-stat ${balance > 0 ? 'is-debt' : 'is-ok'}">
+            <span>Dívida</span>
+            <strong>${balance > 0 ? U.money(balance) : 'Em dia'}</strong>
+            <small>${balance > 0 ? 'a receber' : 'sem saldo'}</small>
+          </div>
+          <div class="seller-stat">
+            <span>Último pagamento</span>
+            <strong>${lastPayment ? U.money(U.number(lastPayment.amount)) : '—'}</strong>
+            <small>${lastPayment ? U.escapeHtml((lastPayment.paymentDate || '').slice(0, 10)) : 'nenhum'}</small>
+          </div>
+        </div>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
+          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Ver detalhes / enviar / cobrar'}</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
         ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
@@ -490,15 +540,22 @@
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
     const L = ledger();
+    const activeSellers = sellers.filter((seller) => seller.active !== false);
     const totalOpen = !loading && L
-      ? sellers.filter((seller) => seller.active !== false).reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      ? activeSellers.reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      : 0;
+    const totalStockOut = !loading
+      ? activeSellers.reduce((sum, seller) => sum + sellerStockSummary(seller.id).value, 0)
       : 0;
 
     return UI.section(
       'Vendedores',
-      'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
+      'Onde está sua mercadoria e quem deve, num lugar só: cada vendedor mostra o que tem em mãos, quanto deve e o último pagamento. Abra um card para enviar consignado ou registrar pagamento.',
       `
-        ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
+        ${!loading ? `<div class="dashboard seller-overview-metrics">
+          ${UI.metric('Mercadoria com vendedores', U.money(totalStockOut), 'consignadoAberto')}
+          ${UI.metric('Total a receber', U.money(totalOpen), null)}
+        </div>` : ''}
         <div id="authSellersError"></div>
         <form id="authCreateSellerForm" class="grid-form">
           <label class="full">Nome

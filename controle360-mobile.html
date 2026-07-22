@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-cscOeja+yN/Mij9fMEn5NA0EGVvPJqPmVuORZ6UcHJA=' 'sha256-DX0Kk6ZpyEOXgyDo5Nr0gpuPJV8FX0mc6s9Rfw/CqkM=' 'sha256-MtEUJebRo7KCAjoVlh7bqbEci1hNI5OV9V8stxqPs0Y=' 'sha256-4zrZEqYPTsuUr6clfBAGFotSYLubmZ03tEHGDefBVOs=' 'sha256-7V/02xbk0CuWRlUrvel7Rjuqvq/eUDdCf7DqUWFbeuM=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-dy6CxwyusHcguqZ7ku78enlUDE8YfB3kFRFfDYljhb0=' 'sha256-jOO/WgQqG06l8oCKG4UcthT8eJf0nevxEjVu6FSrt8c=' 'sha256-fNq9B3Zm8CiDwqUvyaib05nfTEcTapTpiMCNINgcOyI=' 'sha256-+n1bH6MjZd4prNDEG3lJqq8JhhTU+3upblx0oFOxCxo=' 'sha256-Qd51HvLcV2RZrbVnW0vIwHpnLnwODM+jqybwPcvD1Uw=' 'sha256-sne0znmyDRpkM0VtaKy8XwkxHbLHlXoLL9zgf+aYtOU=' 'sha256-wNZAS6WyNjNGJEE9xX8lXrxiQnF7XHVa7iXZj4f0ehQ=' 'sha256-C1eQBne7jhb22Q+fFjqU/pC04Wey3zuiIXVs88QlGQ4=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-/HuQybjQUxHh/InDr963ww1hprVncWOOVmQx8qKZt/c=' 'sha256-e9aqr7WDACQo+mDeKpu+CaSabAWEa0RTJ5MJ2MrAJSw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-uoU3U35t4ePIMEwvamTXh53zwHvEc68h/0BqFbYDlB4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-AimY5ZREqEF9iVUcRPxSc6s/8J5+xwz76rhWOL0jrDQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1305,6 +1305,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.85rem;
   margin-top: 0.9rem;
 }
+/* Totais no topo da aba Vendedores: mercadoria com vendedores + a receber */
+.seller-overview-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 0.4rem;
+}
+
+/* Faixa de resumo dentro de cada card de vendedor (visível sem expandir):
+   mercadoria em mãos, dívida e último pagamento — o "mapa" que o admin quer
+   ver de relance. */
+.seller-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.7rem 0 0.2rem;
+}
+.seller-stat {
+  background: var(--surface-2, var(--bg, #faf6ec));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.seller-stat span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+.seller-stat strong { font-size: 1.02rem; color: var(--ink); line-height: 1.15; overflow-wrap: anywhere; }
+.seller-stat small { font-size: 0.72rem; color: var(--muted); }
+.seller-stat.is-debt { border-color: var(--danger-soft); background: var(--danger-soft); }
+.seller-stat.is-debt strong { color: var(--danger-deep); }
+.seller-stat.is-ok strong { color: var(--success); }
+
+@media (max-width: 480px) {
+  .seller-stat-strip { grid-template-columns: 1fr; }
+}
+
 .seller-manage-panel {
   display: grid;
   gap: 0.7rem;
@@ -3811,6 +3847,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       });
   }
 
+  // Resumo da mercadoria física em mãos do vendedor (seller_stock), avaliada
+  // pelo custo médio real do produto — o admin tem acesso a avg_cost pela RLS,
+  // então este valor bate com "Valor em estoque" do dashboard.
+  function sellerStockSummary(sellerId) {
+    const st = fullState();
+    const rows = (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0);
+    let value = 0;
+    let units = 0;
+    rows.forEach((row) => {
+      const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+      value += U.number(row.quantity) * U.number(product ? product.avgCost : 0);
+      units += U.number(row.quantity);
+    });
+    return { value, units, productCount: rows.length };
+  }
+
+  // Último pagamento recebido deste vendedor (seller_payments é a fonte —
+  // tem paymentDate; o ledger só espelha como crédito).
+  function lastPaymentForSeller(sellerId) {
+    const st = fullState();
+    const payments = (st.sellerPayments || [])
+      .filter((payment) => String(payment.sellerId) === String(sellerId))
+      .sort((a, b) => String(b.paymentDate || '').localeCompare(String(a.paymentDate || '')));
+    return payments[0] || null;
+  }
+
   function pendingCartsCountForSeller(sellerId) {
     const st = fullState();
     return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
@@ -3907,16 +3970,39 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const isExpanded = String(expandedId) === String(seller.id);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
+    const stock = sellerStockSummary(seller.id);
+    const lastPayment = lastPaymentForSeller(seller.id);
+    const pendingCarts = pendingCartsCountForSeller(seller.id);
+    const pendingReturns = pendingReturnsCountForSeller(seller.id);
+    const pendingTotal = pendingCarts + pendingReturns;
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
         <div class="approval-card-head">
           <strong>${U.escapeHtml(seller.name || '—')}</strong>
           ${statusBadge}
+          ${pendingTotal > 0 ? UI.badge(`${pendingTotal} pendência${pendingTotal === 1 ? '' : 's'}`, 'warn') : ''}
         </div>
-        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
+        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}</p>
+        <div class="seller-stat-strip">
+          <div class="seller-stat">
+            <span>Mercadoria em mãos</span>
+            <strong>${U.money(stock.value)}</strong>
+            <small>${stock.productCount} produto${stock.productCount === 1 ? '' : 's'}</small>
+          </div>
+          <div class="seller-stat ${balance > 0 ? 'is-debt' : 'is-ok'}">
+            <span>Dívida</span>
+            <strong>${balance > 0 ? U.money(balance) : 'Em dia'}</strong>
+            <small>${balance > 0 ? 'a receber' : 'sem saldo'}</small>
+          </div>
+          <div class="seller-stat">
+            <span>Último pagamento</span>
+            <strong>${lastPayment ? U.money(U.number(lastPayment.amount)) : '—'}</strong>
+            <small>${lastPayment ? U.escapeHtml((lastPayment.paymentDate || '').slice(0, 10)) : 'nenhum'}</small>
+          </div>
+        </div>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
+          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Ver detalhes / enviar / cobrar'}</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
         ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
@@ -3934,15 +4020,22 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
     const L = ledger();
+    const activeSellers = sellers.filter((seller) => seller.active !== false);
     const totalOpen = !loading && L
-      ? sellers.filter((seller) => seller.active !== false).reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      ? activeSellers.reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      : 0;
+    const totalStockOut = !loading
+      ? activeSellers.reduce((sum, seller) => sum + sellerStockSummary(seller.id).value, 0)
       : 0;
 
     return UI.section(
       'Vendedores',
-      'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
+      'Onde está sua mercadoria e quem deve, num lugar só: cada vendedor mostra o que tem em mãos, quanto deve e o último pagamento. Abra um card para enviar consignado ou registrar pagamento.',
       `
-        ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
+        ${!loading ? `<div class="dashboard seller-overview-metrics">
+          ${UI.metric('Mercadoria com vendedores', U.money(totalStockOut), 'consignadoAberto')}
+          ${UI.metric('Total a receber', U.money(totalOpen), null)}
+        </div>` : ''}
         <div id="authSellersError"></div>
         <form id="authCreateSellerForm" class="grid-form">
           <label class="full">Nome
