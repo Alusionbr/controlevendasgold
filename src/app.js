@@ -74,6 +74,25 @@
     dados: ['admin'],
   };
 
+  // Agrupamento das abas por assunto/frequência de uso (decisão do usuário:
+  // manter todas as abas visíveis, mas organizadas em seções com título em
+  // vez de um "muro" plano). A ordem aqui define a ordem de exibição na barra
+  // do desktop e no menu "Mais" do celular. Cada grupo mistura abas de admin e
+  // vendedor — o filtro por papel (applyRoleVisibility / TAB_ROLES) esconde as
+  // que não pertencem ao usuário, e grupos que ficarem sem nenhuma aba visível
+  // são escondidos. Todo id de TAB_ORDER precisa aparecer em exatamente um
+  // grupo (senão some da navegação).
+  const TAB_GROUPS = [
+    { id: 'diaadia', label: 'Dia a dia',
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+    { id: 'mercadoria', label: 'Mercadoria e produção',
+      tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
+    { id: 'cadastros', label: 'Cadastros',
+      tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
+    { id: 'ferramentas', label: 'Ferramentas',
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+  ];
+
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
@@ -85,7 +104,12 @@
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `
+      <div class="tab-group" data-group="${group.id}">
+        <span class="tab-group-label">${U.escapeHtml(group.label)}</span>
+        ${group.tabs.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+      </div>
+    `).join('');
   }
 
   function buildBottomNav() {
@@ -113,10 +137,19 @@
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <span class="more-menu-group-label">${U.escapeHtml(group.label)}</span>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -186,6 +219,12 @@
     els.tabs.forEach((button) => {
       const allowed = tabAllowed(button.dataset.tab);
       button.hidden = !allowed;
+    });
+    // Esconde o título de um grupo cujas abas foram todas ocultadas para este
+    // papel (evita "Cadastros" aparecer sozinho sem nenhuma aba embaixo).
+    document.querySelectorAll('#tabsBar .tab-group').forEach((group) => {
+      const anyVisible = [...group.querySelectorAll('.tab-button')].some((button) => !button.hidden);
+      group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {

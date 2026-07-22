@@ -317,6 +317,32 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
 
+/* Agrupamento visual das abas por seção (Dia a dia / Mercadoria / Cadastros /
+   Ferramentas). Mantém a barra num único rolar horizontal, com um rótulo
+   pequeno e um divisor sutil antes de cada grupo. */
+.tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+.tab-group[hidden] { display: none; }
+.tab-group + .tab-group {
+  border-left: 1px solid var(--line);
+  padding-left: 0.5rem;
+  margin-left: 0.2rem;
+}
+.tab-group-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 0.15rem;
+  opacity: 0.8;
+}
+
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
    no rodapé assume: 4 destinos principais por perfil + "Mais" para o
@@ -402,9 +428,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+/* Cada seção do menu "Mais" (celular) reproduz os mesmos grupos da barra do
+   desktop: rótulo em linha cheia + itens em 2 colunas. */
+.more-menu-group {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0;
 }
 .more-menu-item {
   text-align: left;

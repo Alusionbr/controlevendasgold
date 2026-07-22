@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-uoU3U35t4ePIMEwvamTXh53zwHvEc68h/0BqFbYDlB4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-AimY5ZREqEF9iVUcRPxSc6s/8J5+xwz76rhWOL0jrDQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-uoU3U35t4ePIMEwvamTXh53zwHvEc68h/0BqFbYDlB4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-4UN54Bznoa8jFIoYrT9IG6bt6Wbt3Jt1ygZ+qXh5ZX4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -325,6 +325,32 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
 
+/* Agrupamento visual das abas por seção (Dia a dia / Mercadoria / Cadastros /
+   Ferramentas). Mantém a barra num único rolar horizontal, com um rótulo
+   pequeno e um divisor sutil antes de cada grupo. */
+.tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+.tab-group[hidden] { display: none; }
+.tab-group + .tab-group {
+  border-left: 1px solid var(--line);
+  padding-left: 0.5rem;
+  margin-left: 0.2rem;
+}
+.tab-group-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 0.15rem;
+  opacity: 0.8;
+}
+
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
    no rodapé assume: 4 destinos principais por perfil + "Mais" para o
@@ -410,9 +436,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+/* Cada seção do menu "Mais" (celular) reproduz os mesmos grupos da barra do
+   desktop: rótulo em linha cheia + itens em 2 colunas. */
+.more-menu-group {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0;
 }
 .more-menu-item {
   text-align: left;
@@ -9774,6 +9816,25 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     dados: ['admin'],
   };
 
+  // Agrupamento das abas por assunto/frequência de uso (decisão do usuário:
+  // manter todas as abas visíveis, mas organizadas em seções com título em
+  // vez de um "muro" plano). A ordem aqui define a ordem de exibição na barra
+  // do desktop e no menu "Mais" do celular. Cada grupo mistura abas de admin e
+  // vendedor — o filtro por papel (applyRoleVisibility / TAB_ROLES) esconde as
+  // que não pertencem ao usuário, e grupos que ficarem sem nenhuma aba visível
+  // são escondidos. Todo id de TAB_ORDER precisa aparecer em exatamente um
+  // grupo (senão some da navegação).
+  const TAB_GROUPS = [
+    { id: 'diaadia', label: 'Dia a dia',
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+    { id: 'mercadoria', label: 'Mercadoria e produção',
+      tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
+    { id: 'cadastros', label: 'Cadastros',
+      tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
+    { id: 'ferramentas', label: 'Ferramentas',
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+  ];
+
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
@@ -9785,7 +9846,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `
+      <div class="tab-group" data-group="${group.id}">
+        <span class="tab-group-label">${U.escapeHtml(group.label)}</span>
+        ${group.tabs.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+      </div>
+    `).join('');
   }
 
   function buildBottomNav() {
@@ -9813,10 +9879,19 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <span class="more-menu-group-label">${U.escapeHtml(group.label)}</span>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -9886,6 +9961,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     els.tabs.forEach((button) => {
       const allowed = tabAllowed(button.dataset.tab);
       button.hidden = !allowed;
+    });
+    // Esconde o título de um grupo cujas abas foram todas ocultadas para este
+    // papel (evita "Cadastros" aparecer sozinho sem nenhuma aba embaixo).
+    document.querySelectorAll('#tabsBar .tab-group').forEach((group) => {
+      const anyVisible = [...group.querySelectorAll('.tab-button')].some((button) => !button.hidden);
+      group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {
