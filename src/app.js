@@ -30,7 +30,7 @@
     fichas: 'Fichas e custos',
     producao: 'Produção',
     vendas: 'Vendas',
-    consignado: 'Consignado',
+    consignado: 'Consignado (clientes)',
     financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
@@ -782,7 +782,7 @@
       U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
       U.escapeHtml(client.notes || '—'),
-      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
+      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${S.isAdmin() ? UI.actionButton('delete-client', client.id, 'Excluir', 'danger') : ''}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
       <form id="clientForm" class="grid-form">
@@ -1044,7 +1044,11 @@
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    const rows = currentConsignments().map((item) => {
+    // Só consignado COM CLIENTE aqui. As consignações de admin→vendedor
+    // (clientId nulo, criadas ao enviar estoque consignado) pertencem ao painel
+    // de Vendedores / "Meu estoque" — sem este filtro elas apareciam nesta
+    // tabela como "Cliente removido", misturando os dois conceitos.
+    const rows = currentConsignments().filter((item) => item.clientId).map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);
@@ -1062,12 +1066,12 @@
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger')}
+          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
 
-    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado com clientes', 'Mercadoria deixada com um cliente para ele vender/pagar depois. (O consignado enviado a um vendedor fica na aba Vendedores / Meu estoque.) Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
       <form id="consignmentForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
