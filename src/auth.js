@@ -428,7 +428,7 @@
         </div>
         ${pendingCarts > 0 || pendingReturns > 0 ? `
           <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
+            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="vendas">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
             ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
           </p>` : ''}
 

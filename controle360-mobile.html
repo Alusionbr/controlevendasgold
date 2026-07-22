@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-uoU3U35t4ePIMEwvamTXh53zwHvEc68h/0BqFbYDlB4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-l/yuqlQRWlGeSScoOVtBLR9bJRJDZeZcGLxaI0wFQ8A='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-zyTKQl0pfw/vP1B2+sRviEeGVaN27uqz4rFmol24Nf0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-9vV4ysgFs7j/8KRnyTyxXIiNlPlzMwl4TJloInqOp+k='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -3969,7 +3969,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </div>
         ${pendingCarts > 0 || pendingReturns > 0 ? `
           <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
+            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="vendas">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
             ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
           </p>` : ''}
 
@@ -10250,6 +10250,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   function setTab(tab) {
+    // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
+    // um botão apontando para uma aba já removida) cairia no `default` do
+    // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
+    if (!TAB_ORDER.includes(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();

@@ -489,6 +489,10 @@
   }
 
   function setTab(tab) {
+    // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
+    // um botão apontando para uma aba já removida) cairia no `default` do
+    // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
+    if (!TAB_ORDER.includes(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
