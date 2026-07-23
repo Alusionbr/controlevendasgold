@@ -248,6 +248,10 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   gap: 0.7rem;
   margin: 1.1rem 0;
 }
+/* Precisa vencer .dashboard{display:grid} — sem isto o atributo hidden (usado
+   para esconder o dashboard fixo na aba "Hoje", evitando duplicação) seria
+   ignorado. */
+.dashboard[hidden] { display: none; }
 .metric-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -316,6 +320,32 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
+
+/* Agrupamento visual das abas por seção (Dia a dia / Mercadoria / Cadastros /
+   Ferramentas). Mantém a barra num único rolar horizontal, com um rótulo
+   pequeno e um divisor sutil antes de cada grupo. */
+.tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+.tab-group[hidden] { display: none; }
+.tab-group + .tab-group {
+  border-left: 1px solid var(--line);
+  padding-left: 0.5rem;
+  margin-left: 0.2rem;
+}
+.tab-group-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 0.15rem;
+  opacity: 0.8;
+}
 
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
@@ -402,9 +432,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+/* Cada seção do menu "Mais" (celular) reproduz os mesmos grupos da barra do
+   desktop: rótulo em linha cheia + itens em 2 colunas. */
+.more-menu-group {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0;
 }
 .more-menu-item {
   text-align: left;
@@ -432,6 +478,21 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   box-shadow: var(--shadow-sm);
 }
 .today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+
+/* Barra de progresso de meta na tela "Hoje" (metas semanais). Componente
+   próprio e leve — não depende do CSS injetado por src/goals.js, que só existe
+   quando a aba Metas foi montada. */
+.today-goal { display: flex; flex-direction: column; gap: 0.35rem; }
+.today-goal + .today-goal { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+.today-goal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.today-goal-name { font-weight: 650; color: var(--ink); }
+.today-goal-pct { font-weight: 700; color: var(--accent-deep); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today-goal-bar { height: 12px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.today-goal-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.4s ease; }
+.today-goal small { color: var(--muted); font-size: 0.8rem; }
+.today-goal.is-done .today-goal-bar i { background: var(--success); }
+.today-goal.is-done .today-goal-pct { color: var(--success); }
+
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
 @media (max-width: 720px) {
   /* A calculadora flutuante (.calc-fab) e' position:fixed no canto inferior
@@ -1297,6 +1358,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.85rem;
   margin-top: 0.9rem;
 }
+/* Totais no topo da aba Vendedores: mercadoria com vendedores + a receber */
+.seller-overview-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 0.4rem;
+}
+
+/* Faixa de resumo dentro de cada card de vendedor (visível sem expandir):
+   mercadoria em mãos, dívida e último pagamento — o "mapa" que o admin quer
+   ver de relance. */
+.seller-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.7rem 0 0.2rem;
+}
+.seller-stat {
+  background: var(--surface-2, var(--bg, #faf6ec));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.seller-stat span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+.seller-stat strong { font-size: 1.02rem; color: var(--ink); line-height: 1.15; overflow-wrap: anywhere; }
+.seller-stat small { font-size: 0.72rem; color: var(--muted); }
+.seller-stat.is-debt { border-color: var(--danger-soft); background: var(--danger-soft); }
+.seller-stat.is-debt strong { color: var(--danger-deep); }
+.seller-stat.is-ok strong { color: var(--success); }
+
+@media (max-width: 480px) {
+  .seller-stat-strip { grid-template-columns: 1fr; }
+}
+
 .seller-manage-panel {
   display: grid;
   gap: 0.7rem;

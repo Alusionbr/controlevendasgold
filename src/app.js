@@ -30,7 +30,7 @@
     fichas: 'Fichas e custos',
     producao: 'Produção',
     vendas: 'Vendas',
-    consignado: 'Consignado',
+    consignado: 'Consignado (clientes)',
     financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
@@ -74,6 +74,25 @@
     dados: ['admin'],
   };
 
+  // Agrupamento das abas por assunto/frequência de uso (decisão do usuário:
+  // manter todas as abas visíveis, mas organizadas em seções com título em
+  // vez de um "muro" plano). A ordem aqui define a ordem de exibição na barra
+  // do desktop e no menu "Mais" do celular. Cada grupo mistura abas de admin e
+  // vendedor — o filtro por papel (applyRoleVisibility / TAB_ROLES) esconde as
+  // que não pertencem ao usuário, e grupos que ficarem sem nenhuma aba visível
+  // são escondidos. Todo id de TAB_ORDER precisa aparecer em exatamente um
+  // grupo (senão some da navegação).
+  const TAB_GROUPS = [
+    { id: 'diaadia', label: 'Dia a dia',
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+    { id: 'mercadoria', label: 'Mercadoria e produção',
+      tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
+    { id: 'cadastros', label: 'Cadastros',
+      tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
+    { id: 'ferramentas', label: 'Ferramentas',
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+  ];
+
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
@@ -85,7 +104,12 @@
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `
+      <div class="tab-group" data-group="${group.id}">
+        <span class="tab-group-label">${U.escapeHtml(group.label)}</span>
+        ${group.tabs.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+      </div>
+    `).join('');
   }
 
   function buildBottomNav() {
@@ -113,10 +137,19 @@
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <span class="more-menu-group-label">${U.escapeHtml(group.label)}</span>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -186,6 +219,12 @@
     els.tabs.forEach((button) => {
       const allowed = tabAllowed(button.dataset.tab);
       button.hidden = !allowed;
+    });
+    // Esconde o título de um grupo cujas abas foram todas ocultadas para este
+    // papel (evita "Cadastros" aparecer sozinho sem nenhuma aba embaixo).
+    document.querySelectorAll('#tabsBar .tab-group').forEach((group) => {
+      const anyVisible = [...group.querySelectorAll('.tab-button')].some((button) => !button.hidden);
+      group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {
@@ -307,6 +346,68 @@
       </section>`;
   }
 
+  // Metas da semana ativas (period_type != 'mes'), cobrindo a data de hoje.
+  // Lê do estado em cache (state().goalsProgress, populado por refresh) — sem
+  // chamada de rede, pois a tela "Hoje" é HTML síncrono.
+  function currentWeeklyGoals() {
+    const today = U.today();
+    return (state().goalsProgress || []).filter((row) => row.period_type !== 'mes'
+      && (!row.period_start || row.period_start <= today)
+      && (!row.period_end || row.period_end >= today));
+  }
+
+  function todayGoalBar(row, name) {
+    const pct = Math.max(0, Math.min(100, U.number(row.progress_pct)));
+    const achieved = U.number(row.achieved_amount);
+    const target = U.number(row.target_amount);
+    const done = !!row.is_achieved;
+    const remaining = Math.max(0, target - achieved);
+    return `
+      <div class="today-goal ${done ? 'is-done' : ''}">
+        <div class="today-goal-top">
+          <span class="today-goal-name">${U.escapeHtml(name || '')}</span>
+          <span class="today-goal-pct">${done ? '🏆 ' : ''}${pct.toFixed(0)}%</span>
+        </div>
+        <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+        <small>${U.money(achieved)} de ${U.money(target)}${done ? ' · meta batida!' : ` · faltam ${U.money(remaining)}`}</small>
+      </div>`;
+  }
+
+  // Resumo de metas na tela "Hoje": vendedor vê a própria meta da semana como
+  // barra de progresso; admin vê o agregado (quantas metas, quantas batidas,
+  // total atingido vs. alvo). Retorna '' quando não há meta ativa — nada de
+  // seção vazia poluindo a tela.
+  function renderTodayGoals(isAdminUser) {
+    const weekly = currentWeeklyGoals();
+    if (!weekly.length) return '';
+    if (isAdminUser) {
+      const target = weekly.reduce((sum, row) => sum + U.number(row.target_amount), 0);
+      const achieved = weekly.reduce((sum, row) => sum + U.number(row.achieved_amount), 0);
+      const done = weekly.filter((row) => row.is_achieved).length;
+      const pct = target > 0 ? Math.max(0, Math.min(100, (achieved / target) * 100)) : 0;
+      return `
+        <section class="today-section">
+          <h3>Metas da semana</h3>
+          <div class="today-goal ${done === weekly.length ? 'is-done' : ''}">
+            <div class="today-goal-top">
+              <span class="today-goal-name">${weekly.length} meta${weekly.length === 1 ? '' : 's'} · ${done} batida${done === 1 ? '' : 's'}</span>
+              <span class="today-goal-pct">${pct.toFixed(0)}%</span>
+            </div>
+            <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+            <small>${U.money(achieved)} de ${U.money(target)} no total da semana</small>
+          </div>
+        </section>`;
+    }
+    const currentUser = S.getCurrentUser();
+    const mine = weekly.filter((row) => String(row.seller_id) === String(currentUser && currentUser.id));
+    if (!mine.length) return '';
+    return `
+      <section class="today-section">
+        <h3>Minha meta da semana</h3>
+        ${mine.map((row) => todayGoalBar(row)).join('')}
+      </section>`;
+  }
+
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
@@ -370,6 +471,8 @@
           </div>
         </section>
 
+        ${renderTodayGoals(isAdminUser)}
+
         ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
@@ -386,6 +489,10 @@
   }
 
   function setTab(tab) {
+    // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
+    // um botão apontando para uma aba já removida) cairia no `default` do
+    // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
+    if (!TAB_ORDER.includes(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
@@ -428,6 +535,12 @@
       activeTab = firstAllowedTab();
       syncActiveNav();
     }
+    // No desktop o dashboard fixo (#dashboard) fica acima de toda aba como KPIs
+    // persistentes — mas na aba "Hoje" ele repetiria exatamente as métricas e a
+    // "Visão operacional" que a própria tela Hoje já mostra. Escondemos o fixo
+    // enquanto "Hoje" está ativa para não duplicar. (No celular #dashboard já é
+    // display:none pela CSS, então isto só afeta o desktop.)
+    if (els.dashboard) els.dashboard.hidden = activeTab === 'hoje';
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
       els.view.innerHTML = legacy();
@@ -669,7 +782,7 @@
       U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
       U.escapeHtml(client.notes || '—'),
-      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
+      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${S.isAdmin() ? UI.actionButton('delete-client', client.id, 'Excluir', 'danger') : ''}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
       <form id="clientForm" class="grid-form">
@@ -931,7 +1044,11 @@
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    const rows = currentConsignments().map((item) => {
+    // Só consignado COM CLIENTE aqui. As consignações de admin→vendedor
+    // (clientId nulo, criadas ao enviar estoque consignado) pertencem ao painel
+    // de Vendedores / "Meu estoque" — sem este filtro elas apareciam nesta
+    // tabela como "Cliente removido", misturando os dois conceitos.
+    const rows = currentConsignments().filter((item) => item.clientId).map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);
@@ -949,12 +1066,12 @@
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger')}
+          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
 
-    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado com clientes', 'Mercadoria deixada com um cliente para ele vender/pagar depois. (O consignado enviado a um vendedor fica na aba Vendedores / Meu estoque.) Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
       <form id="consignmentForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">

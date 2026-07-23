@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-fQxLs9rAJUpQNgPVr7UAfjSWUpFkzeyGuw+QQPLMpI8=' 'sha256-cscOeja+yN/Mij9fMEn5NA0EGVvPJqPmVuORZ6UcHJA=' 'sha256-DX0Kk6ZpyEOXgyDo5Nr0gpuPJV8FX0mc6s9Rfw/CqkM=' 'sha256-MtEUJebRo7KCAjoVlh7bqbEci1hNI5OV9V8stxqPs0Y=' 'sha256-4zrZEqYPTsuUr6clfBAGFotSYLubmZ03tEHGDefBVOs=' 'sha256-7V/02xbk0CuWRlUrvel7Rjuqvq/eUDdCf7DqUWFbeuM=' 'sha256-+CBZ5FssdslNN/aCRtxhjZ8jflFnhgZES0Ci9lC7BuE=' 'sha256-dy6CxwyusHcguqZ7ku78enlUDE8YfB3kFRFfDYljhb0=' 'sha256-jOO/WgQqG06l8oCKG4UcthT8eJf0nevxEjVu6FSrt8c=' 'sha256-fNq9B3Zm8CiDwqUvyaib05nfTEcTapTpiMCNINgcOyI=' 'sha256-+n1bH6MjZd4prNDEG3lJqq8JhhTU+3upblx0oFOxCxo=' 'sha256-Qd51HvLcV2RZrbVnW0vIwHpnLnwODM+jqybwPcvD1Uw=' 'sha256-sne0znmyDRpkM0VtaKy8XwkxHbLHlXoLL9zgf+aYtOU=' 'sha256-wNZAS6WyNjNGJEE9xX8lXrxiQnF7XHVa7iXZj4f0ehQ=' 'sha256-C1eQBne7jhb22Q+fFjqU/pC04Wey3zuiIXVs88QlGQ4=' 'sha256-Hda16WJGHOX+ICXyjEBpRRTZtmplCm+aAxKQBuX7wMM=' 'sha256-/HuQybjQUxHh/InDr963ww1hprVncWOOVmQx8qKZt/c=' 'sha256-e9aqr7WDACQo+mDeKpu+CaSabAWEa0RTJ5MJ2MrAJSw='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-zyTKQl0pfw/vP1B2+sRviEeGVaN27uqz4rFmol24Nf0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-GObs7ZJOYF545XxqeKjk0vCNud5d1v1i/04zCy4O+g8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-pyDZOJC9OYDBzW6leDgcgAOXn9CLFiZFyiiJiLfYXi4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -256,6 +256,10 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   gap: 0.7rem;
   margin: 1.1rem 0;
 }
+/* Precisa vencer .dashboard{display:grid} — sem isto o atributo hidden (usado
+   para esconder o dashboard fixo na aba "Hoje", evitando duplicação) seria
+   ignorado. */
+.dashboard[hidden] { display: none; }
 .metric-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -324,6 +328,32 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .tab-button:hover { background: var(--brand-soft); color: var(--brand-deep); }
 .tab-button.active { background: var(--accent); color: var(--accent-contrast); }
+
+/* Agrupamento visual das abas por seção (Dia a dia / Mercadoria / Cadastros /
+   Ferramentas). Mantém a barra num único rolar horizontal, com um rótulo
+   pequeno e um divisor sutil antes de cada grupo. */
+.tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+.tab-group[hidden] { display: none; }
+.tab-group + .tab-group {
+  border-left: 1px solid var(--line);
+  padding-left: 0.5rem;
+  margin-left: 0.2rem;
+}
+.tab-group-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 0.15rem;
+  opacity: 0.8;
+}
 
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
@@ -410,9 +440,25 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
 }
 .more-menu-role[hidden] { display: none; }
 .more-menu-role {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+/* Cada seção do menu "Mais" (celular) reproduz os mesmos grupos da barra do
+   desktop: rótulo em linha cheia + itens em 2 colunas. */
+.more-menu-group {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
+}
+.more-menu-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0;
 }
 .more-menu-item {
   text-align: left;
@@ -440,6 +486,21 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   box-shadow: var(--shadow-sm);
 }
 .today-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+
+/* Barra de progresso de meta na tela "Hoje" (metas semanais). Componente
+   próprio e leve — não depende do CSS injetado por src/goals.js, que só existe
+   quando a aba Metas foi montada. */
+.today-goal { display: flex; flex-direction: column; gap: 0.35rem; }
+.today-goal + .today-goal { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+.today-goal-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.today-goal-name { font-weight: 650; color: var(--ink); }
+.today-goal-pct { font-weight: 700; color: var(--accent-deep); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today-goal-bar { height: 12px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.today-goal-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.4s ease; }
+.today-goal small { color: var(--muted); font-size: 0.8rem; }
+.today-goal.is-done .today-goal-bar i { background: var(--success); }
+.today-goal.is-done .today-goal-pct { color: var(--success); }
+
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
 @media (max-width: 720px) {
   /* A calculadora flutuante (.calc-fab) e' position:fixed no canto inferior
@@ -1305,6 +1366,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   gap: 0.85rem;
   margin-top: 0.9rem;
 }
+/* Totais no topo da aba Vendedores: mercadoria com vendedores + a receber */
+.seller-overview-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 0.4rem;
+}
+
+/* Faixa de resumo dentro de cada card de vendedor (visível sem expandir):
+   mercadoria em mãos, dívida e último pagamento — o "mapa" que o admin quer
+   ver de relance. */
+.seller-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.7rem 0 0.2rem;
+}
+.seller-stat {
+  background: var(--surface-2, var(--bg, #faf6ec));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.seller-stat span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+.seller-stat strong { font-size: 1.02rem; color: var(--ink); line-height: 1.15; overflow-wrap: anywhere; }
+.seller-stat small { font-size: 0.72rem; color: var(--muted); }
+.seller-stat.is-debt { border-color: var(--danger-soft); background: var(--danger-soft); }
+.seller-stat.is-debt strong { color: var(--danger-deep); }
+.seller-stat.is-ok strong { color: var(--success); }
+
+@media (max-width: 480px) {
+  .seller-stat-strip { grid-template-columns: 1fr; }
+}
+
 .seller-manage-panel {
   display: grid;
   gap: 0.7rem;
@@ -3811,6 +3908,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       });
   }
 
+  // Resumo da mercadoria física em mãos do vendedor (seller_stock), avaliada
+  // pelo custo médio real do produto — o admin tem acesso a avg_cost pela RLS,
+  // então este valor bate com "Valor em estoque" do dashboard.
+  function sellerStockSummary(sellerId) {
+    const st = fullState();
+    const rows = (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0);
+    let value = 0;
+    let units = 0;
+    rows.forEach((row) => {
+      const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+      value += U.number(row.quantity) * U.number(product ? product.avgCost : 0);
+      units += U.number(row.quantity);
+    });
+    return { value, units, productCount: rows.length };
+  }
+
+  // Último pagamento recebido deste vendedor (seller_payments é a fonte —
+  // tem paymentDate; o ledger só espelha como crédito).
+  function lastPaymentForSeller(sellerId) {
+    const st = fullState();
+    const payments = (st.sellerPayments || [])
+      .filter((payment) => String(payment.sellerId) === String(sellerId))
+      .sort((a, b) => String(b.paymentDate || '').localeCompare(String(a.paymentDate || '')));
+    return payments[0] || null;
+  }
+
   function pendingCartsCountForSeller(sellerId) {
     const st = fullState();
     return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
@@ -3845,7 +3969,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </div>
         ${pendingCarts > 0 || pendingReturns > 0 ? `
           <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="aprovacoes">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
+            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="vendas">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
             ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
           </p>` : ''}
 
@@ -3907,16 +4031,39 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const isExpanded = String(expandedId) === String(seller.id);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
+    const stock = sellerStockSummary(seller.id);
+    const lastPayment = lastPaymentForSeller(seller.id);
+    const pendingCarts = pendingCartsCountForSeller(seller.id);
+    const pendingReturns = pendingReturnsCountForSeller(seller.id);
+    const pendingTotal = pendingCarts + pendingReturns;
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
         <div class="approval-card-head">
           <strong>${U.escapeHtml(seller.name || '—')}</strong>
           ${statusBadge}
+          ${pendingTotal > 0 ? UI.badge(`${pendingTotal} pendência${pendingTotal === 1 ? '' : 's'}`, 'warn') : ''}
         </div>
-        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
+        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}</p>
+        <div class="seller-stat-strip">
+          <div class="seller-stat">
+            <span>Mercadoria em mãos</span>
+            <strong>${U.money(stock.value)}</strong>
+            <small>${stock.productCount} produto${stock.productCount === 1 ? '' : 's'}</small>
+          </div>
+          <div class="seller-stat ${balance > 0 ? 'is-debt' : 'is-ok'}">
+            <span>Dívida</span>
+            <strong>${balance > 0 ? U.money(balance) : 'Em dia'}</strong>
+            <small>${balance > 0 ? 'a receber' : 'sem saldo'}</small>
+          </div>
+          <div class="seller-stat">
+            <span>Último pagamento</span>
+            <strong>${lastPayment ? U.money(U.number(lastPayment.amount)) : '—'}</strong>
+            <small>${lastPayment ? U.escapeHtml((lastPayment.paymentDate || '').slice(0, 10)) : 'nenhum'}</small>
+          </div>
+        </div>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
+          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Ver detalhes / enviar / cobrar'}</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
         ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
@@ -3934,15 +4081,22 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
 
     const L = ledger();
+    const activeSellers = sellers.filter((seller) => seller.active !== false);
     const totalOpen = !loading && L
-      ? sellers.filter((seller) => seller.active !== false).reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      ? activeSellers.reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
+      : 0;
+    const totalStockOut = !loading
+      ? activeSellers.reduce((sum, seller) => sum + sellerStockSummary(seller.id).value, 0)
       : 0;
 
     return UI.section(
       'Vendedores',
-      'Crie contas de vendedores e gerencie tudo pelo painel: acesso, estoque consignado, saldo e pendências.',
+      'Onde está sua mercadoria e quem deve, num lugar só: cada vendedor mostra o que tem em mãos, quanto deve e o último pagamento. Abra um card para enviar consignado ou registrar pagamento.',
       `
-        ${!loading ? UI.metric('Total em aberto (todos os vendedores)', U.money(totalOpen), null) : ''}
+        ${!loading ? `<div class="dashboard seller-overview-metrics">
+          ${UI.metric('Mercadoria com vendedores', U.money(totalStockOut), 'consignadoAberto')}
+          ${UI.metric('Total a receber', U.money(totalOpen), null)}
+        </div>` : ''}
         <div id="authSellersError"></div>
         <form id="authCreateSellerForm" class="grid-form">
           <label class="full">Nome
@@ -9637,7 +9791,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     fichas: 'Fichas e custos',
     producao: 'Produção',
     vendas: 'Vendas',
-    consignado: 'Consignado',
+    consignado: 'Consignado (clientes)',
     financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
@@ -9681,6 +9835,25 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     dados: ['admin'],
   };
 
+  // Agrupamento das abas por assunto/frequência de uso (decisão do usuário:
+  // manter todas as abas visíveis, mas organizadas em seções com título em
+  // vez de um "muro" plano). A ordem aqui define a ordem de exibição na barra
+  // do desktop e no menu "Mais" do celular. Cada grupo mistura abas de admin e
+  // vendedor — o filtro por papel (applyRoleVisibility / TAB_ROLES) esconde as
+  // que não pertencem ao usuário, e grupos que ficarem sem nenhuma aba visível
+  // são escondidos. Todo id de TAB_ORDER precisa aparecer em exatamente um
+  // grupo (senão some da navegação).
+  const TAB_GROUPS = [
+    { id: 'diaadia', label: 'Dia a dia',
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+    { id: 'mercadoria', label: 'Mercadoria e produção',
+      tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
+    { id: 'cadastros', label: 'Cadastros',
+      tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
+    { id: 'ferramentas', label: 'Ferramentas',
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+  ];
+
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
@@ -9692,7 +9865,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function buildTabsBar() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    bar.innerHTML = TAB_ORDER.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('');
+    bar.innerHTML = TAB_GROUPS.map((group) => `
+      <div class="tab-group" data-group="${group.id}">
+        <span class="tab-group-label">${U.escapeHtml(group.label)}</span>
+        ${group.tabs.map((tab) => `<button class="tab-button" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+      </div>
+    `).join('');
   }
 
   function buildBottomNav() {
@@ -9720,10 +9898,19 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!list) return;
     list.innerHTML = Object.keys(BOTTOM_NAV_PRIMARY).map((role) => {
       const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
-      const items = TAB_ORDER.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+      const groupsHtml = TAB_GROUPS.map((group) => {
+        const items = group.tabs.filter((tab) => tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role));
+        if (!items.length) return '';
+        return `
+          <div class="more-menu-group">
+            <span class="more-menu-group-label">${U.escapeHtml(group.label)}</span>
+            ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          </div>
+        `;
+      }).join('');
       return `
         <div class="more-menu-role" data-role-set="${role}" hidden>
-          ${items.map((tab) => `<button type="button" class="more-menu-item" data-tab="${tab}">${U.escapeHtml(TAB_LABELS[tab])}</button>`).join('')}
+          ${groupsHtml}
         </div>
       `;
     }).join('');
@@ -9793,6 +9980,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     els.tabs.forEach((button) => {
       const allowed = tabAllowed(button.dataset.tab);
       button.hidden = !allowed;
+    });
+    // Esconde o título de um grupo cujas abas foram todas ocultadas para este
+    // papel (evita "Cadastros" aparecer sozinho sem nenhuma aba embaixo).
+    document.querySelectorAll('#tabsBar .tab-group').forEach((group) => {
+      const anyVisible = [...group.querySelectorAll('.tab-button')].some((button) => !button.hidden);
+      group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
     if (els.bottomNav) {
@@ -9914,6 +10107,68 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       </section>`;
   }
 
+  // Metas da semana ativas (period_type != 'mes'), cobrindo a data de hoje.
+  // Lê do estado em cache (state().goalsProgress, populado por refresh) — sem
+  // chamada de rede, pois a tela "Hoje" é HTML síncrono.
+  function currentWeeklyGoals() {
+    const today = U.today();
+    return (state().goalsProgress || []).filter((row) => row.period_type !== 'mes'
+      && (!row.period_start || row.period_start <= today)
+      && (!row.period_end || row.period_end >= today));
+  }
+
+  function todayGoalBar(row, name) {
+    const pct = Math.max(0, Math.min(100, U.number(row.progress_pct)));
+    const achieved = U.number(row.achieved_amount);
+    const target = U.number(row.target_amount);
+    const done = !!row.is_achieved;
+    const remaining = Math.max(0, target - achieved);
+    return `
+      <div class="today-goal ${done ? 'is-done' : ''}">
+        <div class="today-goal-top">
+          <span class="today-goal-name">${U.escapeHtml(name || '')}</span>
+          <span class="today-goal-pct">${done ? '🏆 ' : ''}${pct.toFixed(0)}%</span>
+        </div>
+        <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+        <small>${U.money(achieved)} de ${U.money(target)}${done ? ' · meta batida!' : ` · faltam ${U.money(remaining)}`}</small>
+      </div>`;
+  }
+
+  // Resumo de metas na tela "Hoje": vendedor vê a própria meta da semana como
+  // barra de progresso; admin vê o agregado (quantas metas, quantas batidas,
+  // total atingido vs. alvo). Retorna '' quando não há meta ativa — nada de
+  // seção vazia poluindo a tela.
+  function renderTodayGoals(isAdminUser) {
+    const weekly = currentWeeklyGoals();
+    if (!weekly.length) return '';
+    if (isAdminUser) {
+      const target = weekly.reduce((sum, row) => sum + U.number(row.target_amount), 0);
+      const achieved = weekly.reduce((sum, row) => sum + U.number(row.achieved_amount), 0);
+      const done = weekly.filter((row) => row.is_achieved).length;
+      const pct = target > 0 ? Math.max(0, Math.min(100, (achieved / target) * 100)) : 0;
+      return `
+        <section class="today-section">
+          <h3>Metas da semana</h3>
+          <div class="today-goal ${done === weekly.length ? 'is-done' : ''}">
+            <div class="today-goal-top">
+              <span class="today-goal-name">${weekly.length} meta${weekly.length === 1 ? '' : 's'} · ${done} batida${done === 1 ? '' : 's'}</span>
+              <span class="today-goal-pct">${pct.toFixed(0)}%</span>
+            </div>
+            <div class="today-goal-bar"><i style="width:${pct}%"></i></div>
+            <small>${U.money(achieved)} de ${U.money(target)} no total da semana</small>
+          </div>
+        </section>`;
+    }
+    const currentUser = S.getCurrentUser();
+    const mine = weekly.filter((row) => String(row.seller_id) === String(currentUser && currentUser.id));
+    if (!mine.length) return '';
+    return `
+      <section class="today-section">
+        <h3>Minha meta da semana</h3>
+        ${mine.map((row) => todayGoalBar(row)).join('')}
+      </section>`;
+  }
+
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
@@ -9977,6 +10232,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           </div>
         </section>
 
+        ${renderTodayGoals(isAdminUser)}
+
         ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
@@ -9993,6 +10250,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   function setTab(tab) {
+    // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
+    // um botão apontando para uma aba já removida) cairia no `default` do
+    // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
+    if (!TAB_ORDER.includes(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
@@ -10035,6 +10296,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       activeTab = firstAllowedTab();
       syncActiveNav();
     }
+    // No desktop o dashboard fixo (#dashboard) fica acima de toda aba como KPIs
+    // persistentes — mas na aba "Hoje" ele repetiria exatamente as métricas e a
+    // "Visão operacional" que a própria tela Hoje já mostra. Escondemos o fixo
+    // enquanto "Hoje" está ativa para não duplicar. (No celular #dashboard já é
+    // display:none pela CSS, então isto só afeta o desktop.)
+    if (els.dashboard) els.dashboard.hidden = activeTab === 'hoje';
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
       els.view.innerHTML = legacy();
@@ -10276,7 +10543,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       U.escapeHtml(client.phone || '—'),
       UI.badge(client.type || 'cliente'),
       U.escapeHtml(client.notes || '—'),
-      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${UI.actionButton('delete-client', client.id, 'Excluir', 'danger')}</div>`,
+      `<div class="actions">${UI.actionButton('client-history', client.id, 'Abrir')}${UI.actionButton('edit-client', client.id, 'Editar')}${S.isAdmin() ? UI.actionButton('delete-client', client.id, 'Excluir', 'danger') : ''}</div>`,
     ]);
     return UI.section('Clientes', 'Cadastro usado em vendas, pedidos e consignados.', `
       <form id="clientForm" class="grid-form">
@@ -10538,7 +10805,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    const rows = currentConsignments().map((item) => {
+    // Só consignado COM CLIENTE aqui. As consignações de admin→vendedor
+    // (clientId nulo, criadas ao enviar estoque consignado) pertencem ao painel
+    // de Vendedores / "Meu estoque" — sem este filtro elas apareciam nesta
+    // tabela como "Cliente removido", misturando os dois conceitos.
+    const rows = currentConsignments().filter((item) => item.clientId).map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);
@@ -10556,12 +10827,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger')}
+          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
 
-    return UI.section('Consignado', 'Envio consignado transfere estoque para o cliente. Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado com clientes', 'Mercadoria deixada com um cliente para ele vender/pagar depois. (O consignado enviado a um vendedor fica na aba Vendedores / Meu estoque.) Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
       <form id="consignmentForm" class="grid-form">
         <label>Data
           <input name="date" type="date" required value="${U.today()}">
