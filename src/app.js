@@ -545,6 +545,9 @@
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      // Kanban de Tarefas usa o mesmo componente UI.kanban() da esteira de
+      // pedidos — mesma marcação de overflow (ver UI.markKanbanOverflow).
+      if (activeTab === 'tarefas' && UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(els.view);
       return;
     }
     mountModuleTab(activeTab);
@@ -2243,8 +2246,23 @@
     if (event.target.name === 'unitPrice') event.target.dataset.touched = '1';
   }
 
+  // A marcação de overflow do kanban (UI.markKanbanOverflow, ver item da
+  // esteira/tarefas) só mede o DOM no momento do render — se o usuário
+  // redimensiona a janela sem disparar um novo render, a affordance de
+  // scroll fica desatualizada (testado: reduzir a janela pode fazer o
+  // quadro passar a transbordar sem que o aviso apareça). Recalcula, com
+  // debounce, sempre que a janela mudar de tamanho.
+  let kanbanOverflowResizeTimer = null;
+  function handleWindowResizeForKanban() {
+    clearTimeout(kanbanOverflowResizeTimer);
+    kanbanOverflowResizeTimer = setTimeout(() => {
+      if (UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(document);
+    }, 150);
+  }
+
   function bindEvents() {
     bindHelpTips();
+    window.addEventListener('resize', handleWindowResizeForKanban);
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
     document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
       button.addEventListener('click', () => setTab(button.dataset.tab));

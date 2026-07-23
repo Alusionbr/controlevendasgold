@@ -877,6 +877,7 @@
         if (config.paymentMode) config.paymentMode.value = draft.paymentMode || 'avista';
         if (config.paidInitialAmount) config.paidInitialAmount.value = draft.paidInitialAmount || '0';
       }
+      if (UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(container);
     }
 
     function readConfig() {

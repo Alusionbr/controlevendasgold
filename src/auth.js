@@ -105,6 +105,21 @@
     }
   }
 
+  // Aviso visível quando refresh() falha (ex.: blip de rede numa das várias
+  // chamadas paralelas em src/state.js) — sem isto, o login/restauração de
+  // sessão prossegue normalmente mas com todos os dados zerados e nenhum
+  // sinal do motivo, fácil de confundir com "o dashboard sumiu". app.js
+  // carrega depois de auth.js (ver ordem de <script> em index.html), então
+  // window.C360.app já existe quando login/restoreSession de fato rodam
+  // (são sempre disparados por interação do usuário após o boot completo) —
+  // a checagem defensiva é só para nunca quebrar o fluxo de login por causa
+  // do aviso em si.
+  function notifyRefreshFailure() {
+    if (window.C360.app && typeof window.C360.app.toast === 'function') {
+      window.C360.app.toast('Não foi possível carregar todos os dados agora. Recarregue a página.', 'error');
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Mapeamento de erros -> mensagens amigáveis em PT-BR
   // ---------------------------------------------------------------------
@@ -189,7 +204,11 @@
     } catch (error) {
       // Sessão e perfil são válidos; não bloqueamos o login por uma falha ao
       // atualizar o cache de dados — o usuário pode tentar recarregar depois.
+      // Mas isso não pode ficar silencioso: sem aviso, a tela carrega com tudo
+      // zerado (produtos, vendas, estoque) e parece "o dashboard sumiu" sem
+      // nenhuma pista do motivo real (blip de rede).
       console.error('C360.auth: erro ao atualizar estado após login.', error);
+      notifyRefreshFailure();
     }
 
     return { ok: true };
@@ -246,6 +265,7 @@
       }
     } catch (error) {
       console.error('C360.auth: erro ao atualizar estado ao restaurar sessão.', error);
+      notifyRefreshFailure();
     }
 
     return true;

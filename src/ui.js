@@ -187,6 +187,18 @@
     </div>`;
   }
 
+  // Marca cada .kanban dentro de root com .is-scrollable quando ele
+  // realmente transborda (scrollWidth > clientWidth) — o CSS só mostra a
+  // scrollbar/dica "Arraste para o lado" nesse caso. Chamar depois de montar
+  // o HTML no DOM (precisa medir dimensões reais). Reaproveitado pela esteira
+  // de pedidos (src/salesCart.js) e pelo Kanban de Tarefas (src/app.js).
+  function markKanbanOverflow(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    root.querySelectorAll('.kanban').forEach((el) => {
+      el.classList.toggle('is-scrollable', el.scrollWidth > el.clientWidth + 1);
+    });
+  }
+
   window.C360.ui = {
     HELP,
     help,
@@ -204,5 +216,6 @@
     costBox,
     kanban,
     compact,
+    markKanbanOverflow,
   };
 })();
