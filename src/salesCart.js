@@ -365,7 +365,7 @@
       const price = U.number(item.unitPrice);
       const rowTotal = qty * price;
       // eslint-disable-next-line no-await-in-loop
-      await S().add('orders', {
+      const order = await S().add('orders', {
         sellerId,
         clientId: revenda ? null : (draft.clientId || null),
         productId: item.productId,
@@ -381,18 +381,75 @@
         notes: draft.notes || (draft.customerName || ''),
         convertedSaleId: null,
       });
+      // Revenda lançada direto pelo admin (não 'request') já nasce aprovada —
+      // a dívida entra no saldo do vendedor agora, antes mesmo de montar.
+      // eslint-disable-next-line no-await-in-loop
+      if (approvalStatus === 'aprovado') await syncOrderDebt(order);
     }
     await S().refresh();
   }
 
+  // =====================================================================
+  // Dívida do pedido de revenda — decisão do usuário: a dívida nasce quando o
+  // pedido fica APROVADO (mesmo antes de montar/despachar), não mais só no
+  // despacho. syncOrderDebt é a ÚNICA porta de entrada para isso: idempotente
+  // (calcula o líquido já lançado e só posta a diferença), então é seguro
+  // chamar em qualquer ponto de transição — aprovação, edição de qtd/preço, e
+  // como rede de segurança dentro de materializeOrder — sem nunca cobrar duas
+  // vezes. sourceType 'order'/'order_edit' marcam os lançamentos que entram
+  // nesse cálculo; 'order_cancel' (reverseOrderDebt) fica de fora de propósito
+  // para não anular o próprio estorno num recálculo seguinte.
+  function postedOrderDebt(orderId) {
+    return (state().sellerAccountEntries || [])
+      .filter((entry) => String(entry.sourceId) === String(orderId) && ['order', 'order_edit'].includes(entry.sourceType))
+      .reduce((sum, entry) => sum + (entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount)), 0);
+  }
+
+  async function syncOrderDebt(order) {
+    if (order.saleType !== 'revenda' || order.approvalStatus !== 'aprovado') return;
+    const target = Math.max(U.number(order.quantity) * U.number(order.unitPrice) - U.number(order.paidAmount), 0);
+    const postedNet = postedOrderDebt(order.id);
+    const delta = target - postedNet;
+    if (Math.abs(delta) < 0.005) return;
+    await S().add('sellerAccountEntries', {
+      sellerId: order.sellerId,
+      type: delta > 0 ? 'debit_replenishment' : 'manual_adjustment',
+      direction: delta > 0 ? 'debit' : 'credit',
+      amount: Math.abs(delta),
+      sourceType: postedNet > 0 ? 'order_edit' : 'order',
+      sourceId: order.id,
+      notes: postedNet > 0
+        ? `Ajuste de pedido editado - pedido ${order.orderGroupId || order.id}`
+        : `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) aprovada - pedido ${order.orderGroupId || order.id}`,
+    });
+  }
+
+  // Estorna a dívida já lançada quando um pedido aprovado é cancelado antes de
+  // ser despachado (decisão do usuário: cancelamento sempre estorna sozinho).
+  async function reverseOrderDebt(order) {
+    const postedNet = postedOrderDebt(order.id);
+    if (postedNet <= 0.005) return;
+    await S().add('sellerAccountEntries', {
+      sellerId: order.sellerId,
+      type: 'writeoff',
+      direction: 'credit',
+      amount: postedNet,
+      sourceType: 'order_cancel',
+      sourceId: order.id,
+      notes: `Pedido cancelado - estorno da dívida do pedido ${order.orderGroupId || order.id}`,
+    });
+  }
+
   // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
+  // A dívida de revenda NÃO nasce mais aqui (ver syncOrderDebt) — despacho só
+  // move estoque físico e cria o consignment; syncOrderDebt é chamado no fim
+  // apenas como rede de segurança (idempotente, não cobra de novo).
   async function materializeOrder(order) {
     if (order.convertedSaleId) return;
     const quantity = U.number(order.quantity);
     const unitPrice = U.number(order.unitPrice);
     if (order.saleType === 'revenda') {
-      const total = quantity * unitPrice;
-      const paid = Math.min(U.number(order.paidAmount), total);
+      const paid = Math.min(U.number(order.paidAmount), quantity * unitPrice);
       const consignment = await transferAdminStockToSeller({
         sellerId: order.sellerId,
         productId: order.productId,
@@ -402,18 +459,7 @@
         groupId: order.orderGroupId || order.id,
         note: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) para ${sellerName(order.sellerId)}`,
       });
-      const debt = Math.max(total - paid, 0);
-      if (debt > 0) {
-        await S().add('sellerAccountEntries', {
-          sellerId: order.sellerId,
-          type: 'debit_replenishment',
-          direction: 'debit',
-          amount: debt,
-          sourceType: 'order',
-          sourceId: order.id,
-          notes: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) despachada - pedido ${order.orderGroupId || order.id}`,
-        });
-      }
+      await syncOrderDebt(order);
       await S().update('orders', order.id, { convertedSaleId: (consignment && consignment.id) || order.id });
     } else {
       // Venda minha (cliente final): baixa estoque central + CMV/lucro.
@@ -446,6 +492,27 @@
     }
     // Despacho/conclusao materializam a venda (estoque + financeiro).
     if (newStatus === 'despachado' || newStatus === 'concluido') {
+      // Pré-checagem de estoque de TODAS as linhas antes de mexer em qualquer
+      // uma. Bug real encontrado: sem isto, um pedido com vários itens
+      // processava um a um — se o 3º item não tivesse estoque, os 2 primeiros
+      // já tinham baixado estoque/gerado consignação, mas a função quebrava
+      // antes de atualizar o status do grupo. O card ficava preso na coluna
+      // antiga (parecia travado/bugado) escondendo que metade já tinha sido
+      // processada. Validando tudo antes, o despacho é tudo-ou-nada.
+      const shortages = [];
+      orders.forEach((order) => {
+        if (order.convertedSaleId) return;
+        const product = productById(order.productId);
+        if (!product) { shortages.push('Um produto do pedido não foi encontrado no estoque.'); return; }
+        if (product.type === 'servico') return;
+        const missing = U.number(order.quantity) - U.number(product.currentStock);
+        if (missing > 0) {
+          shortages.push(`${product.name}: faltam ${U.qty(missing, product.unit)} (estoque atual ${U.qty(product.currentStock, product.unit)}, pedido pede ${U.qty(order.quantity, product.unit)}).`);
+        }
+      });
+      if (shortages.length) {
+        throw new Error(`Não é possível despachar — estoque insuficiente: ${shortages.join(' ')}`);
+      }
       for (const order of orders) {
         // eslint-disable-next-line no-await-in-loop
         if (!order.convertedSaleId) await materializeOrder(order);
@@ -462,7 +529,12 @@
     const orders = ordersInGroup(groupId);
     for (const order of orders) {
       // eslint-disable-next-line no-await-in-loop
-      await S().update('orders', order.id, { approvalStatus });
+      const updated = await S().update('orders', order.id, { approvalStatus });
+      // Ao aprovar um pedido que o vendedor pediu ('request'), a dívida entra
+      // no saldo dele agora — antes mesmo de montar/despachar (decisão do
+      // usuário). syncOrderDebt não faz nada se approvalStatus !== 'aprovado'.
+      // eslint-disable-next-line no-await-in-loop
+      await syncOrderDebt(updated || { ...order, approvalStatus });
     }
     await S().refresh();
   }
@@ -471,6 +543,13 @@
     const orders = ordersInGroup(groupId);
     if (orders.some((order) => order.convertedSaleId)) {
       throw new Error('Este pedido ja foi despachado. Use Devolucao/Desperdicio para reverter.');
+    }
+    // Estorna a dívida já lançada na aprovação antes de excluir os pedidos —
+    // decisão do usuário: cancelar sempre estorna sozinho, sem depender do
+    // admin lembrar de ajustar o saldo manualmente.
+    for (const order of orders) {
+      // eslint-disable-next-line no-await-in-loop
+      await reverseOrderDebt(order);
     }
     for (const order of orders) {
       // eslint-disable-next-line no-await-in-loop
@@ -490,7 +569,12 @@
       if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
       validateDraftPrice(order.productId, price);
       // eslint-disable-next-line no-await-in-loop
-      await S().update('orders', order.id, { quantity: qty, unitPrice: price });
+      const updated = await S().update('orders', order.id, { quantity: qty, unitPrice: price });
+      // Se o pedido já estava aprovado (dívida já lançada), o valor da dívida
+      // acompanha a edição automaticamente — decisão do usuário. syncOrderDebt
+      // só lança a DIFERENÇA (idempotente), nunca duplica.
+      // eslint-disable-next-line no-await-in-loop
+      await syncOrderDebt(updated || { ...order, quantity: qty, unitPrice: price });
     }
     await S().refresh();
   }
@@ -553,10 +637,10 @@
     const products = productsForDraft(draft);
     const revenda = isRevendaMode(draft.mode);
     const modeHint = {
-      propria: 'Venda para o cliente final. Ao lancar, entra na esteira em Pendente; a baixa de estoque acontece no Despachado.',
-      revenda: 'Envio para um revendedor. Passa pela esteira; a divida/consignado do vendedor e registrada no Despachado.',
-      own: 'Voce vende um produto que ja esta no seu estoque. A baixa e imediata.',
-      request: 'Pedido de reposicao ao admin. Entra na esteira e o admin aprova antes de montar/despachar.',
+      propria: 'Venda para o cliente final. Ao lançar, entra na esteira em Pendente; a baixa de estoque só acontece quando chegar em Despachado.',
+      revenda: 'Envio para um revendedor. A dívida (consignado/parcial) já entra no saldo do vendedor agora, ao lançar. O estoque central só sai de fato, e a venda só conta no faturamento, quando o pedido chegar em Despachado.',
+      own: 'Você vende um produto que já está no seu estoque. A baixa é imediata.',
+      request: 'Pedido de reposição ao admin. Assim que o admin aprovar, a dívida (se for consignado/parcial) já entra no seu saldo — antes mesmo de ser montado. O estoque só sai quando for despachado.',
     }[draft.mode] || '';
 
     const productCards = products.slice(0, 18).map((product) => {
@@ -758,8 +842,8 @@
       </div>`;
     }).join('');
     const desc = admin
-      ? 'So o administrador avanca o pedido. A venda baixa estoque e conta no faturamento ao chegar em Despachado.'
-      : 'Acompanhe o status dos seus pedidos. Quem avanca o status e o administrador.';
+      ? 'Só o administrador avança o pedido. Revenda (consignado/parcial): a dívida do vendedor já entra no saldo assim que o pedido é aprovado — "Em montagem"/"Pronto" são só as etapas físicas de separar a mercadoria. O estoque central só sai de fato, e a venda só conta no faturamento, quando o pedido chega em "Despachado".'
+      : 'Acompanhe o status dos seus pedidos. Quem avança o status é o administrador. Se for revenda, a dívida já aparece em "Meu saldo com admin" assim que o pedido é aprovado, antes mesmo de ser montado.';
     return UI.section('Esteira de pedidos', desc,
       `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}<div class="kanban board-kanban" data-board>${columns}</div>`);
   }
@@ -813,14 +897,21 @@
       if (event.target.closest('[data-cart-config]')) { readConfig(); paint(); return; }
       const boardMove = event.target.closest('[data-board-move]');
       if (boardMove) {
+        // options.onDone() (= renderAll) REMONTA este painel do zero, o que
+        // descarta boardFeedback (variável local do closure) — se chamado
+        // também no erro, a mensagem de "estoque insuficiente" pisca e some
+        // antes do admin conseguir ler (bug real: parecia que o despacho
+        // falhava "sem avisar nada"). Só chama onDone() quando algo de fato
+        // mudou; no erro, só repinta este painel e a mensagem fica visível.
         try {
           await advanceOrderGroup(boardMove.dataset.groupId, boardMove.value);
           boardFeedback = { message: 'Status atualizado.', type: 'success' };
+          paint();
+          if (typeof options.onDone === 'function') options.onDone();
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
+          paint();
         }
-        paint();
-        if (typeof options.onDone === 'function') options.onDone();
         return;
       }
       const priceInput = event.target.closest('[data-draft-price]');
@@ -876,6 +967,13 @@
       if (boardButton) {
         const action = boardButton.dataset.boardAction;
         const groupId = boardButton.dataset.groupId;
+        // 'edit-group'/'cancel-edit-group' só alternam um estado de UI local
+        // (boardState, que sobrevive a remounts) — não precisam de onDone().
+        // As demais mudam dado real e devem refletir no dashboard/outras abas.
+        // Só chamamos onDone() quando a ação teve sucesso: no erro, chamar
+        // onDone() remontaria o painel e apagaria a mensagem antes do admin
+        // ler (mesmo problema do board-move acima).
+        const needsRefresh = ['approve-group', 'reject-group', 'save-edit-group', 'cancel-group'].includes(action);
         try {
           if (action === 'approve-group') { await setGroupApproval(groupId, 'aprovado'); boardFeedback = { message: 'Pedido aprovado. Pode montar.', type: 'success' }; }
           else if (action === 'reject-group') { if (!confirm('Rejeitar este pedido?')) return; await setGroupApproval(groupId, 'rejeitado'); boardFeedback = { message: 'Pedido rejeitado.', type: 'warning' }; }
@@ -883,11 +981,12 @@
           else if (action === 'cancel-edit-group') { boardState.editGroupId = ''; }
           else if (action === 'save-edit-group') { await saveGroupEdit(container, groupId); boardState.editGroupId = ''; boardFeedback = { message: 'Pedido atualizado.', type: 'success' }; }
           else if (action === 'cancel-group') { if (!confirm('Cancelar (excluir) este pedido?')) return; await cancelGroup(groupId); boardFeedback = { message: 'Pedido cancelado.', type: 'success' }; }
+          paint();
+          if (needsRefresh && typeof options.onDone === 'function') options.onDone();
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
+          paint();
         }
-        paint();
-        if (typeof options.onDone === 'function') options.onDone();
         return;
       }
 
