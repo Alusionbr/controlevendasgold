@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-FT8ak2B6YxzNlTxI7AeUAIeXGDFT7pvMvIDbq9/ME6A=' 'sha256-zyTKQl0pfw/vP1B2+sRviEeGVaN27uqz4rFmol24Nf0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-1TiUNmjnpF6EGzwR7rY9V6ydXxb056owx0FWEL2yeoI=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-pyDZOJC9OYDBzW6leDgcgAOXn9CLFiZFyiiJiLfYXi4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-RP6UOwFeUt0olYS3VNFOGHVUjQuaIOr7cLSS7/g1KM8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-kciJKtxWzlWKL0kptnP69OZ4ij2i1eS6nW/Mk/KslDA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -353,6 +353,62 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   white-space: nowrap;
   padding: 0 0.15rem;
   opacity: 0.8;
+}
+
+/* ---------- Navegação desktop larga: barra lateral (sidebar) ----------
+   Abaixo de 960px a barra horizontal de sempre (.tabs, com scroll) continua
+   valendo — é uma faixa estreita onde uma sidebar de ~230px comeria
+   proporcionalmente demais da tela. A partir de 960px, .tabs vira uma coluna
+   fixa à esquerda: resolve de vez o transbordamento da barra horizontal
+   (medido: só cabiam ~1100px de ~3200px necessários em 1440px de viewport,
+   e isso não melhora com monitor maior porque .app-shell tem max-width fixo)
+   sem esconder nenhuma aba atrás de clique extra — todas ficam visíveis de
+   uma vez, agrupadas pelas mesmas 4 seções que já existem.
+   Sem position:sticky nesta v1: a altura real do .app-header sticky varia
+   (1 ou 2 linhas conforme largura/zoom — ver comentário acima sobre por que
+   .tabs não é sticky hoje), então travar a sidebar exatamente abaixo dele
+   exigiria medir a altura real via JS; mais seguro a sidebar rolar junto com
+   a página por enquanto. */
+@media (min-width: 960px) {
+  .app-body {
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .tabs {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+    border-radius: var(--radius);
+    padding: 0.6rem;
+    margin: 0;
+  }
+  .tab-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+  }
+  .tab-group + .tab-group {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+  .tab-group-label { padding: 0.3rem 0.6rem 0.2rem; }
+  .tab-button {
+    width: 100%;
+    text-align: left;
+    border-radius: var(--radius-sm);
+    /* A base .tab-button tem white-space:nowrap (certo na barra horizontal
+       com scroll) — na sidebar isso cortaria rótulos longos como
+       "Devoluções, desperdícios e brindes" contra a largura fixa da coluna.
+       Aqui deixa quebrar em mais de uma linha. */
+    white-space: normal;
+    line-height: 1.25;
+  }
 }
 
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
@@ -806,6 +862,33 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.5rem;
+  position: relative;
+  scrollbar-width: thin;
+}
+.kanban::-webkit-scrollbar { height: 6px; }
+.kanban::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+/* Classe aplicada via JS (markKanbanOverflow em ui.js) só quando o quadro
+   realmente transborda — sem isto o corte da última coluna é silencioso (sem
+   seta, sem scrollbar visível em muitos SOs), e quem não sabe que dá pra
+   arrastar simplesmente não vê o resto das colunas. O aviso é um
+   pseudo-elemento (não um nó extra no grid, que bagunçaria as colunas),
+   posicionado absoluto sobre o próprio .kanban (que tem position:relative) —
+   fica fixo visualmente no canto direito da área visível, não rola junto com
+   o conteúdo. */
+.kanban.is-scrollable { box-shadow: inset -24px 0 16px -16px rgba(0, 0, 0, 0.14); }
+.kanban.is-scrollable::after {
+  content: 'Arraste para o lado →';
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ink-contrast, #fff);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .kanban-column {
   background: var(--surface-soft);
@@ -828,6 +911,10 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  /* O card é item flex de .kanban-dropzone; sem isto ele não encolhe abaixo
+     do conteúdo interno (bug clássico de min-width:auto) e vaza para a
+     coluna vizinha quando o texto/badge do cabeçalho é mais longo. */
+  min-width: 0;
 }
 .kanban-card:active { cursor: grabbing; }
 .kanban-card strong { font-size: 0.95rem; color: var(--ink); }
@@ -855,6 +942,11 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   text-transform: none;
   letter-spacing: 0;
   color: var(--text);
+  /* Sem isto o select assume a largura da opção mais longa (ex. "Pronto
+     (caixa montada)") e vaza para a coluna seguinte do kanban. */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 480px) {
@@ -1588,8 +1680,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 /* Esteira de pedidos (board) — cards agrupados por caixa */
 .board-kanban { margin-top: 0.4rem; }
 .board-card { display: grid; gap: 0.5rem; }
-.board-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.board-card-head strong { font-size: 0.92rem; }
+/* Sem flex-wrap + min-width:0 no nome, "who" (nome do vendedor/cliente) longo
+   + o badge de tipo não cabem numa linha só, não encolhem (min-width:auto é o
+   padrão de item flex) e vazam para fora do card, sobrepondo a coluna vizinha
+   do kanban — bug real reproduzido em qualquer coluna, inclusive Despachado. */
+.board-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
+.board-card-head strong { font-size: 0.92rem; min-width: 0; overflow-wrap: break-word; flex: 1 1 auto; }
 .board-card-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
 .board-card-items li { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--muted); font-size: 0.84rem; }
 .board-card-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--line); padding-top: 0.4rem; }
@@ -1945,9 +2041,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
     <section id="dashboard" class="dashboard"></section>
 
-    <nav class="tabs" id="tabsBar" aria-label="Módulos do sistema"></nav>
+    <div class="app-body">
+      <nav class="tabs" id="tabsBar" aria-label="Módulos do sistema"></nav>
 
-    <section id="view" class="view"></section>
+      <section id="view" class="view"></section>
+    </div>
   </main>
 
   <nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal" hidden></nav>
@@ -3518,6 +3616,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     </div>`;
   }
 
+  // Marca cada .kanban dentro de root com .is-scrollable quando ele
+  // realmente transborda (scrollWidth > clientWidth) — o CSS só mostra a
+  // scrollbar/dica "Arraste para o lado" nesse caso. Chamar depois de montar
+  // o HTML no DOM (precisa medir dimensões reais). Reaproveitado pela esteira
+  // de pedidos (src/salesCart.js) e pelo Kanban de Tarefas (src/app.js).
+  function markKanbanOverflow(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    root.querySelectorAll('.kanban').forEach((el) => {
+      el.classList.toggle('is-scrollable', el.scrollWidth > el.clientWidth + 1);
+    });
+  }
+
   window.C360.ui = {
     HELP,
     help,
@@ -3535,6 +3645,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     costBox,
     kanban,
     compact,
+    markKanbanOverflow,
   };
 })();
 </script>
@@ -3646,6 +3757,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
   }
 
+  // Aviso visível quando refresh() falha (ex.: blip de rede numa das várias
+  // chamadas paralelas em src/state.js) — sem isto, o login/restauração de
+  // sessão prossegue normalmente mas com todos os dados zerados e nenhum
+  // sinal do motivo, fácil de confundir com "o dashboard sumiu". app.js
+  // carrega depois de auth.js (ver ordem de <script> em index.html), então
+  // window.C360.app já existe quando login/restoreSession de fato rodam
+  // (são sempre disparados por interação do usuário após o boot completo) —
+  // a checagem defensiva é só para nunca quebrar o fluxo de login por causa
+  // do aviso em si.
+  function notifyRefreshFailure() {
+    if (window.C360.app && typeof window.C360.app.toast === 'function') {
+      window.C360.app.toast('Não foi possível carregar todos os dados agora. Recarregue a página.', 'error');
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Mapeamento de erros -> mensagens amigáveis em PT-BR
   // ---------------------------------------------------------------------
@@ -3730,7 +3856,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     } catch (error) {
       // Sessão e perfil são válidos; não bloqueamos o login por uma falha ao
       // atualizar o cache de dados — o usuário pode tentar recarregar depois.
+      // Mas isso não pode ficar silencioso: sem aviso, a tela carrega com tudo
+      // zerado (produtos, vendas, estoque) e parece "o dashboard sumiu" sem
+      // nenhuma pista do motivo real (blip de rede).
       console.error('C360.auth: erro ao atualizar estado após login.', error);
+      notifyRefreshFailure();
     }
 
     return { ok: true };
@@ -3787,6 +3917,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       }
     } catch (error) {
       console.error('C360.auth: erro ao atualizar estado ao restaurar sessão.', error);
+      notifyRefreshFailure();
     }
 
     return true;
@@ -7405,6 +7536,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         if (config.paymentMode) config.paymentMode.value = draft.paymentMode || 'avista';
         if (config.paidInitialAmount) config.paidInitialAmount.value = draft.paidInitialAmount || '0';
       }
+      if (UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(container);
     }
 
     function readConfig() {
@@ -10405,6 +10537,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      // Kanban de Tarefas usa o mesmo componente UI.kanban() da esteira de
+      // pedidos — mesma marcação de overflow (ver UI.markKanbanOverflow).
+      if (activeTab === 'tarefas' && UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(els.view);
       return;
     }
     mountModuleTab(activeTab);
@@ -12103,8 +12238,23 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (event.target.name === 'unitPrice') event.target.dataset.touched = '1';
   }
 
+  // A marcação de overflow do kanban (UI.markKanbanOverflow, ver item da
+  // esteira/tarefas) só mede o DOM no momento do render — se o usuário
+  // redimensiona a janela sem disparar um novo render, a affordance de
+  // scroll fica desatualizada (testado: reduzir a janela pode fazer o
+  // quadro passar a transbordar sem que o aviso apareça). Recalcula, com
+  // debounce, sempre que a janela mudar de tamanho.
+  let kanbanOverflowResizeTimer = null;
+  function handleWindowResizeForKanban() {
+    clearTimeout(kanbanOverflowResizeTimer);
+    kanbanOverflowResizeTimer = setTimeout(() => {
+      if (UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(document);
+    }, 150);
+  }
+
   function bindEvents() {
     bindHelpTips();
+    window.addEventListener('resize', handleWindowResizeForKanban);
     els.tabs.forEach((button) => button.addEventListener('click', () => setTab(button.dataset.tab)));
     document.querySelectorAll('.bottom-nav-item[data-tab], .more-menu-item[data-tab]').forEach((button) => {
       button.addEventListener('click', () => setTab(button.dataset.tab));

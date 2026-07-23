@@ -347,6 +347,62 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   opacity: 0.8;
 }
 
+/* ---------- Navegação desktop larga: barra lateral (sidebar) ----------
+   Abaixo de 960px a barra horizontal de sempre (.tabs, com scroll) continua
+   valendo — é uma faixa estreita onde uma sidebar de ~230px comeria
+   proporcionalmente demais da tela. A partir de 960px, .tabs vira uma coluna
+   fixa à esquerda: resolve de vez o transbordamento da barra horizontal
+   (medido: só cabiam ~1100px de ~3200px necessários em 1440px de viewport,
+   e isso não melhora com monitor maior porque .app-shell tem max-width fixo)
+   sem esconder nenhuma aba atrás de clique extra — todas ficam visíveis de
+   uma vez, agrupadas pelas mesmas 4 seções que já existem.
+   Sem position:sticky nesta v1: a altura real do .app-header sticky varia
+   (1 ou 2 linhas conforme largura/zoom — ver comentário acima sobre por que
+   .tabs não é sticky hoje), então travar a sidebar exatamente abaixo dele
+   exigiria medir a altura real via JS; mais seguro a sidebar rolar junto com
+   a página por enquanto. */
+@media (min-width: 960px) {
+  .app-body {
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .tabs {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+    border-radius: var(--radius);
+    padding: 0.6rem;
+    margin: 0;
+  }
+  .tab-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+  }
+  .tab-group + .tab-group {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+  .tab-group-label { padding: 0.3rem 0.6rem 0.2rem; }
+  .tab-button {
+    width: 100%;
+    text-align: left;
+    border-radius: var(--radius-sm);
+    /* A base .tab-button tem white-space:nowrap (certo na barra horizontal
+       com scroll) — na sidebar isso cortaria rótulos longos como
+       "Devoluções, desperdícios e brindes" contra a largura fixa da coluna.
+       Aqui deixa quebrar em mais de uma linha. */
+    white-space: normal;
+    line-height: 1.25;
+  }
+}
+
 /* ---------- Navegação mobile (bottom-nav + menu "Mais") ----------
    No celular a barra de abas do desktop (.tabs) some e esta navegação fixa
    no rodapé assume: 4 destinos principais por perfil + "Mais" para o
@@ -798,6 +854,33 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.5rem;
+  position: relative;
+  scrollbar-width: thin;
+}
+.kanban::-webkit-scrollbar { height: 6px; }
+.kanban::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+/* Classe aplicada via JS (markKanbanOverflow em ui.js) só quando o quadro
+   realmente transborda — sem isto o corte da última coluna é silencioso (sem
+   seta, sem scrollbar visível em muitos SOs), e quem não sabe que dá pra
+   arrastar simplesmente não vê o resto das colunas. O aviso é um
+   pseudo-elemento (não um nó extra no grid, que bagunçaria as colunas),
+   posicionado absoluto sobre o próprio .kanban (que tem position:relative) —
+   fica fixo visualmente no canto direito da área visível, não rola junto com
+   o conteúdo. */
+.kanban.is-scrollable { box-shadow: inset -24px 0 16px -16px rgba(0, 0, 0, 0.14); }
+.kanban.is-scrollable::after {
+  content: 'Arraste para o lado →';
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ink-contrast, #fff);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .kanban-column {
   background: var(--surface-soft);
@@ -820,6 +903,10 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  /* O card é item flex de .kanban-dropzone; sem isto ele não encolhe abaixo
+     do conteúdo interno (bug clássico de min-width:auto) e vaza para a
+     coluna vizinha quando o texto/badge do cabeçalho é mais longo. */
+  min-width: 0;
 }
 .kanban-card:active { cursor: grabbing; }
 .kanban-card strong { font-size: 0.95rem; color: var(--ink); }
@@ -847,6 +934,11 @@ table .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   text-transform: none;
   letter-spacing: 0;
   color: var(--text);
+  /* Sem isto o select assume a largura da opção mais longa (ex. "Pronto
+     (caixa montada)") e vaza para a coluna seguinte do kanban. */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 480px) {
@@ -1580,8 +1672,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 /* Esteira de pedidos (board) — cards agrupados por caixa */
 .board-kanban { margin-top: 0.4rem; }
 .board-card { display: grid; gap: 0.5rem; }
-.board-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.board-card-head strong { font-size: 0.92rem; }
+/* Sem flex-wrap + min-width:0 no nome, "who" (nome do vendedor/cliente) longo
+   + o badge de tipo não cabem numa linha só, não encolhem (min-width:auto é o
+   padrão de item flex) e vazam para fora do card, sobrepondo a coluna vizinha
+   do kanban — bug real reproduzido em qualquer coluna, inclusive Despachado. */
+.board-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
+.board-card-head strong { font-size: 0.92rem; min-width: 0; overflow-wrap: break-word; flex: 1 1 auto; }
 .board-card-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
 .board-card-items li { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--muted); font-size: 0.84rem; }
 .board-card-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--line); padding-top: 0.4rem; }
