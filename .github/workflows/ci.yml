@@ -1,0 +1,38 @@
+name: Validar Controle360
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verificar sintaxe JavaScript
+        shell: bash
+        run: |
+          for file in src/*.js build-mobile.js; do
+            node --check "$file"
+          done
+
+      - name: Testar regras críticas
+        run: node --test tests/*.test.js
+
+      - name: Verificar sincronização do mobile
+        shell: bash
+        run: |
+          node build-mobile.js "$RUNNER_TEMP/controle360-mobile.html"
+          cmp --silent controle360-mobile.html "$RUNNER_TEMP/controle360-mobile.html"
