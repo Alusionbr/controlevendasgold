@@ -432,47 +432,37 @@
 
   async function refreshAsSeller(businessId, userId) {
     const api = window.C360.api;
+    // Perfil vendedor é somente leitura. Carregamos apenas o necessário para
+    // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
+    // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, clients, sales, orders, consignments,
-      consignmentEvents, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, operationalMovements,
+      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
-      api.list('clients', { seller_id: userId }),
-      api.list('sales', { seller_id: userId }),
-      api.list('orders', { seller_id: userId }),
-      api.list('consignments', { seller_id: userId }),
-      api.list('consignment_events', { business_id: businessId }),
-      api.listSellerPrices(userId),
       api.listSellerStock(userId),
-      api.listSellerSettings({ sellerId: userId }),
-      api.listSaleCarts({ seller_id: userId }),
-      api.listSaleCartItems({ business_id: businessId }),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
-      api.list('operational_movements', { seller_id: userId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
-    state.products = sellerProducts; // já camelCase (seller_products, sem custo)
-    state.clients = clients.map(toCamelCaseRow);
-    state.sales = sales.map(toCamelCaseRow);
-    state.orders = orders.map(toCamelCaseRow);
-    state.consignments = consignments.map(toCamelCaseRow);
-    state.consignmentEvents = consignmentEvents.map(toCamelCaseRow);
-    state.sellerPrices = sellerPrices;
+    state.products = sellerProducts;
     state.sellerStock = sellerStock;
-    state.sellerSettings = sellerSettings;
-    state.saleCarts = saleCarts;
-    state.saleCartItems = saleCartItems;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
-    state.financialEntries = [];
-    state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
-    // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
-    // o round-trip de rede e já deixamos vazio.
+    // Todo o restante é admin-only no modelo operacional oficial.
+    state.clients = [];
+    state.sales = [];
+    state.orders = [];
+    state.consignments = [];
+    state.consignmentEvents = [];
+    state.sellerPrices = [];
+    state.sellerSettings = [];
+    state.saleCarts = [];
+    state.saleCartItems = [];
+    state.financialEntries = [];
+    state.operationalMovements = [];
     state.suppliers = [];
     state.purchases = [];
     state.stockMovements = [];
@@ -481,13 +471,8 @@
     state.tasks = [];
     state.profiles = [];
     state.sellers = [];
-
-    const [salesGoals, goalsProgress] = await Promise.all([
-      api.listSalesGoals({ sellerId: userId }),
-      api.listGoalsProgress({ sellerId: userId }),
-    ]);
-    state.salesGoals = salesGoals;
-    state.goalsProgress = goalsProgress;
+    state.salesGoals = [];
+    state.goalsProgress = [];
   }
 
   async function refresh() {
