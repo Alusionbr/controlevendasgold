@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-XVGGmMCbZfUL4k2a8t1VKQODqd7TuD2jwjPpRxsk5wc=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-RP6UOwFeUt0olYS3VNFOGHVUjQuaIOr7cLSS7/g1KM8=' 'sha256-a+uvXNsJUBVeaqKATrUVSNSbqzVNJlJquUyNakQGGZI=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-kciJKtxWzlWKL0kptnP69OZ4ij2i1eS6nW/Mk/KslDA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-RP6UOwFeUt0olYS3VNFOGHVUjQuaIOr7cLSS7/g1KM8=' 'sha256-/76dc45oIMU1dLryLSmI4nTgBhM7+ERHW/dM+AGcdcg=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-/0C4GHnjhfBwOJoi9xTmZQqFfz5B/QcDJdGJGtVo1LU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -3143,47 +3143,37 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function refreshAsSeller(businessId, userId) {
     const api = window.C360.api;
+    // Perfil vendedor é somente leitura. Carregamos apenas o necessário para
+    // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
+    // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, clients, sales, orders, consignments,
-      consignmentEvents, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, operationalMovements,
+      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
-      api.list('clients', { seller_id: userId }),
-      api.list('sales', { seller_id: userId }),
-      api.list('orders', { seller_id: userId }),
-      api.list('consignments', { seller_id: userId }),
-      api.list('consignment_events', { business_id: businessId }),
-      api.listSellerPrices(userId),
       api.listSellerStock(userId),
-      api.listSellerSettings({ sellerId: userId }),
-      api.listSaleCarts({ seller_id: userId }),
-      api.listSaleCartItems({ business_id: businessId }),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
-      api.list('operational_movements', { seller_id: userId, _order: 'created_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
-    state.products = sellerProducts; // já camelCase (seller_products, sem custo)
-    state.clients = clients.map(toCamelCaseRow);
-    state.sales = sales.map(toCamelCaseRow);
-    state.orders = orders.map(toCamelCaseRow);
-    state.consignments = consignments.map(toCamelCaseRow);
-    state.consignmentEvents = consignmentEvents.map(toCamelCaseRow);
-    state.sellerPrices = sellerPrices;
+    state.products = sellerProducts;
     state.sellerStock = sellerStock;
-    state.sellerSettings = sellerSettings;
-    state.saleCarts = saleCarts;
-    state.saleCartItems = saleCartItems;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
-    state.financialEntries = [];
-    state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
-    // Tabelas admin-only (RLS devolveria [] mesmo se chamássemos): evitamos
-    // o round-trip de rede e já deixamos vazio.
+    // Todo o restante é admin-only no modelo operacional oficial.
+    state.clients = [];
+    state.sales = [];
+    state.orders = [];
+    state.consignments = [];
+    state.consignmentEvents = [];
+    state.sellerPrices = [];
+    state.sellerSettings = [];
+    state.saleCarts = [];
+    state.saleCartItems = [];
+    state.financialEntries = [];
+    state.operationalMovements = [];
     state.suppliers = [];
     state.purchases = [];
     state.stockMovements = [];
@@ -3192,13 +3182,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.tasks = [];
     state.profiles = [];
     state.sellers = [];
-
-    const [salesGoals, goalsProgress] = await Promise.all([
-      api.listSalesGoals({ sellerId: userId }),
-      api.listGoalsProgress({ sellerId: userId }),
-    ]);
-    state.salesGoals = salesGoals;
-    state.goalsProgress = goalsProgress;
+    state.salesGoals = [];
+    state.goalsProgress = [];
   }
 
   async function refresh() {
@@ -7965,8 +7950,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return payment;
   }
 
+  function ownStockRows(sellerId) {
+    const st = state();
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return [
+          product ? U.escapeHtml(product.name) : 'Produto removido',
+          U.qty(row.quantity, product ? product.unit : ''),
+        ];
+      });
+  }
+
   // ---------------------------------------------------------------------
-  // Vendedor — só o próprio saldo e histórico, sem escrita
+  // Vendedor — somente leitura: saldo, estoque em mãos e histórico
   // ---------------------------------------------------------------------
   function renderSeller() {
     const currentUser = user();
@@ -7974,12 +7972,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
     const payments = paymentsForSeller(currentUser.id).slice(0, 10);
+    const stockRows = ownStockRows(currentUser.id);
 
     return UI.section(
-      'Meu saldo com admin',
-      'Reposição consignado/parcial vira débito aqui; pagamentos recebidos abatem o saldo.',
+      'Minha conta',
+      'Consulta do seu estoque em mãos, saldo e histórico. Movimentações são registradas pelo administrador.',
       `
         ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
+        <h3>Estoque em mãos</h3>
+        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque consignado com você no momento.')}
         <h3>Histórico</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
         <h3>Pagamentos já registrados</h3>
@@ -10004,6 +10005,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // todos gerados a partir deste mapa, em vez de listas duplicadas em
   // index.html e aqui (fonte antiga do bug de dessincronização).
   // ---------------------------------------------------------------------
+  //
+  // Modelo operacional oficial: vendedores têm uma única tela somente leitura
+  // ("Minha conta"). Toda movimentação de estoque e dinheiro é feita pelo admin.
+  // A RLS aplica a mesma regra no banco; isto é apenas a camada de interface.
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
@@ -10029,7 +10034,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
     precos: 'Preços',
-    meusaldo: 'Meu saldo com admin',
+    meusaldo: 'Minha conta',
     devolucoes: 'Devoluções, desperdícios e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
     calculadora: 'Calculadora',
@@ -10041,28 +10046,28 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
-    hoje: ['admin', 'vendedor'],
+    hoje: ['admin'],
     negocios: ['admin'],
     produtos: ['admin'],
-    clientes: ['admin', 'vendedor'],
+    clientes: ['admin'],
     fornecedores: ['admin'],
     compras: ['admin'],
     fichas: ['admin'],
     producao: ['admin'],
-    vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    vendas: ['admin'],
+    consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: ['vendedor'],
+    estoque: [],
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
     precos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
-    minhasdevolucoes: ['vendedor'],
-    calculadora: ['admin', 'vendedor'],
-    metas: ['admin', 'vendedor'],
-    ajuda: ['admin', 'vendedor'],
+    minhasdevolucoes: [],
+    calculadora: ['admin'],
+    metas: ['admin'],
+    ajuda: ['admin'],
     dados: ['admin'],
   };
 
@@ -10089,7 +10094,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+    vendedor: ['meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -10113,12 +10118,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <span class="bottom-nav-label">${U.escapeHtml(BOTTOM_NAV_SHORT_LABELS[tab] || TAB_LABELS[tab])}</span>
         </button>
       `).join('');
+      const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
+      const hasMore = TAB_ORDER.some((tab) =>
+        tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role)
+      );
       return `
         <div class="bottom-nav-set" data-role-set="${role}" hidden>
           ${items}
-          <button type="button" class="bottom-nav-item" data-more-menu-open>
-            <span class="bottom-nav-label">Mais</span>
-          </button>
+          ${hasMore ? `
+            <button type="button" class="bottom-nav-item" data-more-menu-open>
+              <span class="bottom-nav-label">Mais</span>
+            </button>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -10219,6 +10230,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    [els.btnExport, els.btnDataTab, els.btnHelp].forEach((button) => {
+      if (button) button.hidden = role !== 'admin';
+    });
     if (els.bottomNav) {
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
@@ -10484,7 +10498,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
     // um botão apontando para uma aba já removida) cairia no `default` do
     // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
-    if (!TAB_ORDER.includes(tab)) return;
+    if (!TAB_ORDER.includes(tab) || !tabAllowed(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
@@ -10532,7 +10546,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // "Visão operacional" que a própria tela Hoje já mostra. Escondemos o fixo
     // enquanto "Hoje" está ativa para não duplicar. (No celular #dashboard já é
     // display:none pela CSS, então isto só afeta o desktop.)
-    if (els.dashboard) els.dashboard.hidden = activeTab === 'hoje';
+    if (els.dashboard) els.dashboard.hidden = currentRole() !== 'admin' || activeTab === 'hoje';
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
       els.view.innerHTML = legacy();
@@ -10549,19 +10563,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
-        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
+        // Modelo oficial: só o admin registra envios, pagamentos e correções.
+        // O painel antigo de concessão direta foi removido porque alterava
+        // seller_stock sem baixar o estoque central nem gerar dívida.
+        els.view.innerHTML = '<div id="sellersPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
-        }
-        if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
-          window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
-        }
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
-          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
       case 'precos':
@@ -12385,7 +12392,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       eventsBound = true;
     }
     applyRoleVisibility();
-    if (window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
+    if (S.isAdmin() && window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
       window.C360.calculator.mountFloating();
     }
     renderAll();
