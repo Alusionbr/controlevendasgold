@@ -84,8 +84,21 @@
     return payment;
   }
 
+  function ownStockRows(sellerId) {
+    const st = state();
+    return (st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => {
+        const product = (st.products || []).find((item) => String(item.id) === String(row.productId));
+        return [
+          product ? U.escapeHtml(product.name) : 'Produto removido',
+          U.qty(row.quantity, product ? product.unit : ''),
+        ];
+      });
+  }
+
   // ---------------------------------------------------------------------
-  // Vendedor — só o próprio saldo e histórico, sem escrita
+  // Vendedor — somente leitura: saldo, estoque em mãos e histórico
   // ---------------------------------------------------------------------
   function renderSeller() {
     const currentUser = user();
@@ -93,12 +106,15 @@
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
     const payments = paymentsForSeller(currentUser.id).slice(0, 10);
+    const stockRows = ownStockRows(currentUser.id);
 
     return UI.section(
-      'Meu saldo com admin',
-      'Reposição consignado/parcial vira débito aqui; pagamentos recebidos abatem o saldo.',
+      'Minha conta',
+      'Consulta do seu estoque em mãos, saldo e histórico. Movimentações são registradas pelo administrador.',
       `
         ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
+        <h3>Estoque em mãos</h3>
+        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque consignado com você no momento.')}
         <h3>Histórico</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
         <h3>Pagamentos já registrados</h3>
