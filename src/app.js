@@ -12,6 +12,10 @@
   // todos gerados a partir deste mapa, em vez de listas duplicadas em
   // index.html e aqui (fonte antiga do bug de dessincronização).
   // ---------------------------------------------------------------------
+  //
+  // Modelo operacional oficial: vendedores têm uma única tela somente leitura
+  // ("Minha conta"). Toda movimentação de estoque e dinheiro é feita pelo admin.
+  // A RLS aplica a mesma regra no banco; isto é apenas a camada de interface.
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
@@ -37,7 +41,7 @@
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
     precos: 'Preços',
-    meusaldo: 'Meu saldo com admin',
+    meusaldo: 'Minha conta',
     devolucoes: 'Devoluções, desperdícios e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
     calculadora: 'Calculadora',
@@ -49,28 +53,28 @@
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
   const TAB_ROLES = {
-    hoje: ['admin', 'vendedor'],
+    hoje: ['admin'],
     negocios: ['admin'],
     produtos: ['admin'],
-    clientes: ['admin', 'vendedor'],
+    clientes: ['admin'],
     fornecedores: ['admin'],
     compras: ['admin'],
     fichas: ['admin'],
     producao: ['admin'],
-    vendas: ['admin', 'vendedor'],
-    consignado: ['admin', 'vendedor'],
+    vendas: ['admin'],
+    consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: ['vendedor'],
+    estoque: [],
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
     precos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
-    minhasdevolucoes: ['vendedor'],
-    calculadora: ['admin', 'vendedor'],
-    metas: ['admin', 'vendedor'],
-    ajuda: ['admin', 'vendedor'],
+    minhasdevolucoes: [],
+    calculadora: ['admin'],
+    metas: ['admin'],
+    ajuda: ['admin'],
     dados: ['admin'],
   };
 
@@ -97,7 +101,7 @@
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['hoje', 'vendas', 'clientes', 'estoque'],
+    vendedor: ['meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -121,12 +125,18 @@
           <span class="bottom-nav-label">${U.escapeHtml(BOTTOM_NAV_SHORT_LABELS[tab] || TAB_LABELS[tab])}</span>
         </button>
       `).join('');
+      const primary = new Set(BOTTOM_NAV_PRIMARY[role]);
+      const hasMore = TAB_ORDER.some((tab) =>
+        tab !== 'hoje' && !primary.has(tab) && (TAB_ROLES[tab] || []).includes(role)
+      );
       return `
         <div class="bottom-nav-set" data-role-set="${role}" hidden>
           ${items}
-          <button type="button" class="bottom-nav-item" data-more-menu-open>
-            <span class="bottom-nav-label">Mais</span>
-          </button>
+          ${hasMore ? `
+            <button type="button" class="bottom-nav-item" data-more-menu-open>
+              <span class="bottom-nav-label">Mais</span>
+            </button>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -227,6 +237,9 @@
       group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
+    [els.btnExport, els.btnDataTab, els.btnHelp].forEach((button) => {
+      if (button) button.hidden = role !== 'admin';
+    });
     if (els.bottomNav) {
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
@@ -492,7 +505,7 @@
     // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
     // um botão apontando para uma aba já removida) cairia no `default` do
     // mountModuleTab e mostraria a tela de Negócios, confundindo o usuário.
-    if (!TAB_ORDER.includes(tab)) return;
+    if (!TAB_ORDER.includes(tab) || !tabAllowed(tab)) return;
     activeTab = tab;
     syncActiveNav();
     closeMoreMenu();
@@ -540,7 +553,7 @@
     // "Visão operacional" que a própria tela Hoje já mostra. Escondemos o fixo
     // enquanto "Hoje" está ativa para não duplicar. (No celular #dashboard já é
     // display:none pela CSS, então isto só afeta o desktop.)
-    if (els.dashboard) els.dashboard.hidden = activeTab === 'hoje';
+    if (els.dashboard) els.dashboard.hidden = currentRole() !== 'admin' || activeTab === 'hoje';
     const legacy = LEGACY_RENDERERS[activeTab];
     if (legacy) {
       els.view.innerHTML = legacy();
@@ -557,19 +570,12 @@
     const isAdminUser = S.isAdmin();
     switch (tab) {
       case 'vendedores':
-        // Aba unica do admin para tudo sobre vendedores: cadastro/saldo/envio
-        // (painel "Gerenciar" de auth.js), permissoes e concessao direta de
-        // estoque. Antes esses dois ultimos viviam na aba "Aprovacoes", que
-        // saiu (a aprovacao de pedido virou parte da esteira em Vendas).
-        els.view.innerHTML = '<div id="sellersPanel"></div><div id="sellerPermissionsPanel"></div><div id="grantStockPanel"></div>';
+        // Modelo oficial: só o admin registra envios, pagamentos e correções.
+        // O painel antigo de concessão direta foi removido porque alterava
+        // seller_stock sem baixar o estoque central nem gerar dívida.
+        els.view.innerHTML = '<div id="sellersPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
-        }
-        if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
-          window.C360.salesCart.mountSettings(document.getElementById('sellerPermissionsPanel'), { onDone: renderAll });
-        }
-        if (window.C360.sellerStock && typeof window.C360.sellerStock.mountGrantStock === 'function') {
-          window.C360.sellerStock.mountGrantStock(document.getElementById('grantStockPanel'));
         }
         break;
       case 'precos':
@@ -2393,7 +2399,7 @@
       eventsBound = true;
     }
     applyRoleVisibility();
-    if (window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
+    if (S.isAdmin() && window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
       window.C360.calculator.mountFloating();
     }
     renderAll();
