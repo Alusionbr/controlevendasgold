@@ -50,6 +50,17 @@
     return window.C360.calc || null;
   }
 
+  function api() {
+    return window.C360.api || null;
+  }
+
+  function alreadyReturned(saleId) {
+    if (!hasState('getState')) return 0;
+    return (stateApi().getState().sales || [])
+      .filter((entry) => String(entry.parentSaleId) === String(saleId) && entry.origin === 'devolucao')
+      .reduce((sum, entry) => sum + Math.abs(U.number(entry.quantity)), 0);
+  }
+
   // ---------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------
@@ -198,63 +209,21 @@
 
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (maxQty > 0 && qty > maxQty) {
-        return { ok: false, error: `Quantidade não pode ser maior que a vendida (${maxQty}).` };
+      const available = Math.max(maxQty - alreadyReturned(sale.id), 0);
+      if (maxQty > 0 && qty > available) {
+        return { ok: false, error: `Quantidade não pode ser maior que o saldo devolvível (${available}).` };
       }
-      if (!hasState('add')) return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
-
-      let money = { grossRevenue: -qty * U.number(sale.unitPrice), netRevenue: -qty * U.number(sale.unitPrice), cogs: -qty * U.number(sale.unitCost), grossProfit: 0, percentFees: 0, margin: 0 };
-      if (calc() && typeof calc().saleMath === 'function') {
-        money = calc().saleMath({
-          quantity: -qty,
-          unitPrice: sale.unitPrice,
-          discount: 0,
-          fixedFees: 0,
-          feePercent: 0,
-          unitCost: sale.unitCost,
-        });
+      if (!api() || typeof api().registerSaleReturn !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
       }
 
-      const salePayload = {
-        businessId: sale.businessId,
-        productId: sale.productId,
-        clientId: sale.clientId,
-        sellerId: sale.sellerId,
-        quantity: -qty,
-        unitPrice: sale.unitPrice,
-        unitCost: sale.unitCost,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        percentFees: money.percentFees,
-        grossRevenue: money.grossRevenue,
-        netRevenue: money.netRevenue,
-        cogs: money.cogs,
-        grossProfit: money.grossProfit,
-        margin: money.margin,
-        parentSaleId: sale.id,
-        origin: 'devolucao',
-        date: U.today(),
+      const saleId = await api().registerSaleReturn({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-      };
-
-      const saleRecord = await stateApi().add('sales', salePayload);
-
-      let movement = null;
-      if (hasState('recordMovement')) {
-        movement = await stateApi().recordMovement({
-          type: 'entrada_devolucao_venda',
-          productId: sale.productId,
-          quantity: qty,
-          unitCost: sale.unitCost,
-          refType: 'sale',
-          refId: sale.id,
-          notes: notes || '',
-          date: U.today(),
-        });
-      }
-
-      return { ok: true, saleRecord, movement };
+      });
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, saleRecord: { id: saleId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDevolucao', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DEVOLUCAO };
@@ -269,20 +238,17 @@
       const qty = U.number(quantity);
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (!hasState('recordMovement')) return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      if (!api() || typeof api().registerSaleWaste !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      }
 
-      const movement = await stateApi().recordMovement({
-        type: 'saida_desperdicio',
-        productId: sale.productId,
-        quantity: -qty,
-        unitCost: sale.unitCost,
-        refType: 'sale',
-        refId: sale.id,
+      const movementId = await api().registerSaleWaste({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-        date: U.today(),
       });
-
-      return { ok: true, movement };
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, movement: { id: movementId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDesperdicio', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DESPERDICIO };

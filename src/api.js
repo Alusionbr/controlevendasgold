@@ -352,6 +352,47 @@
     });
   }
 
+  async function registerSellerPayment({ sellerId, amount, method, notes }) {
+    return restRequest('/rest/v1/rpc/register_seller_payment', {
+      method: 'POST',
+      body: {
+        p_seller_id: sellerId,
+        p_amount: Number(amount),
+        p_method: method || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleReturn({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_return', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleWaste({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_waste', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function convertPublicCartToOrders(cartId) {
+    return restRequest('/rest/v1/rpc/convert_public_cart_to_orders', {
+      method: 'POST',
+      body: { p_cart_id: cartId },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -509,6 +550,10 @@
     consumeSellerStock,
     adjustOwnStock,
     registerPurchaseGroup,
+    registerSellerPayment,
+    registerSaleReturn,
+    registerSaleWaste,
+    convertPublicCartToOrders,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,

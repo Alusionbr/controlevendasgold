@@ -678,7 +678,9 @@
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
-    const canShareLink = isAdmin() ? false : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
+    const canShareLink = isAdmin()
+      ? draft.mode === 'propria'
+      : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
     const parcialHint = (draft.mode === 'revenda' && draft.paymentMode === 'parcial')
       ? `<p class="hint-inline">Fica devendo: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>`
       : '';
@@ -743,6 +745,36 @@
   }
 
   // ------- Esteira -------
+
+  function renderSubmittedPublicCarts() {
+    if (!isAdmin()) return '';
+    const carts = (state().saleCarts || []).filter((cart) => cart.status === 'submitted');
+    if (!carts.length) return '';
+
+    const rows = carts.map((cart) => {
+      const items = itemsForCart(cart.id);
+      const itemSummary = items.map((item) => {
+        const product = productById(item.productId);
+        return `${U.escapeHtml(product?.name || 'Produto removido')} × ${U.qty(item.quantity, product?.unit)}`;
+      }).join('<br>');
+      return [
+        U.escapeHtml(cart.customerName || 'Cliente não informado'),
+        U.escapeHtml(cart.customerPhone || '—'),
+        itemSummary || 'Sem itens',
+        UI.moneyCell(cartTotal(items)),
+        (cart.submittedAt || cart.createdAt || '').slice(0, 10),
+        items.length
+          ? `<button type="button" class="small" data-cart-action="convert-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Adicionar à esteira</button>`
+          : `<button type="button" class="small danger" data-cart-action="reject-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Descartar vazio</button>`,
+      ];
+    });
+
+    return UI.section(
+      'Carrinhos recebidos',
+      'Pedidos enviados pelos links públicos. Revise os itens e adicione à esteira para separar e despachar.',
+      UI.table(['Cliente', 'Contato', 'Itens', 'Total', 'Enviado em', ''], rows)
+    );
+  }
 
   function orderGroups() {
     const map = new Map();
@@ -869,7 +901,11 @@
     let boardFeedback = null;
 
     function paint() {
-      container.innerHTML = [renderBuilder(draft, feedback), renderBoard(boardFeedback)].join('');
+      container.innerHTML = [
+        renderBuilder(draft, feedback),
+        renderSubmittedPublicCarts(),
+        renderBoard(boardFeedback),
+      ].join('');
       const config = container.querySelector('[data-cart-config]');
       if (config) {
         if (config.clientId) config.clientId.value = draft.clientId || '';
@@ -1030,6 +1066,15 @@
           resetDraft(draft, true);
           draft.lastLink = publicUrl(cart);
           feedback = { message: 'Link publico criado.', type: 'success' };
+        } else if (action === 'convert-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode converter carrinhos.');
+          await api().convertPublicCartToOrders(button.dataset.cartId);
+          await S().refresh();
+          feedback = { message: 'Carrinho adicionado à esteira.', type: 'success' };
+        } else if (action === 'reject-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode descartar carrinhos.');
+          await S().update('saleCarts', button.dataset.cartId, { status: 'rejected' });
+          feedback = { message: 'Carrinho vazio descartado.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };

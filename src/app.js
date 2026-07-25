@@ -725,7 +725,6 @@
         `<div class="actions">
           ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
-          ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
       ];
     });
@@ -1075,7 +1074,6 @@
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
@@ -1965,9 +1963,6 @@
       if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
       if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
-        case 'delete-product':
-          if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
-          break;
         case 'adjust-stock':
           await adjustStock(id);
           break;
@@ -1982,9 +1977,6 @@
           await deleteRecord('orders', id);
           break;
         case 'delete-task': await deleteRecord('tasks', id); break;
-        case 'delete-consignment':
-          if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
-          break;
         case 'consign-sell':
           await consignmentSell(id);
           break;
@@ -2441,7 +2433,6 @@
 
   init();
 })();
-
 
 
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-RP6UOwFeUt0olYS3VNFOGHVUjQuaIOr7cLSS7/g1KM8=' 'sha256-/76dc45oIMU1dLryLSmI4nTgBhM7+ERHW/dM+AGcdcg=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-/0C4GHnjhfBwOJoi9xTmZQqFfz5B/QcDJdGJGtVo1LU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-iKHqkrIfnoLYItUiTnyPey4hdpfETzJo5mJi9b3gtys=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-yoHh8OTkcI0BtnA4rMdVp0sUcqQyLnAsYg8EXwQwuKw=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-3/IGxWLqO9CNfqNdHz010XC2lW1d44sHPlmuvktJfkc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2534,6 +2534,47 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function registerSellerPayment({ sellerId, amount, method, notes }) {
+    return restRequest('/rest/v1/rpc/register_seller_payment', {
+      method: 'POST',
+      body: {
+        p_seller_id: sellerId,
+        p_amount: Number(amount),
+        p_method: method || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleReturn({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_return', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleWaste({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_waste', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function convertPublicCartToOrders(cartId) {
+    return restRequest('/rest/v1/rpc/convert_public_cart_to_orders', {
+      method: 'POST',
+      body: { p_cart_id: cartId },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -2691,6 +2732,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     consumeSellerStock,
     adjustOwnStock,
     registerPurchaseGroup,
+    registerSellerPayment,
+    registerSaleReturn,
+    registerSaleWaste,
+    convertPublicCartToOrders,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
@@ -4863,6 +4908,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return window.C360.calc || null;
   }
 
+  function api() {
+    return window.C360.api || null;
+  }
+
+  function alreadyReturned(saleId) {
+    if (!hasState('getState')) return 0;
+    return (stateApi().getState().sales || [])
+      .filter((entry) => String(entry.parentSaleId) === String(saleId) && entry.origin === 'devolucao')
+      .reduce((sum, entry) => sum + Math.abs(U.number(entry.quantity)), 0);
+  }
+
   // ---------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------
@@ -5011,63 +5067,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (maxQty > 0 && qty > maxQty) {
-        return { ok: false, error: `Quantidade não pode ser maior que a vendida (${maxQty}).` };
+      const available = Math.max(maxQty - alreadyReturned(sale.id), 0);
+      if (maxQty > 0 && qty > available) {
+        return { ok: false, error: `Quantidade não pode ser maior que o saldo devolvível (${available}).` };
       }
-      if (!hasState('add')) return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
-
-      let money = { grossRevenue: -qty * U.number(sale.unitPrice), netRevenue: -qty * U.number(sale.unitPrice), cogs: -qty * U.number(sale.unitCost), grossProfit: 0, percentFees: 0, margin: 0 };
-      if (calc() && typeof calc().saleMath === 'function') {
-        money = calc().saleMath({
-          quantity: -qty,
-          unitPrice: sale.unitPrice,
-          discount: 0,
-          fixedFees: 0,
-          feePercent: 0,
-          unitCost: sale.unitCost,
-        });
+      if (!api() || typeof api().registerSaleReturn !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
       }
 
-      const salePayload = {
-        businessId: sale.businessId,
-        productId: sale.productId,
-        clientId: sale.clientId,
-        sellerId: sale.sellerId,
-        quantity: -qty,
-        unitPrice: sale.unitPrice,
-        unitCost: sale.unitCost,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        percentFees: money.percentFees,
-        grossRevenue: money.grossRevenue,
-        netRevenue: money.netRevenue,
-        cogs: money.cogs,
-        grossProfit: money.grossProfit,
-        margin: money.margin,
-        parentSaleId: sale.id,
-        origin: 'devolucao',
-        date: U.today(),
+      const saleId = await api().registerSaleReturn({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-      };
-
-      const saleRecord = await stateApi().add('sales', salePayload);
-
-      let movement = null;
-      if (hasState('recordMovement')) {
-        movement = await stateApi().recordMovement({
-          type: 'entrada_devolucao_venda',
-          productId: sale.productId,
-          quantity: qty,
-          unitCost: sale.unitCost,
-          refType: 'sale',
-          refId: sale.id,
-          notes: notes || '',
-          date: U.today(),
-        });
-      }
-
-      return { ok: true, saleRecord, movement };
+      });
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, saleRecord: { id: saleId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDevolucao', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DEVOLUCAO };
@@ -5082,20 +5096,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const qty = U.number(quantity);
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (!hasState('recordMovement')) return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      if (!api() || typeof api().registerSaleWaste !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      }
 
-      const movement = await stateApi().recordMovement({
-        type: 'saida_desperdicio',
-        productId: sale.productId,
-        quantity: -qty,
-        unitCost: sale.unitCost,
-        refType: 'sale',
-        refId: sale.id,
+      const movementId = await api().registerSaleWaste({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-        date: U.today(),
       });
-
-      return { ok: true, movement };
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, movement: { id: movementId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDesperdicio', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DESPERDICIO };
@@ -7322,7 +7333,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
-    const canShareLink = isAdmin() ? false : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
+    const canShareLink = isAdmin()
+      ? draft.mode === 'propria'
+      : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
     const parcialHint = (draft.mode === 'revenda' && draft.paymentMode === 'parcial')
       ? `<p class="hint-inline">Fica devendo: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>`
       : '';
@@ -7387,6 +7400,36 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   // ------- Esteira -------
+
+  function renderSubmittedPublicCarts() {
+    if (!isAdmin()) return '';
+    const carts = (state().saleCarts || []).filter((cart) => cart.status === 'submitted');
+    if (!carts.length) return '';
+
+    const rows = carts.map((cart) => {
+      const items = itemsForCart(cart.id);
+      const itemSummary = items.map((item) => {
+        const product = productById(item.productId);
+        return `${U.escapeHtml(product?.name || 'Produto removido')} × ${U.qty(item.quantity, product?.unit)}`;
+      }).join('<br>');
+      return [
+        U.escapeHtml(cart.customerName || 'Cliente não informado'),
+        U.escapeHtml(cart.customerPhone || '—'),
+        itemSummary || 'Sem itens',
+        UI.moneyCell(cartTotal(items)),
+        (cart.submittedAt || cart.createdAt || '').slice(0, 10),
+        items.length
+          ? `<button type="button" class="small" data-cart-action="convert-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Adicionar à esteira</button>`
+          : `<button type="button" class="small danger" data-cart-action="reject-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Descartar vazio</button>`,
+      ];
+    });
+
+    return UI.section(
+      'Carrinhos recebidos',
+      'Pedidos enviados pelos links públicos. Revise os itens e adicione à esteira para separar e despachar.',
+      UI.table(['Cliente', 'Contato', 'Itens', 'Total', 'Enviado em', ''], rows)
+    );
+  }
 
   function orderGroups() {
     const map = new Map();
@@ -7513,7 +7556,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     let boardFeedback = null;
 
     function paint() {
-      container.innerHTML = [renderBuilder(draft, feedback), renderBoard(boardFeedback)].join('');
+      container.innerHTML = [
+        renderBuilder(draft, feedback),
+        renderSubmittedPublicCarts(),
+        renderBoard(boardFeedback),
+      ].join('');
       const config = container.querySelector('[data-cart-config]');
       if (config) {
         if (config.clientId) config.clientId.value = draft.clientId || '';
@@ -7674,6 +7721,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           resetDraft(draft, true);
           draft.lastLink = publicUrl(cart);
           feedback = { message: 'Link publico criado.', type: 'success' };
+        } else if (action === 'convert-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode converter carrinhos.');
+          await api().convertPublicCartToOrders(button.dataset.cartId);
+          await S().refresh();
+          feedback = { message: 'Carrinho adicionado à esteira.', type: 'success' };
+        } else if (action === 'reject-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode descartar carrinhos.');
+          await S().update('saleCarts', button.dataset.cartId, { status: 'rejected' });
+          feedback = { message: 'Carrinho vazio descartado.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -7929,25 +7985,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   async function registerPayment(sellerId, { amount, method, notes } = {}) {
     const value = U.number(amount);
     if (value <= 0) throw new Error('Informe um valor maior que zero.');
-    const payment = await S().add('sellerPayments', {
+    const api = window.C360.api;
+    if (!api || typeof api.registerSellerPayment !== 'function') {
+      throw new Error('Registro atômico de pagamento indisponível.');
+    }
+    const paymentId = await api.registerSellerPayment({
       sellerId,
       amount: value,
-      paymentDate: U.today(),
       method: method || null,
-      notes: notes || '',
-      receivedBy: user()?.id || null,
-    });
-    await S().add('sellerAccountEntries', {
-      sellerId,
-      type: 'payment',
-      direction: 'credit',
-      amount: value,
-      sourceType: 'seller_payment',
-      sourceId: payment?.id || null,
       notes: notes || '',
     });
     await S().refresh();
-    return payment;
+    return { id: paymentId };
   }
 
   function ownStockRows(sellerId) {
@@ -10718,7 +10767,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         `<div class="actions">
           ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
-          ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
       ];
     });
@@ -11068,7 +11116,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
@@ -11958,9 +12005,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
       if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
-        case 'delete-product':
-          if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
-          break;
         case 'adjust-stock':
           await adjustStock(id);
           break;
@@ -11975,9 +12019,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           await deleteRecord('orders', id);
           break;
         case 'delete-task': await deleteRecord('tasks', id); break;
-        case 'delete-consignment':
-          if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
-          break;
         case 'consign-sell':
           await consignmentSell(id);
           break;
