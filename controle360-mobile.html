@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-BdmF9midKaaEmJWHtPfbILwr89P5AaOueRC06brVYqc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-K0TovXIEsxMIkVAvwwGrv/SKjVm4DHDm9iju9pJ0zKM=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-RP6UOwFeUt0olYS3VNFOGHVUjQuaIOr7cLSS7/g1KM8=' 'sha256-/76dc45oIMU1dLryLSmI4nTgBhM7+ERHW/dM+AGcdcg=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-/0C4GHnjhfBwOJoi9xTmZQqFfz5B/QcDJdGJGtVo1LU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-mkGrbb3nOGj5D9B2NlWgPfPpRL4h7O3ajJL7q8dJXs0=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-3/IGxWLqO9CNfqNdHz010XC2lW1d44sHPlmuvktJfkc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2534,6 +2534,54 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function registerSellerPayment({ sellerId, amount, method, notes }) {
+    return restRequest('/rest/v1/rpc/register_seller_payment', {
+      method: 'POST',
+      body: {
+        p_seller_id: sellerId,
+        p_amount: Number(amount),
+        p_method: method || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleReturn({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_return', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function registerSaleWaste({ saleId, quantity, notes }) {
+    return restRequest('/rest/v1/rpc/register_sale_waste', {
+      method: 'POST',
+      body: {
+        p_sale_id: saleId,
+        p_quantity: Number(quantity),
+        p_notes: notes || '',
+      },
+    });
+  }
+
+  async function convertPublicCartToOrders(cartId) {
+    return restRequest('/rest/v1/rpc/convert_public_cart_to_orders', {
+      method: 'POST',
+      body: { p_cart_id: cartId },
+    });
+  }
+
+  async function advanceOrderGroup(groupId, newStatus) {
+    return restRequest('/rest/v1/rpc/advance_order_group', {
+      method: 'POST',
+      body: { p_group_id: groupId, p_new_status: newStatus },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -2691,6 +2739,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     consumeSellerStock,
     adjustOwnStock,
     registerPurchaseGroup,
+    registerSellerPayment,
+    registerSaleReturn,
+    registerSaleWaste,
+    convertPublicCartToOrders,
+    advanceOrderGroup,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
@@ -4863,6 +4916,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return window.C360.calc || null;
   }
 
+  function api() {
+    return window.C360.api || null;
+  }
+
+  function alreadyReturned(saleId) {
+    if (!hasState('getState')) return 0;
+    return (stateApi().getState().sales || [])
+      .filter((entry) => String(entry.parentSaleId) === String(saleId) && entry.origin === 'devolucao')
+      .reduce((sum, entry) => sum + Math.abs(U.number(entry.quantity)), 0);
+  }
+
   // ---------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------
@@ -5011,63 +5075,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (maxQty > 0 && qty > maxQty) {
-        return { ok: false, error: `Quantidade não pode ser maior que a vendida (${maxQty}).` };
+      const available = Math.max(maxQty - alreadyReturned(sale.id), 0);
+      if (maxQty > 0 && qty > available) {
+        return { ok: false, error: `Quantidade não pode ser maior que o saldo devolvível (${available}).` };
       }
-      if (!hasState('add')) return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
-
-      let money = { grossRevenue: -qty * U.number(sale.unitPrice), netRevenue: -qty * U.number(sale.unitPrice), cogs: -qty * U.number(sale.unitCost), grossProfit: 0, percentFees: 0, margin: 0 };
-      if (calc() && typeof calc().saleMath === 'function') {
-        money = calc().saleMath({
-          quantity: -qty,
-          unitPrice: sale.unitPrice,
-          discount: 0,
-          fixedFees: 0,
-          feePercent: 0,
-          unitCost: sale.unitCost,
-        });
+      if (!api() || typeof api().registerSaleReturn !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DEVOLUCAO };
       }
 
-      const salePayload = {
-        businessId: sale.businessId,
-        productId: sale.productId,
-        clientId: sale.clientId,
-        sellerId: sale.sellerId,
-        quantity: -qty,
-        unitPrice: sale.unitPrice,
-        unitCost: sale.unitCost,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        percentFees: money.percentFees,
-        grossRevenue: money.grossRevenue,
-        netRevenue: money.netRevenue,
-        cogs: money.cogs,
-        grossProfit: money.grossProfit,
-        margin: money.margin,
-        parentSaleId: sale.id,
-        origin: 'devolucao',
-        date: U.today(),
+      const saleId = await api().registerSaleReturn({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-      };
-
-      const saleRecord = await stateApi().add('sales', salePayload);
-
-      let movement = null;
-      if (hasState('recordMovement')) {
-        movement = await stateApi().recordMovement({
-          type: 'entrada_devolucao_venda',
-          productId: sale.productId,
-          quantity: qty,
-          unitCost: sale.unitCost,
-          refType: 'sale',
-          refId: sale.id,
-          notes: notes || '',
-          date: U.today(),
-        });
-      }
-
-      return { ok: true, saleRecord, movement };
+      });
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, saleRecord: { id: saleId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDevolucao', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DEVOLUCAO };
@@ -5082,20 +5104,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const qty = U.number(quantity);
       if (!sale || !sale.id) return { ok: false, error: 'Venda inválida.' };
       if (qty <= 0) return { ok: false, error: 'Informe uma quantidade maior que zero.' };
-      if (!hasState('recordMovement')) return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      if (!api() || typeof api().registerSaleWaste !== 'function') {
+        return { ok: false, error: FALLBACK_ERROR_DESPERDICIO };
+      }
 
-      const movement = await stateApi().recordMovement({
-        type: 'saida_desperdicio',
-        productId: sale.productId,
-        quantity: -qty,
-        unitCost: sale.unitCost,
-        refType: 'sale',
-        refId: sale.id,
+      const movementId = await api().registerSaleWaste({
+        saleId: sale.id,
+        quantity: qty,
         notes: notes || '',
-        date: U.today(),
       });
-
-      return { ok: true, movement };
+      if (hasState('refresh')) await stateApi().refresh();
+      return { ok: true, movement: { id: movementId } };
     } catch (error) {
       console.error('C360.returns: erro em recordDesperdicio', error);
       return { ok: false, error: error?.message || FALLBACK_ERROR_DESPERDICIO };
@@ -6819,57 +6838,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
   // =====================================================================
 
-  async function addToSellerStock(sellerId, productId, quantity) {
-    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
-    const nextQuantity = U.number(current?.quantity) + U.number(quantity);
-    if (current) await S().update('sellerStock', current.id, { quantity: nextQuantity });
-    else await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
-  }
-
-  // Transfere estoque central -> estoque do vendedor, criando consignments +
-  // stock_movements + seller_stock. Devolve o consignment criado (usado como
-  // marcador de "ja materializado" no pedido). amountPaid = fatia ja quitada.
-  async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, amountPaid = 0, groupId, note }) {
-    const product = productById(productId);
-    const qty = U.number(quantity);
-    if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
-    if (product.type === 'servico') throw new Error('Servico nao pode ser enviado ao revendedor.');
-    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
-    if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para despachar.`);
-
-    await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
-    await S().recordMovement({
-      date: U.today(),
-      type: 'saida_envio_consignado',
-      productId: product.id,
-      quantity: -qty,
-      unitCost: U.number(product.avgCost),
-      totalCost: -(qty * U.number(product.avgCost)),
-      notes: note || `Despacho ao vendedor ${sellerName(sellerId)}`,
-    });
-    await addToSellerStock(sellerId, product.id, qty);
-    const paid = U.number(amountPaid);
-    const consignment = await S().add('consignments', {
-      sellerId,
-      clientId: null,
-      productId: product.id,
-      quantitySent: qty,
-      quantitySold: 0,
-      quantityReturned: 0,
-      unitPrice,
-      costAtSend: U.number(product.avgCost),
-      amountPaid: paid,
-      status: 'com_cliente',
-      date: U.today(),
-      notes: `Revenda despachada${groupId ? ` (pedido ${groupId})` : ''}`,
-    });
-    if (consignment && consignment.id) {
-      await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'envio', date: U.today(), quantity: qty, amount: 0 });
-      if (paid > 0) await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'pagamento', date: U.today(), quantity: 0, amount: paid });
-    }
-    return consignment;
-  }
-
   function saleMathForCart({ quantity, unitPrice, unitCost }) {
     if (Calc && typeof Calc.saleMath === 'function') {
       return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
@@ -7038,9 +7006,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // pedido fica APROVADO (mesmo antes de montar/despachar), não mais só no
   // despacho. syncOrderDebt é a ÚNICA porta de entrada para isso: idempotente
   // (calcula o líquido já lançado e só posta a diferença), então é seguro
-  // chamar em qualquer ponto de transição — aprovação, edição de qtd/preço, e
-  // como rede de segurança dentro de materializeOrder — sem nunca cobrar duas
-  // vezes. sourceType 'order'/'order_edit' marcam os lançamentos que entram
+  // chamar na criação, aprovação e edição sem nunca cobrar duas vezes. O RPC
+  // atômico de despacho repete essa conferência como rede de segurança.
+  // sourceType 'order'/'order_edit' marcam os lançamentos que entram
   // nesse cálculo; 'order_cancel' (reverseOrderDebt) fica de fora de propósito
   // para não anular o próprio estorno num recálculo seguinte.
   function postedOrderDebt(orderId) {
@@ -7084,45 +7052,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
-  // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
-  // A dívida de revenda NÃO nasce mais aqui (ver syncOrderDebt) — despacho só
-  // move estoque físico e cria o consignment; syncOrderDebt é chamado no fim
-  // apenas como rede de segurança (idempotente, não cobra de novo).
-  async function materializeOrder(order) {
-    if (order.convertedSaleId) return;
-    const quantity = U.number(order.quantity);
-    const unitPrice = U.number(order.unitPrice);
-    if (order.saleType === 'revenda') {
-      const paid = Math.min(U.number(order.paidAmount), quantity * unitPrice);
-      const consignment = await transferAdminStockToSeller({
-        sellerId: order.sellerId,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        amountPaid: paid,
-        groupId: order.orderGroupId || order.id,
-        note: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) para ${sellerName(order.sellerId)}`,
-      });
-      await syncOrderDebt(order);
-      await S().update('orders', order.id, { convertedSaleId: (consignment && consignment.id) || order.id });
-    } else {
-      // Venda minha (cliente final): baixa estoque central + CMV/lucro.
-      const sale = await window.C360.app.addSale({
-        date: U.today(),
-        channel: 'Pedido',
-        clientId: order.clientId || null,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        notes: `Venda despachada - pedido ${order.orderGroupId || order.id}${order.notes ? ` - ${order.notes}` : ''}`,
-      }, { origin: 'pedido', originId: order.id });
-      await S().update('orders', order.id, { convertedSaleId: sale.id });
-    }
-  }
-
   function ordersInGroup(groupId) {
     return (state().orders || []).filter((order) => String(order.orderGroupId || order.id) === String(groupId));
   }
@@ -7134,38 +7063,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (orders.some((order) => order.approvalStatus === 'pendente_aprovacao')) {
       throw new Error('Aprove o pedido antes de avancar o status.');
     }
-    // Despacho/conclusao materializam a venda (estoque + financeiro).
-    if (newStatus === 'despachado' || newStatus === 'concluido') {
-      // Pré-checagem de estoque de TODAS as linhas antes de mexer em qualquer
-      // uma. Bug real encontrado: sem isto, um pedido com vários itens
-      // processava um a um — se o 3º item não tivesse estoque, os 2 primeiros
-      // já tinham baixado estoque/gerado consignação, mas a função quebrava
-      // antes de atualizar o status do grupo. O card ficava preso na coluna
-      // antiga (parecia travado/bugado) escondendo que metade já tinha sido
-      // processada. Validando tudo antes, o despacho é tudo-ou-nada.
-      const shortages = [];
-      orders.forEach((order) => {
-        if (order.convertedSaleId) return;
-        const product = productById(order.productId);
-        if (!product) { shortages.push('Um produto do pedido não foi encontrado no estoque.'); return; }
-        if (product.type === 'servico') return;
-        const missing = U.number(order.quantity) - U.number(product.currentStock);
-        if (missing > 0) {
-          shortages.push(`${product.name}: faltam ${U.qty(missing, product.unit)} (estoque atual ${U.qty(product.currentStock, product.unit)}, pedido pede ${U.qty(order.quantity, product.unit)}).`);
-        }
-      });
-      if (shortages.length) {
-        throw new Error(`Não é possível despachar — estoque insuficiente: ${shortages.join(' ')}`);
-      }
-      for (const order of orders) {
-        // eslint-disable-next-line no-await-in-loop
-        if (!order.convertedSaleId) await materializeOrder(order);
-      }
-    }
-    for (const order of orders) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().update('orders', order.id, { status: newStatus });
-    }
+    // A transição inteira roda dentro de UMA transação no Postgres. Isso evita
+    // o estado antigo em que estoque/consignação eram gravados, mas a FK do
+    // pedido falhava depois e deixava o card parado (e duplicava na tentativa).
+    await api().advanceOrderGroup(groupId, newStatus);
     await S().refresh();
   }
 
@@ -7185,7 +7086,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function cancelGroup(groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) {
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
       throw new Error('Este pedido ja foi despachado. Use Devolucao/Desperdicio para reverter.');
     }
     // Estorna a dívida já lançada na aprovação antes de excluir os pedidos —
@@ -7204,7 +7105,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function saveGroupEdit(container, groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) throw new Error('Pedido ja despachado nao pode ser editado.');
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
+      throw new Error('Pedido ja despachado nao pode ser editado.');
+    }
     for (const order of orders) {
       const qtyInput = container.querySelector(`[data-edit-qty="${CSS.escape(order.id)}"]`);
       const priceInput = container.querySelector(`[data-edit-price="${CSS.escape(order.id)}"]`);
@@ -7322,7 +7225,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
-    const canShareLink = isAdmin() ? false : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
+    const canShareLink = isAdmin()
+      ? draft.mode === 'propria'
+      : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
     const parcialHint = (draft.mode === 'revenda' && draft.paymentMode === 'parcial')
       ? `<p class="hint-inline">Fica devendo: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>`
       : '';
@@ -7388,6 +7293,36 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   // ------- Esteira -------
 
+  function renderSubmittedPublicCarts() {
+    if (!isAdmin()) return '';
+    const carts = (state().saleCarts || []).filter((cart) => cart.status === 'submitted');
+    if (!carts.length) return '';
+
+    const rows = carts.map((cart) => {
+      const items = itemsForCart(cart.id);
+      const itemSummary = items.map((item) => {
+        const product = productById(item.productId);
+        return `${U.escapeHtml(product?.name || 'Produto removido')} × ${U.qty(item.quantity, product?.unit)}`;
+      }).join('<br>');
+      return [
+        U.escapeHtml(cart.customerName || 'Cliente não informado'),
+        U.escapeHtml(cart.customerPhone || '—'),
+        itemSummary || 'Sem itens',
+        UI.moneyCell(cartTotal(items)),
+        (cart.submittedAt || cart.createdAt || '').slice(0, 10),
+        items.length
+          ? `<button type="button" class="small" data-cart-action="convert-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Adicionar à esteira</button>`
+          : `<button type="button" class="small danger" data-cart-action="reject-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Descartar vazio</button>`,
+      ];
+    });
+
+    return UI.section(
+      'Carrinhos recebidos',
+      'Pedidos enviados pelos links públicos. Revise os itens e adicione à esteira para separar e despachar.',
+      UI.table(['Cliente', 'Contato', 'Itens', 'Total', 'Enviado em', ''], rows)
+    );
+  }
+
   function orderGroups() {
     const map = new Map();
     (state().orders || []).forEach((order) => {
@@ -7407,7 +7342,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         sellerId: first.sellerId,
         clientId: first.clientId,
         total: rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0),
-        materialized: rows.some((order) => order.convertedSaleId),
+        materialized: rows.some((order) => order.convertedSaleId || order.convertedConsignmentId),
       };
     });
   }
@@ -7513,7 +7448,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     let boardFeedback = null;
 
     function paint() {
-      container.innerHTML = [renderBuilder(draft, feedback), renderBoard(boardFeedback)].join('');
+      container.innerHTML = [
+        renderBuilder(draft, feedback),
+        renderSubmittedPublicCarts(),
+        renderBoard(boardFeedback),
+      ].join('');
       const config = container.querySelector('[data-cart-config]');
       if (config) {
         if (config.clientId) config.clientId.value = draft.clientId || '';
@@ -7674,6 +7613,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           resetDraft(draft, true);
           draft.lastLink = publicUrl(cart);
           feedback = { message: 'Link publico criado.', type: 'success' };
+        } else if (action === 'convert-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode converter carrinhos.');
+          await api().convertPublicCartToOrders(button.dataset.cartId);
+          await S().refresh();
+          feedback = { message: 'Carrinho adicionado à esteira.', type: 'success' };
+        } else if (action === 'reject-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode descartar carrinhos.');
+          await S().update('saleCarts', button.dataset.cartId, { status: 'rejected' });
+          feedback = { message: 'Carrinho vazio descartado.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
@@ -7929,25 +7877,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   async function registerPayment(sellerId, { amount, method, notes } = {}) {
     const value = U.number(amount);
     if (value <= 0) throw new Error('Informe um valor maior que zero.');
-    const payment = await S().add('sellerPayments', {
+    const api = window.C360.api;
+    if (!api || typeof api.registerSellerPayment !== 'function') {
+      throw new Error('Registro atômico de pagamento indisponível.');
+    }
+    const paymentId = await api.registerSellerPayment({
       sellerId,
       amount: value,
-      paymentDate: U.today(),
       method: method || null,
-      notes: notes || '',
-      receivedBy: user()?.id || null,
-    });
-    await S().add('sellerAccountEntries', {
-      sellerId,
-      type: 'payment',
-      direction: 'credit',
-      amount: value,
-      sourceType: 'seller_payment',
-      sourceId: payment?.id || null,
       notes: notes || '',
     });
     await S().refresh();
-    return payment;
+    return { id: paymentId };
   }
 
   function ownStockRows(sellerId) {
@@ -9636,7 +9577,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     feePercent: 'Taxa (%)', grossRevenue: 'Receita bruta', percentFees: 'Taxas percentuais',
     netRevenue: 'Receita líquida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
     origin: 'Origem', originId: 'ID de origem', dueDate: 'Prazo / entrega', status: 'Status',
-    convertedSaleId: 'ID da venda gerada', quantitySent: 'Qtd. enviada',
+    convertedSaleId: 'ID da venda gerada', convertedConsignmentId: 'ID da consignação gerada', quantitySent: 'Qtd. enviada',
     quantitySold: 'Qtd. vendida', quantityReturned: 'Qtd. devolvida',
     amountPaid: 'Valor pago', costAtSend: 'Custo no envio',
     consignmentId: 'ID da consignação', amount: 'Valor', title: 'Título',
@@ -9673,7 +9614,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
-    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
+    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
@@ -10718,7 +10659,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         `<div class="actions">
           ${UI.actionButton('edit-product', product.id, 'Editar')}
           ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
-          ${UI.actionButton('delete-product', product.id, 'Excluir', 'danger')}
         </div>`,
       ];
     });
@@ -11068,7 +11008,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
           ${UI.actionButton('consign-return', item.id, 'Devolver')}
           ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-          ${S.isAdmin() ? UI.actionButton('delete-consignment', item.id, 'Excluir', 'danger') : ''}
         </div>`,
       ];
     });
@@ -11958,9 +11897,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
       if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
-        case 'delete-product':
-          if (confirm('Excluir produto? As movimentações antigas ficam no histórico com item removido.')) await deleteRecord('products', id);
-          break;
         case 'adjust-stock':
           await adjustStock(id);
           break;
@@ -11975,9 +11911,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           await deleteRecord('orders', id);
           break;
         case 'delete-task': await deleteRecord('tasks', id); break;
-        case 'delete-consignment':
-          if (confirm('Excluir consignação? Isso não desfaz estoque automaticamente. Use apenas para correção manual/revisão.')) await deleteRecord('consignments', id);
-          break;
         case 'consign-sell':
           await consignmentSell(id);
           break;

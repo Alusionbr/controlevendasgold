@@ -63,25 +63,18 @@
   async function registerPayment(sellerId, { amount, method, notes } = {}) {
     const value = U.number(amount);
     if (value <= 0) throw new Error('Informe um valor maior que zero.');
-    const payment = await S().add('sellerPayments', {
+    const api = window.C360.api;
+    if (!api || typeof api.registerSellerPayment !== 'function') {
+      throw new Error('Registro atômico de pagamento indisponível.');
+    }
+    const paymentId = await api.registerSellerPayment({
       sellerId,
       amount: value,
-      paymentDate: U.today(),
       method: method || null,
-      notes: notes || '',
-      receivedBy: user()?.id || null,
-    });
-    await S().add('sellerAccountEntries', {
-      sellerId,
-      type: 'payment',
-      direction: 'credit',
-      amount: value,
-      sourceType: 'seller_payment',
-      sourceId: payment?.id || null,
       notes: notes || '',
     });
     await S().refresh();
-    return payment;
+    return { id: paymentId };
   }
 
   function ownStockRows(sellerId) {

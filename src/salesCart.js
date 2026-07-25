@@ -175,57 +175,6 @@
   // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
   // =====================================================================
 
-  async function addToSellerStock(sellerId, productId, quantity) {
-    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
-    const nextQuantity = U.number(current?.quantity) + U.number(quantity);
-    if (current) await S().update('sellerStock', current.id, { quantity: nextQuantity });
-    else await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
-  }
-
-  // Transfere estoque central -> estoque do vendedor, criando consignments +
-  // stock_movements + seller_stock. Devolve o consignment criado (usado como
-  // marcador de "ja materializado" no pedido). amountPaid = fatia ja quitada.
-  async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, amountPaid = 0, groupId, note }) {
-    const product = productById(productId);
-    const qty = U.number(quantity);
-    if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
-    if (product.type === 'servico') throw new Error('Servico nao pode ser enviado ao revendedor.');
-    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
-    if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para despachar.`);
-
-    await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
-    await S().recordMovement({
-      date: U.today(),
-      type: 'saida_envio_consignado',
-      productId: product.id,
-      quantity: -qty,
-      unitCost: U.number(product.avgCost),
-      totalCost: -(qty * U.number(product.avgCost)),
-      notes: note || `Despacho ao vendedor ${sellerName(sellerId)}`,
-    });
-    await addToSellerStock(sellerId, product.id, qty);
-    const paid = U.number(amountPaid);
-    const consignment = await S().add('consignments', {
-      sellerId,
-      clientId: null,
-      productId: product.id,
-      quantitySent: qty,
-      quantitySold: 0,
-      quantityReturned: 0,
-      unitPrice,
-      costAtSend: U.number(product.avgCost),
-      amountPaid: paid,
-      status: 'com_cliente',
-      date: U.today(),
-      notes: `Revenda despachada${groupId ? ` (pedido ${groupId})` : ''}`,
-    });
-    if (consignment && consignment.id) {
-      await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'envio', date: U.today(), quantity: qty, amount: 0 });
-      if (paid > 0) await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'pagamento', date: U.today(), quantity: 0, amount: paid });
-    }
-    return consignment;
-  }
-
   function saleMathForCart({ quantity, unitPrice, unitCost }) {
     if (Calc && typeof Calc.saleMath === 'function') {
       return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
@@ -394,9 +343,9 @@
   // pedido fica APROVADO (mesmo antes de montar/despachar), não mais só no
   // despacho. syncOrderDebt é a ÚNICA porta de entrada para isso: idempotente
   // (calcula o líquido já lançado e só posta a diferença), então é seguro
-  // chamar em qualquer ponto de transição — aprovação, edição de qtd/preço, e
-  // como rede de segurança dentro de materializeOrder — sem nunca cobrar duas
-  // vezes. sourceType 'order'/'order_edit' marcam os lançamentos que entram
+  // chamar na criação, aprovação e edição sem nunca cobrar duas vezes. O RPC
+  // atômico de despacho repete essa conferência como rede de segurança.
+  // sourceType 'order'/'order_edit' marcam os lançamentos que entram
   // nesse cálculo; 'order_cancel' (reverseOrderDebt) fica de fora de propósito
   // para não anular o próprio estorno num recálculo seguinte.
   function postedOrderDebt(orderId) {
@@ -440,45 +389,6 @@
     });
   }
 
-  // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
-  // A dívida de revenda NÃO nasce mais aqui (ver syncOrderDebt) — despacho só
-  // move estoque físico e cria o consignment; syncOrderDebt é chamado no fim
-  // apenas como rede de segurança (idempotente, não cobra de novo).
-  async function materializeOrder(order) {
-    if (order.convertedSaleId) return;
-    const quantity = U.number(order.quantity);
-    const unitPrice = U.number(order.unitPrice);
-    if (order.saleType === 'revenda') {
-      const paid = Math.min(U.number(order.paidAmount), quantity * unitPrice);
-      const consignment = await transferAdminStockToSeller({
-        sellerId: order.sellerId,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        amountPaid: paid,
-        groupId: order.orderGroupId || order.id,
-        note: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) para ${sellerName(order.sellerId)}`,
-      });
-      await syncOrderDebt(order);
-      await S().update('orders', order.id, { convertedSaleId: (consignment && consignment.id) || order.id });
-    } else {
-      // Venda minha (cliente final): baixa estoque central + CMV/lucro.
-      const sale = await window.C360.app.addSale({
-        date: U.today(),
-        channel: 'Pedido',
-        clientId: order.clientId || null,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        notes: `Venda despachada - pedido ${order.orderGroupId || order.id}${order.notes ? ` - ${order.notes}` : ''}`,
-      }, { origin: 'pedido', originId: order.id });
-      await S().update('orders', order.id, { convertedSaleId: sale.id });
-    }
-  }
-
   function ordersInGroup(groupId) {
     return (state().orders || []).filter((order) => String(order.orderGroupId || order.id) === String(groupId));
   }
@@ -490,38 +400,10 @@
     if (orders.some((order) => order.approvalStatus === 'pendente_aprovacao')) {
       throw new Error('Aprove o pedido antes de avancar o status.');
     }
-    // Despacho/conclusao materializam a venda (estoque + financeiro).
-    if (newStatus === 'despachado' || newStatus === 'concluido') {
-      // Pré-checagem de estoque de TODAS as linhas antes de mexer em qualquer
-      // uma. Bug real encontrado: sem isto, um pedido com vários itens
-      // processava um a um — se o 3º item não tivesse estoque, os 2 primeiros
-      // já tinham baixado estoque/gerado consignação, mas a função quebrava
-      // antes de atualizar o status do grupo. O card ficava preso na coluna
-      // antiga (parecia travado/bugado) escondendo que metade já tinha sido
-      // processada. Validando tudo antes, o despacho é tudo-ou-nada.
-      const shortages = [];
-      orders.forEach((order) => {
-        if (order.convertedSaleId) return;
-        const product = productById(order.productId);
-        if (!product) { shortages.push('Um produto do pedido não foi encontrado no estoque.'); return; }
-        if (product.type === 'servico') return;
-        const missing = U.number(order.quantity) - U.number(product.currentStock);
-        if (missing > 0) {
-          shortages.push(`${product.name}: faltam ${U.qty(missing, product.unit)} (estoque atual ${U.qty(product.currentStock, product.unit)}, pedido pede ${U.qty(order.quantity, product.unit)}).`);
-        }
-      });
-      if (shortages.length) {
-        throw new Error(`Não é possível despachar — estoque insuficiente: ${shortages.join(' ')}`);
-      }
-      for (const order of orders) {
-        // eslint-disable-next-line no-await-in-loop
-        if (!order.convertedSaleId) await materializeOrder(order);
-      }
-    }
-    for (const order of orders) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().update('orders', order.id, { status: newStatus });
-    }
+    // A transição inteira roda dentro de UMA transação no Postgres. Isso evita
+    // o estado antigo em que estoque/consignação eram gravados, mas a FK do
+    // pedido falhava depois e deixava o card parado (e duplicava na tentativa).
+    await api().advanceOrderGroup(groupId, newStatus);
     await S().refresh();
   }
 
@@ -541,7 +423,7 @@
 
   async function cancelGroup(groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) {
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
       throw new Error('Este pedido ja foi despachado. Use Devolucao/Desperdicio para reverter.');
     }
     // Estorna a dívida já lançada na aprovação antes de excluir os pedidos —
@@ -560,7 +442,9 @@
 
   async function saveGroupEdit(container, groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) throw new Error('Pedido ja despachado nao pode ser editado.');
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
+      throw new Error('Pedido ja despachado nao pode ser editado.');
+    }
     for (const order of orders) {
       const qtyInput = container.querySelector(`[data-edit-qty="${CSS.escape(order.id)}"]`);
       const priceInput = container.querySelector(`[data-edit-price="${CSS.escape(order.id)}"]`);
@@ -678,7 +562,9 @@
     const linkHint = draft.lastLink
       ? `<div class="notice success"><strong>Link criado:</strong><br><input readonly value="${U.escapeHtml(draft.lastLink)}" onfocus="this.select()"></div>`
       : '';
-    const canShareLink = isAdmin() ? false : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
+    const canShareLink = isAdmin()
+      ? draft.mode === 'propria'
+      : (settingForSeller(user()?.id).allowPublicCartLinks && draft.mode === 'own');
     const parcialHint = (draft.mode === 'revenda' && draft.paymentMode === 'parcial')
       ? `<p class="hint-inline">Fica devendo: <strong>${U.money(Math.max(cartTotal(draft.items) - U.number(draft.paidInitialAmount), 0))}</strong></p>`
       : '';
@@ -744,6 +630,36 @@
 
   // ------- Esteira -------
 
+  function renderSubmittedPublicCarts() {
+    if (!isAdmin()) return '';
+    const carts = (state().saleCarts || []).filter((cart) => cart.status === 'submitted');
+    if (!carts.length) return '';
+
+    const rows = carts.map((cart) => {
+      const items = itemsForCart(cart.id);
+      const itemSummary = items.map((item) => {
+        const product = productById(item.productId);
+        return `${U.escapeHtml(product?.name || 'Produto removido')} × ${U.qty(item.quantity, product?.unit)}`;
+      }).join('<br>');
+      return [
+        U.escapeHtml(cart.customerName || 'Cliente não informado'),
+        U.escapeHtml(cart.customerPhone || '—'),
+        itemSummary || 'Sem itens',
+        UI.moneyCell(cartTotal(items)),
+        (cart.submittedAt || cart.createdAt || '').slice(0, 10),
+        items.length
+          ? `<button type="button" class="small" data-cart-action="convert-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Adicionar à esteira</button>`
+          : `<button type="button" class="small danger" data-cart-action="reject-public-cart" data-cart-id="${U.escapeHtml(cart.id)}">Descartar vazio</button>`,
+      ];
+    });
+
+    return UI.section(
+      'Carrinhos recebidos',
+      'Pedidos enviados pelos links públicos. Revise os itens e adicione à esteira para separar e despachar.',
+      UI.table(['Cliente', 'Contato', 'Itens', 'Total', 'Enviado em', ''], rows)
+    );
+  }
+
   function orderGroups() {
     const map = new Map();
     (state().orders || []).forEach((order) => {
@@ -763,7 +679,7 @@
         sellerId: first.sellerId,
         clientId: first.clientId,
         total: rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0),
-        materialized: rows.some((order) => order.convertedSaleId),
+        materialized: rows.some((order) => order.convertedSaleId || order.convertedConsignmentId),
       };
     });
   }
@@ -869,7 +785,11 @@
     let boardFeedback = null;
 
     function paint() {
-      container.innerHTML = [renderBuilder(draft, feedback), renderBoard(boardFeedback)].join('');
+      container.innerHTML = [
+        renderBuilder(draft, feedback),
+        renderSubmittedPublicCarts(),
+        renderBoard(boardFeedback),
+      ].join('');
       const config = container.querySelector('[data-cart-config]');
       if (config) {
         if (config.clientId) config.clientId.value = draft.clientId || '';
@@ -1030,6 +950,15 @@
           resetDraft(draft, true);
           draft.lastLink = publicUrl(cart);
           feedback = { message: 'Link publico criado.', type: 'success' };
+        } else if (action === 'convert-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode converter carrinhos.');
+          await api().convertPublicCartToOrders(button.dataset.cartId);
+          await S().refresh();
+          feedback = { message: 'Carrinho adicionado à esteira.', type: 'success' };
+        } else if (action === 'reject-public-cart') {
+          if (!isAdmin()) throw new Error('Somente o administrador pode descartar carrinhos.');
+          await S().update('saleCarts', button.dataset.cartId, { status: 'rejected' });
+          feedback = { message: 'Carrinho vazio descartado.', type: 'success' };
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
