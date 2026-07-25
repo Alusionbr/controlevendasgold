@@ -26,7 +26,7 @@
     feePercent: 'Taxa (%)', grossRevenue: 'Receita bruta', percentFees: 'Taxas percentuais',
     netRevenue: 'Receita líquida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
     origin: 'Origem', originId: 'ID de origem', dueDate: 'Prazo / entrega', status: 'Status',
-    convertedSaleId: 'ID da venda gerada', quantitySent: 'Qtd. enviada',
+    convertedSaleId: 'ID da venda gerada', convertedConsignmentId: 'ID da consignação gerada', quantitySent: 'Qtd. enviada',
     quantitySold: 'Qtd. vendida', quantityReturned: 'Qtd. devolvida',
     amountPaid: 'Valor pago', costAtSend: 'Custo no envio',
     consignmentId: 'ID da consignação', amount: 'Valor', title: 'Título',
@@ -63,7 +63,7 @@
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
-    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
+    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
@@ -379,4 +379,3 @@
     importJson,
   };
 })();
-

@@ -393,6 +393,13 @@
     });
   }
 
+  async function advanceOrderGroup(groupId, newStatus) {
+    return restRequest('/rest/v1/rpc/advance_order_group', {
+      method: 'POST',
+      body: { p_group_id: groupId, p_new_status: newStatus },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -554,6 +561,7 @@
     registerSaleReturn,
     registerSaleWaste,
     convertPublicCartToOrders,
+    advanceOrderGroup,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,

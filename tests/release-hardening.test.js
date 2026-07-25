@@ -120,7 +120,7 @@ test('desperdício usa RPC atômica e atualiza o cache remoto', async () => {
   assert.equal(refreshes, 1);
 });
 
-test('API envia as quatro operações críticas para RPCs dedicadas', async () => {
+test('API envia as operações críticas para RPCs dedicadas', async () => {
   const requests = [];
   const fetch = async (url, options = {}) => {
     requests.push({ url, options });
@@ -136,6 +136,7 @@ test('API envia as quatro operações críticas para RPCs dedicadas', async () =
   await c360.api.registerSaleReturn({ saleId: 'sale-1', quantity: 2, notes: 'troca' });
   await c360.api.registerSaleWaste({ saleId: 'sale-1', quantity: 1, notes: 'avaria' });
   await c360.api.convertPublicCartToOrders('cart-1');
+  await c360.api.advanceOrderGroup('group-1', 'despachado');
 
   assert.deepEqual(
     requests.map((request) => new URL(request.url).pathname),
@@ -144,6 +145,7 @@ test('API envia as quatro operações críticas para RPCs dedicadas', async () =
       '/rest/v1/rpc/register_sale_return',
       '/rest/v1/rpc/register_sale_waste',
       '/rest/v1/rpc/convert_public_cart_to_orders',
+      '/rest/v1/rpc/advance_order_group',
     ]
   );
   assert.deepEqual(
@@ -153,8 +155,27 @@ test('API envia as quatro operações críticas para RPCs dedicadas', async () =
       { p_sale_id: 'sale-1', p_quantity: 2, p_notes: 'troca' },
       { p_sale_id: 'sale-1', p_quantity: 1, p_notes: 'avaria' },
       { p_cart_id: 'cart-1' },
+      { p_group_id: 'group-1', p_new_status: 'despachado' },
     ]
   );
+});
+
+test('despacho da esteira separa venda de consignação e é atômico', () => {
+  const source = read('src/salesCart.js');
+  const sql = read('supabase/migrations/20260725142236_atomic_order_dispatch.sql');
+
+  assert.match(source, /api\(\)\.advanceOrderGroup\(groupId, newStatus\)/);
+  assert.doesNotMatch(source, /convertedSaleId:\s*\(consignment/);
+  assert.match(source, /order\.convertedSaleId \|\| order\.convertedConsignmentId/);
+
+  assert.match(sql, /add column if not exists converted_consignment_id uuid/);
+  assert.match(sql, /references public\.consignments\(id\)/);
+  assert.match(sql, /create or replace function public\.advance_order_group/);
+  assert.match(sql, /security invoker/);
+  assert.match(sql, /for update/);
+  assert.match(sql, /set converted_consignment_id = v_consignment_id/);
+  assert.match(sql, /set converted_sale_id = v_sale_id/);
+  assert.match(sql, /grant execute on function public\.advance_order_group\(uuid, text\) to authenticated/);
 });
 
 test('histórico não pode mais ser apagado pela interface ou por cascade', () => {

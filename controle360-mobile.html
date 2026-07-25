@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-iKHqkrIfnoLYItUiTnyPey4hdpfETzJo5mJi9b3gtys=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-yoHh8OTkcI0BtnA4rMdVp0sUcqQyLnAsYg8EXwQwuKw=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TKIoyJbZcAbej2AXANOFL28JO2btYBW7J64Tl1t1i8U=' 'sha256-3/IGxWLqO9CNfqNdHz010XC2lW1d44sHPlmuvktJfkc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-mkGrbb3nOGj5D9B2NlWgPfPpRL4h7O3ajJL7q8dJXs0=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-3/IGxWLqO9CNfqNdHz010XC2lW1d44sHPlmuvktJfkc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2575,6 +2575,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function advanceOrderGroup(groupId, newStatus) {
+    return restRequest('/rest/v1/rpc/advance_order_group', {
+      method: 'POST',
+      body: { p_group_id: groupId, p_new_status: newStatus },
+    });
+  }
+
   async function listSellerSettings(params = {}) {
     const query = {};
     if (params.sellerId) query.seller_id = params.sellerId;
@@ -2736,6 +2743,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     registerSaleReturn,
     registerSaleWaste,
     convertPublicCartToOrders,
+    advanceOrderGroup,
     listSellerSettings,
     setSellerSettings,
     listSaleCarts,
@@ -6830,57 +6838,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // so o ponto de disparo). Ver docs/fluxos-operacionais.md Fluxo 15.
   // =====================================================================
 
-  async function addToSellerStock(sellerId, productId, quantity) {
-    const current = (state().sellerStock || []).find((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId));
-    const nextQuantity = U.number(current?.quantity) + U.number(quantity);
-    if (current) await S().update('sellerStock', current.id, { quantity: nextQuantity });
-    else await S().add('sellerStock', { sellerId, productId, quantity: nextQuantity });
-  }
-
-  // Transfere estoque central -> estoque do vendedor, criando consignments +
-  // stock_movements + seller_stock. Devolve o consignment criado (usado como
-  // marcador de "ja materializado" no pedido). amountPaid = fatia ja quitada.
-  async function transferAdminStockToSeller({ sellerId, productId, quantity, unitPrice, amountPaid = 0, groupId, note }) {
-    const product = productById(productId);
-    const qty = U.number(quantity);
-    if (!product) throw new Error('Produto nao encontrado no estoque do admin.');
-    if (product.type === 'servico') throw new Error('Servico nao pode ser enviado ao revendedor.');
-    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
-    if (U.number(product.currentStock) < qty) throw new Error(`${product.name} nao tem estoque suficiente para despachar.`);
-
-    await S().update('products', product.id, { currentStock: U.number(product.currentStock) - qty });
-    await S().recordMovement({
-      date: U.today(),
-      type: 'saida_envio_consignado',
-      productId: product.id,
-      quantity: -qty,
-      unitCost: U.number(product.avgCost),
-      totalCost: -(qty * U.number(product.avgCost)),
-      notes: note || `Despacho ao vendedor ${sellerName(sellerId)}`,
-    });
-    await addToSellerStock(sellerId, product.id, qty);
-    const paid = U.number(amountPaid);
-    const consignment = await S().add('consignments', {
-      sellerId,
-      clientId: null,
-      productId: product.id,
-      quantitySent: qty,
-      quantitySold: 0,
-      quantityReturned: 0,
-      unitPrice,
-      costAtSend: U.number(product.avgCost),
-      amountPaid: paid,
-      status: 'com_cliente',
-      date: U.today(),
-      notes: `Revenda despachada${groupId ? ` (pedido ${groupId})` : ''}`,
-    });
-    if (consignment && consignment.id) {
-      await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'envio', date: U.today(), quantity: qty, amount: 0 });
-      if (paid > 0) await S().add('consignmentEvents', { consignmentId: consignment.id, type: 'pagamento', date: U.today(), quantity: 0, amount: paid });
-    }
-    return consignment;
-  }
-
   function saleMathForCart({ quantity, unitPrice, unitCost }) {
     if (Calc && typeof Calc.saleMath === 'function') {
       return Calc.saleMath({ quantity, unitPrice, discount: 0, fixedFees: 0, feePercent: 0, unitCost });
@@ -7049,9 +7006,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // pedido fica APROVADO (mesmo antes de montar/despachar), não mais só no
   // despacho. syncOrderDebt é a ÚNICA porta de entrada para isso: idempotente
   // (calcula o líquido já lançado e só posta a diferença), então é seguro
-  // chamar em qualquer ponto de transição — aprovação, edição de qtd/preço, e
-  // como rede de segurança dentro de materializeOrder — sem nunca cobrar duas
-  // vezes. sourceType 'order'/'order_edit' marcam os lançamentos que entram
+  // chamar na criação, aprovação e edição sem nunca cobrar duas vezes. O RPC
+  // atômico de despacho repete essa conferência como rede de segurança.
+  // sourceType 'order'/'order_edit' marcam os lançamentos que entram
   // nesse cálculo; 'order_cancel' (reverseOrderDebt) fica de fora de propósito
   // para não anular o próprio estorno num recálculo seguinte.
   function postedOrderDebt(orderId) {
@@ -7095,45 +7052,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
-  // Materializa UMA linha do pedido (idempotente: convertedSaleId marca feito).
-  // A dívida de revenda NÃO nasce mais aqui (ver syncOrderDebt) — despacho só
-  // move estoque físico e cria o consignment; syncOrderDebt é chamado no fim
-  // apenas como rede de segurança (idempotente, não cobra de novo).
-  async function materializeOrder(order) {
-    if (order.convertedSaleId) return;
-    const quantity = U.number(order.quantity);
-    const unitPrice = U.number(order.unitPrice);
-    if (order.saleType === 'revenda') {
-      const paid = Math.min(U.number(order.paidAmount), quantity * unitPrice);
-      const consignment = await transferAdminStockToSeller({
-        sellerId: order.sellerId,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        amountPaid: paid,
-        groupId: order.orderGroupId || order.id,
-        note: `Revenda (${PAYMENT_MODE_LABELS[order.paymentMode] || order.paymentMode}) para ${sellerName(order.sellerId)}`,
-      });
-      await syncOrderDebt(order);
-      await S().update('orders', order.id, { convertedSaleId: (consignment && consignment.id) || order.id });
-    } else {
-      // Venda minha (cliente final): baixa estoque central + CMV/lucro.
-      const sale = await window.C360.app.addSale({
-        date: U.today(),
-        channel: 'Pedido',
-        clientId: order.clientId || null,
-        productId: order.productId,
-        quantity,
-        unitPrice,
-        discount: 0,
-        fixedFees: 0,
-        feePercent: 0,
-        notes: `Venda despachada - pedido ${order.orderGroupId || order.id}${order.notes ? ` - ${order.notes}` : ''}`,
-      }, { origin: 'pedido', originId: order.id });
-      await S().update('orders', order.id, { convertedSaleId: sale.id });
-    }
-  }
-
   function ordersInGroup(groupId) {
     return (state().orders || []).filter((order) => String(order.orderGroupId || order.id) === String(groupId));
   }
@@ -7145,38 +7063,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (orders.some((order) => order.approvalStatus === 'pendente_aprovacao')) {
       throw new Error('Aprove o pedido antes de avancar o status.');
     }
-    // Despacho/conclusao materializam a venda (estoque + financeiro).
-    if (newStatus === 'despachado' || newStatus === 'concluido') {
-      // Pré-checagem de estoque de TODAS as linhas antes de mexer em qualquer
-      // uma. Bug real encontrado: sem isto, um pedido com vários itens
-      // processava um a um — se o 3º item não tivesse estoque, os 2 primeiros
-      // já tinham baixado estoque/gerado consignação, mas a função quebrava
-      // antes de atualizar o status do grupo. O card ficava preso na coluna
-      // antiga (parecia travado/bugado) escondendo que metade já tinha sido
-      // processada. Validando tudo antes, o despacho é tudo-ou-nada.
-      const shortages = [];
-      orders.forEach((order) => {
-        if (order.convertedSaleId) return;
-        const product = productById(order.productId);
-        if (!product) { shortages.push('Um produto do pedido não foi encontrado no estoque.'); return; }
-        if (product.type === 'servico') return;
-        const missing = U.number(order.quantity) - U.number(product.currentStock);
-        if (missing > 0) {
-          shortages.push(`${product.name}: faltam ${U.qty(missing, product.unit)} (estoque atual ${U.qty(product.currentStock, product.unit)}, pedido pede ${U.qty(order.quantity, product.unit)}).`);
-        }
-      });
-      if (shortages.length) {
-        throw new Error(`Não é possível despachar — estoque insuficiente: ${shortages.join(' ')}`);
-      }
-      for (const order of orders) {
-        // eslint-disable-next-line no-await-in-loop
-        if (!order.convertedSaleId) await materializeOrder(order);
-      }
-    }
-    for (const order of orders) {
-      // eslint-disable-next-line no-await-in-loop
-      await S().update('orders', order.id, { status: newStatus });
-    }
+    // A transição inteira roda dentro de UMA transação no Postgres. Isso evita
+    // o estado antigo em que estoque/consignação eram gravados, mas a FK do
+    // pedido falhava depois e deixava o card parado (e duplicava na tentativa).
+    await api().advanceOrderGroup(groupId, newStatus);
     await S().refresh();
   }
 
@@ -7196,7 +7086,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function cancelGroup(groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) {
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
       throw new Error('Este pedido ja foi despachado. Use Devolucao/Desperdicio para reverter.');
     }
     // Estorna a dívida já lançada na aprovação antes de excluir os pedidos —
@@ -7215,7 +7105,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function saveGroupEdit(container, groupId) {
     const orders = ordersInGroup(groupId);
-    if (orders.some((order) => order.convertedSaleId)) throw new Error('Pedido ja despachado nao pode ser editado.');
+    if (orders.some((order) => order.convertedSaleId || order.convertedConsignmentId)) {
+      throw new Error('Pedido ja despachado nao pode ser editado.');
+    }
     for (const order of orders) {
       const qtyInput = container.querySelector(`[data-edit-qty="${CSS.escape(order.id)}"]`);
       const priceInput = container.querySelector(`[data-edit-price="${CSS.escape(order.id)}"]`);
@@ -7450,7 +7342,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         sellerId: first.sellerId,
         clientId: first.clientId,
         total: rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0),
-        materialized: rows.some((order) => order.convertedSaleId),
+        materialized: rows.some((order) => order.convertedSaleId || order.convertedConsignmentId),
       };
     });
   }
@@ -9685,7 +9577,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     feePercent: 'Taxa (%)', grossRevenue: 'Receita bruta', percentFees: 'Taxas percentuais',
     netRevenue: 'Receita líquida', cogs: 'CMV', grossProfit: 'Lucro bruto', margin: 'Margem',
     origin: 'Origem', originId: 'ID de origem', dueDate: 'Prazo / entrega', status: 'Status',
-    convertedSaleId: 'ID da venda gerada', quantitySent: 'Qtd. enviada',
+    convertedSaleId: 'ID da venda gerada', convertedConsignmentId: 'ID da consignação gerada', quantitySent: 'Qtd. enviada',
     quantitySold: 'Qtd. vendida', quantityReturned: 'Qtd. devolvida',
     amountPaid: 'Valor pago', costAtSend: 'Custo no envio',
     consignmentId: 'ID da consignação', amount: 'Valor', title: 'Título',
@@ -9722,7 +9614,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
-    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'createdAt', 'updatedAt'] },
+    { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
