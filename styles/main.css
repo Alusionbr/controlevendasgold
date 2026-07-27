@@ -2002,3 +2002,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     min-width: 0;
   }
 }
+
+/* Correção em massa de custo (aba Produtos): lista só os produtos que têm
+   estoque físico valendo R$ 0, para o admin preencher tudo de uma vez em
+   vez de abrir produto por produto. */
+.missing-cost-panel { border-left: 3px solid var(--warn, #d98324); margin-bottom: 1.25rem; }
+.missing-cost-panel .hint-inline { display: block; margin-bottom: 0.75rem; white-space: normal; }
+.missing-cost-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+.missing-cost-row > span { flex: 1 1 12rem; min-width: 0; font-weight: 600; font-size: 0.85rem; }
+.missing-cost-row > span small { display: block; font-weight: 400; opacity: 0.7; }
+.missing-cost-row > input { flex: 0 1 10rem; }
+.missing-cost-panel button { margin-top: 0.85rem; }

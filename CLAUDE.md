@@ -785,3 +785,69 @@ aba removida, o total agregado aparece corretamente na aba Vendedores,
 "Registrar pagamento" (mesmo `registerPayment` reaproveitado) continua
 funcionando ali, e "Meu saldo com admin" (visão do vendedor) continua
 batendo com o saldo do lado do admin.
+
+---
+
+## Atualização: custo do estoque, consignado no lançamento e bug do `form.id`
+
+Sessão de teste ponta a ponta pedida pelo usuário ("faça um teste completo
+das funcionalidades e corrija todas as falhas"), feita com a skill
+`run-controlevendasgold`.
+
+### Bug do `form.id` (silencioso, atingia 3 telas)
+
+`handleSubmit` (`src/app.js`) fazia `handlers[form.id]`. Todo campo com
+`name` vira propriedade do formulário, então um `<input name="id">` — que
+as telas de edição usam para carregar o registro — **sobrescrevia
+`form.id` com o próprio input**. O lookup falhava, `handleSubmit` caía no
+`if (!handler) return;` e nada acontecia: sem erro, sem fechar o diálogo,
+sem salvar. Atingia **"Editar produto"**, **"Editar cliente"** e **"Baixar
+lançamento financeiro"**. Corrigido usando `form.getAttribute('id')`.
+Ao criar formulário novo com campo `id`, nunca ler `form.id`.
+
+### Custo médio: o estoque valia R$ 0
+
+Só a aba Compras (RPC `register_purchase_group`) alimentava `avg_cost`.
+Cadastro de produto traz "Custo médio inicial" com 0 por padrão,
+"Ajustar estoque" reaproveitava o custo antigo e o editor de produto nem
+expunha o campo. Resultado: quem cadastrava produto e acertava por
+"Ajustar estoque" via o estoque subir mas "Valor em estoque", CMV e lucro
+ficarem zerados. Mudanças:
+
+- `adjustStock` virou diálogo (`openStockAdjust`/`submitStockAdjust`), com
+  quantidade + custo + motivo num formulário só, no lugar de 3 `prompt()`
+  encadeados. Entrada recalcula custo médio ponderado; sem mudança de
+  quantidade dá para corrigir só o custo (caminho para produto já
+  cadastrado errado).
+- Editor de produto ganhou o campo "Custo médio"; alterar gera
+  `stock_movements` `ajuste_manual` com `quantity: 0`.
+- Cadastro com estoque inicial > 0 agora gera movimentação (antes o saldo
+  nascia do nada, contra a regra "estoque nunca sem movimentação") e
+  confirma antes de salvar com estoque > 0 e custo 0.
+- `renderMissingCostPanel` (aba Produtos) corrige em massa todo produto
+  com estoque e custo 0; a tela "Hoje" avisa quando existem.
+
+### Consignado sai do estoque no lançamento
+
+Decisão do usuário. Antes o consignado admin→vendedor só era criado em
+"Despachado"; agora `launchOrderFromCart` e `setGroupApproval` chamam
+`materializeOrder` assim que a revenda fica aprovada. `assertStockForItems`
+(extraída de `advanceOrderGroup`) garante tudo-ou-nada nos três pontos.
+`materializeOrder` continua idempotente por `convertedSaleId`, então
+avançar o card depois não cobra nem baixa estoque de novo. As colunas da
+esteira viraram acompanhamento físico para revenda; venda ao cliente final
+segue baixando só em "Despachado".
+
+Consignação admin→vendedor tem `clientId` nulo e por isso nunca aparecia na
+aba "Consignado" (a tabela filtra por cliente). Adicionada a seção de
+leitura "Consignado com vendedores" com atalho para a aba Vendedores.
+
+### Driver de teste
+
+`.claude/skills/run-controlevendasgold/driver.mjs` deixou de ter um branch
+por tabela: virou store genérico em memória (qualquer `/rest/v1/<table>`
+faz round-trip POST/GET/PATCH/DELETE com filtros `eq.` e `order`), mais os
+RPCs que movem dados (`consume_seller_stock`, `seller_adjust_own_stock`,
+`register_purchase_group`) e o comando `db [tabela]`. Antes, toda tabela
+sem branch respondia `[]` no GET, e um fluxo quebrado ficava
+indistinguível de um fluxo correto.

@@ -464,6 +464,21 @@
       ? `<ul class="today-list">${lowStockProducts.map((product) => `<li><span>${U.escapeHtml(product.name)}</span>${UI.stockCell(product)}</li>`).join('')}</ul>`
       : UI.formNotice('Nenhum produto abaixo do estoque mínimo.', 'success');
 
+    // Estoque sem custo distorce silenciosamente lucro e valor em estoque —
+    // o aviso fica na tela que o usuário abre todo dia, com o atalho para a
+    // correção em massa (aba Produtos).
+    const missingCost = productsMissingCost();
+    const missingCostHtml = missingCost.length
+      ? `<section class="today-section">
+          <h3>Custos faltando</h3>
+          <div class="notice warn">
+            <strong>${missingCost.length} produto${missingCost.length === 1 ? '' : 's'} com estoque e custo R$ 0,00.</strong>
+            Enquanto isso não for preenchido, "Valor em estoque" e o lucro das vendas ficam menores do que a realidade.
+          </div>
+          <div class="quick-actions"><button type="button" class="quick-action" data-tab="produtos">Corrigir custos</button></div>
+        </section>`
+      : '';
+
     return `
       <div class="today-screen">
         <div class="dashboard">
@@ -492,6 +507,8 @@
           <h3>Últimas vendas</h3>
           ${recentSalesHtml}
         </section>
+
+        ${missingCostHtml}
 
         <section class="today-section">
           <h3>${isAdminUser ? 'Estoque crítico' : 'Meu estoque baixo'}</h3>
@@ -730,6 +747,7 @@
     });
 
     return UI.section('Produtos, insumos e embalagens', 'Cadastre matéria-prima, vidro, rótulo, caixa, produto final, kit, mercadoria ou serviço. Não há dados modelo preenchidos.', `
+      ${renderMissingCostPanel()}
       <form id="productForm" class="grid-form">
         <label>Nome
           <input name="name" required placeholder="Ex.: Vidro âmbar 100 ml / Rótulo / Essência pronta">
@@ -1106,7 +1124,7 @@
   }
 
   // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
-  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
+  // revenda é lançado/aprovado na esteira. O acerto continua sendo feito na
   // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
   // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
   // encontrava a tela vazia e concluía que nada tinha sido registrado.
@@ -1127,7 +1145,7 @@
     });
     return `
       <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda é despachada. O acerto (pagamento, devolução) é feito na aba Vendedores.</p>
+      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda é lançada (ou aprovada, se o pedido veio do vendedor). O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
       ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;
@@ -1540,6 +1558,7 @@
         <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
         <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
         <label>Unidade<select name='unit' required>${UI.optionList(state().settings.units, product.unit, '')}</select></label>
+        <label>${UI.fieldLabel('Custo médio', 'custoMedioInicial')}<input name='avgCost' type='number' min='0' step='0.0001' value='${U.escapeHtml(U.number(product.avgCost))}'><span>Compras recalculam sozinhas. Edite só para corrigir um cadastro errado — a alteração fica registrada nas movimentações.</span></label>
         <label>Preço de venda<input name='salePrice' type='number' min='0' step='0.01' value='${U.escapeHtml(product.salePrice || 0)}'></label>
         <label>Piso de preço<input name='priceFloor' type='number' min='0' step='0.01' value='${U.escapeHtml(product.priceFloor ?? '')}'></label>
         <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
@@ -1607,10 +1626,16 @@
 
   async function updateProduct(data) {
     const business = S.activeBusiness();
+    const product = productById(data.id);
+    const previousCost = U.number(product?.avgCost);
+    const nextCost = U.number(data.avgCost);
+    const costChanged = Math.abs(nextCost - previousCost) > 0.000001;
+    if (nextCost < 0) throw new Error('Custo médio não pode ser negativo.');
     await S.update('products', data.id, {
       name: data.name.trim(),
       type: data.type,
       unit: data.unit,
+      avgCost: nextCost,
       salePrice: U.number(data.salePrice),
       priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
       minStock: U.number(data.minStock),
@@ -1618,6 +1643,20 @@
       taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
       notes: data.notes || '',
     });
+    // Mudar o custo médio muda o valor do estoque, então deixa rastro pelo
+    // mesmo caminho de qualquer outra correção manual (quantidade 0: não é
+    // entrada nem saída de mercadoria).
+    if (costChanged && product && product.type !== 'servico') {
+      await S.recordMovement({
+        date: U.today(),
+        type: 'ajuste_manual',
+        productId: data.id,
+        quantity: 0,
+        unitCost: nextCost,
+        totalCost: 0,
+        notes: `Custo médio corrigido de ${U.money(previousCost)} para ${U.money(nextCost)}.`,
+      });
+    }
   }
   async function updateBusiness(data) {
     const business = S.activeBusiness();
@@ -1964,12 +2003,21 @@
     const form = event.target.closest('form');
     if (!form) return;
     event.preventDefault();
+    // getAttribute('id'), nunca form.id: todo campo com `name` vira
+    // propriedade do formulário, então um `<input name="id">` (usado pelas
+    // telas de edição para carregar o registro) sobrescreve `form.id` com o
+    // próprio input. O lookup em `handlers` então falhava em silêncio e
+    // "Editar produto", "Editar cliente" e "Baixar lançamento" não salvavam
+    // nada — sem erro na tela, sem fechar o diálogo.
+    const formId = form.getAttribute('id');
     try {
       const data = U.formData(form);
       const handlers = {
         businessForm: updateBusiness,
         productForm: addProduct,
         productEditForm: updateProduct,
+        stockAdjustForm: submitStockAdjust,
+        missingCostForm: submitMissingCosts,
         clientEditForm: updateClient,
         clientForm: (d) => S.add('clients', { name: d.name.trim(), phone: d.phone || '', type: d.type || 'cliente', notes: d.notes || '' }),
         supplierForm: (d) => S.add('suppliers', { name: d.name.trim(), phone: d.phone || '', notes: d.notes || '' }),
@@ -1984,12 +2032,13 @@
         consignmentForm: addConsignment,
         taskForm: (d) => S.add('tasks', { title: d.title.trim(), dueDate: d.dueDate || null, status: d.status || 'a_fazer', notes: d.notes || '' }),
       };
-      const handler = handlers[form.id];
+      const handler = handlers[formId];
       if (!handler) return;
       await handler(data);
-      if (form.id === 'productEditForm') document.getElementById('productEditor')?.close();
-      if (form.id === 'clientEditForm') document.getElementById('clientEditor')?.close();
-      if (form.id === 'financialPaymentForm') document.getElementById('financialPaymentEditor')?.close();
+      if (formId === 'productEditForm') document.getElementById('productEditor')?.close();
+      if (formId === 'stockAdjustForm') document.getElementById('stockAdjustEditor')?.close();
+      if (formId === 'clientEditForm') document.getElementById('clientEditor')?.close();
+      if (formId === 'financialPaymentForm') document.getElementById('financialPaymentEditor')?.close();
       form.reset();
       renderAll();
     } catch (error) {
@@ -2008,14 +2057,15 @@
       if (action === 'close-client-editor') { document.getElementById('clientEditor')?.close(); return; }
       if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
       if (action === 'go-sellers') { setTab('vendedores'); return; }
+      if (action === 'close-stock-adjust') { document.getElementById('stockAdjustEditor')?.close(); return; }
       if (action === 'financial-pay') { openFinancialPayment(id); return; }
       if (action === 'close-financial-payment') { document.getElementById('financialPaymentEditor')?.close(); return; }
       if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
       if (action === 'financial-restore') { await S.update('financialEntries', id, { status: 'open' }); renderAll(); return; }
       switch (action) {
         case 'adjust-stock':
-          await adjustStock(id);
-          break;
+          openStockAdjust(id);
+          return;
         case 'delete-client': await deleteRecord('clients', id); break;
         case 'delete-supplier': await deleteRecord('suppliers', id); break;
         case 'remove-purchase-draft':
@@ -2125,40 +2175,66 @@
   // e "Ajustar estoque" reaproveitava o custo antigo. O sintoma era o
   // estoque subir na tela mas "Valor em estoque" (e o CMV das vendas
   // seguintes) continuar zerado.
-  async function adjustStock(productId) {
+  function openStockAdjust(productId) {
     const product = productById(productId);
     if (!product) throw new Error('Produto não encontrado.');
     const currentStock = U.number(product.currentStock);
     const currentCost = U.number(product.avgCost);
-    const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(currentStock, product.unit)}`, String(currentStock));
-    if (newQtyText === null) return;
-    const newQty = U.number(newQtyText);
+    document.getElementById('stockAdjustEditor')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'stockAdjustEditor';
+    dialog.className = 'product-editor-dialog';
+    dialog.innerHTML = `
+      <form id="stockAdjustForm" class="stack-form product-editor-form">
+        <header>
+          <div><span>Ajustar estoque</span><h2>${U.escapeHtml(product.name)}</h2></div>
+          <button type="button" class="ghost small" data-action="close-stock-adjust">Fechar</button>
+        </header>
+        <input type="hidden" name="id" value="${U.escapeHtml(product.id)}">
+        <div class="notice">Hoje: <strong>${U.qty(currentStock, product.unit)}</strong> ao custo de <strong>${U.money(currentCost)}</strong> por ${U.escapeHtml(product.unit)}.</div>
+        <label>Estoque correto (contagem física)
+          <input name="newQuantity" type="number" min="0" step="0.001" required value="${U.escapeHtml(currentStock)}">
+        </label>
+        <label>${UI.fieldLabel('Custo por unidade', 'custoMedioInicial')}
+          <input name="unitCost" type="number" min="0" step="0.0001" required value="${U.escapeHtml(currentCost)}">
+          <span>Se o estoque aumentar, este é o custo do que está entrando e o custo médio é recalculado. Sem custo, o produto não entra em "Valor em estoque" nem gera CMV.</span>
+        </label>
+        <label>Motivo do ajuste
+          <input name="reason" required placeholder="Ex.: contagem física, quebra, perda, acerto de cadastro">
+        </label>
+        <footer>
+          <button type="button" class="ghost" data-action="close-stock-adjust">Cancelar</button>
+          <button type="submit">Salvar ajuste</button>
+        </footer>
+      </form>`;
+    dialog.addEventListener('close', () => dialog.remove());
+    document.body.appendChild(dialog);
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  async function submitStockAdjust(data) {
+    const product = productById(data.id);
+    if (!product) throw new Error('Produto não encontrado.');
+    const currentStock = U.number(product.currentStock);
+    const currentCost = U.number(product.avgCost);
+    const newQty = U.number(data.newQuantity);
+    const unitCost = U.number(data.unitCost);
     if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
+    if (unitCost < 0) throw new Error('Custo não pode ser negativo.');
+    const reason = String(data.reason || '').trim();
+    if (!reason) throw new Error('Informe o motivo do ajuste.');
     const diff = newQty - currentStock;
-    // Sem mudança de quantidade só faz sentido continuar se ainda dá para
-    // corrigir o custo — é o caso de quem já cadastrou o produto com estoque
-    // e custo zero e precisa acertar o valor sem inventar movimentação.
-    const costOnly = diff === 0;
-    if (costOnly && currentCost > 0) return;
+    const costChanged = Math.abs(unitCost - currentCost) > 0.000001;
+    if (diff === 0 && !costChanged) throw new Error('Nada mudou: informe uma quantidade ou um custo diferente.');
 
-    const askCost = diff > 0 || costOnly;
-    let unitCost = currentCost;
     const patch = { currentStock: newQty };
-    if (askCost) {
-      const label = costOnly
-        ? `Custo por unidade de "${product.name}"? (usado para calcular valor em estoque, CMV e lucro)`
-        : `Custo por unidade das ${U.qty(diff, product.unit)} que estão entrando?`;
-      const costText = prompt(label, String(currentCost || ''));
-      if (costText === null) return;
-      unitCost = U.number(costText);
-      if (unitCost < 0) throw new Error('Custo não pode ser negativo.');
-      patch.avgCost = costOnly
-        ? unitCost
-        : Calc.weightedAverageCost(currentStock, currentCost, diff, diff * unitCost);
-    }
+    // Entrada usa média ponderada (custo do que entra x o que já havia);
+    // correção sem entrada substitui o custo direto, que é o caso de quem
+    // cadastrou o produto sem custo e só quer acertar o valor.
+    if (diff > 0) patch.avgCost = Calc.weightedAverageCost(currentStock, currentCost, diff, diff * unitCost);
+    else if (costChanged) patch.avgCost = unitCost;
 
-    const reason = prompt('Motivo do ajuste (obrigatório):');
-    if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
     await S.update('products', product.id, patch);
     await S.recordMovement({
       date: U.today(),
@@ -2167,8 +2243,61 @@
       quantity: diff,
       unitCost,
       totalCost: diff * unitCost,
-      notes: reason.trim(),
+      notes: reason,
     });
+  }
+
+  // Produtos com estoque físico valendo R$ 0: enquanto existirem, "Valor em
+  // estoque", CMV e lucro saem menores do que a realidade, sem nada na tela
+  // explicando por quê. Alimenta o aviso da tela "Hoje" e o painel de
+  // correção em massa da aba Produtos.
+  function productsMissingCost() {
+    if (!S.isAdmin()) return [];
+    return currentProducts().filter((product) => product.type !== 'servico'
+      && U.number(product.currentStock) > 0
+      && U.number(product.avgCost) <= 0);
+  }
+
+  function renderMissingCostPanel() {
+    const missing = productsMissingCost();
+    if (!missing.length) return '';
+    const rows = missing.map((product) => `
+      <label class="missing-cost-row">
+        <span>${U.escapeHtml(product.name)} <small>${U.qty(product.currentStock, product.unit)} em estoque</small></span>
+        <input name="cost_${U.escapeHtml(product.id)}" type="number" min="0" step="0.0001" placeholder="Custo por ${U.escapeHtml(product.unit)}">
+      </label>`).join('');
+    return `
+      <form id="missingCostForm" class="panel-card missing-cost-panel">
+        <h3>${missing.length} produto${missing.length === 1 ? '' : 's'} com estoque e custo R$ 0,00</h3>
+        <p class="hint-inline">Enquanto o custo estiver zerado, esse estoque não conta em "Valor em estoque" e as vendas saem com CMV zero (lucro inflado). Preencha o que souber — deixar em branco mantém como está.</p>
+        ${rows}
+        <button type="submit">Salvar custos</button>
+      </form>`;
+  }
+
+  async function submitMissingCosts(data) {
+    const missing = productsMissingCost();
+    const updates = missing
+      .map((product) => ({ product, cost: U.number(data[`cost_${product.id}`]) }))
+      .filter((row) => String(data[`cost_${row.product.id}`] ?? '').trim() !== '' && row.cost > 0);
+    if (!updates.length) throw new Error('Informe o custo de pelo menos um produto.');
+    for (const { product, cost } of updates) {
+      // eslint-disable-next-line no-await-in-loop
+      await S.update('products', product.id, { avgCost: cost });
+      // Correção de valor sem movimentar quantidade: fica registrada com
+      // quantidade 0 para o histórico não perder o "quando/por quê".
+      // eslint-disable-next-line no-await-in-loop
+      await S.recordMovement({
+        date: U.today(),
+        type: 'ajuste_manual',
+        productId: product.id,
+        quantity: 0,
+        unitCost: cost,
+        totalCost: 0,
+        notes: 'Correção de custo médio (produto estava sem custo cadastrado).',
+      });
+    }
+    toast(`${updates.length} custo(s) atualizado(s).`);
   }
 
   function handleCostPreview(event) {
