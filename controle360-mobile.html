@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-g9cRIETm4G18oZ3GcMJDuM7Vs4lmS17CQE55oCbM2+Q=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-VxnCbTGul/00cb4Qhuzx033lxLXSwuierpMUwba/uL0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-g9cRIETm4G18oZ3GcMJDuM7Vs4lmS17CQE55oCbM2+Q=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-PMuzgfMmUYibN3bcEoVAe/L8pOxBr6Ih2o5VkdXE5wI='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -8324,6 +8324,44 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // ---------------------------------------------------------------------
   // Admin — fila de conferência
   // ---------------------------------------------------------------------
+  // Formulário do ADMIN para registrar uma devolução/desperdício/brinde de um
+  // vendedor. Existe porque o painel do vendedor virou somente leitura: a tela
+  // dele diz "Movimentações são registradas pelo administrador", mas o admin
+  // só tinha a fila de conferência — e nada mais alimentava
+  // `operational_movements`, então a fila ficava vazia para sempre e o módulo
+  // inteiro (Fase 4) era inalcançável.
+  function renderAdminEntryForm() {
+    const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    const stockBySeller = (state().sellerStock || []).filter((row) => U.number(row.quantity) > 0);
+    const products = (state().products || []).filter((product) => product.type !== 'servico');
+    return `
+      <form class="grid-form" data-om-admin-form novalidate>
+        <label>Tipo
+          <select name="type">
+            <option value="return">Devolução (volta ao estoque central)</option>
+            <option value="waste">Desperdício</option>
+            <option value="gift">Brinde</option>
+          </select>
+        </label>
+        <label>Vendedor
+          <select name="sellerId">${UI.optionList(sellers, '', 'Estoque do admin')}</select>
+        </label>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantityDeclared" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label class="wide">Motivo
+          <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+        </label>
+        <button type="submit">Registrar para conferência</button>
+        <p class="hint-inline wide">Entra na fila abaixo. Estoque e dívida só mudam quando você confere.
+          ${stockBySeller.length ? '' : ' Nenhum vendedor tem estoque em mãos no momento.'}</p>
+      </form>
+    `;
+  }
+
   function renderAdminQueue(feedback) {
     const pending = (state().operationalMovements || []).filter((movement) => ['a_devolver', 'pending'].includes(movement.status));
     const cards = pending.map((movement) => {
@@ -8355,10 +8393,16 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </article>
       `;
     }).join('');
+    const history = (state().operationalMovements || []).filter((movement) => !['a_devolver', 'pending'].includes(movement.status));
     return UI.section(
       'Devoluções, desperdícios e brindes',
       '"A devolver"/pendente não mexe em estoque nem financeiro até você conferir.',
-      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}<div class="om-admin-list">${cards || '<div class="empty-state"><strong>Nada aguardando conferência.</strong></div>'}</div>`
+      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+       ${renderAdminEntryForm()}
+       <h3>Aguardando conferência</h3>
+       <div class="om-admin-list">${cards || '<div class="empty-state"><strong>Nada aguardando conferência.</strong></div>'}</div>
+       <h3>Já conferido</h3>
+       ${UI.table(['Tipo', 'Status', 'Produto', 'Qtd.', 'Motivo', 'Data'], history.map(movementRow), 'Nenhuma movimentação conferida ainda.')}`
     );
   }
 
@@ -8371,6 +8415,37 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
 
     container.addEventListener('submit', async (event) => {
+      const adminForm = event.target.closest('[data-om-admin-form]');
+      if (adminForm) {
+        event.preventDefault();
+        const data = U.formData(adminForm);
+        try {
+          const qty = U.number(data.quantityDeclared);
+          if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
+          if (!data.productId) throw new Error('Selecione um produto.');
+          if (!data.reason || !data.reason.trim()) throw new Error('Informe o motivo.');
+          // Sem vendedor = mercadoria do estoque central do admin. Com
+          // vendedor, a quantidade precisa existir no estoque dele, senão a
+          // conferência falharia depois (decrementSellerStock) com a
+          // solicitação já criada.
+          if (data.sellerId) assertSellerStockAvailable(data.sellerId, data.productId, qty);
+          await S().add('operationalMovements', {
+            type: data.type,
+            status: data.type === 'return' ? 'a_devolver' : 'pending',
+            sellerId: data.sellerId || null,
+            productId: data.productId,
+            quantityDeclared: qty,
+            reason: data.reason.trim(),
+            notes: '',
+          });
+          feedback = { message: 'Registrado. Confira abaixo para aplicar no estoque.', type: 'success' };
+        } catch (error) {
+          feedback = { message: error.message, type: 'danger' };
+        }
+        paint();
+        if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
       const form = event.target.closest('[data-om-confirm-form]');
       if (!form) return;
       event.preventDefault();
@@ -11170,30 +11245,37 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     `, 'consignado');
   }
 
-  // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
-  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
-  // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
+  // Consignado admin -> vendedor, criado quando um pedido de revenda chega em
+  // "Despachado" na esteira. Aparece aqui só em leitura porque, sem isso, quem
   // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
   // encontrava a tela vazia e concluía que nada tinha sido registrado.
+  //
+  // A quantidade sai de `seller_stock`, NÃO da linha de `consignments`: no
+  // fluxo do vendedor só `seller_stock` acompanha a realidade. Devolução
+  // conferida (src/operationalMovements.js) e venda do estoque próprio
+  // (RPC consume_seller_stock) baixam seller_stock e nunca mexem em
+  // consignments.quantity_returned/sold — ler a linha mostraria a quantidade
+  // original para sempre, mesmo depois de a mercadoria voltar.
   function renderSellerConsignmentSummary() {
     if (!S.isAdmin()) return '';
-    const open = currentConsignments().filter((item) => !item.clientId
-      && Calc.consignmentAvailableWithClient(item) > 0);
-    if (!open.length) return '';
-    const rows = open.map((item) => {
-      const product = productById(item.productId);
+    const held = (state().sellerStock || [])
+      .filter((row) => row.businessId === state().activeBusinessId && U.number(row.quantity) > 0);
+    if (!held.length) return '';
+    const ledger = window.C360.sellerLedger;
+    const rows = held.map((row) => {
+      const product = productById(row.productId);
       return [
-        U.escapeHtml(item.date),
-        U.escapeHtml(sellerName(item.sellerId)),
+        U.escapeHtml(sellerName(row.sellerId)),
         UI.productName(product),
-        U.qty(Calc.consignmentAvailableWithClient(item), product?.unit),
-        UI.moneyCell(U.number(item.quantitySent) * U.number(item.unitPrice)),
+        U.qty(row.quantity, product?.unit),
+        UI.moneyCell(U.number(row.quantity) * U.number(product?.avgCost)),
+        ledger && typeof ledger.balanceFor === 'function' ? UI.moneyCell(ledger.balanceFor(row.sellerId)) : '—',
       ];
     });
     return `
       <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda chega em "Despachado". O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
-      ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
+      <p class="hint-inline">Mercadoria que está com cada vendedor agora. O acerto — pagamento, devolução — é feito na aba Vendedores. A dívida é do vendedor inteiro, não de um produto só.</p>
+      ${UI.table(['Vendedor', 'Produto', 'Em mãos', 'Valor pelo custo', 'Dívida do vendedor'], rows)}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;
   }

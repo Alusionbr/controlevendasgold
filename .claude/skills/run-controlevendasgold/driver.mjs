@@ -162,6 +162,33 @@ function sellerProductsView() {
   }));
 }
 
+// Triggers do Postgres que o app DEPENDE mas não executa: sem emular, uma
+// linha volta do mock com estado diferente do que a produção devolveria, e
+// o teste passa onde o app real falha (ou vice-versa).
+// migration 0024: sync_financial_entry_status() — status/settled_at de
+// financial_entries são derivados de paid_amount vs amount, nunca escritos
+// pelo cliente.
+function applyDbTriggers(table, row) {
+  if (table === 'financial_entries') {
+    const amount = Number(row.amount || 0);
+    const paid = Number(row.paid_amount || 0);
+    if (row.status === 'cancelled') {
+      row.settled_at = null;
+    } else if (paid >= amount) {
+      row.status = 'paid';
+      row.paid_amount = amount;
+      row.settled_at = row.settled_at || new Date().toISOString();
+    } else if (paid > 0) {
+      row.status = 'partial';
+      row.settled_at = null;
+    } else {
+      row.status = 'open';
+      row.settled_at = null;
+    }
+  }
+  return row;
+}
+
 function json(route, body, status = 200) {
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -314,6 +341,7 @@ async function installMocks(pg) {
             updated_at: new Date().toISOString(),
             ...body,
           };
+          applyDbTriggers(table, row);
           rows.push(row);
           return row;
         });
@@ -322,7 +350,7 @@ async function installMocks(pg) {
       if (method === 'PATCH') {
         const matched = applyFilters(rows, params);
         const patch = req.postDataJSON();
-        matched.forEach((row) => Object.assign(row, patch, { updated_at: new Date().toISOString() }));
+        matched.forEach((row) => applyDbTriggers(table, Object.assign(row, patch, { updated_at: new Date().toISOString() })));
         return json(route, matched);
       }
       if (method === 'DELETE') {

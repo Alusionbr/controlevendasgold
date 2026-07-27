@@ -265,6 +265,44 @@
   // ---------------------------------------------------------------------
   // Admin — fila de conferência
   // ---------------------------------------------------------------------
+  // Formulário do ADMIN para registrar uma devolução/desperdício/brinde de um
+  // vendedor. Existe porque o painel do vendedor virou somente leitura: a tela
+  // dele diz "Movimentações são registradas pelo administrador", mas o admin
+  // só tinha a fila de conferência — e nada mais alimentava
+  // `operational_movements`, então a fila ficava vazia para sempre e o módulo
+  // inteiro (Fase 4) era inalcançável.
+  function renderAdminEntryForm() {
+    const sellers = (state().profiles || []).filter((profile) => profile.role === 'vendedor' && profile.active !== false);
+    const stockBySeller = (state().sellerStock || []).filter((row) => U.number(row.quantity) > 0);
+    const products = (state().products || []).filter((product) => product.type !== 'servico');
+    return `
+      <form class="grid-form" data-om-admin-form novalidate>
+        <label>Tipo
+          <select name="type">
+            <option value="return">Devolução (volta ao estoque central)</option>
+            <option value="waste">Desperdício</option>
+            <option value="gift">Brinde</option>
+          </select>
+        </label>
+        <label>Vendedor
+          <select name="sellerId">${UI.optionList(sellers, '', 'Estoque do admin')}</select>
+        </label>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantityDeclared" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label class="wide">Motivo
+          <input name="reason" required placeholder="Ex.: cliente desistiu, caiu no chão, amostra para cliente">
+        </label>
+        <button type="submit">Registrar para conferência</button>
+        <p class="hint-inline wide">Entra na fila abaixo. Estoque e dívida só mudam quando você confere.
+          ${stockBySeller.length ? '' : ' Nenhum vendedor tem estoque em mãos no momento.'}</p>
+      </form>
+    `;
+  }
+
   function renderAdminQueue(feedback) {
     const pending = (state().operationalMovements || []).filter((movement) => ['a_devolver', 'pending'].includes(movement.status));
     const cards = pending.map((movement) => {
@@ -296,10 +334,16 @@
         </article>
       `;
     }).join('');
+    const history = (state().operationalMovements || []).filter((movement) => !['a_devolver', 'pending'].includes(movement.status));
     return UI.section(
       'Devoluções, desperdícios e brindes',
       '"A devolver"/pendente não mexe em estoque nem financeiro até você conferir.',
-      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}<div class="om-admin-list">${cards || '<div class="empty-state"><strong>Nada aguardando conferência.</strong></div>'}</div>`
+      `${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+       ${renderAdminEntryForm()}
+       <h3>Aguardando conferência</h3>
+       <div class="om-admin-list">${cards || '<div class="empty-state"><strong>Nada aguardando conferência.</strong></div>'}</div>
+       <h3>Já conferido</h3>
+       ${UI.table(['Tipo', 'Status', 'Produto', 'Qtd.', 'Motivo', 'Data'], history.map(movementRow), 'Nenhuma movimentação conferida ainda.')}`
     );
   }
 
@@ -312,6 +356,37 @@
     }
 
     container.addEventListener('submit', async (event) => {
+      const adminForm = event.target.closest('[data-om-admin-form]');
+      if (adminForm) {
+        event.preventDefault();
+        const data = U.formData(adminForm);
+        try {
+          const qty = U.number(data.quantityDeclared);
+          if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
+          if (!data.productId) throw new Error('Selecione um produto.');
+          if (!data.reason || !data.reason.trim()) throw new Error('Informe o motivo.');
+          // Sem vendedor = mercadoria do estoque central do admin. Com
+          // vendedor, a quantidade precisa existir no estoque dele, senão a
+          // conferência falharia depois (decrementSellerStock) com a
+          // solicitação já criada.
+          if (data.sellerId) assertSellerStockAvailable(data.sellerId, data.productId, qty);
+          await S().add('operationalMovements', {
+            type: data.type,
+            status: data.type === 'return' ? 'a_devolver' : 'pending',
+            sellerId: data.sellerId || null,
+            productId: data.productId,
+            quantityDeclared: qty,
+            reason: data.reason.trim(),
+            notes: '',
+          });
+          feedback = { message: 'Registrado. Confira abaixo para aplicar no estoque.', type: 'success' };
+        } catch (error) {
+          feedback = { message: error.message, type: 'danger' };
+        }
+        paint();
+        if (typeof options.onDone === 'function') options.onDone();
+        return;
+      }
       const form = event.target.closest('[data-om-confirm-form]');
       if (!form) return;
       event.preventDefault();

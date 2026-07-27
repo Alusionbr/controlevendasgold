@@ -1127,30 +1127,37 @@
     `, 'consignado');
   }
 
-  // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
-  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
-  // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
+  // Consignado admin -> vendedor, criado quando um pedido de revenda chega em
+  // "Despachado" na esteira. Aparece aqui só em leitura porque, sem isso, quem
   // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
   // encontrava a tela vazia e concluía que nada tinha sido registrado.
+  //
+  // A quantidade sai de `seller_stock`, NÃO da linha de `consignments`: no
+  // fluxo do vendedor só `seller_stock` acompanha a realidade. Devolução
+  // conferida (src/operationalMovements.js) e venda do estoque próprio
+  // (RPC consume_seller_stock) baixam seller_stock e nunca mexem em
+  // consignments.quantity_returned/sold — ler a linha mostraria a quantidade
+  // original para sempre, mesmo depois de a mercadoria voltar.
   function renderSellerConsignmentSummary() {
     if (!S.isAdmin()) return '';
-    const open = currentConsignments().filter((item) => !item.clientId
-      && Calc.consignmentAvailableWithClient(item) > 0);
-    if (!open.length) return '';
-    const rows = open.map((item) => {
-      const product = productById(item.productId);
+    const held = (state().sellerStock || [])
+      .filter((row) => row.businessId === state().activeBusinessId && U.number(row.quantity) > 0);
+    if (!held.length) return '';
+    const ledger = window.C360.sellerLedger;
+    const rows = held.map((row) => {
+      const product = productById(row.productId);
       return [
-        U.escapeHtml(item.date),
-        U.escapeHtml(sellerName(item.sellerId)),
+        U.escapeHtml(sellerName(row.sellerId)),
         UI.productName(product),
-        U.qty(Calc.consignmentAvailableWithClient(item), product?.unit),
-        UI.moneyCell(U.number(item.quantitySent) * U.number(item.unitPrice)),
+        U.qty(row.quantity, product?.unit),
+        UI.moneyCell(U.number(row.quantity) * U.number(product?.avgCost)),
+        ledger && typeof ledger.balanceFor === 'function' ? UI.moneyCell(ledger.balanceFor(row.sellerId)) : '—',
       ];
     });
     return `
       <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda chega em "Despachado". O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
-      ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
+      <p class="hint-inline">Mercadoria que está com cada vendedor agora. O acerto — pagamento, devolução — é feito na aba Vendedores. A dívida é do vendedor inteiro, não de um produto só.</p>
+      ${UI.table(['Vendedor', 'Produto', 'Em mãos', 'Valor pelo custo', 'Dívida do vendedor'], rows)}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;
   }
