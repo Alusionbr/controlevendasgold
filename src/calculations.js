@@ -151,7 +151,17 @@
     // envio (débito lançado na aprovação) e cai sozinho a cada pagamento.
     const clientConsignments = consignments.filter((item) => !item.sellerId);
     const sellerEntries = (state.sellerAccountEntries || []).filter((entry) => entry.businessId === businessId);
-    const sellerOwed = Math.max(sellerBalance(sellerEntries), 0);
+    // Clampar por vendedor, não no total: quem pagou a mais fica com saldo
+    // negativo (crédito), e somar tudo antes do Math.max fazia esse crédito
+    // abater a dívida de OUTRO vendedor — o painel mostrava menos a receber
+    // do que o admin realmente tem para receber.
+    const balanceBySeller = new Map();
+    sellerEntries.forEach((entry) => {
+      const key = String(entry.sellerId);
+      balanceBySeller.set(key, (balanceBySeller.get(key) || []).concat(entry));
+    });
+    let sellerOwed = 0;
+    balanceBySeller.forEach((entries) => { sellerOwed += Math.max(sellerBalance(entries), 0); });
 
     return {
       stockValue: products.reduce((sum, product) => sum + number(product.currentStock) * number(product.avgCost), 0),

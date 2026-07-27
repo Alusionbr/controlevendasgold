@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-g9cRIETm4G18oZ3GcMJDuM7Vs4lmS17CQE55oCbM2+Q=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-gR7V7Herd/wvqVIiVgvZ9MSJpsbhnzwZZVxjcEjiJ9c='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-EByQzNjQkX2PzTP8cvp4vlNr+6I2n0+Jbvp+tGSXHS4=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-lVBkA8JN0jQ6JpDu2C9t6zpiRJIg/yoLkfHpGWAXVxA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -3296,6 +3296,29 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.goalsProgress = [];
   }
 
+  // Assinantes avisados sempre que refresh() repovoa o cache. Existe por um
+  // motivo específico: cada módulo (auth.js, salesCart.js, sellerStock.js,
+  // operationalMovements.js, sellerLedger.js...) faz `await S().refresh()`
+  // depois de gravar e em seguida repinta só o PRÓPRIO container. O painel
+  // fixo do topo (#dashboard) não pertence a nenhum deles — só o renderAll()
+  // de app.js o desenha — então ele ficava congelado com o número velho até
+  // trocar de negócio ou recarregar a página. Era por isso que registrar um
+  // pagamento de vendedor não mexia em "Consignado em aberto": o ledger já
+  // estava certo no banco e no cache, mas ninguém tinha redesenhado o topo.
+  const refreshListeners = [];
+
+  function onRefresh(listener) {
+    if (typeof listener === 'function') refreshListeners.push(listener);
+  }
+
+  function notifyRefreshed() {
+    refreshListeners.forEach((listener) => {
+      // Um assinante que quebra não pode impedir os outros nem derrubar o
+      // fluxo de gravação que acabou de dar certo.
+      try { listener(); } catch (error) { console.error('Falha ao notificar refresh:', error); }
+    });
+  }
+
   async function refresh() {
     const api = window.C360.api;
     if (!api || typeof api.getCurrentAuthUserId !== 'function') return;
@@ -3313,6 +3336,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       // Perfil provisionado sem negócio ainda (bootstrap pendente) — nada
       // mais para buscar além do próprio perfil.
       persistCacheMirror();
+      notifyRefreshed();
       return;
     }
 
@@ -3323,6 +3347,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
 
     persistCacheMirror();
+    notifyRefreshed();
   }
 
   window.C360.state = {
@@ -3343,6 +3368,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     getCurrentUser,
     isAdmin,
     refresh,
+    onRefresh,
   };
 })();
 </script>
@@ -3500,7 +3526,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // envio (débito lançado na aprovação) e cai sozinho a cada pagamento.
     const clientConsignments = consignments.filter((item) => !item.sellerId);
     const sellerEntries = (state.sellerAccountEntries || []).filter((entry) => entry.businessId === businessId);
-    const sellerOwed = Math.max(sellerBalance(sellerEntries), 0);
+    // Clampar por vendedor, não no total: quem pagou a mais fica com saldo
+    // negativo (crédito), e somar tudo antes do Math.max fazia esse crédito
+    // abater a dívida de OUTRO vendedor — o painel mostrava menos a receber
+    // do que o admin realmente tem para receber.
+    const balanceBySeller = new Map();
+    sellerEntries.forEach((entry) => {
+      const key = String(entry.sellerId);
+      balanceBySeller.set(key, (balanceBySeller.get(key) || []).concat(entry));
+    });
+    let sellerOwed = 0;
+    balanceBySeller.forEach((entries) => { sellerOwed += Math.max(sellerBalance(entries), 0); });
 
     return {
       stockValue: products.reduce((sum, product) => sum + number(product.currentStock) * number(product.avgCost), 0),
@@ -12808,6 +12844,26 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
   window.C360.app = { refresh: renderAll, toast, setTab, addSale };
+
+  // O painel fixo do topo (#dashboard) é desenhado só por renderAll(), mas
+  // quem grava pagamento de vendedor, envio de consignado, conferência de
+  // devolução etc. são os módulos — e cada um repinta apenas o próprio
+  // container depois do `await S().refresh()`. Resultado: os números do topo
+  // ("Consignado em aberto", "Valor em estoque", "Pedidos pendentes", a Visão
+  // operacional) ficavam parados no valor anterior até trocar de negócio ou
+  // recarregar a página, mesmo com o banco e o cache já corretos.
+  //
+  // Assinar o refresh do estado conserta todos os módulos de uma vez, sem
+  // precisar lembrar de chamar nada em cada call-site novo. Redesenha só o
+  // dashboard de propósito: renderTab() aqui destruiria o estado local da
+  // tela do módulo (painel expandido, formulário em digitação, mensagem de
+  // sucesso) que ele acabou de montar.
+  if (S && typeof S.onRefresh === 'function') {
+    S.onRefresh(() => {
+      if (!els.appShell || els.appShell.hidden || !els.dashboard) return;
+      renderDashboard();
+    });
+  }
 
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é

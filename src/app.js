@@ -2691,6 +2691,26 @@
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
   window.C360.app = { refresh: renderAll, toast, setTab, addSale };
 
+  // O painel fixo do topo (#dashboard) é desenhado só por renderAll(), mas
+  // quem grava pagamento de vendedor, envio de consignado, conferência de
+  // devolução etc. são os módulos — e cada um repinta apenas o próprio
+  // container depois do `await S().refresh()`. Resultado: os números do topo
+  // ("Consignado em aberto", "Valor em estoque", "Pedidos pendentes", a Visão
+  // operacional) ficavam parados no valor anterior até trocar de negócio ou
+  // recarregar a página, mesmo com o banco e o cache já corretos.
+  //
+  // Assinar o refresh do estado conserta todos os módulos de uma vez, sem
+  // precisar lembrar de chamar nada em cada call-site novo. Redesenha só o
+  // dashboard de propósito: renderTab() aqui destruiria o estado local da
+  // tela do módulo (painel expandido, formulário em digitação, mensagem de
+  // sucesso) que ele acabou de montar.
+  if (S && typeof S.onRefresh === 'function') {
+    S.onRefresh(() => {
+      if (!els.appShell || els.appShell.hidden || !els.dashboard) return;
+      renderDashboard();
+    });
+  }
+
   // ---------------------------------------------------------------------
   // Bootstrap com portão de autenticação (src/auth.js): a tela de login é
   // mostrada enquanto não houver sessão válida; o dashboard/abas só montam

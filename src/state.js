@@ -475,6 +475,29 @@
     state.goalsProgress = [];
   }
 
+  // Assinantes avisados sempre que refresh() repovoa o cache. Existe por um
+  // motivo específico: cada módulo (auth.js, salesCart.js, sellerStock.js,
+  // operationalMovements.js, sellerLedger.js...) faz `await S().refresh()`
+  // depois de gravar e em seguida repinta só o PRÓPRIO container. O painel
+  // fixo do topo (#dashboard) não pertence a nenhum deles — só o renderAll()
+  // de app.js o desenha — então ele ficava congelado com o número velho até
+  // trocar de negócio ou recarregar a página. Era por isso que registrar um
+  // pagamento de vendedor não mexia em "Consignado em aberto": o ledger já
+  // estava certo no banco e no cache, mas ninguém tinha redesenhado o topo.
+  const refreshListeners = [];
+
+  function onRefresh(listener) {
+    if (typeof listener === 'function') refreshListeners.push(listener);
+  }
+
+  function notifyRefreshed() {
+    refreshListeners.forEach((listener) => {
+      // Um assinante que quebra não pode impedir os outros nem derrubar o
+      // fluxo de gravação que acabou de dar certo.
+      try { listener(); } catch (error) { console.error('Falha ao notificar refresh:', error); }
+    });
+  }
+
   async function refresh() {
     const api = window.C360.api;
     if (!api || typeof api.getCurrentAuthUserId !== 'function') return;
@@ -492,6 +515,7 @@
       // Perfil provisionado sem negócio ainda (bootstrap pendente) — nada
       // mais para buscar além do próprio perfil.
       persistCacheMirror();
+      notifyRefreshed();
       return;
     }
 
@@ -502,6 +526,7 @@
     }
 
     persistCacheMirror();
+    notifyRefreshed();
   }
 
   window.C360.state = {
@@ -522,6 +547,7 @@
     getCurrentUser,
     isAdmin,
     refresh,
+    onRefresh,
   };
 })();
 

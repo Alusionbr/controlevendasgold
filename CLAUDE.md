@@ -855,3 +855,62 @@ RPCs que movem dados (`consume_seller_stock`, `seller_adjust_own_stock`,
 `register_purchase_group`) e o comando `db [tabela]`. Antes, toda tabela
 sem branch respondia `[]` no GET, e um fluxo quebrado ficava
 indistinguível de um fluxo correto.
+
+---
+
+## Atualização: números do painel congelados após gravar por um módulo
+
+Relato do usuário: "o consignado em aberto não atualiza quando faz parte do
+pagamento — será que existem outros conflitos parecidos?". Sim: era **um
+defeito só**, com muitos sintomas.
+
+### Causa
+
+O painel fixo do topo (`#dashboard`) é desenhado exclusivamente por
+`renderDashboard()`, que só roda dentro de `renderAll()` (`src/app.js`).
+Mas quem grava pagamento de vendedor, envio de consignado, conferência de
+devolução etc. são os **módulos** (`src/auth.js`, `src/salesCart.js`,
+`src/sellerStock.js`, `src/operationalMovements.js`, `src/sellerLedger.js`),
+e cada um faz `await S().refresh()` e em seguida repinta **apenas o próprio
+container** com o `paint()` local. Ninguém redesenhava o topo.
+
+Resultado: banco certo, cache certo, tela errada. `setTab()` também não
+ajuda — ele chama `renderTab()`, não `renderAll()`. O número só se corrigia
+recarregando a página. Só `src/calculator.js` e `src/exportImport.js`
+chamavam `C360.app.refresh()`.
+
+Reproduzido com a skill `run-controlevendasgold` no código anterior à
+correção: após inserir um débito e dar `refresh()`, o estado dizia
+R$ 1.600,00 e a tela continuava exibindo R$ 600,00.
+
+### Correção
+
+`src/state.js` ganhou `onRefresh(listener)`; `refresh()` avisa os
+assinantes depois de repovoar o cache. `src/app.js` assina uma vez e
+redesenha **só o dashboard**. Conserta todos os módulos de uma vez, sem
+precisar lembrar de chamar nada em cada call-site novo.
+
+Redesenhar só o dashboard é deliberado: chamar `renderTab()` ali destruiria
+o estado local da tela do módulo (painel expandido, formulário em digitação,
+mensagem de sucesso) que ele acabou de montar.
+
+Verificado ao vivo, sem trocar de aba: pagamento parcial (R$ 150 → R$ 90),
+envio de consignado (estoque R$ 1.000 → R$ 950 e consignado R$ 0 → R$ 150)
+e devolução conferida (estoque 95 → 97, consignado R$ 90 → R$ 70).
+
+### Correção secundária: clamp por vendedor
+
+`businessMetrics` fazia `Math.max(sellerBalance(todos_os_lançamentos), 0)`.
+Somando todos os vendedores antes do clamp, o crédito de quem pagou a mais
+abatia a dívida de OUTRO vendedor. Agora o saldo é apurado por vendedor e
+só os positivos entram no total.
+
+### Driver: `advance_order_group`
+
+O mock respondia `rpc-not-implemented` **sem erro** para esse RPC, então a
+tela dizia "Consignado enviado. Estoque baixado e dívida lançada" enquanto
+nada tinha se movido. Implementado em
+`.claude/skills/run-controlevendasgold/driver.mjs` espelhando a migration
+`20260725142236_atomic_order_dispatch.sql` (baixa de estoque,
+`stock_movements`, `seller_stock`, `consignments`, débito no ledger pela
+diferença, `sales` na venda própria).

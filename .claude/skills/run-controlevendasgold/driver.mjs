@@ -322,6 +322,122 @@ async function installMocks(pg) {
         return json(route, paymentId);
       }
 
+      // migration 20260725142236: advance_order_group(p_group_id, p_new_status)
+      // — move a esteira e, ao chegar em "despachado", materializa o grupo
+      // inteiro numa transação: baixa estoque, grava stock_movements, cria
+      // consignments/seller_stock (revenda) ou sales (venda própria) e acerta
+      // a dívida do vendedor no ledger.
+      //
+      // Sem isto o mock respondia `rpc-not-implemented` SEM erro, então a tela
+      // dizia "Consignado enviado. Estoque baixado e dívida lançada" enquanto
+      // nada tinha se movido — exatamente o tipo de falso positivo que este
+      // driver existe para evitar.
+      if (fn === 'advance_order_group') {
+        const groupId = String(body.p_group_id);
+        const status = String(body.p_new_status);
+        const orders = rowsOf('orders').filter((o) => String(o.order_group_id || o.id) === groupId);
+        if (!orders.length) return json(route, { message: 'Pedido não encontrado na esteira.' }, 400);
+        if (orders.some((o) => o.approval_status !== 'aprovado')) {
+          return json(route, { message: 'Aprove o pedido antes de avançar a etapa.' }, 400);
+        }
+
+        // Etapas anteriores ao despacho são só logísticas.
+        if (['pendente', 'em_preparo', 'pronto'].includes(status)) {
+          orders.forEach((o) => { o.status = status; });
+          return json(route, { group_id: groupId, status, orders: orders.length, changed: true });
+        }
+
+        for (const order of orders) {
+          if (order.converted_sale_id || order.converted_consignment_id) continue;
+          const product = rowsOf('products').find((r) => String(r.id) === String(order.product_id));
+          if (!product) return json(route, { message: 'Produto do pedido não encontrado.' }, 400);
+          const quantity = Number(order.quantity);
+          const unitPrice = Number(order.unit_price);
+          const avgCost = Number(product.avg_cost || 0);
+          const paidAmount = Number(order.paid_amount || 0);
+          if (product.type !== 'servico' && Number(product.current_stock) < quantity) {
+            return json(route, { message: `Estoque insuficiente para ${product.name}.` }, 400);
+          }
+          const now = new Date().toISOString();
+          const today = now.slice(0, 10);
+
+          if (order.sale_type === 'revenda') {
+            product.current_stock = Number(product.current_stock) - quantity;
+            rowsOf('stock_movements').push({
+              id: nextId('stock_movements'), business_id: BUSINESS_ID, date: today,
+              type: 'saida_envio_consignado', product_id: order.product_id, quantity: -quantity,
+              unit_cost: avgCost, total_cost: -(quantity * avgCost), ref_type: 'order',
+              ref_id: order.id, notes: `Despacho da esteira - pedido ${groupId}`, created_at: now,
+            });
+            const held = rowsOf('seller_stock').find((r) => String(r.seller_id) === String(order.seller_id)
+              && String(r.product_id) === String(order.product_id));
+            if (held) held.quantity = Number(held.quantity) + quantity;
+            else {
+              rowsOf('seller_stock').push({
+                id: nextId('seller_stock'), business_id: BUSINESS_ID, seller_id: order.seller_id,
+                product_id: order.product_id, quantity, created_at: now,
+              });
+            }
+            const consignmentId = nextId('consignments');
+            rowsOf('consignments').push({
+              id: consignmentId, business_id: BUSINESS_ID, date: today, client_id: null,
+              product_id: order.product_id, quantity_sent: quantity, quantity_sold: 0,
+              quantity_returned: 0, amount_paid: Math.min(paidAmount, quantity * unitPrice),
+              unit_price: unitPrice, cost_at_send: avgCost, seller_id: order.seller_id,
+              notes: `Revenda despachada (pedido ${groupId})`, status: 'com_cliente', created_at: now,
+            });
+            rowsOf('consignment_events').push({
+              id: nextId('consignment_events'), business_id: BUSINESS_ID, consignment_id: consignmentId,
+              type: 'envio', date: today, quantity, amount: 0, created_at: now,
+            });
+
+            // Mesma rede de segurança do SQL: lança só a DIFERENÇA entre a
+            // dívida devida e a já lançada na aprovação, para não duplicar.
+            const posted = rowsOf('seller_account_entries')
+              .filter((e) => String(e.source_id) === String(order.id) && ['order', 'order_edit'].includes(e.source_type))
+              .reduce((sum, e) => sum + (e.direction === 'credit' ? -Number(e.amount) : Number(e.amount)), 0);
+            const target = Math.max(quantity * unitPrice - paidAmount, 0);
+            const delta = target - posted;
+            if (Math.abs(delta) >= 0.005) {
+              rowsOf('seller_account_entries').push({
+                id: nextId('seller_account_entries'), business_id: BUSINESS_ID, seller_id: order.seller_id,
+                type: delta > 0 ? 'debit_replenishment' : 'manual_adjustment',
+                direction: delta > 0 ? 'debit' : 'credit', amount: Math.abs(delta),
+                source_type: posted > 0 ? 'order_edit' : 'order', source_id: order.id,
+                notes: `Ajuste atômico no despacho - pedido ${groupId}`, created_at: now,
+              });
+            }
+            order.converted_consignment_id = consignmentId;
+          } else {
+            const gross = quantity * unitPrice;
+            const cogs = quantity * avgCost;
+            const saleId = nextId('sales');
+            rowsOf('sales').push({
+              id: saleId, business_id: BUSINESS_ID, date: today, channel: 'Pedido',
+              client_id: order.client_id, product_id: order.product_id, quantity,
+              unit_price: unitPrice, discount: 0, fixed_fees: 0, fee_percent: 0, percent_fees: 0,
+              unit_cost: avgCost, gross_revenue: gross, net_revenue: gross, cogs,
+              gross_profit: gross - cogs, margin: gross ? (gross - cogs) / gross : 0,
+              notes: `Venda despachada - pedido ${groupId}`, origin: 'pedido', origin_id: order.id,
+              seller_id: null, created_at: now,
+            });
+            if (product.type !== 'servico') {
+              product.current_stock = Number(product.current_stock) - quantity;
+              rowsOf('stock_movements').push({
+                id: nextId('stock_movements'), business_id: BUSINESS_ID, date: today,
+                type: 'saida_venda', product_id: order.product_id, quantity: -quantity,
+                unit_cost: avgCost, total_cost: -cogs, ref_type: 'sale', ref_id: saleId,
+                notes: `Despacho da esteira - pedido ${groupId}`, created_at: now,
+              });
+            }
+            order.converted_sale_id = saleId;
+          }
+        }
+
+        orders.forEach((o) => { o.status = status; });
+        return json(route, { group_id: groupId, status, orders: orders.length, changed: true });
+      }
+
       return json(route, { mock: 'rpc-not-implemented', fn });
     }
 
