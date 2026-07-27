@@ -202,6 +202,9 @@
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
   // Filtros extras da aba Relatórios (vazio = todos).
+  // Dia mostrado em "Recebimentos do dia" (tela Hoje) — separado do período
+  // do painel de propósito: ali é faixa de datas, aqui é um dia só.
+  let receiptsDate = U.today();
   let reportProductId = '';
   let reportChannel = '';
   let draggedCard = null;
@@ -332,8 +335,13 @@
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
-      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
     `;
+    // "Visão operacional" NÃO entra aqui de propósito. O painel fixo aparece
+    // em todas as abas menos "Hoje" (que tem a própria versão), então esse
+    // bloco alto se repetia no topo de Vendas, Produtos, Compras... empurrando
+    // o conteúdo de trabalho — e a barra lateral inteira — para baixo da
+    // dobra, sem mostrar nada que a tela "Hoje" já não mostre melhor. As seis
+    // métricas acima continuam em todas as abas por serem compactas.
   }
 
   function renderOperationsSnapshot(baseState) {
@@ -434,6 +442,47 @@
       </section>`;
   }
 
+  // "Recebimentos do dia" — quanto de dinheiro entrou num dia, separado por
+  // origem. Existe porque nenhuma tela respondia isso: a aba Financeiro
+  // acompanha contas a receber (que nascem em aberto), o consignado mostra
+  // saldo devedor, e o pagamento do vendedor só aparecia dentro do card dele.
+  // O seletor de data serve para conferir um dia passado ("quanto entrou
+  // ontem"), sem virar mais um relatório em outra aba.
+  function renderDailyReceipts() {
+    if (!S.isAdmin()) return '';
+    const receipts = Calc.dailyReceipts(state(), receiptsDate);
+    const lines = [
+      { label: 'Pagamentos de vendedores', hint: 'Vendedor acertando a dívida com você.', data: receipts.sellers, tab: 'vendedores' },
+      { label: 'Pagamentos de consignado (clientes)', hint: 'Cliente pagando o que já vendeu.', data: receipts.clients, tab: 'consignado' },
+      { label: 'Vendas à vista', hint: 'Venda direta registrada no dia.', data: receipts.sales, tab: 'vendas' },
+    ];
+    const rows = lines.map((line) => `
+      <li class="receipts-row ${line.data.count ? '' : 'is-empty'}">
+        <div>
+          <strong>${U.escapeHtml(line.label)}</strong>
+          <small>${line.data.count} ${line.data.count === 1 ? 'lançamento' : 'lançamentos'} · ${U.escapeHtml(line.hint)}</small>
+        </div>
+        <span>${U.money(line.data.total)}</span>
+      </li>`).join('');
+
+    return `
+      <section class="today-section receipts-section">
+        <div class="receipts-head">
+          <h3>Recebimentos do dia ${UI.help('recebimentosDia')}</h3>
+          <label class="receipts-date">Dia
+            <input type="date" data-receipts-date value="${U.escapeHtml(receiptsDate)}" aria-label="Dia dos recebimentos">
+          </label>
+        </div>
+        <div class="receipts-total">
+          <span>Total recebido${receiptsDate === U.today() ? ' hoje' : ''}</span>
+          <strong>${U.money(receipts.total)}</strong>
+          <small>${receipts.count} ${receipts.count === 1 ? 'recebimento' : 'recebimentos'}</small>
+        </div>
+        <ul class="receipts-list">${rows}</ul>
+      </section>
+    `;
+  }
+
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
@@ -511,6 +560,8 @@
             ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
+
+        ${renderDailyReceipts()}
 
         ${renderTodayGoals(isAdminUser)}
 
@@ -2622,6 +2673,12 @@
     if (filter) {
       if (filter.dataset.reportFilter === 'product') reportProductId = filter.value || '';
       if (filter.dataset.reportFilter === 'channel') reportChannel = filter.value || '';
+      renderTab();
+      return;
+    }
+    const receiptsInput = event.target.closest('[data-receipts-date]');
+    if (receiptsInput) {
+      receiptsDate = receiptsInput.value || U.today();
       renderTab();
       return;
     }

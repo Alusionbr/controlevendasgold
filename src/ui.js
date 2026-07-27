@@ -14,6 +14,7 @@
     lucroBruto: 'O que sobra das vendas depois de tirar o custo dos produtos vendidos (CMV). Ainda não desconta despesas fixas como aluguel.',
     consignadoAberto: 'Tudo que ainda te devem em consignado. Conta desde a geração do pedido (venda à vista não entra aqui: já foi paga). Do lado dos vendedores é o saldo devedor deles; do lado dos clientes, a mercadoria em mãos mais o que já venderam e não pagaram. Cai quando o pagamento é registrado ou a mercadoria volta.',
     pedidosPendentes: 'Pedidos que ainda não foram despachados nem concluídos.',
+    recebimentosDia: 'Dinheiro que entrou no dia escolhido: vendedores pagando o que deviam, clientes pagando consignação e vendas à vista. Venda de consignado informada não entra aqui — informar a venda não é receber; o valor aparece quando o pagamento for registrado.',
     // Negócio
     margemDesejada: 'Quanto você quer ganhar sobre o preço de venda, em %. Ex.: 50% = metade do preço é lucro planejado. O sistema usa isso para sugerir o preço de venda.',
     taxasPadrao: 'Taxas que costumam cair nas suas vendas, em %: maquininha de cartão, comissão de marketplace, etc. Entram no cálculo do preço sugerido.',

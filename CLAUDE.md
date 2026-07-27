@@ -914,3 +914,64 @@ nada tinha se movido. Implementado em
 `20260725142236_atomic_order_dispatch.sql` (baixa de estoque,
 `stock_movements`, `seller_stock`, `consignments`, débito no ledger pela
 diferença, `sales` na venda própria).
+
+---
+
+## Atualização: recebimentos do dia e densidade da interface desktop
+
+Dois pedidos do usuário na mesma rodada.
+
+### "Recebimentos do dia" (tela Hoje, admin)
+
+Nenhuma tela respondia "quanto entrou hoje": o Financeiro acompanha contas a
+receber (que nascem em aberto), o consignado mostra saldo devedor e o
+pagamento do vendedor só aparecia dentro do card dele. Nova função
+`Calc.dailyReceipts(state, date)` (`src/calculations.js`) + seção na tela
+Hoje com seletor de dia.
+
+Soma três origens, mostradas separadas para não virar um número opaco:
+
+| Origem | Fonte |
+|---|---|
+| Pagamentos de vendedores | `seller_payments.payment_date` |
+| Pagamentos de consignado (clientes) | `consignment_events` tipo `pagamento` |
+| Vendas à vista | `sales` do dia |
+
+Duas exclusões deliberadas em `dailyReceipts`, ambas para não contar dinheiro
+que não entrou: venda com `origin = 'consignado'` (informar que o cliente
+vendeu não é receber — o dinheiro aparece depois como pagamento, e contar os
+dois seria dobrar) e venda com `sellerId` preenchido (o dinheiro ficou com o
+vendedor e vira dívida dele no ledger — mesma regra do trigger
+`create_sale_receivable`).
+
+### Densidade da interface desktop
+
+Escolha do usuário entre as opções apresentadas: "compactar e limpar". Tudo
+dentro de `@media (min-width: 960px)` no fim de `styles/main.css` — a base
+mobile-first não muda, porque é onde os vendedores trabalham.
+
+1. **Densidade**: fontes/espaçamentos menores, `.app-shell` de 1180px para
+   1320px.
+2. **Menos caixa**: sombra vira borda de 1px; cartão-dentro-de-cartão
+   (`.operations-kpis article`, `.sales-trend-card`) vira linha divisória à
+   esquerda.
+3. **Ouro como destaque**: `.quick-actions > .quick-action` deixa de ter
+   fundo dourado e fica com contorno. O escopo `>` é obrigatório: a classe
+   `.quick-action` também é usada nos atalhos em texto da Visão operacional,
+   que são `.link-button` e precisam continuar parecendo link.
+
+Mudança estrutural junto (`src/app.js`, `renderDashboard`): a "Visão
+operacional" saiu do painel fixo. Ela aparecia no topo de **todas as abas
+menos "Hoje"** (que tem a própria cópia), empurrando o conteúdo de trabalho e
+a barra lateral inteira para baixo da dobra em Vendas/Produtos/Compras. As
+seis métricas compactas continuam em todas as abas.
+
+### Driver: duas fixtures que não batiam com a produção
+
+- `sales.seller_id` da fixture era o uid do admin. Na produção só venda feita
+  por vendedor carrega esse campo (`state.js` só carimba para o papel
+  vendedor) — com o valor errado, "Vendas à vista" aparecia zerada num teste
+  que deveria passar.
+- O mock de `register_seller_payment` não gravava `payment_date` (o SQL real
+  usa `current_date`), então o pagamento sumia de qualquer tela que agrupe
+  recebimento por dia.

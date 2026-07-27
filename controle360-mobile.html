@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-EByQzNjQkX2PzTP8cvp4vlNr+6I2n0+Jbvp+tGSXHS4=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-lVBkA8JN0jQ6JpDu2C9t6zpiRJIg/yoLkfHpGWAXVxA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-ACoJ13LMRezCdG/SDpVyVRCu3uy+H5RjlskvaABx2Yo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2068,6 +2068,114 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .bar-chart-track { grid-area: track; }
 }
 
+/* ---------- Recebimentos do dia (tela "Hoje") ---------- */
+.receipts-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.receipts-head h3 { margin-bottom: 0; }
+.receipts-date { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.receipts-date input { min-height: 36px; padding: 0.3rem 0.5rem; }
+.receipts-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0 0.5rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+}
+.receipts-total span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.receipts-total strong { font-family: var(--num); font-size: 1.6rem; font-weight: 720; color: var(--ink); font-variant-numeric: tabular-nums; }
+.receipts-total small { color: var(--muted); }
+.receipts-list { display: flex; flex-direction: column; }
+.receipts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+.receipts-row + .receipts-row { border-top: 1px solid var(--line); }
+.receipts-row strong { display: block; font-weight: 650; font-size: 0.92rem; }
+.receipts-row small { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.1rem; }
+.receipts-row > span { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+/* Linha zerada continua visível (a ausência de recebimento é informação),
+   mas some do primeiro plano para o olho ir direto ao que teve movimento. */
+.receipts-row.is-empty strong, .receipts-row.is-empty > span { color: var(--muted); font-weight: 600; }
+
+/* ---------- Densidade de desktop ----------
+   Pedido do usuário: "a tela desktop ainda está grande... deixar mais
+   profissional". A base do app é mobile-first (a maioria dos vendedores usa
+   no celular) e continua intocada: tudo aqui vive dentro de min-width 960px,
+   a mesma largura em que a barra lateral já assume.
+
+   Três movimentos, nesta ordem de importância:
+   1. DENSIDADE — fontes e espaçamentos menores. Num monitor, os tamanhos
+      pensados para o toque de um dedo viram "celular ampliado".
+   2. MENOS CAIXA — sombra some e vira borda de 1px; cartão dentro de cartão
+      vira linha divisória. Sombra empilhada em três níveis é o que mais dá
+      aparência amadora aqui.
+   3. OURO COMO DESTAQUE — o dourado deixa de ser fundo de botão comum e fica
+      para o que orienta: aba ativa, foco e valores. Quatro botões dourados
+      lado a lado competem com o dado, que é o que importa numa tela de
+      gestão. */
+@media (min-width: 960px) {
+  /* Aproveita o monitor: antes sobrava faixa vazia dos dois lados enquanto o
+     conteúdo dentro ficava espremido e alto. */
+  .app-shell { max-width: 1320px; padding-bottom: 3rem; }
+  .app-body { grid-template-columns: 208px 1fr; gap: 1.25rem; }
+
+  /* 2 — menos caixa */
+  .business-bar,
+  .tabs,
+  .metric-card,
+  .today-section,
+  .panel-card,
+  .operations-snapshot { box-shadow: none; }
+  .operations-snapshot { background: var(--surface); }
+  .operations-kpis article,
+  .sales-trend-card {
+    background: transparent;
+    border: 0;
+    border-left: 2px solid var(--line-strong);
+    border-radius: 0;
+    padding: 0.1rem 0 0.1rem 0.7rem;
+  }
+  .operations-kpis article.needs-attention { border-left-color: var(--accent); box-shadow: none; }
+
+  /* 1 — densidade */
+  .today-screen { gap: 0.9rem; }
+  .today-section { padding: 0.85rem 1rem; }
+  .today-section h3 { font-size: 0.92rem; margin-bottom: 0.55rem; }
+  .dashboard { gap: 0.55rem; margin: 0.9rem 0; }
+  .metric-card { padding: 0.7rem 0.85rem; gap: 0.25rem; }
+  .metric-card strong { font-size: 1.2rem; }
+  .operations-snapshot { padding: 0.85rem 1rem; gap: 0.65rem; }
+  .operations-snapshot-head h2 { font-size: 1rem; }
+  .operations-kpis strong { font-size: 1.05rem; }
+  .operations-kpis small { min-height: 0; font-size: 0.8rem; }
+  .sales-bars { height: 88px; }
+  .section-head h2 { font-size: 1.1rem; }
+  .receipts-total strong { font-size: 1.35rem; }
+
+  /* Barra lateral: 19 itens em altura de toque ocupavam a coluna inteira. */
+  .tabs { padding: 0.3rem; }
+  .tab-button { min-height: 34px; padding: 0.35rem 0.65rem; font-size: 0.88rem; }
+  .tab-group + .tab-group { padding-top: 0.35rem; margin-top: 0.35rem; }
+
+  /* 3 — ouro como destaque, não como preenchimento.
+     Escopo em `.quick-actions >`: a classe .quick-action também é usada nos
+     atalhos em texto da Visão operacional ("Ver vendedores"), que ali são
+     .link-button e precisam continuar parecendo link, não botão. */
+  .quick-actions { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; }
+  .quick-actions > .quick-action {
+    min-height: 38px;
+    background: var(--surface);
+    color: var(--brand-deep);
+    border: 1px solid var(--line-strong);
+    font-weight: 650;
+  }
+  .quick-actions > .quick-action:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+}
+
   </style>
 </head>
 <body>
@@ -3490,6 +3598,52 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  // Dinheiro que entrou num dia específico. Três origens distintas, somadas
+  // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
+  //
+  // - vendedores: pagamento de vendedor quitando dívida (`seller_payments`,
+  //   gravado pelo RPC register_seller_payment com a data do recebimento);
+  // - clientes:   pagamento de consignação de cliente (`consignmentEvents`
+  //   tipo 'pagamento', gravado por consignmentPay em src/app.js);
+  // - vendas:     venda direta do dia, que é dinheiro na hora.
+  //
+  // Venda de consignado (origin 'consignado') fica DE FORA de propósito:
+  // informar que o cliente vendeu não é receber — o dinheiro entra depois,
+  // como pagamento, e seria contado duas vezes. Venda com sellerId também
+  // fica fora: o dinheiro ficou com o vendedor, e vira dívida dele no ledger
+  // (mesma regra do trigger create_sale_receivable, docs/backend.md).
+  function dailyReceipts(state, date) {
+    const businessId = state.activeBusinessId;
+    const day = String(date || '').slice(0, 10);
+    const empty = { total: 0, count: 0 };
+    if (!businessId || !day) {
+      return { sellers: empty, clients: empty, sales: empty, total: 0, count: 0 };
+    }
+
+    const sameBusiness = (row) => row.businessId === businessId;
+    const sum = (rows, key) => rows.reduce((acc, row) => acc + number(row[key]), 0);
+
+    const sellerRows = (state.sellerPayments || [])
+      .filter((row) => sameBusiness(row) && String(row.paymentDate || '').slice(0, 10) === day);
+    const clientRows = (state.consignmentEvents || [])
+      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
+    const saleRows = (state.sales || [])
+      .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
+        && row.origin !== 'consignado' && !row.sellerId);
+
+    const sellers = { total: sum(sellerRows, 'amount'), count: sellerRows.length };
+    const clients = { total: sum(clientRows, 'amount'), count: clientRows.length };
+    const sales = { total: sum(saleRows, 'netRevenue'), count: saleRows.length };
+
+    return {
+      sellers,
+      clients,
+      sales,
+      total: sellers.total + clients.total + sales.total,
+      count: sellers.count + clients.count + sales.count,
+    };
+  }
+
   function businessMetrics(state) {
     const businessId = state.activeBusinessId;
     if (!businessId) {
@@ -3596,6 +3750,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     consignmentDeliveredAmount,
     consignmentUnsettledAmount,
     consignmentAvailableWithClient,
+    dailyReceipts,
     businessMetrics,
     resolveSellerPrice,
     validatePriceFloor,
@@ -3619,6 +3774,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     lucroBruto: 'O que sobra das vendas depois de tirar o custo dos produtos vendidos (CMV). Ainda não desconta despesas fixas como aluguel.',
     consignadoAberto: 'Tudo que ainda te devem em consignado. Conta desde a geração do pedido (venda à vista não entra aqui: já foi paga). Do lado dos vendedores é o saldo devedor deles; do lado dos clientes, a mercadoria em mãos mais o que já venderam e não pagaram. Cai quando o pagamento é registrado ou a mercadoria volta.',
     pedidosPendentes: 'Pedidos que ainda não foram despachados nem concluídos.',
+    recebimentosDia: 'Dinheiro que entrou no dia escolhido: vendedores pagando o que deviam, clientes pagando consignação e vendas à vista. Venda de consignado informada não entra aqui — informar a venda não é receber; o valor aparece quando o pagamento for registrado.',
     // Negócio
     margemDesejada: 'Quanto você quer ganhar sobre o preço de venda, em %. Ex.: 50% = metade do preço é lucro planejado. O sistema usa isso para sugerir o preço de venda.',
     taxasPadrao: 'Taxas que costumam cair nas suas vendas, em %: maquininha de cartão, comissão de marketplace, etc. Entram no cálculo do preço sugerido.',
@@ -10356,6 +10512,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
   // Filtros extras da aba Relatórios (vazio = todos).
+  // Dia mostrado em "Recebimentos do dia" (tela Hoje) — separado do período
+  // do painel de propósito: ali é faixa de datas, aqui é um dia só.
+  let receiptsDate = U.today();
   let reportProductId = '';
   let reportChannel = '';
   let draggedCard = null;
@@ -10486,8 +10645,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
-      ${S.isAdmin() ? renderOperationsSnapshot(baseState) : ''}
     `;
+    // "Visão operacional" NÃO entra aqui de propósito. O painel fixo aparece
+    // em todas as abas menos "Hoje" (que tem a própria versão), então esse
+    // bloco alto se repetia no topo de Vendas, Produtos, Compras... empurrando
+    // o conteúdo de trabalho — e a barra lateral inteira — para baixo da
+    // dobra, sem mostrar nada que a tela "Hoje" já não mostre melhor. As seis
+    // métricas acima continuam em todas as abas por serem compactas.
   }
 
   function renderOperationsSnapshot(baseState) {
@@ -10588,6 +10752,47 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       </section>`;
   }
 
+  // "Recebimentos do dia" — quanto de dinheiro entrou num dia, separado por
+  // origem. Existe porque nenhuma tela respondia isso: a aba Financeiro
+  // acompanha contas a receber (que nascem em aberto), o consignado mostra
+  // saldo devedor, e o pagamento do vendedor só aparecia dentro do card dele.
+  // O seletor de data serve para conferir um dia passado ("quanto entrou
+  // ontem"), sem virar mais um relatório em outra aba.
+  function renderDailyReceipts() {
+    if (!S.isAdmin()) return '';
+    const receipts = Calc.dailyReceipts(state(), receiptsDate);
+    const lines = [
+      { label: 'Pagamentos de vendedores', hint: 'Vendedor acertando a dívida com você.', data: receipts.sellers, tab: 'vendedores' },
+      { label: 'Pagamentos de consignado (clientes)', hint: 'Cliente pagando o que já vendeu.', data: receipts.clients, tab: 'consignado' },
+      { label: 'Vendas à vista', hint: 'Venda direta registrada no dia.', data: receipts.sales, tab: 'vendas' },
+    ];
+    const rows = lines.map((line) => `
+      <li class="receipts-row ${line.data.count ? '' : 'is-empty'}">
+        <div>
+          <strong>${U.escapeHtml(line.label)}</strong>
+          <small>${line.data.count} ${line.data.count === 1 ? 'lançamento' : 'lançamentos'} · ${U.escapeHtml(line.hint)}</small>
+        </div>
+        <span>${U.money(line.data.total)}</span>
+      </li>`).join('');
+
+    return `
+      <section class="today-section receipts-section">
+        <div class="receipts-head">
+          <h3>Recebimentos do dia ${UI.help('recebimentosDia')}</h3>
+          <label class="receipts-date">Dia
+            <input type="date" data-receipts-date value="${U.escapeHtml(receiptsDate)}" aria-label="Dia dos recebimentos">
+          </label>
+        </div>
+        <div class="receipts-total">
+          <span>Total recebido${receiptsDate === U.today() ? ' hoje' : ''}</span>
+          <strong>${U.money(receipts.total)}</strong>
+          <small>${receipts.count} ${receipts.count === 1 ? 'recebimento' : 'recebimentos'}</small>
+        </div>
+        <ul class="receipts-list">${rows}</ul>
+      </section>
+    `;
+  }
+
   // Tela "Hoje" — abertura padrão da navegação mobile (ver
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
@@ -10665,6 +10870,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
+
+        ${renderDailyReceipts()}
 
         ${renderTodayGoals(isAdminUser)}
 
@@ -12776,6 +12983,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (filter) {
       if (filter.dataset.reportFilter === 'product') reportProductId = filter.value || '';
       if (filter.dataset.reportFilter === 'channel') reportChannel = filter.value || '';
+      renderTab();
+      return;
+    }
+    const receiptsInput = event.target.closest('[data-receipts-date]');
+    if (receiptsInput) {
+      receiptsDate = receiptsInput.value || U.today();
       renderTab();
       return;
     }

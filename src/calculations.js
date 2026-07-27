@@ -115,6 +115,52 @@
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  // Dinheiro que entrou num dia específico. Três origens distintas, somadas
+  // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
+  //
+  // - vendedores: pagamento de vendedor quitando dívida (`seller_payments`,
+  //   gravado pelo RPC register_seller_payment com a data do recebimento);
+  // - clientes:   pagamento de consignação de cliente (`consignmentEvents`
+  //   tipo 'pagamento', gravado por consignmentPay em src/app.js);
+  // - vendas:     venda direta do dia, que é dinheiro na hora.
+  //
+  // Venda de consignado (origin 'consignado') fica DE FORA de propósito:
+  // informar que o cliente vendeu não é receber — o dinheiro entra depois,
+  // como pagamento, e seria contado duas vezes. Venda com sellerId também
+  // fica fora: o dinheiro ficou com o vendedor, e vira dívida dele no ledger
+  // (mesma regra do trigger create_sale_receivable, docs/backend.md).
+  function dailyReceipts(state, date) {
+    const businessId = state.activeBusinessId;
+    const day = String(date || '').slice(0, 10);
+    const empty = { total: 0, count: 0 };
+    if (!businessId || !day) {
+      return { sellers: empty, clients: empty, sales: empty, total: 0, count: 0 };
+    }
+
+    const sameBusiness = (row) => row.businessId === businessId;
+    const sum = (rows, key) => rows.reduce((acc, row) => acc + number(row[key]), 0);
+
+    const sellerRows = (state.sellerPayments || [])
+      .filter((row) => sameBusiness(row) && String(row.paymentDate || '').slice(0, 10) === day);
+    const clientRows = (state.consignmentEvents || [])
+      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
+    const saleRows = (state.sales || [])
+      .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
+        && row.origin !== 'consignado' && !row.sellerId);
+
+    const sellers = { total: sum(sellerRows, 'amount'), count: sellerRows.length };
+    const clients = { total: sum(clientRows, 'amount'), count: clientRows.length };
+    const sales = { total: sum(saleRows, 'netRevenue'), count: saleRows.length };
+
+    return {
+      sellers,
+      clients,
+      sales,
+      total: sellers.total + clients.total + sales.total,
+      count: sellers.count + clients.count + sales.count,
+    };
+  }
+
   function businessMetrics(state) {
     const businessId = state.activeBusinessId;
     if (!businessId) {
@@ -221,6 +267,7 @@
     consignmentDeliveredAmount,
     consignmentUnsettledAmount,
     consignmentAvailableWithClient,
+    dailyReceipts,
     businessMetrics,
     resolveSellerPrice,
     validatePriceFloor,

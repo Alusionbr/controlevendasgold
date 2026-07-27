@@ -104,7 +104,12 @@ const DB = {
     tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }],
   sales: [{
-    id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: FIXTURES.admin.uid,
+    id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: null,
+    // seller_id null = venda do admin. Só venda feita por vendedor carrega
+    // seller_id (state.js só carimba esse campo para o papel vendedor), e é
+    // o que o trigger create_sale_receivable usa para decidir de quem é o
+    // dinheiro — a fixture antiga punha o uid do admin aqui e não batia com
+    // o que o app grava de verdade.
     quantity: 2, unit_price: 25, unit_cost: 10, discount: 0, fixed_fees: 0, fee_percent: 0, percent_fees: 0,
     gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
     origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
@@ -311,6 +316,10 @@ async function installMocks(pg) {
         rowsOf('seller_payments').push({
           id: paymentId, business_id: BUSINESS_ID, seller_id: body.p_seller_id,
           amount: Number(body.p_amount), method: body.p_method, notes: body.p_notes || '',
+          // payment_date = current_date no SQL real. Sem ele qualquer tela
+          // que agrupe recebimento por dia lê o pagamento como se não tivesse
+          // data e some com o valor.
+          payment_date: new Date().toISOString().slice(0, 10),
           created_at: new Date().toISOString(),
         });
         rowsOf('seller_account_entries').push({

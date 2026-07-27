@@ -2059,3 +2059,111 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   .bar-chart-value { grid-area: value; }
   .bar-chart-track { grid-area: track; }
 }
+
+/* ---------- Recebimentos do dia (tela "Hoje") ---------- */
+.receipts-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.receipts-head h3 { margin-bottom: 0; }
+.receipts-date { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.receipts-date input { min-height: 36px; padding: 0.3rem 0.5rem; }
+.receipts-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0 0.5rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+}
+.receipts-total span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.receipts-total strong { font-family: var(--num); font-size: 1.6rem; font-weight: 720; color: var(--ink); font-variant-numeric: tabular-nums; }
+.receipts-total small { color: var(--muted); }
+.receipts-list { display: flex; flex-direction: column; }
+.receipts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+.receipts-row + .receipts-row { border-top: 1px solid var(--line); }
+.receipts-row strong { display: block; font-weight: 650; font-size: 0.92rem; }
+.receipts-row small { display: block; color: var(--muted); font-size: 0.78rem; margin-top: 0.1rem; }
+.receipts-row > span { font-family: var(--num); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+/* Linha zerada continua visível (a ausência de recebimento é informação),
+   mas some do primeiro plano para o olho ir direto ao que teve movimento. */
+.receipts-row.is-empty strong, .receipts-row.is-empty > span { color: var(--muted); font-weight: 600; }
+
+/* ---------- Densidade de desktop ----------
+   Pedido do usuário: "a tela desktop ainda está grande... deixar mais
+   profissional". A base do app é mobile-first (a maioria dos vendedores usa
+   no celular) e continua intocada: tudo aqui vive dentro de min-width 960px,
+   a mesma largura em que a barra lateral já assume.
+
+   Três movimentos, nesta ordem de importância:
+   1. DENSIDADE — fontes e espaçamentos menores. Num monitor, os tamanhos
+      pensados para o toque de um dedo viram "celular ampliado".
+   2. MENOS CAIXA — sombra some e vira borda de 1px; cartão dentro de cartão
+      vira linha divisória. Sombra empilhada em três níveis é o que mais dá
+      aparência amadora aqui.
+   3. OURO COMO DESTAQUE — o dourado deixa de ser fundo de botão comum e fica
+      para o que orienta: aba ativa, foco e valores. Quatro botões dourados
+      lado a lado competem com o dado, que é o que importa numa tela de
+      gestão. */
+@media (min-width: 960px) {
+  /* Aproveita o monitor: antes sobrava faixa vazia dos dois lados enquanto o
+     conteúdo dentro ficava espremido e alto. */
+  .app-shell { max-width: 1320px; padding-bottom: 3rem; }
+  .app-body { grid-template-columns: 208px 1fr; gap: 1.25rem; }
+
+  /* 2 — menos caixa */
+  .business-bar,
+  .tabs,
+  .metric-card,
+  .today-section,
+  .panel-card,
+  .operations-snapshot { box-shadow: none; }
+  .operations-snapshot { background: var(--surface); }
+  .operations-kpis article,
+  .sales-trend-card {
+    background: transparent;
+    border: 0;
+    border-left: 2px solid var(--line-strong);
+    border-radius: 0;
+    padding: 0.1rem 0 0.1rem 0.7rem;
+  }
+  .operations-kpis article.needs-attention { border-left-color: var(--accent); box-shadow: none; }
+
+  /* 1 — densidade */
+  .today-screen { gap: 0.9rem; }
+  .today-section { padding: 0.85rem 1rem; }
+  .today-section h3 { font-size: 0.92rem; margin-bottom: 0.55rem; }
+  .dashboard { gap: 0.55rem; margin: 0.9rem 0; }
+  .metric-card { padding: 0.7rem 0.85rem; gap: 0.25rem; }
+  .metric-card strong { font-size: 1.2rem; }
+  .operations-snapshot { padding: 0.85rem 1rem; gap: 0.65rem; }
+  .operations-snapshot-head h2 { font-size: 1rem; }
+  .operations-kpis strong { font-size: 1.05rem; }
+  .operations-kpis small { min-height: 0; font-size: 0.8rem; }
+  .sales-bars { height: 88px; }
+  .section-head h2 { font-size: 1.1rem; }
+  .receipts-total strong { font-size: 1.35rem; }
+
+  /* Barra lateral: 19 itens em altura de toque ocupavam a coluna inteira. */
+  .tabs { padding: 0.3rem; }
+  .tab-button { min-height: 34px; padding: 0.35rem 0.65rem; font-size: 0.88rem; }
+  .tab-group + .tab-group { padding-top: 0.35rem; margin-top: 0.35rem; }
+
+  /* 3 — ouro como destaque, não como preenchimento.
+     Escopo em `.quick-actions >`: a classe .quick-action também é usada nos
+     atalhos em texto da Visão operacional ("Ver vendedores"), que ali são
+     .link-button e precisam continuar parecendo link, não botão. */
+  .quick-actions { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; }
+  .quick-actions > .quick-action {
+    min-height: 38px;
+    background: var(--surface);
+    color: var(--brand-deep);
+    border: 1px solid var(--line-strong);
+    font-weight: 650;
+  }
+  .quick-actions > .quick-action:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+}
