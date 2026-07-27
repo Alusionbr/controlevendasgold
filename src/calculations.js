@@ -98,6 +98,23 @@
     return number(consignment.quantitySent) - number(consignment.quantitySold) - number(consignment.quantityReturned);
   }
 
+  // Valor da mercadoria que saiu do estoque e ainda está na mão do vendedor/
+  // cliente, ao preço combinado. Diferente de consignmentOpenAmount, que só
+  // conta o que já foi VENDIDO e não pago: enquanto ninguém informa venda,
+  // aquele valor é zero, e era por isso que um consignado recém-lançado
+  // aparecia como R$ 0,00 no painel mesmo tendo sido registrado direitinho.
+  function consignmentDeliveredAmount(consignment) {
+    return Math.max(consignmentAvailableWithClient(consignment), 0) * number(consignment.unitPrice);
+  }
+
+  // Tudo que ainda não foi acertado nesta consignação: mercadoria parada com
+  // quem recebeu + o que ele já vendeu e ainda não repassou. A soma não muda
+  // quando uma venda é informada (o valor só troca de coluna) e só cai quando
+  // o dinheiro entra ou a mercadoria volta.
+  function consignmentUnsettledAmount(consignment) {
+    return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
+  }
+
   function businessMetrics(state) {
     const businessId = state.activeBusinessId;
     if (!businessId) {
@@ -107,6 +124,8 @@
         netRevenue: 0,
         grossProfit: 0,
         consignmentsOpen: 0,
+        consignmentsSoldUnpaid: 0,
+        consignmentsWithSellers: 0,
         pendingOrders: 0,
       };
     }
@@ -116,12 +135,32 @@
     const consignments = state.consignments.filter((item) => item.businessId === businessId);
     const orders = state.orders.filter((order) => order.businessId === businessId);
 
+    // Consignado em aberto tem DUAS fontes de verdade diferentes, e misturá-las
+    // dá número errado:
+    //
+    // - Consignado com CLIENTE (sem vendedor): o acerto acontece na própria
+    //   linha de `consignments` — "Registrar venda"/"Devolver"/"Registrar
+    //   pagamento" mexem em quantitySold/quantityReturned/amountPaid. Aqui a
+    //   linha é a fonte.
+    // - Consignado com VENDEDOR: o acerto acontece no ledger
+    //   (`seller_account_entries`). O pagamento do vendedor grava um crédito
+    //   ali e NUNCA toca `consignments.amount_paid`. Somar a linha faria o
+    //   valor ficar preso para sempre, mesmo depois de o vendedor pagar tudo.
+    //
+    // Por isso o lado do vendedor entra pelo saldo do ledger, que já nasce no
+    // envio (débito lançado na aprovação) e cai sozinho a cada pagamento.
+    const clientConsignments = consignments.filter((item) => !item.sellerId);
+    const sellerEntries = (state.sellerAccountEntries || []).filter((entry) => entry.businessId === businessId);
+    const sellerOwed = Math.max(sellerBalance(sellerEntries), 0);
+
     return {
       stockValue: products.reduce((sum, product) => sum + number(product.currentStock) * number(product.avgCost), 0),
       lowStockCount: products.filter((product) => number(product.minStock) > 0 && number(product.currentStock) <= number(product.minStock)).length,
       netRevenue: sales.reduce((sum, sale) => sum + number(sale.netRevenue), 0),
       grossProfit: sales.reduce((sum, sale) => sum + number(sale.grossProfit), 0),
-      consignmentsOpen: consignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
+      consignmentsOpen: clientConsignments.reduce((sum, item) => sum + consignmentUnsettledAmount(item), 0) + sellerOwed,
+      consignmentsSoldUnpaid: clientConsignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
+      consignmentsWithSellers: sellerOwed,
       pendingOrders: orders.filter((order) => !['despachado', 'concluido'].includes(order.status)).length,
     };
   }
@@ -165,6 +204,8 @@
     saleMath,
     sellerBalance,
     consignmentOpenAmount,
+    consignmentDeliveredAmount,
+    consignmentUnsettledAmount,
     consignmentAvailableWithClient,
     businessMetrics,
     resolveSellerPrice,

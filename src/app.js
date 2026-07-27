@@ -330,6 +330,7 @@
     const productMap = new Map(products.map((product) => [String(product.id), product]));
     const withSellers = (baseState.sellerStock || []).filter((row) => row.businessId === businessId)
       .reduce((sum, row) => sum + U.number(row.quantity) * U.number(productMap.get(String(row.productId))?.avgCost), 0);
+    const snapshotMetrics = Calc.businessMetrics(baseState);
     const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
     const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
     const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
@@ -350,7 +351,7 @@
         <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
         <div class='operations-kpis'>
           <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
-          <article><span>A receber</span><strong>${U.money(Calc.businessMetrics(baseState).consignmentsOpen)}</strong><small>Somente itens já vendidos e não pagos.</small><button type='button' class='link-button quick-action' data-tab='consignado'>Ver consignado</button></article>
+          <article><span>Consignado a receber</span><strong>${U.money(snapshotMetrics.consignmentsOpen)}</strong><small>${U.money(snapshotMetrics.consignmentsWithSellers)} de vendedores; o resto é consignado com clientes.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>

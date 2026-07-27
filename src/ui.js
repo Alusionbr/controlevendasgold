@@ -12,7 +12,7 @@
     alertasEstoque: 'Quantos produtos estão no estoque mínimo ou abaixo dele. Servem de aviso para você repor a tempo.',
     receitaLiquida: 'Tudo que entrou com as vendas, já tirando descontos e taxas. É o valor antes de descontar o custo dos produtos.',
     lucroBruto: 'O que sobra das vendas depois de tirar o custo dos produtos vendidos (CMV). Ainda não desconta despesas fixas como aluguel.',
-    consignadoAberto: 'Valor que clientes com produtos em consignação já venderam, mas ainda não te pagaram.',
+    consignadoAberto: 'Tudo que ainda te devem em consignado. Conta desde a geração do pedido (venda à vista não entra aqui: já foi paga). Do lado dos vendedores é o saldo devedor deles; do lado dos clientes, a mercadoria em mãos mais o que já venderam e não pagaram. Cai quando o pagamento é registrado ou a mercadoria volta.',
     pedidosPendentes: 'Pedidos que ainda não foram despachados nem concluídos.',
     // Negócio
     margemDesejada: 'Quanto você quer ganhar sobre o preço de venda, em %. Ex.: 50% = metade do preço é lucro planejado. O sistema usa isso para sugerir o preço de venda.',

@@ -275,6 +275,26 @@ async function installMocks(pg) {
         return json(route, groupId);
       }
 
+      // migration 0026: register_seller_payment(...) — pagamento do vendedor
+      // vira UM crédito no ledger + a linha em seller_payments. Reimplementado
+      // porque é o único ponto que faz o saldo devedor CAIR: sem ele, o ciclo
+      // consignado→pagamento não dá para ser testado ponta a ponta.
+      if (fn === 'register_seller_payment') {
+        const paymentId = nextId('seller_payments');
+        rowsOf('seller_payments').push({
+          id: paymentId, business_id: BUSINESS_ID, seller_id: body.p_seller_id,
+          amount: Number(body.p_amount), method: body.p_method, notes: body.p_notes || '',
+          created_at: new Date().toISOString(),
+        });
+        rowsOf('seller_account_entries').push({
+          id: nextId('seller_account_entries'), business_id: BUSINESS_ID, seller_id: body.p_seller_id,
+          type: 'payment', direction: 'credit', amount: Number(body.p_amount),
+          source_type: 'payment', source_id: paymentId, notes: body.p_notes || 'Pagamento recebido',
+          created_at: new Date().toISOString(),
+        });
+        return json(route, paymentId);
+      }
+
       return json(route, { mock: 'rpc-not-implemented', fn });
     }
 
