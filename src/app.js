@@ -52,6 +52,15 @@
 
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
+  //
+  // Lista vazia = aba desativada para TODO mundo (tabAllowed exige que o papel
+  // esteja na lista; `[]` não contém ninguém). É diferente de `undefined`, que
+  // libera para todos. Use SEM_PAPEL em vez de `[]` literal: o painel do
+  // vendedor virou somente leitura no PR #18 e estas abas ficaram sem dono,
+  // mas continuam em TAB_ORDER/TAB_LABELS de propósito — quando as funções do
+  // vendedor voltarem, basta trocar SEM_PAPEL por ['vendedor'] aqui, sem mexer
+  // em mais nada.
+  const SEM_PAPEL = [];
   const TAB_ROLES = {
     hoje: ['admin'],
     negocios: ['admin'],
@@ -64,14 +73,14 @@
     vendas: ['admin'],
     consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: [],
+    estoque: SEM_PAPEL,          // "Meu estoque" do vendedor
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
     precos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
-    minhasdevolucoes: [],
+    minhasdevolucoes: SEM_PAPEL, // "Devoluções e brindes" do vendedor
     calculadora: ['admin'],
     metas: ['admin'],
     ajuda: ['admin'],

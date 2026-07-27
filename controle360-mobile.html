@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-g9cRIETm4G18oZ3GcMJDuM7Vs4lmS17CQE55oCbM2+Q=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-PMuzgfMmUYibN3bcEoVAe/L8pOxBr6Ih2o5VkdXE5wI='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-g9cRIETm4G18oZ3GcMJDuM7Vs4lmS17CQE55oCbM2+Q=' 'sha256-4ryeGxksGlvRMfA4wr+rl99wwll13PKhtLPmttqACkQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-gR7V7Herd/wvqVIiVgvZ9MSJpsbhnzwZZVxjcEjiJ9c='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -10170,6 +10170,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
   // só evita que a interface ofereça botões que dariam erro de permissão.
+  //
+  // Lista vazia = aba desativada para TODO mundo (tabAllowed exige que o papel
+  // esteja na lista; `[]` não contém ninguém). É diferente de `undefined`, que
+  // libera para todos. Use SEM_PAPEL em vez de `[]` literal: o painel do
+  // vendedor virou somente leitura no PR #18 e estas abas ficaram sem dono,
+  // mas continuam em TAB_ORDER/TAB_LABELS de propósito — quando as funções do
+  // vendedor voltarem, basta trocar SEM_PAPEL por ['vendedor'] aqui, sem mexer
+  // em mais nada.
+  const SEM_PAPEL = [];
   const TAB_ROLES = {
     hoje: ['admin'],
     negocios: ['admin'],
@@ -10182,14 +10191,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     vendas: ['admin'],
     consignado: ['admin'],
     financeiro: ['admin'],
-    estoque: [],
+    estoque: SEM_PAPEL,          // "Meu estoque" do vendedor
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
     precos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
-    minhasdevolucoes: [],
+    minhasdevolucoes: SEM_PAPEL, // "Devoluções e brindes" do vendedor
     calculadora: ['admin'],
     metas: ['admin'],
     ajuda: ['admin'],
