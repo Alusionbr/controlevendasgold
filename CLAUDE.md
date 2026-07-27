@@ -788,7 +788,7 @@ batendo com o saldo do lado do admin.
 
 ---
 
-## Atualização: custo do estoque, consignado no lançamento e bug do `form.id`
+## Atualização: custo do estoque, consignado visível e bug do `form.id`
 
 Sessão de teste ponta a ponta pedida pelo usuário ("faça um teste completo
 das funcionalidades e corrija todas as falhas"), feita com a skill
@@ -827,20 +827,24 @@ ficarem zerados. Mudanças:
 - `renderMissingCostPanel` (aba Produtos) corrige em massa todo produto
   com estoque e custo 0; a tela "Hoje" avisa quando existem.
 
-### Consignado sai do estoque no lançamento
-
-Decisão do usuário. Antes o consignado admin→vendedor só era criado em
-"Despachado"; agora `launchOrderFromCart` e `setGroupApproval` chamam
-`materializeOrder` assim que a revenda fica aprovada. `assertStockForItems`
-(extraída de `advanceOrderGroup`) garante tudo-ou-nada nos três pontos.
-`materializeOrder` continua idempotente por `convertedSaleId`, então
-avançar o card depois não cobra nem baixa estoque de novo. As colunas da
-esteira viraram acompanhamento físico para revenda; venda ao cliente final
-segue baixando só em "Despachado".
+### Consignado invisível na aba "Consignado"
 
 Consignação admin→vendedor tem `clientId` nulo e por isso nunca aparecia na
-aba "Consignado" (a tabela filtra por cliente). Adicionada a seção de
-leitura "Consignado com vendedores" com atalho para a aba Vendedores.
+aba "Consignado" (a tabela filtra por cliente). Quem despachava uma revenda
+e vinha conferir ali encontrava a tela vazia e concluía que nada tinha sido
+registrado. Adicionada a seção de leitura "Consignado com vendedores"
+(`renderSellerConsignmentSummary`, `src/app.js`) com atalho para a aba
+Vendedores, onde o acerto é feito.
+
+**Pendente (decisão do usuário já tomada, implementação não)**: o usuário
+pediu que a revenda saia do estoque central no LANÇAMENTO/aprovação, em vez
+de esperar "Despachado". Foi implementado no cliente e revertido no rebase:
+o PR #19 moveu o despacho inteiro para o RPC `advance_order_group`
+(migration `20260725142236_atomic_order_dispatch.sql`), removendo
+`materializeOrder`/`transferAdminStockToSeller` do JS. Fazer isso agora
+significa mudar o SQL — mover a materialização para o momento da aprovação
+dentro de uma função `SECURITY DEFINER` — não dá para resolver em
+`src/salesCart.js`.
 
 ### Driver de teste
 

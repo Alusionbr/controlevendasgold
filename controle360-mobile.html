@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-8dA+n7u7Y6heOTM9bqfFhG4mkYgPFfu+ve1mZXVIhW8='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-eUAda8C1Mcq9JbbJE8nQZ/AKhR46e14XaYBCiNp2h90=' 'sha256-qTxI9qxCTtk0DV2JfzlWMtBxiUq750TLd0d6Ipq6w5g=' 'sha256-qaob8JYQnIQa7wz0kC3dr0svXaQmo86TgQ6z6oZsBYQ=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-WNbsV0zntWPLVf+t0yPDdP4lE2Nu5Ia5mFL09Lfk520=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-W5EmfsQi67LT6MyQ/uUne7YgwW9sCY74crR/GdERs7E='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -11083,7 +11083,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
-  // revenda é lançado/aprovado na esteira. O acerto continua sendo feito na
+  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
   // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
   // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
   // encontrava a tela vazia e concluía que nada tinha sido registrado.
@@ -11104,7 +11104,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
     return `
       <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda é lançada (ou aprovada, se o pedido veio do vendedor). O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
+      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda chega em "Despachado". O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
       ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;

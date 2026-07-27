@@ -1124,7 +1124,7 @@
   }
 
   // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
-  // revenda é lançado/aprovado na esteira. O acerto continua sendo feito na
+  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
   // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
   // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
   // encontrava a tela vazia e concluía que nada tinha sido registrado.
@@ -1145,7 +1145,7 @@
     });
     return `
       <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda é lançada (ou aprovada, se o pedido veio do vendedor). O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
+      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda chega em "Despachado". O acerto — pagamento, devolução — é feito na aba Vendedores.</p>
       ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;
