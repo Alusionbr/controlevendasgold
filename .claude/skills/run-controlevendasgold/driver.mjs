@@ -83,25 +83,84 @@ const SELLER_ROSTER = [
   { id: '22222222-2222-2222-2222-222222222223', role: 'vendedor', name: 'Vendedor Dois', email: 'vendedor2@demo.local', business_id: BUSINESS_ID, active: true },
 ];
 let currentFixture = FIXTURES.admin;
-// In-memory ledger/stock so `installMocks` can round-trip POSTs made by the
-// consolidated seller panel (send consignado, register payment) back out
-// through the next GET — without this, every action would look like a no-op
-// on screenshot since state.refresh() re-fetches from these same routes.
+
+// ---------------------------------------------------------------------
+// In-memory stand-in for Postgres. Keyed by REAL table name (snake_case),
+// exactly what the app puts in the URL — so ANY table the app touches
+// round-trips (POST → GET) without needing a bespoke branch per table.
+//
+// This matters for testing more than it looks: with the old per-table
+// mock, every unlisted table answered `[]` on GET, so an insert the app
+// made (a consignment, a stock movement, a ledger entry) vanished on the
+// next `state.refresh()`. Screens then rendered empty state and a broken
+// flow was indistinguishable from a working one.
+// ---------------------------------------------------------------------
 const SALE_ID = '44444444-4444-4444-4444-444444444444';
-const DB = { sellerAccountEntries: [], sellerPayments: [], sellerStock: [], products: [{
-  id: PRODUCT_ID, business_id: BUSINESS_ID, name: 'Produto Demo', type: 'produto_final', unit: 'un',
-  current_stock: 100, avg_cost: 10, sale_price: 25, default_price: 25, price_floor: 15, min_stock: 5,
-  notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 50,
-  tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}], sales: [{
-  id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: FIXTURES.admin.uid,
-  quantity: 2, unit_price: 25, unit_cost: 10, discount: 0, fixed_fees: 0, fee_percent: 0, percent_fees: 0,
-  gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
-  origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
-  created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-}], saleCarts: [], saleCartItems: [], orders: [] };
+const DB = {
+  products: [{
+    id: PRODUCT_ID, business_id: BUSINESS_ID, name: 'Produto Demo', type: 'produto_final', unit: 'un',
+    current_stock: 100, avg_cost: 10, sale_price: 25, default_price: 25, price_floor: 15, min_stock: 5,
+    notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 50,
+    tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  }],
+  sales: [{
+    id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: FIXTURES.admin.uid,
+    quantity: 2, unit_price: 25, unit_cost: 10, discount: 0, fixed_fees: 0, fee_percent: 0, percent_fees: 0,
+    gross_revenue: 50, net_revenue: 50, cogs: 20, gross_profit: 30, margin: 0.6, parent_sale_id: null,
+    origin: 'manual', channel: 'Direto', date: new Date().toISOString().slice(0, 10), notes: '',
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  }],
+};
 let seq = 1;
 const nextId = (prefix) => `${prefix}-${seq++}`;
+
+function rowsOf(table) {
+  if (!DB[table]) DB[table] = [];
+  return DB[table];
+}
+
+// PostgREST filters the app actually emits: `col=eq.<value>` (see
+// buildQueryString in src/api.js) plus `order`/`select`. Anything else is
+// ignored on purpose — this is a test double, not a Postgres clone.
+function applyFilters(rows, params) {
+  let out = rows;
+  for (const [key, raw] of params.entries()) {
+    if (key === 'order' || key === 'select' || key === 'limit' || key === 'offset') continue;
+    if (!raw.startsWith('eq.')) continue;
+    const value = raw.slice(3);
+    out = out.filter((row) => {
+      const cell = row[key];
+      if (value === 'null') return cell === null || cell === undefined;
+      return String(cell) === value;
+    });
+  }
+  return out;
+}
+
+function applyOrder(rows, params) {
+  const spec = params.get('order');
+  if (!spec) return rows;
+  const [col, dir = 'asc'] = spec.split('.');
+  return [...rows].sort((a, b) => {
+    const av = a[col] ?? '';
+    const bv = b[col] ?? '';
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+    return dir.startsWith('desc') ? -cmp : cmp;
+  });
+}
+
+// The seller_products view (migrations 0014/0022) masks stock and cost from
+// vendedores. Mirroring it here is what makes admin-vs-vendedor screens
+// differ in the mock the same way they differ in production.
+function sellerProductsView() {
+  return rowsOf('products').map((p) => ({
+    id: p.id, business_id: p.business_id, name: p.name, type: p.type, unit: p.unit,
+    current_stock: null, sale_price: p.sale_price, default_price: p.default_price,
+    price_floor: p.price_floor, min_stock: p.min_stock, notes: p.notes,
+    created_at: p.created_at, updated_at: p.updated_at,
+    stock_available: Number(p.current_stock) > 0, stock_hidden: true,
+  }));
+}
 
 function json(route, body, status = 200) {
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -150,113 +209,112 @@ async function installMocks(pg) {
         default_margin_percent: 50, default_tax_percent: 5, created_at: new Date().toISOString(),
       }]);
     }
-    if (p === '/rest/v1/products') {
-      if (method === 'PATCH') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const row = DB.products.find((item) => item.id === idFilter);
-        if (row) Object.assign(row, req.postDataJSON());
-        return json(route, [row]);
-      }
-      return json(route, DB.products);
-    }
     if (p === '/rest/v1/seller_products') {
-      return json(route, DB.products); // seller_products view: same shape as products for this mock
+      return json(route, applyFilters(sellerProductsView(), params));
     }
-    if (p === '/rest/v1/sales') {
-      if (method === 'POST') {
-        const row = { id: nextId('sale'), created_at: new Date().toISOString(), ...req.postDataJSON() };
-        DB.sales.push(row);
-        return json(route, [row]);
+
+    // --- RPCs (SECURITY DEFINER functions the app calls) -----------------
+    // Only the ones that MOVE DATA are reimplemented, because a stubbed RPC
+    // makes a broken flow look identical to a working one (e.g. a seller
+    // sale whose stock never decrements). Anything else answers with an
+    // explicit marker rather than a plausible-looking null.
+    if (p.startsWith('/rest/v1/rpc/')) {
+      const fn = p.split('/').pop();
+      const body = method === 'POST' ? req.postDataJSON() : {};
+
+      // migration 0007: consume_seller_stock(p_product_id, p_quantity)
+      if (fn === 'consume_seller_stock') {
+        const row = rowsOf('seller_stock').find((r) => String(r.seller_id) === String(currentFixture.uid)
+          && String(r.product_id) === String(body.p_product_id));
+        if (!row || Number(row.quantity) < Number(body.p_quantity)) {
+          return json(route, { message: 'Estoque proprio insuficiente.' }, 400);
+        }
+        row.quantity = Number(row.quantity) - Number(body.p_quantity);
+        return json(route, row);
       }
-      return json(route, DB.sales);
+
+      // migration 0009: seller_adjust_own_stock(p_product_id, p_new_quantity, p_reason)
+      if (fn === 'seller_adjust_own_stock') {
+        const row = rowsOf('seller_stock').find((r) => String(r.seller_id) === String(currentFixture.uid)
+          && String(r.product_id) === String(body.p_product_id));
+        if (!row) return json(route, { message: 'Produto nao esta no seu estoque.' }, 400);
+        row.quantity = Number(body.p_new_quantity);
+        return json(route, row);
+      }
+
+      // migration 0025: register_purchase_group(...) — weighted average cost,
+      // purchases + stock_movements, all in one transaction.
+      if (fn === 'register_purchase_group') {
+        const items = body.p_items || [];
+        const total = items.reduce((sum, it) => sum + Number(it.totalCost), 0);
+        const groupId = nextId('purchase_group');
+        items.forEach((it) => {
+          const product = rowsOf('products').find((r) => String(r.id) === String(it.productId));
+          if (!product) return;
+          const stock = Number(product.current_stock);
+          const quantity = Number(it.quantity);
+          const totalCost = Number(it.totalCost);
+          const unitCost = totalCost / quantity;
+          product.avg_cost = ((stock * Number(product.avg_cost)) + totalCost) / (stock + quantity);
+          product.current_stock = stock + quantity;
+          rowsOf('purchases').push({
+            id: nextId('purchases'), business_id: BUSINESS_ID, purchase_group_id: groupId,
+            date: body.p_date, due_date: body.p_due_date || body.p_date, supplier_id: body.p_supplier_id,
+            product_id: it.productId, quantity, total_cost: totalCost, unit_cost: unitCost,
+            payment_mode: body.p_payment_mode || 'a_prazo',
+            paid_amount: total > 0 ? (totalCost / total) * Number(body.p_paid_amount || 0) : 0,
+            notes: body.p_notes || '', created_at: new Date().toISOString(),
+          });
+          rowsOf('stock_movements').push({
+            id: nextId('stock_movements'), business_id: BUSINESS_ID, date: body.p_date,
+            type: 'entrada_compra', product_id: it.productId, quantity, unit_cost: unitCost,
+            total_cost: totalCost, ref_type: 'purchase_group', ref_id: groupId,
+            notes: body.p_notes || '', created_at: new Date().toISOString(),
+          });
+        });
+        return json(route, groupId);
+      }
+
+      return json(route, { mock: 'rpc-not-implemented', fn });
     }
-    if (p === '/rest/v1/seller_stock') {
+
+    // --- generic table CRUD: works for every /rest/v1/<table> ------------
+    if (p.startsWith('/rest/v1/')) {
+      const table = p.slice('/rest/v1/'.length);
+      const rows = rowsOf(table);
+
       if (method === 'POST') {
-        const row = { id: nextId('sstock'), ...req.postDataJSON() };
-        DB.sellerStock.push(row);
-        return json(route, [row]);
+        const payload = req.postDataJSON();
+        const list = Array.isArray(payload) ? payload : [payload];
+        const created = list.map((body) => {
+          const row = {
+            id: nextId(table),
+            business_id: BUSINESS_ID,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            ...body,
+          };
+          rows.push(row);
+          return row;
+        });
+        return json(route, created);
       }
       if (method === 'PATCH') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const row = DB.sellerStock.find((item) => item.id === idFilter);
-        if (row) Object.assign(row, req.postDataJSON());
-        return json(route, [row]);
-      }
-      return json(route, DB.sellerStock);
-    }
-    if (p === '/rest/v1/sale_carts') {
-      if (method === 'POST') {
-        const row = { id: nextId('cart'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...req.postDataJSON() };
-        DB.saleCarts.push(row);
-        return json(route, [row]);
-      }
-      if (method === 'PATCH') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const row = DB.saleCarts.find((item) => item.id === idFilter);
-        if (row) Object.assign(row, req.postDataJSON());
-        return json(route, [row]);
-      }
-      return json(route, [...DB.saleCarts].reverse());
-    }
-    if (p === '/rest/v1/sale_cart_items') {
-      if (method === 'POST') {
-        const row = { id: nextId('cartitem'), ...req.postDataJSON() };
-        DB.saleCartItems.push(row);
-        return json(route, [row]);
-      }
-      if (method === 'PATCH') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const row = DB.saleCartItems.find((item) => item.id === idFilter);
-        if (row) Object.assign(row, req.postDataJSON());
-        return json(route, [row]);
-      }
-      return json(route, DB.saleCartItems);
-    }
-    if (p === '/rest/v1/orders') {
-      if (method === 'POST') {
-        const row = { id: nextId('order'), business_id: BUSINESS_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), converted_sale_id: null, ...req.postDataJSON() };
-        if (row.status === undefined) row.status = 'pendente';
-        DB.orders.push(row);
-        return json(route, [row]);
-      }
-      if (method === 'PATCH') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const row = DB.orders.find((item) => item.id === idFilter);
-        if (row) Object.assign(row, req.postDataJSON());
-        return json(route, [row]);
+        const matched = applyFilters(rows, params);
+        const patch = req.postDataJSON();
+        matched.forEach((row) => Object.assign(row, patch, { updated_at: new Date().toISOString() }));
+        return json(route, matched);
       }
       if (method === 'DELETE') {
-        const idFilter = (params.get('id') || '').replace('eq.', '');
-        const idx = DB.orders.findIndex((item) => item.id === idFilter);
-        if (idx !== -1) DB.orders.splice(idx, 1);
-        return json(route, []);
+        const matched = applyFilters(rows, params);
+        matched.forEach((row) => {
+          const idx = rows.indexOf(row);
+          if (idx !== -1) rows.splice(idx, 1);
+        });
+        return json(route, matched);
       }
-      return json(route, DB.orders);
+      return json(route, applyOrder(applyFilters(rows, params), params));
     }
-    if (p === '/rest/v1/seller_account_entries') {
-      if (method === 'POST') {
-        const row = { id: nextId('entry'), created_at: new Date().toISOString(), ...req.postDataJSON() };
-        DB.sellerAccountEntries.push(row);
-        return json(route, [row]);
-      }
-      return json(route, [...DB.sellerAccountEntries].reverse());
-    }
-    if (p === '/rest/v1/seller_payments') {
-      if (method === 'POST') {
-        const row = { id: nextId('pay'), created_at: new Date().toISOString(), ...req.postDataJSON() };
-        DB.sellerPayments.push(row);
-        return json(route, [row]);
-      }
-      return json(route, [...DB.sellerPayments].reverse());
-    }
-    if (p.startsWith('/rest/v1/rpc/')) return json(route, null);
-    if (method === 'POST' && p.startsWith('/rest/v1/')) {
-      // Generic insert fallback (consignments, consignment_events, stock_movements,
-      // sale_carts, sale_cart_items, ...): echo back an id so callers that read
-      // result[0].id don't blow up, without needing a bespoke branch per table.
-      return json(route, [{ id: nextId('row'), created_at: new Date().toISOString(), ...req.postDataJSON() }]);
-    }
-    if (p.startsWith('/rest/v1/')) return json(route, []); // every other table: empty, still renders
     if (p.startsWith('/functions/v1/')) return json(route, {});
 
     return json(route, {}, 404);
@@ -372,6 +430,19 @@ const COMMANDS = {
   async text(sel) {
     if (!page) return console.log('ERROR: launch first');
     console.log(await page.evaluate((s) => (s ? document.querySelector(s) : document.body)?.innerText ?? '(null)', sel || null));
+  },
+
+  // db [table] — inspect the mock "database". No argument lists every table
+  // with a row count; with a table name, dumps its rows. This is the mock's
+  // answer to "did that button actually write anything?", which a screenshot
+  // cannot tell you.
+  async db(table) {
+    const name = (table || '').trim();
+    if (!name) {
+      const summary = Object.fromEntries(Object.entries(DB).map(([t, rows]) => [t, rows.length]));
+      return console.log(JSON.stringify(summary, null, 2));
+    }
+    console.log(JSON.stringify(DB[name] || [], null, 2));
   },
 
   async console() { console.log('(errors print live as they happen; nothing buffered)'); },

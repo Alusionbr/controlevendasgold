@@ -1101,7 +1101,36 @@
         <button type="submit">Enviar consignado</button>
       </form>
       ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'Ações'], rows)}
+      ${renderSellerConsignmentSummary()}
     `, 'consignado');
+  }
+
+  // Consignado admin -> vendedor (clientId nulo), criado quando um pedido de
+  // revenda chega em "Despachado" na esteira. O acerto continua sendo feito na
+  // aba Vendedores; aqui ele aparece só em leitura porque, sem isso, quem
+  // lançava um consignado pela esteira e vinha conferir na aba "Consignado"
+  // encontrava a tela vazia e concluía que nada tinha sido registrado.
+  function renderSellerConsignmentSummary() {
+    if (!S.isAdmin()) return '';
+    const open = currentConsignments().filter((item) => !item.clientId
+      && Calc.consignmentAvailableWithClient(item) > 0);
+    if (!open.length) return '';
+    const rows = open.map((item) => {
+      const product = productById(item.productId);
+      return [
+        U.escapeHtml(item.date),
+        U.escapeHtml(sellerName(item.sellerId)),
+        UI.productName(product),
+        U.qty(Calc.consignmentAvailableWithClient(item), product?.unit),
+        UI.moneyCell(U.number(item.quantitySent) * U.number(item.unitPrice)),
+      ];
+    });
+    return `
+      <h3>Consignado com vendedores</h3>
+      <p class="hint-inline">Gerado pela esteira de pedidos quando uma revenda é despachada. O acerto (pagamento, devolução) é feito na aba Vendedores.</p>
+      ${UI.table(['Data', 'Vendedor', 'Produto', 'Com o vendedor', 'Valor enviado'], rows)}
+      <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
+    `;
   }
 
   function financialDisplayStatus(entry) {
@@ -1604,12 +1633,18 @@
 
   async function addProduct(data) {
     const business = S.activeBusiness();
-    await S.add('products', {
+    const initialStock = U.number(data.currentStock);
+    const initialCost = U.number(data.avgCost);
+    if (initialStock > 0 && initialCost <= 0 && data.type !== 'servico'
+      && !confirm('Você informou estoque inicial mas custo médio inicial 0. Sem custo, este produto entra valendo R$ 0 e não aparece em "Valor em estoque" nem gera CMV nas vendas. Cadastrar assim mesmo?')) {
+      throw new Error('Cadastro cancelado. Informe o custo médio inicial (ou registre a entrada pela aba Compras).');
+    }
+    const product = await S.add('products', {
       name: data.name.trim(),
       type: data.type,
       unit: data.unit,
-      currentStock: U.number(data.currentStock),
-      avgCost: U.number(data.avgCost),
+      currentStock: initialStock,
+      avgCost: initialCost,
       salePrice: U.number(data.salePrice),
       minStock: U.number(data.minStock),
       laborCostPerUnit: U.number(data.laborCostPerUnit),
@@ -1619,6 +1654,20 @@
       taxFeePercent: data.taxFeePercent === '' ? U.number(business?.defaultFeePercent) : U.number(data.taxFeePercent),
       notes: data.notes || '',
     });
+    // Estoque inicial é estoque: sem esta movimentação o saldo nascia do nada
+    // e o relatório de movimentações não fechava com o estoque atual (ver
+    // CLAUDE.md, "Estoque nunca deve ser alterado sem movimentação").
+    if (product && product.id && initialStock > 0 && data.type !== 'servico') {
+      await S.recordMovement({
+        date: U.today(),
+        type: 'ajuste_manual',
+        productId: product.id,
+        quantity: initialStock,
+        unitCost: initialCost,
+        totalCost: initialStock * initialCost,
+        notes: 'Estoque inicial informado no cadastro do produto.',
+      });
+    }
   }
 
   async function addPurchaseDraftItem(data) {
@@ -1958,6 +2007,7 @@
       if (action === 'edit-client') { openClientEditor(id, true); return; }
       if (action === 'close-client-editor') { document.getElementById('clientEditor')?.close(); return; }
       if (action === 'close-product-editor') { document.getElementById('productEditor')?.close(); return; }
+      if (action === 'go-sellers') { setTab('vendedores'); return; }
       if (action === 'financial-pay') { openFinancialPayment(id); return; }
       if (action === 'close-financial-payment') { document.getElementById('financialPaymentEditor')?.close(); return; }
       if (action === 'financial-cancel') { await S.update('financialEntries', id, { status: 'cancelled' }); renderAll(); return; }
@@ -2068,19 +2118,48 @@
   // venda, consignado): sempre gera stockMovements com type 'ajuste_manual'
   // e motivo obrigatório, nunca muda o estoque em silêncio (ver CLAUDE.md,
   // regra "Estoque nunca deve ser alterado sem movimentação").
+  //
+  // Toda ENTRADA aqui também pergunta o custo por unidade. Sem isso, um
+  // produto cadastrado com "Custo médio inicial" 0 (o padrão do formulário)
+  // ficava valendo R$ 0 para sempre: só a aba Compras alimentava `avgCost`,
+  // e "Ajustar estoque" reaproveitava o custo antigo. O sintoma era o
+  // estoque subir na tela mas "Valor em estoque" (e o CMV das vendas
+  // seguintes) continuar zerado.
   async function adjustStock(productId) {
     const product = productById(productId);
     if (!product) throw new Error('Produto não encontrado.');
-    const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(product.currentStock, product.unit)}`);
+    const currentStock = U.number(product.currentStock);
+    const currentCost = U.number(product.avgCost);
+    const newQtyText = prompt(`Novo estoque de "${product.name}"? Atual: ${U.qty(currentStock, product.unit)}`, String(currentStock));
     if (newQtyText === null) return;
     const newQty = U.number(newQtyText);
     if (newQty < 0) throw new Error('Estoque não pode ficar negativo.');
-    const diff = newQty - U.number(product.currentStock);
-    if (diff === 0) return;
+    const diff = newQty - currentStock;
+    // Sem mudança de quantidade só faz sentido continuar se ainda dá para
+    // corrigir o custo — é o caso de quem já cadastrou o produto com estoque
+    // e custo zero e precisa acertar o valor sem inventar movimentação.
+    const costOnly = diff === 0;
+    if (costOnly && currentCost > 0) return;
+
+    const askCost = diff > 0 || costOnly;
+    let unitCost = currentCost;
+    const patch = { currentStock: newQty };
+    if (askCost) {
+      const label = costOnly
+        ? `Custo por unidade de "${product.name}"? (usado para calcular valor em estoque, CMV e lucro)`
+        : `Custo por unidade das ${U.qty(diff, product.unit)} que estão entrando?`;
+      const costText = prompt(label, String(currentCost || ''));
+      if (costText === null) return;
+      unitCost = U.number(costText);
+      if (unitCost < 0) throw new Error('Custo não pode ser negativo.');
+      patch.avgCost = costOnly
+        ? unitCost
+        : Calc.weightedAverageCost(currentStock, currentCost, diff, diff * unitCost);
+    }
+
     const reason = prompt('Motivo do ajuste (obrigatório):');
     if (!reason || !reason.trim()) throw new Error('Informe o motivo do ajuste.');
-    const unitCost = U.number(product.avgCost);
-    await S.update('products', product.id, { currentStock: newQty });
+    await S.update('products', product.id, patch);
     await S.recordMovement({
       date: U.today(),
       type: 'ajuste_manual',

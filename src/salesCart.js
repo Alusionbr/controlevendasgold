@@ -61,7 +61,14 @@
   }
   function sellerName(id) {
     const profile = (state().profiles || []).find((item) => String(item.id) === String(id));
-    return profile ? profile.name : 'Vendedor';
+    if (profile) return profile.name;
+    // `profiles` fica vazio para quem entrou como vendedor (a RLS só devolve a
+    // própria linha, e refreshAsSeller nem busca a tabela), então o vendedor
+    // via os próprios pedidos rotulados só como "Revenda: Vendedor". O perfil
+    // logado é a única identidade disponível desse lado.
+    const current = user();
+    if (current && String(current.id) === String(id)) return current.name || 'Você';
+    return 'Vendedor';
   }
   function settingForSeller(id) {
     return (state().sellerSettings || []).find((item) => String(item.sellerId) === String(id)) || {
