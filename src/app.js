@@ -42,7 +42,12 @@
     vendedores: 'Vendedores',
     precos: 'Preços',
     meusaldo: 'Minha conta',
-    devolucoes: 'Devoluções, desperdícios e brindes',
+    // Rótulo de navegação é destino, não descrição: "Devoluções,
+    // desperdícios e brindes" quebrava em 3 linhas na barra lateral e
+    // desalinhava a coluna inteira. O nome completo continua no título da
+    // própria tela (UI.section em src/operationalMovements.js), que é onde
+    // ele ensina o que cabe ali.
+    devolucoes: 'Devoluções e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
     calculadora: 'Calculadora',
     metas: 'Metas',

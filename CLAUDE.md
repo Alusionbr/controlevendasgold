@@ -975,3 +975,11 @@ seis métricas compactas continuam em todas as abas.
 - O mock de `register_seller_payment` não gravava `payment_date` (o SQL real
   usa `current_date`), então o pagamento sumia de qualquer tela que agrupe
   recebimento por dia.
+
+### Rótulo de navegação vs. título de tela
+
+Medido na barra lateral (208px): só `devolucoes` quebrava — 3 linhas, 64px
+contra 34px de todos os outros, desalinhando a coluna inteira. Virou
+"Devoluções e brindes" em `TAB_LABELS`; o nome completo continua no
+`UI.section` da própria tela. Regra para rótulos novos: navegação nomeia o
+destino, a tela descreve o que cabe nela.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-ACoJ13LMRezCdG/SDpVyVRCu3uy+H5RjlskvaABx2Yo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-R0RoTwb2ZBbvc7dlqlWWcPHEzzbS+JVXvteDMartIr0=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-PvNPqu1bW6iLageFjiBjeLo5cQw+xjGWMJ5bAPiNG08=' 'sha256-xWUAGOiNAgoQMqHeBAiDToZK+N8jdNVun1EQ7UlwJOY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -10352,7 +10352,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     vendedores: 'Vendedores',
     precos: 'Preços',
     meusaldo: 'Minha conta',
-    devolucoes: 'Devoluções, desperdícios e brindes',
+    // Rótulo de navegação é destino, não descrição: "Devoluções,
+    // desperdícios e brindes" quebrava em 3 linhas na barra lateral e
+    // desalinhava a coluna inteira. O nome completo continua no título da
+    // própria tela (UI.section em src/operationalMovements.js), que é onde
+    // ele ensina o que cabe ali.
+    devolucoes: 'Devoluções e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
     calculadora: 'Calculadora',
     metas: 'Metas',
