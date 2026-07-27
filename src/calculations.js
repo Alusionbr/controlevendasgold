@@ -161,7 +161,11 @@
       consignmentsOpen: clientConsignments.reduce((sum, item) => sum + consignmentUnsettledAmount(item), 0) + sellerOwed,
       consignmentsSoldUnpaid: clientConsignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
       consignmentsWithSellers: sellerOwed,
-      pendingOrders: orders.filter((order) => !['despachado', 'concluido'].includes(order.status)).length,
+      // Pedido rejeitado não é pendência: some da esteira (renderBoard já o
+      // filtra), mas continuava inflando este contador — o painel dizia que
+      // havia pedidos a despachar que não existiam em tela nenhuma.
+      pendingOrders: orders.filter((order) => !['despachado', 'concluido'].includes(order.status)
+        && order.approvalStatus !== 'rejeitado').length,
     };
   }
 

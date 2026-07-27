@@ -2020,3 +2020,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .missing-cost-row > span small { display: block; font-weight: 400; opacity: 0.7; }
 .missing-cost-row > input { flex: 0 1 10rem; }
 .missing-cost-panel button { margin-top: 0.85rem; }
+
+/* Gráfico de barras horizontais dos relatórios (CSS puro, sem biblioteca).
+   Usado por "mais vendidos", "receita por canal" e "receita por mês". */
+.bar-chart { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.bar-chart li {
+  display: grid;
+  grid-template-columns: minmax(6rem, 8rem) 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+.bar-chart-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bar-chart-track {
+  background: var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: 999px;
+  height: 0.7rem;
+  overflow: hidden;
+}
+.bar-chart-track > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent, #c9a227);
+  min-width: 2px;
+}
+.bar-chart-value { font-size: 0.78rem; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .bar-chart li { grid-template-columns: 1fr auto; grid-template-areas: "label value" "track track"; }
+  .bar-chart-label { grid-area: label; white-space: normal; }
+  .bar-chart-value { grid-area: value; }
+  .bar-chart-track { grid-area: track; }
+}

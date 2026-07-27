@@ -192,6 +192,9 @@
   const todayDate = new Date();
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
+  // Filtros extras da aba Relatórios (vazio = todos).
+  let reportProductId = '';
+  let reportChannel = '';
   let draggedCard = null;
   let openReturnsSaleId = null;
   let purchaseDraft = [];
@@ -1254,11 +1257,29 @@
     `);
   }
 
+  // Barras horizontais em CSS puro (sem biblioteca de gráfico, ver CLAUDE.md
+  // "não adicionar bibliotecas externas sem necessidade real"). `rows` já vem
+  // ordenado; `format` decide se o rótulo é dinheiro ou quantidade.
+  function barChart(rows, format = U.money) {
+    if (!rows.length) return '<div class="empty-state"><strong>Sem dados no período.</strong><span>Ajuste o filtro acima.</span></div>';
+    const max = Math.max(...rows.map((row) => row.value), 1);
+    return `<ul class="bar-chart">${rows.map((row) => `
+      <li>
+        <span class="bar-chart-label" title="${U.escapeHtml(row.label)}">${U.escapeHtml(row.label)}</span>
+        <span class="bar-chart-track"><i style="width:${Math.max(2, Math.round((row.value / max) * 100))}%"></i></span>
+        <strong class="bar-chart-value">${format(row.value)}</strong>
+      </li>`).join('')}</ul>`;
+  }
+
   function renderReports() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts();
     const inPeriod = (date) => (!dashboardStart || String(date || '') >= dashboardStart) && (!dashboardEnd || String(date || '') <= dashboardEnd);
-    const periodSales = currentSales().filter((sale) => inPeriod(sale.date));
+    const allPeriodSales = currentSales().filter((sale) => inPeriod(sale.date));
+    // Filtros extras do relatório (produto/canal). Aplicados só às vendas —
+    // estoque e ficha técnica não dependem de período nem de canal.
+    const periodSales = allPeriodSales.filter((sale) => (!reportProductId || String(sale.productId) === String(reportProductId))
+      && (!reportChannel || String(sale.channel || '') === reportChannel));
     const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
     const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
     const salesTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
@@ -1273,6 +1294,41 @@
       row.quantity += U.number(sale.quantity); row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); byProduct.set(key, row);
     });
     const topProductRows = [...byProduct.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 12).map((row) => [UI.productName(row.product), U.qty(row.quantity, row.product?.unit), UI.moneyCell(row.revenue), UI.moneyCell(row.profit), row.revenue ? `${((row.profit / row.revenue) * 100).toFixed(1)}%` : '0%']);
+
+    const productLabel = (row) => row.product?.name || 'Produto removido';
+    const topByRevenue = [...byProduct.values()]
+      .filter((row) => row.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue).slice(0, 8)
+      .map((row) => ({ label: productLabel(row), value: row.revenue }));
+    const topByQuantity = [...byProduct.values()]
+      .filter((row) => row.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity).slice(0, 8)
+      .map((row) => ({ label: productLabel(row), value: row.quantity }));
+
+    const sumBy = (keyFor) => {
+      const map = new Map();
+      periodSales.forEach((sale) => {
+        const key = keyFor(sale);
+        map.set(key, U.number(map.get(key)) + U.number(sale.netRevenue));
+      });
+      return map;
+    };
+    const byChannelRows = [...sumBy((sale) => sale.channel || 'Sem canal').entries()]
+      .filter(([, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, value]) => ({ label, value }));
+    // Por mês fica em ordem cronológica (não por valor): a leitura aqui é
+    // evolução no tempo, não ranking.
+    const byMonthRows = [...sumBy((sale) => String(sale.date || '').slice(0, 7) || '—').entries()]
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+      .map(([label, value]) => ({ label, value }));
+
+    // Canais que realmente aparecem nas vendas + os configurados, sem repetir:
+    // filtrar por um canal que nunca foi usado só geraria tela vazia.
+    const channelsInUse = [...new Set([
+      ...allPeriodSales.map((sale) => sale.channel).filter(Boolean),
+      ...(state().settings.channels || []),
+    ])];
     const costRows = products.filter((product) => ['produto_final', 'kit'].includes(product.type)).map((product) => {
       const cost = Calc.calculateRecipeCost(product.id, state());
       return [
@@ -1308,12 +1364,35 @@
         <div><span>Período analisado</span><strong>${U.escapeHtml(dashboardStart || 'Início')} até ${U.escapeHtml(dashboardEnd || 'Hoje')}</strong></div>
         <label>De<input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}"></label>
         <label>Até<input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}"></label>
+        <label>Atalho
+          <select data-report-preset>
+            <option value="">Escolher</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="tudo">Tudo</option>
+          </select>
+        </label>
+        <label>Produto
+          <select data-report-filter="product">${UI.optionList(products, reportProductId, 'Todos')}</select>
+        </label>
+        <label>Canal
+          <select data-report-filter="channel">${UI.optionList(channelsInUse, reportChannel, 'Todos')}</select>
+        </label>
       </div>
       <div class="metric-grid report-metrics">
         <article><span>Receita líquida</span><strong>${U.money(salesTotal)}</strong><small>${periodSales.length} item(ns) vendidos.</small></article>
         <article><span>Lucro bruto</span><strong>${U.money(profitTotal)}</strong><small>${salesTotal ? ((profitTotal / salesTotal) * 100).toFixed(1) : '0'}% de margem.</small></article>
         <article><span>Ticket médio</span><strong>${U.money(ticket)}</strong><small>Por venda ou pedido.</small></article>
         <article><span>Caixa no período</span><strong>${U.money(financialReceived - financialPaid)}</strong><small>${U.money(financialReceived)} recebido · ${U.money(financialPaid)} pago.</small></article>
+      </div>
+      <div class="two-columns">
+        <div class="panel-card"><h3>Mais vendidos por receita</h3>${barChart(topByRevenue)}</div>
+        <div class="panel-card"><h3>Mais vendidos por quantidade</h3>${barChart(topByQuantity, (value) => U.qty(value, ''))}</div>
+      </div>
+      <div class="two-columns">
+        <div class="panel-card"><h3>Receita por canal</h3>${barChart(byChannelRows)}</div>
+        <div class="panel-card"><h3>Receita por mês</h3>${barChart(byMonthRows)}</div>
       </div>
       <div class="panel-card"><h3>Produtos mais vendidos</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
       <div class="three-columns">
@@ -2518,11 +2597,44 @@
   }
 
   function handleDashboardPeriod(event) {
+    const preset = event.target.closest('[data-report-preset]');
+    if (preset) {
+      applyPeriodPreset(preset.value);
+      return;
+    }
+    const filter = event.target.closest('[data-report-filter]');
+    if (filter) {
+      if (filter.dataset.reportFilter === 'product') reportProductId = filter.value || '';
+      if (filter.dataset.reportFilter === 'channel') reportChannel = filter.value || '';
+      renderTab();
+      return;
+    }
     const input = event.target.closest('[data-dashboard-date]');
     if (!input) return;
     if (input.dataset.dashboardDate === 'start') dashboardStart = input.value || '';
     if (input.dataset.dashboardDate === 'end') dashboardEnd = input.value || '';
     renderDashboard();
+    // O mesmo par de datas filtra o painel fixo E a aba Relatórios. Sem este
+    // renderTab, mudar o período com Relatórios aberto atualizava só os KPIs
+    // do topo e a tela inteira abaixo continuava mostrando o período antigo.
+    if (activeTab === 'relatorios') renderTab();
+  }
+
+  function applyPeriodPreset(preset) {
+    const today = new Date();
+    const iso = (date) => date.toISOString().slice(0, 10);
+    if (preset === 'tudo') { dashboardStart = ''; dashboardEnd = ''; }
+    else if (preset === 'mes') {
+      dashboardStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+      dashboardEnd = U.today();
+    } else if (preset === '7' || preset === '30') {
+      const from = new Date(today);
+      from.setDate(from.getDate() - (Number(preset) - 1));
+      dashboardStart = iso(from);
+      dashboardEnd = U.today();
+    } else return;
+    renderDashboard();
+    renderTab();
   }
 
   function handleDataActions(event) {
