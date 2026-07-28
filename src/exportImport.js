@@ -38,6 +38,13 @@
     direction: 'Direção', category: 'Categoria', description: 'Descrição', issueDate: 'Emissão',
     paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
     sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
+    paymentDate: 'Data do pagamento', method: 'Forma',
+    receivedBy: 'Recebido por', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
+    quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
+    affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
+    parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
+    periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
+    targetAmount: 'Meta', rewardDescription: 'Premiação',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -47,10 +54,12 @@
     'discount', 'fixedFees', 'feePercent', 'grossRevenue', 'percentFees', 'netRevenue',
     'cogs', 'grossProfit', 'margin', 'quantitySent', 'quantitySold', 'quantityReturned',
     'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
-    'paidAmount',
+    'paidAmount', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue',
+    'price', 'floor', 'targetAmount',
   ]);
 
-  const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt', 'submittedAt', 'approvedAt']);
+  const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
+    'submittedAt', 'approvedAt', 'paymentDate', 'confirmedAt', 'periodStart', 'periodEnd']);
 
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
@@ -62,15 +71,25 @@
     { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'createdAt', 'updatedAt'] },
+    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'sellerId', 'parentSaleId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
-    { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'notes', 'status', 'createdAt', 'updatedAt'] },
+    { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'sellerId', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sellerSettings', sheet: 'Permissoes vendedores', fields: ['id', 'businessId', 'sellerId', 'allowAdminStockSales', 'allowConsignment', 'allowPublicCartLinks', 'maxDiscountPercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'saleCartItems', sheet: 'Itens carrinho', fields: ['id', 'cartId', 'businessId', 'productId', 'quantity', 'unitPrice', 'approvedQuantity', 'rejectionReason', 'createdAt', 'updatedAt'] },
+    // Fases 3 e 4 (ledger do vendedor, estoque em mãos, devoluções) e metas.
+    // Sem estas abas o arquivo de backup saía sem NENHUMA dívida de vendedor,
+    // sem o histórico de pagamentos e sem o que cada vendedor tem em mãos —
+    // justamente os dados que não dá para reconstruir olhando outra tela.
+    { key: 'sellerAccountEntries', sheet: 'Conta corrente vendedor', fields: ['id', 'businessId', 'sellerId', 'type', 'direction', 'amount', 'sourceType', 'sourceId', 'notes', 'createdBy', 'createdAt'] },
+    { key: 'sellerPayments', sheet: 'Pagamentos vendedor', fields: ['id', 'businessId', 'sellerId', 'amount', 'paymentDate', 'method', 'notes', 'receivedBy', 'createdAt'] },
+    { key: 'sellerStock', sheet: 'Estoque com vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'quantity', 'createdAt', 'updatedAt'] },
+    { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
+    { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },
+    { key: 'salesGoals', sheet: 'Metas', fields: ['id', 'businessId', 'sellerId', 'periodType', 'periodStart', 'periodEnd', 'targetAmount', 'rewardDescription', 'notes', 'createdAt', 'updatedAt'] },
   ];
 
   const BACKUP_SHEET = 'Backup_NAO_EDITAR';

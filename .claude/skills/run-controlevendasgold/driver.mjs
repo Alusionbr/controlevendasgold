@@ -194,6 +194,35 @@ function applyDbTriggers(table, row) {
   return row;
 }
 
+// migration 0024: trg_purchases_create_payable / trg_sales_create_receivable.
+// O lançamento financeiro nasce no BANCO, não no cliente — sem emular isso a
+// aba Financeiro fica vazia depois de uma compra ou venda no mock, e um
+// módulo quebrado fica indistinguível de um módulo correto.
+function applyInsertSideEffects(table, row) {
+  if (table === 'purchases') {
+    rowsOf('financial_entries').push(applyDbTriggers('financial_entries', {
+      id: nextId('financial_entries'), business_id: row.business_id, direction: 'payable',
+      category: 'purchase', description: 'Compra', issue_date: row.date,
+      due_date: row.due_date || row.date, amount: Number(row.total_cost || 0),
+      paid_amount: Number(row.paid_amount || 0), supplier_id: row.supplier_id || null,
+      source_type: 'purchase', source_id: row.id, payment_method: row.payment_mode || 'a_prazo',
+      notes: row.notes || '', created_at: new Date().toISOString(),
+    }));
+  }
+  // Mesmas exclusões do SQL: venda de vendedor e venda de consignado não
+  // viram conta a receber do admin.
+  if (table === 'sales' && !row.seller_id && row.origin !== 'consignado' && Number(row.net_revenue || 0) > 0) {
+    rowsOf('financial_entries').push(applyDbTriggers('financial_entries', {
+      id: nextId('financial_entries'), business_id: row.business_id, direction: 'receivable',
+      category: 'sale', description: 'Venda', issue_date: row.date, due_date: row.date,
+      amount: Number(row.net_revenue || 0), paid_amount: 0, client_id: row.client_id || null,
+      source_type: 'sale', source_id: row.id, payment_method: null,
+      notes: row.notes || '', created_at: new Date().toISOString(),
+    }));
+  }
+  return row;
+}
+
 function json(route, body, status = 200) {
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -297,6 +326,7 @@ async function installMocks(pg) {
             paid_amount: total > 0 ? (totalCost / total) * Number(body.p_paid_amount || 0) : 0,
             notes: body.p_notes || '', created_at: new Date().toISOString(),
           });
+          applyInsertSideEffects('purchases', rowsOf('purchases')[rowsOf('purchases').length - 1]);
           rowsOf('stock_movements').push({
             id: nextId('stock_movements'), business_id: BUSINESS_ID, date: body.p_date,
             type: 'entrada_compra', product_id: it.productId, quantity, unit_cost: unitCost,
@@ -430,6 +460,7 @@ async function installMocks(pg) {
               notes: `Venda despachada - pedido ${groupId}`, origin: 'pedido', origin_id: order.id,
               seller_id: null, created_at: now,
             });
+            applyInsertSideEffects('sales', rowsOf('sales')[rowsOf('sales').length - 1]);
             if (product.type !== 'servico') {
               product.current_stock = Number(product.current_stock) - quantity;
               rowsOf('stock_movements').push({
@@ -468,6 +499,7 @@ async function installMocks(pg) {
           };
           applyDbTriggers(table, row);
           rows.push(row);
+          applyInsertSideEffects(table, row);
           return row;
         });
         return json(route, created);

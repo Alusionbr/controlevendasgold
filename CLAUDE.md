@@ -983,3 +983,48 @@ contra 34px de todos os outros, desalinhando a coluna inteira. Virou
 "Devoluções e brindes" em `TAB_LABELS`; o nome completo continua no
 `UI.section` da própria tela. Regra para rótulos novos: navegação nomeia o
 destino, a tela descreve o que cabe nela.
+
+---
+
+## Atualização: revisão funcional e cobertura do backup
+
+Rodada de revisão pedida pelo usuário. Fluxos exercitados de ponta a ponta com
+a skill `run-controlevendasgold`, todos **corretos**, sem alteração de código:
+
+| Fluxo | Conferido |
+|---|---|
+| Ficha técnica | 50 ml × R$ 0,50 + 1 vidro × R$ 2,00 = R$ 27,00; sugerido R$ 60,00 = 27 / (1 − 0,50 − 0,05) |
+| Produção | 10 un: insumos baixados, produto 100 → 110, custo médio 11,545 = 1270/110, 3 movimentações |
+| Compra | 190 @ 2,00 + 100 por 300 → 290 @ 2,3448 |
+| Venda pela esteira | pedido → despachado: venda com CMV pelo custo médio, `saida_venda`, estoque −2, conta a receber |
+| Financeiro | baixa parcial 80 de 200 → status `partial` |
+
+### `COLLECTIONS` do backup estava incompleto
+
+`src/exportImport.js` exportava 17 coleções e **nenhuma** das criadas nas
+Fases 3-4: `sellerAccountEntries` (a dívida de cada vendedor),
+`sellerPayments`, `sellerStock`, `operationalMovements`, `sellerPrices` e
+`salesGoals`. Faltavam também `sellerId`/`parentSaleId` em `sales` e
+`sellerId` em `consignments` — sem esse campo, nem as consignações que
+saíam no arquivo diziam de quem eram.
+
+Corrigido: 23 abas. Regra do CLAUDE.md continua valendo — coleção nova entra
+em `COLLECTIONS`, e cada chave nova em `LABELS` + `NUMERIC_KEYS`/`DATE_KEYS`
+conforme o tipo.
+
+### Pendente (decisão do usuário): restaurar backup não grava no servidor
+
+`importXlsx`/`importJson` chamam `S.replaceState(...)`, que só troca o cache
+em memória e o espelho em localStorage — **nenhuma escrita no Supabase**. Em
+seguida chamam `refresh()`, que aqui é `C360.app.refresh` (só redesenha).
+Resultado: a tela mostra os dados importados e o primeiro
+`C360.state.refresh()` (qualquer gravação de módulo, ou recarregar a página)
+traz tudo do servidor de volta por cima.
+
+Reproduzido: `replaceState` com um produto renomeado → tela mostra o nome
+novo → `await state.refresh()` → volta ao nome do servidor.
+
+Ou seja: exportar funciona (e agora é completo), **restaurar não**. Consertar
+exige upsert das ~23 coleções respeitando ordem de FK e RLS — é trabalho de
+backend, com decisão de produto no meio (substituir tudo? mesclar? o que fazer
+com id que já existe?), por isso não foi feito junto.
