@@ -1028,3 +1028,144 @@ Ou seja: exportar funciona (e agora é completo), **restaurar não**. Consertar
 exige upsert das ~23 coleções respeitando ordem de FK e RLS — é trabalho de
 backend, com decisão de produto no meio (substituir tudo? mesclar? o que fazer
 com id que já existe?), por isso não foi feito junto.
+
+---
+
+## Atualização: devolução, brinde e acerto do vendedor no card do vendedor
+
+Pedido do usuário, olhando o app em produção: *"não achei nada para devolução
+de produtos do vendedor ou algum acerto que possa abater valores de produtos
+que viram brindes"*. Duas coisas diferentes estavam por trás disso — uma de
+descoberta e uma de regra faltando.
+
+### 1. Estava escondido numa aba
+
+O módulo existia (aba "Devoluções e brindes", `src/operationalMovements.js`),
+mas fica no grupo "Mercadoria e produção" da barra lateral, longe do card do
+vendedor — que é onde o admin está quando lembra que o vendedor devolveu
+alguma coisa. Além disso o fluxo era de **dois passos** (registrar → conferir
+depois), desenhado para quando quem abria a solicitação era o vendedor. Com o
+painel do vendedor somente leitura (PR #18), quem registra é o próprio admin,
+com a mercadoria na mão: a fila só criava trabalho e movimentação esquecida
+como pendente.
+
+- **`src/operationalMovements.js`**: nova função exportada
+  `adminRecordMovement({sellerId, productId, type, quantity, unitValue,
+  affectsFinance, reason})` — cria a movimentação e já aplica o efeito na
+  mesma chamada, reaproveitando `confirmMovement`/`applyMovementEffects`
+  inteiros (mesmas regras de estoque, `stock_movements` e ledger do caminho
+  com conferência).
+- **`src/auth.js`** (card do vendedor, `sellerManagePanel`): seção
+  "Devolução, brinde ou desperdício", com produto limitado ao que o vendedor
+  tem em mãos. A aba "Devoluções e brindes" continua existindo e continua
+  sendo a fila de conferência de qualquer movimentação legada pendente.
+
+### 2. Brinde e desperdício não podiam abater dívida
+
+`applyMovementEffects` só creditava o ledger quando `type === 'return'` — o
+checkbox "Abater da dívida do vendedor" nem aparecia para brinde/desperdício.
+Consequência: mercadoria que saiu do central, virou dívida e depois virou
+brinde autorizado continuava cobrada do vendedor, sem nenhum caminho no app
+para acertar isso a não ser um ajuste manual inventado à mão.
+
+Agora os três tipos podem creditar, com o tipo de lançamento certo (todos já
+existiam no `CHECK` de `seller_account_entries` desde a migração `0011`,
+sem uso até aqui — **nenhuma migração nova**):
+
+| Movimentação | Lançamento no ledger | Estoque central |
+|---|---|---|
+| Devolução | `return_credit` | volta (+ `entrada_devolucao_consignado`) |
+| Brinde | `bonus_credit` | não volta |
+| Desperdício | `writeoff` | não volta |
+
+Abater é decisão do admin caso a caso (checkbox), não automático: brinde
+autorizado por ele abate; mercadoria que o vendedor perdeu por descuido pode
+continuar como dívida.
+
+### 3. Correção de lançamento errado
+
+- **`src/sellerLedger.js`**: `registerAdjustment(sellerId, {amount,
+  direction, notes})`, exportada — grava `manual_adjustment` na direção
+  escolhida, com motivo obrigatório.
+- **`src/auth.js`**: cada linha do histórico ganhou "Corrigir", que só
+  **pré-preenche** o formulário de ajuste com o estorno daquele lançamento
+  (valor igual, direção invertida, nota `Correção do lançamento de {data}
+  ({tipo})`) para o admin conferir e confirmar. Nunca edita nem apaga o
+  original — mesmo princípio do `ajuste_manual` de estoque.
+
+### 4. Densidade (pedido: "a tela ocupa muito espaço em vários lugares")
+
+- As 4 ações do card do vendedor viraram `<details>` recolhidos
+  (`.seller-action`): o card de um vendedor passava de 1.000px com tudo
+  aberto. O card expandido agora ocupa a linha inteira do grid, porque o
+  histórico tem 6 colunas e ficava cortado na coluna de ~430px.
+- Vendedores **desativados** saem da lista por padrão, atrás de um botão
+  "Mostrar N desativado(s)" — contas de teste desativadas empurravam os
+  vendedores reais para fora da primeira tela.
+- "Cadastrar novo vendedor" virou `<details>` recolhido (é ação rara).
+- Passada de espaçamento só no desktop (`@media (min-width: 721px)` no fim de
+  `styles/main.css`): cartões de métrica, formulários, estados vazios,
+  `panel-card` e cabeçalhos de seção. Nenhuma mudança em alvo de toque no
+  celular.
+
+### Verificação
+
+Rodado ponta a ponta com a skill `run-controlevendasgold` (mock admin e
+vendedor), conferindo o banco simulado a cada passo: envio consignado de 10 un
+a R$ 25 → dívida R$ 250 / estoque central −10; brinde de 4 un com abatimento →
+dívida R$ 150 / mercadoria em mãos 6 un / central inalterado; devolução de
+2 un → dívida R$ 100 / central +2 / `entrada_devolucao_consignado` gravado;
+"Corrigir" na devolução pré-preencheu R$ 50 como débito com a nota certa. A
+tela "Minha conta" do vendedor mostra o mesmo saldo e o mesmo histórico, sem
+nenhum formulário de escrita. Nenhum erro de console em toda a sequência.
+
+---
+
+## Atualização: patrocínio como categoria própria e "Saiu sem venda" no negócio
+
+Pedido do usuário: *"sinalizar no negócio essas informações desperdícios ou
+brindes patrocínio"* — e a confirmação de que *"um produto já enviado pode se
+transformar em brinde"* (que é exatamente o caminho do card do vendedor:
+mercadoria em mãos → "Virou brinde").
+
+### Patrocínio
+
+`operational_movements.type` ganhou `'sponsorship'` (migração
+`0029_sponsorship_movement_type.sql`, aplicada no projeto em uso). Brinde para
+fechar uma venda e patrocínio de marketing são decisões diferentes, com donos
+diferentes — juntar as duas em `gift` apagava essa diferença no relatório.
+
+O que **não** mudou de propósito:
+
+- `stock_movements`: patrocínio continua gravando `saida_brinde`. Para o
+  estoque as duas saídas são idênticas (saiu sem venda, pelo custo médio); a
+  distinção é de negócio e vive em `operational_movements.type`.
+- `seller_account_entries`: patrocínio credita `bonus_credit`, igual a brinde —
+  o efeito no saldo do vendedor é o mesmo.
+
+### "Saiu sem venda" — a informação que faltava no negócio
+
+Desperdício, brinde e patrocínio consomem estoque sem gerar receita. Antes eles
+só existiam como duas tabelinhas soltas em Relatórios ("Desperdício por
+período" e "Brindes por responsável", esta sem valor nenhum), então o dinheiro
+sumia sem explicação entre "Valor em estoque" e "Vendas no período".
+
+- **`src/app.js`, `renderReplicationReports()`**: as duas tabelinhas viraram um
+  painel único "Saiu sem venda — desperdício, brinde e patrocínio", com
+  **custo** (pelo custo médio) e **abatido da dívida** (o quanto o negócio
+  absorveu no lugar do vendedor), por tipo com linha de total, e um
+  detalhamento por responsável.
+- **`src/app.js`, `renderOperationsSnapshot()`**: novo cartão "Saiu sem venda
+  (mês)" na Visão operacional da tela Hoje, com o custo do mês e atalho para o
+  relatório. Sem isso o número existia mas ninguém via.
+- `NO_SALE_TYPES` e `TYPE_LABELS` passaram a ser exportados por
+  `window.C360.operationalMovements` para os dois pontos acima lerem a mesma
+  definição em vez de repetir a lista de tipos.
+
+### Verificação
+
+Skill `run-controlevendasgold`: consignado de 12 un a R$ 30 (dívida R$ 360) →
+patrocínio de 5 un com abatimento → dívida R$ 210, "Saiu sem venda (mês)"
+R$ 50,00 (5 × custo médio 10) na tela Hoje, e o painel de Relatórios mostrando
+Patrocínio / 1 ocorrência / custo R$ 50,00 / abatido R$ 150,00, com o detalhe
+por responsável. Nenhum erro de console.

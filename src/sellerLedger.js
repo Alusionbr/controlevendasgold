@@ -77,6 +77,29 @@
     return { id: paymentId };
   }
 
+  // Correção de lançamento errado. Nunca edita nem apaga o lançamento
+  // original: grava um lançamento NOVO de `manual_adjustment` na direção
+  // escolhida, com motivo obrigatório — mesmo princípio do `ajuste_manual`
+  // de estoque (o histórico continua contando o que realmente aconteceu,
+  // inclusive o erro e a correção).
+  async function registerAdjustment(sellerId, { amount, direction, notes } = {}) {
+    const value = U.number(amount);
+    if (!sellerId) throw new Error('Vendedor não identificado.');
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    if (!['debit', 'credit'].includes(direction)) throw new Error('Escolha se o ajuste aumenta ou reduz a dívida.');
+    if (!notes || !String(notes).trim()) throw new Error('Informe o motivo do ajuste.');
+    const entry = await S().add('sellerAccountEntries', {
+      sellerId,
+      type: 'manual_adjustment',
+      direction,
+      amount: value,
+      sourceType: 'manual',
+      notes: String(notes).trim(),
+    });
+    await S().refresh();
+    return entry;
+  }
+
   function ownStockRows(sellerId) {
     const st = state();
     return (st.sellerStock || [])
@@ -130,5 +153,5 @@
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment, registerAdjustment };
 })();

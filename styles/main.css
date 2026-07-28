@@ -2167,3 +2167,80 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
   .quick-actions > .quick-action:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
 }
+
+
+/* ---------- Ações do vendedor (aba Vendedores) ---------- */
+/* Cada ação do painel é um <details> nativo: recolhido por padrão, abre uma
+   de cada vez, sem JS. Antes as 4 ações vinham abertas e empilhadas, e o card
+   de um único vendedor passava de 1.000px. */
+.seller-action {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+.seller-action + .seller-action { margin-top: 0.45rem; }
+.seller-action > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--brand-deep);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.seller-action > summary::-webkit-details-marker { display: none; }
+.seller-action > summary::before {
+  content: "+";
+  font-weight: 800;
+  color: var(--accent-deep);
+  width: 1ch;
+}
+.seller-action[open] > summary::before { content: "−"; }
+.seller-action[open] > summary { border-bottom: 1px solid var(--line); background: var(--surface-soft); }
+.seller-action > summary:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.seller-action > .ss-hint,
+.seller-action > form { padding: 0 0.7rem; }
+.seller-action > .ss-hint { margin: 0.55rem 0 0; }
+.seller-action > form { margin-bottom: 0.7rem; }
+.seller-action > form.grid-form { padding-top: 0.6rem; }
+.seller-create { margin-top: 0.9rem; }
+.seller-list-filter { margin: 0.6rem 0 0; }
+.checkbox-line {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+.checkbox-line input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; }
+
+/* ---------- Densidade geral ----------
+   Pedido do usuário: "a tela ocupa muito espaço em vários lugares". Os
+   valores abaixo reduzem respiro repetido (cartões, formulários, estados
+   vazios e cabeçalhos de seção) sem mexer em tamanho de toque de botão nem
+   em nenhum layout de grade. Só desktop: no celular o espaçamento maior é o
+   que mantém os alvos de toque confortáveis. */
+@media (min-width: 721px) {
+  .app-shell { padding-bottom: 2.2rem; }
+  .business-bar { padding: 0.55rem 0.8rem; }
+  .dashboard { margin: 0.8rem 0; gap: 0.55rem; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+  .metric-card { padding: 0.7rem 0.8rem; gap: 0.2rem; }
+  .metric-card strong { font-size: 1.2rem; }
+  .section-head { margin-bottom: 0.8rem; }
+  .grid-form { gap: 0.6rem 0.8rem; margin-bottom: 0.8rem; }
+  .panel-card { padding: 0.9rem; margin-top: 0.8rem; }
+  .panel-card h3 { margin-bottom: 0.55rem; }
+  .empty-state { padding: 1.1rem 1.2rem; }
+  .today-section { padding: 0.9rem 1rem; }
+  .seller-manage-panel { gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.6rem; }
+  .seller-manage-panel h3 { margin: 0.3rem 0 0; }
+  .seller-stat-strip { margin: 0.5rem 0 0.1rem; }
+  .seller-stat { padding: 0.4rem 0.55rem; }
+}
+
+/* Card aberto ocupa a linha inteira: o histórico de lançamentos tem 6 colunas
+   (incluindo "Corrigir") e não cabe na coluna de ~430px do grid de 2 colunas —
+   ficava cortado no meio do valor, com o botão fora da área visível. */
+.seller-manage-card:has(.seller-manage-panel) { grid-column: 1 / -1; }

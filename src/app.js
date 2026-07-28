@@ -363,6 +363,17 @@
     const overdueFinancial = financialOpen.filter((entry) => entry.dueDate && entry.dueDate < U.today());
     const overdueFinancialValue = overdueFinancial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
+    // Saída sem venda no mês corrente (desperdício/brinde/patrocínio): fica ao
+    // lado dos outros indicadores porque é dinheiro que sai do estoque sem
+    // aparecer em "Vendas no período" — sem este cartão, some da vista.
+    const noSaleTypes = (window.C360.operationalMovements && window.C360.operationalMovements.NO_SALE_TYPES)
+      || ['waste', 'gift', 'sponsorship'];
+    const monthPrefix = U.today().slice(0, 7);
+    const noSaleMonth = (baseState.operationalMovements || []).filter((movement) => movement.businessId === businessId
+      && noSaleTypes.includes(movement.type) && movement.status === 'confirmed'
+      && String(movement.confirmedAt || movement.createdAt || '').slice(0, 7) === monthPrefix);
+    const noSaleMonthCost = noSaleMonth.reduce((sum, movement) => sum
+      + U.number(movement.quantityReceived) * U.number(productMap.get(String(movement.productId))?.avgCost), 0);
     const days = Array.from({ length: 7 }, (_, index) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - index));
@@ -380,6 +391,7 @@
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
+          <article><span>Saiu sem venda (mês)</span><strong>${U.money(noSaleMonthCost)}</strong><small>${noSaleMonth.length} desperdício/brinde/patrocínio, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='relatorios'>Ver detalhe</button></article>
         </div>
         <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
       </section>`;
@@ -1521,24 +1533,50 @@
       ];
     });
 
-    const wasteByMonth = {};
-    movements.filter((movement) => movement.type === 'waste' && movement.status === 'confirmed').forEach((movement) => {
-      const month = (movement.confirmedAt || movement.createdAt || '').slice(0, 7) || '—';
-      const product = productById(movement.productId);
-      const value = U.number(movement.quantityReceived) * U.number(product?.avgCost);
-      wasteByMonth[month] = (wasteByMonth[month] || 0) + value;
-    });
-    const wasteRows = Object.entries(wasteByMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([month, value]) => [U.escapeHtml(month), UI.moneyCell(value)]);
+    // "Saiu sem venda": desperdício, brinde e patrocínio confirmados. Estas são
+    // as saídas que consomem estoque sem gerar receita — o negócio precisa ver
+    // quanto custaram e quanto foi perdoado da dívida do vendedor, senão o
+    // dinheiro some sem explicação entre "valor em estoque" e "vendas".
+    const noSaleTypes = (window.C360.operationalMovements && window.C360.operationalMovements.NO_SALE_TYPES)
+      || ['waste', 'gift', 'sponsorship'];
+    const typeLabels = (window.C360.operationalMovements && window.C360.operationalMovements.TYPE_LABELS)
+      || { waste: 'Desperdício', gift: 'Brinde', sponsorship: 'Patrocínio' };
+    const noSale = movements.filter((movement) => noSaleTypes.includes(movement.type)
+      && ['confirmed', 'pending'].includes(movement.status) && movement.status === 'confirmed');
 
-    const giftsByResponsible = {};
-    movements.filter((movement) => movement.type === 'gift' && movement.status === 'confirmed').forEach((movement) => {
-      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Admin';
+    const noSaleByType = {};
+    const noSaleByResponsible = {};
+    noSale.forEach((movement) => {
       const product = productById(movement.productId);
       const qty = U.number(movement.quantityReceived);
-      if (!giftsByResponsible[label]) giftsByResponsible[label] = [];
-      giftsByResponsible[label].push(`${qty} ${product?.unit || ''} de ${product?.name || 'produto removido'}`);
+      const cost = qty * U.number(product?.avgCost);
+      const forgiven = movement.affectsFinance ? U.number(movement.totalValue) : 0;
+      const type = noSaleByType[movement.type] || (noSaleByType[movement.type] = { count: 0, cost: 0, forgiven: 0 });
+      type.count += 1; type.cost += cost; type.forgiven += forgiven;
+      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Estoque do admin';
+      const who = noSaleByResponsible[label] || (noSaleByResponsible[label] = { cost: 0, forgiven: 0, items: [] });
+      who.cost += cost; who.forgiven += forgiven;
+      who.items.push(`${typeLabels[movement.type] || movement.type}: ${U.qty(qty, product?.unit)} de ${product?.name || 'produto removido'}`);
     });
-    const giftRows = Object.entries(giftsByResponsible).map(([label, items]) => [U.escapeHtml(label), U.escapeHtml(items.join(', '))]);
+
+    const noSaleTotals = Object.values(noSaleByType).reduce(
+      (acc, row) => ({ cost: acc.cost + row.cost, forgiven: acc.forgiven + row.forgiven }), { cost: 0, forgiven: 0 });
+    const noSaleTypeRows = noSaleTypes.filter((type) => noSaleByType[type]).map((type) => [
+      U.escapeHtml(typeLabels[type] || type),
+      String(noSaleByType[type].count),
+      UI.moneyCell(noSaleByType[type].cost),
+      UI.moneyCell(noSaleByType[type].forgiven),
+    ]);
+    if (noSaleTypeRows.length) {
+      noSaleTypeRows.push([
+        '<strong>Total</strong>', '',
+        `<strong>${U.money(noSaleTotals.cost)}</strong>`,
+        `<strong>${U.money(noSaleTotals.forgiven)}</strong>`,
+      ]);
+    }
+    const noSaleResponsibleRows = Object.entries(noSaleByResponsible).map(([label, row]) => [
+      U.escapeHtml(label), UI.moneyCell(row.cost), UI.moneyCell(row.forgiven), U.escapeHtml(row.items.join('; ')),
+    ]);
 
     const inTransit = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado'].includes(movement.status));
     const inTransitRows = inTransit.map((movement) => {
@@ -1553,9 +1591,15 @@
         <div class="panel-card"><h3>Saldo por vendedor</h3>${UI.table(['Vendedor', 'Saldo'], sellerBalanceRows, 'Nenhum vendedor com saldo em aberto.')}</div>
         <div class="panel-card"><h3>Pedidos em aberto</h3>${UI.table(['Origem', 'Vendedor', 'Cliente', 'Status', 'Data'], openOrderRows, 'Nenhum pedido em aberto.')}</div>
         <div class="panel-card"><h3>Devoluções pendentes</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.', 'Status'], pendingReturnRows, 'Nenhuma devolução pendente.')}</div>
-        <div class="panel-card"><h3>Desperdício por período</h3>${UI.table(['Mês', 'Valor perdido'], wasteRows, 'Nenhum desperdício confirmado ainda.')}</div>
-        <div class="panel-card"><h3>Brindes por responsável</h3>${UI.table(['Responsável', 'Itens'], giftRows, 'Nenhum brinde confirmado ainda.')}</div>
         <div class="panel-card"><h3>Estoque em trânsito</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.'], inTransitRows, 'Nada em trânsito.')}</div>
+      </div>
+      <div class="panel-card" style="margin-top: 1.2rem;">
+        <h3>Saiu sem venda — desperdício, brinde e patrocínio</h3>
+        <p class="ss-hint">Mercadoria que deixou o estoque e não virou receita. <strong>Custo</strong> é quanto ela valia pelo custo médio;
+          <strong>abatido da dívida</strong> é o quanto disso o negócio absorveu no lugar do vendedor.</p>
+        ${UI.table(['Tipo', 'Ocorrências', 'Custo', 'Abatido da dívida'], noSaleTypeRows, 'Nada saiu sem venda ainda.')}
+        ${noSaleResponsibleRows.length ? `<h3 style="margin-top: 1rem;">Por responsável</h3>
+          ${UI.table(['Responsável', 'Custo', 'Abatido da dívida', 'Detalhe'], noSaleResponsibleRows, '')}` : ''}
       </div>
     `;
   }
