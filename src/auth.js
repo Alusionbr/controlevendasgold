@@ -414,11 +414,6 @@
     return payments[0] || null;
   }
 
-  function pendingCartsCountForSeller(sellerId) {
-    const st = fullState();
-    return (st.saleCarts || []).filter((cart) => String(cart.sellerId) === String(sellerId) && cart.status === 'pending_approval').length;
-  }
-
   function pendingReturnsCountForSeller(sellerId) {
     const st = fullState();
     return (st.operationalMovements || []).filter((movement) => String(movement.sellerId) === String(sellerId)
@@ -429,65 +424,151 @@
     return (fullState().products || []).filter((product) => product.type !== 'servico');
   }
 
-  function sellerManagePanel(seller, feedback) {
+  // Só o que o vendedor tem fisicamente em mãos pode ser devolvido, perdido
+  // ou virar brinde — oferecer o catálogo inteiro aqui só produziria erro de
+  // "estoque próprio insuficiente" no envio.
+  function productsInSellerHands(sellerId) {
+    const st = fullState();
+    const inHand = new Set((st.sellerStock || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && U.number(row.quantity) > 0)
+      .map((row) => String(row.productId)));
+    return (st.products || []).filter((product) => inHand.has(String(product.id)));
+  }
+
+  const LEDGER_TYPE_LABELS = {
+    debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
+    manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
+  };
+
+  // Bloco recolhido: o painel tem 4 ações e, abertas todas de uma vez, o card
+  // do vendedor passava de 1.000px de altura — o admin rolava a tela inteira
+  // para achar o botão certo. Recolhido, o painel cabe numa tela e cada ação
+  // abre onde está.
+  function manageAction(title, hint, body, open) {
+    return `
+      <details class="seller-action" ${open ? 'open' : ''}>
+        <summary>${U.escapeHtml(title)}</summary>
+        ${hint ? `<p class="ss-hint">${hint}</p>` : ''}
+        ${body}
+      </details>
+    `;
+  }
+
+  function sellerManagePanel(seller, feedback, adjustPrefill) {
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
-    const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
+    const entries = L ? L.entriesForSeller(seller.id).slice(0, 8) : [];
     const stockRows = stockRowsForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
+    const inHand = productsInSellerHands(seller.id);
+    const prefill = adjustPrefill && String(adjustPrefill.sellerId) === String(seller.id) ? adjustPrefill : null;
+
+    const consignBody = `
+      <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
+        <label>Produto
+          <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantity" type="number" step="0.001" min="0.001" required>
+        </label>
+        <label>Preço unitário (dívida)
+          <input name="unitPrice" type="number" step="0.01" min="0" required>
+        </label>
+        <button type="submit" class="small">Enviar consignado</button>
+      </form>
+    `;
+
+    const paymentBody = `
+      <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+        <label>Valor recebido
+          <input name="amount" type="number" step="0.01" min="0.01" required>
+        </label>
+        <label>Forma
+          <input name="method" placeholder="Pix, dinheiro...">
+        </label>
+        <label class="wide">Observação
+          <input name="notes" placeholder="Opcional">
+        </label>
+        <button type="submit" class="small">Registrar pagamento</button>
+      </form>
+    `;
+
+    // Devolução / desperdício / brinde em um passo só: o admin está com a
+    // mercadoria na mão, então não existe fila de conferência aqui (ver
+    // src/operationalMovements.js adminRecordMovement).
+    const returnBody = `
+      <form class="grid-form compact-form" data-om-seller-form data-seller-id="${U.escapeHtml(seller.id)}">
+        <label>O que aconteceu
+          <select name="type" required>
+            <option value="return">Devolveu ao estoque central</option>
+            <option value="gift">Virou brinde</option>
+            <option value="waste">Perdeu / quebrou (desperdício)</option>
+          </select>
+        </label>
+        <label>Produto
+          <select name="productId" required>${UI.optionList(inHand, '', inHand.length ? 'Selecione o produto' : 'Nada em mãos com este vendedor')}</select>
+        </label>
+        <label>Quantidade
+          <input name="quantity" type="number" step="0.001" min="0.001" required ${inHand.length ? '' : 'disabled'}>
+        </label>
+        <label>Valor unitário
+          <input name="unitValue" type="number" step="0.01" min="0" value="0" ${inHand.length ? '' : 'disabled'}>
+        </label>
+        <label class="wide checkbox-line">
+          <input type="checkbox" name="affectsFinance" checked ${inHand.length ? '' : 'disabled'}>
+          Abater esse valor da dívida do vendedor
+        </label>
+        <label class="wide">Motivo
+          <input name="reason" required placeholder="Ex.: cliente desistiu, amostra autorizada, caiu no chão" ${inHand.length ? '' : 'disabled'}>
+        </label>
+        <button type="submit" class="small" ${inHand.length ? '' : 'disabled'}>Registrar</button>
+      </form>
+    `;
+
+    const adjustBody = `
+      <form class="grid-form compact-form" data-ledger-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+        <label>Valor
+          <input name="amount" type="number" step="0.01" min="0.01" required value="${prefill ? U.escapeHtml(prefill.amount) : ''}">
+        </label>
+        <label>Efeito
+          <select name="direction" required>
+            <option value="credit" ${prefill && prefill.direction === 'credit' ? 'selected' : ''}>Reduzir a dívida (crédito)</option>
+            <option value="debit" ${prefill && prefill.direction === 'debit' ? 'selected' : ''}>Aumentar a dívida (débito)</option>
+          </select>
+        </label>
+        <label class="wide">Motivo
+          <input name="notes" required placeholder="Ex.: correção de valor lançado errado" value="${prefill ? U.escapeHtml(prefill.notes) : ''}">
+        </label>
+        <button type="submit" class="small">Lançar ajuste</button>
+      </form>
+    `;
 
     return `
       <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
-        <div class="seller-manage-grid">
-          ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
-          ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
-          ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
-        </div>
-        ${pendingCarts > 0 || pendingReturns > 0 ? `
-          <p class="ss-hint">
-            ${pendingCarts > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="vendas">Ver ${pendingCarts} pedido${pendingCarts === 1 ? '' : 's'} pendente${pendingCarts === 1 ? '' : 's'}</button>` : ''}
-            ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
-          </p>` : ''}
 
-        <h3>Enviar estoque consignado</h3>
-        <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
-        <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Produto
-            <select name="productId" required>${UI.optionList(products, '', products.length ? 'Selecione o produto' : 'Nenhum produto cadastrado')}</select>
-          </label>
-          <label>Quantidade
-            <input name="quantity" type="number" step="0.001" min="0.001" required>
-          </label>
-          <label>Preço unitário (dívida)
-            <input name="unitPrice" type="number" step="0.01" min="0" required>
-          </label>
-          <button type="submit" class="small">Enviar consignado</button>
-        </form>
-
-        <h3>Estoque atual do vendedor</h3>
+        <h3>O que está com este vendedor</h3>
         ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
-        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
-          const label = ({
-            debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
-            manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
-          })[entry.type] || entry.type;
+        ${manageAction('Enviar estoque consignado',
+          `Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).`,
+          consignBody)}
+
+        ${manageAction('Registrar pagamento recebido',
+          balance > 0 ? `Em aberto hoje: <strong>${U.money(balance)}</strong>.` : 'Este vendedor está em dia.',
+          paymentBody)}
+
+        ${manageAction('Devolução, brinde ou desperdício',
+          'Tira a mercadoria das mãos do vendedor. Devolução volta ao estoque central; brinde e desperdício saem de circulação. Marque "abater da dívida" para o vendedor não ficar devendo o que não vendeu.',
+          returnBody)}
+
+        ${manageAction('Ajuste manual / correção',
+          'Lançou errado? Não apagamos histórico: isto cria um lançamento novo que corrige o saldo, com o motivo registrado.',
+          adjustBody, !!prefill)}
+
+        <h3>Histórico de lançamentos</h3>
+        ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor', ''], entries.map((entry) => {
+          const label = LEDGER_TYPE_LABELS[entry.type] || entry.type;
           const signed = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
           return [
             (entry.createdAt || '').slice(0, 10),
@@ -495,13 +576,19 @@
             UI.badge(entry.direction === 'credit' ? 'Crédito' : 'Débito', entry.direction === 'credit' ? 'ok' : ''),
             U.escapeHtml(entry.notes || ''),
             `<strong>${signed < 0 ? '- ' : ''}${U.money(Math.abs(signed))}</strong>`,
+            `<button type="button" class="small secondary" data-action="prefill-adjust"
+               data-id="${U.escapeHtml(seller.id)}"
+               data-amount="${U.escapeHtml(U.number(entry.amount))}"
+               data-direction="${entry.direction === 'credit' ? 'debit' : 'credit'}"
+               data-label="${U.escapeHtml(label)}"
+               data-date="${U.escapeHtml((entry.createdAt || '').slice(0, 10))}">Corrigir</button>`,
           ];
         }), 'Nenhum lançamento ainda.')}
       </div>
     `;
   }
 
-  function sellerRow(seller, expandedId, feedback) {
+  function sellerRow(seller, expandedId, feedback, adjustPrefill) {
     const isActive = seller.active !== false;
     const statusBadge = isActive ? UI.badge('Ativo', 'ok') : UI.badge('Inativo', 'warn');
     const toggleAction = isActive ? 'deactivate-seller' : 'activate-seller';
@@ -512,16 +599,14 @@
     const balance = L ? L.balanceFor(seller.id) : 0;
     const stock = sellerStockSummary(seller.id);
     const lastPayment = lastPaymentForSeller(seller.id);
-    const pendingCarts = pendingCartsCountForSeller(seller.id);
-    const pendingReturns = pendingReturnsCountForSeller(seller.id);
-    const pendingTotal = pendingCarts + pendingReturns;
+    const pendingTotal = pendingReturnsCountForSeller(seller.id);
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
         <div class="approval-card-head">
           <strong>${U.escapeHtml(seller.name || '—')}</strong>
           ${statusBadge}
-          ${pendingTotal > 0 ? UI.badge(`${pendingTotal} pendência${pendingTotal === 1 ? '' : 's'}`, 'warn') : ''}
+          ${pendingTotal > 0 ? UI.badge(`${pendingTotal} devolução${pendingTotal === 1 ? '' : 'ões'} a conferir`, 'warn') : ''}
         </div>
         <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}</p>
         <div class="seller-stat-strip">
@@ -542,10 +627,10 @@
           </div>
         </div>
         <div class="actions">
-          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Ver detalhes / enviar / cobrar'}</button>
+          <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Abrir'}</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
         </div>
-        ${isExpanded ? sellerManagePanel(seller, feedback) : ''}
+        ${isExpanded ? sellerManagePanel(seller, feedback, adjustPrefill) : ''}
       </article>
     `;
   }
@@ -553,14 +638,21 @@
   function renderSellers(data = {}) {
     const sellers = Array.isArray(data.sellers) ? data.sellers : [];
     const loading = !!data.loading;
+    const activeSellers = sellers.filter((seller) => seller.active !== false);
+    const inactiveSellers = sellers.filter((seller) => seller.active === false);
+    // Vendedor desativado não recebe mercadoria nem paga nada: manter os dois
+    // grupos na mesma lista fazia a tela crescer sem limite (contas de teste
+    // desativadas empurravam os vendedores reais para fora da primeira tela).
+    const showInactive = !!data.showInactive;
+    const visible = showInactive ? sellers : activeSellers;
+
     const listHtml = loading
       ? UI.formNotice('Carregando vendedores...', 'info')
-      : (sellers.length
-        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
-        : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
+      : (visible.length
+        ? `<div class="seller-ledger-grid">${visible.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback, data.adjustPrefill)).join('')}</div>`
+        : `<div class="empty-state"><strong>${activeSellers.length ? 'Nenhum vendedor ativo em exibição.' : 'Nenhum vendedor cadastrado ainda.'}</strong><span>Use "Cadastrar novo vendedor" para começar.</span></div>`);
 
     const L = ledger();
-    const activeSellers = sellers.filter((seller) => seller.active !== false);
     const totalOpen = !loading && L
       ? activeSellers.reduce((sum, seller) => sum + Math.max(L.balanceFor(seller.id), 0), 0)
       : 0;
@@ -570,26 +662,35 @@
 
     return UI.section(
       'Vendedores',
-      'Onde está sua mercadoria e quem deve, num lugar só: cada vendedor mostra o que tem em mãos, quanto deve e o último pagamento. Abra um card para enviar consignado ou registrar pagamento.',
+      'Onde está sua mercadoria e quem deve, num lugar só. Abra um vendedor para enviar consignado, receber pagamento, registrar devolução/brinde ou corrigir um lançamento.',
       `
         ${!loading ? `<div class="dashboard seller-overview-metrics">
           ${UI.metric('Mercadoria com vendedores', U.money(totalStockOut), 'consignadoAberto')}
           ${UI.metric('Total a receber', U.money(totalOpen), null)}
         </div>` : ''}
         <div id="authSellersError"></div>
-        <form id="authCreateSellerForm" class="grid-form">
-          <label class="full">Nome
-            <input name="name" required placeholder="Nome do vendedor">
-          </label>
-          <label>E-mail
-            <input type="email" name="email" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vendedor@exemplo.com">
-          </label>
-          <label>Senha provisória
-            <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
-          </label>
-          <button type="submit">Criar vendedor</button>
-        </form>
+        ${!loading && inactiveSellers.length ? `
+          <p class="seller-list-filter">
+            <button type="button" class="small secondary" data-action="toggle-inactive">
+              ${showInactive ? `Ocultar ${inactiveSellers.length} desativado${inactiveSellers.length === 1 ? '' : 's'}` : `Mostrar ${inactiveSellers.length} desativado${inactiveSellers.length === 1 ? '' : 's'}`}
+            </button>
+          </p>` : ''}
         ${listHtml}
+        <details class="seller-action seller-create">
+          <summary>Cadastrar novo vendedor</summary>
+          <form id="authCreateSellerForm" class="grid-form compact-form">
+            <label class="full">Nome
+              <input name="name" required placeholder="Nome do vendedor">
+            </label>
+            <label>E-mail
+              <input type="email" name="email" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vendedor@exemplo.com">
+            </label>
+            <label>Senha provisória
+              <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+            </label>
+            <button type="submit">Criar vendedor</button>
+          </form>
+        </details>
       `
     );
   }
@@ -601,9 +702,11 @@
     let loading = true;
     let expandedId = null;
     let manageFeedback = null;
+    let showInactive = false;
+    let adjustPrefill = null;
 
     function paint() {
-      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback });
+      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback, showInactive, adjustPrefill });
     }
 
     function errorHost() {
@@ -644,6 +747,8 @@
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const movementForm = event.target.closest('[data-om-seller-form]');
+      const adjustForm = event.target.closest('[data-ledger-adjust-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -725,6 +830,57 @@
           manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
         }
         paint();
+        return;
+      }
+
+      if (movementForm && container.contains(movementForm)) {
+        event.preventDefault();
+        const sellerId = movementForm.dataset.sellerId;
+        const data = U.formData(movementForm);
+        const submitButton = movementForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+          const OM = window.C360.operationalMovements;
+          if (!OM || typeof OM.adminRecordMovement !== 'function') {
+            throw new Error('Registro de devolução indisponível no momento.');
+          }
+          await OM.adminRecordMovement({
+            sellerId,
+            productId: data.productId,
+            type: data.type,
+            quantity: data.quantity,
+            unitValue: data.unitValue,
+            affectsFinance: !!data.affectsFinance,
+            reason: data.reason,
+          });
+          const done = ({ return: 'Devolução registrada: mercadoria de volta no estoque central.',
+            gift: 'Brinde registrado: mercadoria saiu das mãos do vendedor.',
+            waste: 'Desperdício registrado: mercadoria saiu das mãos do vendedor.' })[data.type];
+          manageFeedback = {
+            message: `${done}${data.affectsFinance ? ' Dívida abatida no valor informado.' : ''}`,
+            type: 'success',
+          };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar a movimentação.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
+      if (adjustForm && container.contains(adjustForm)) {
+        event.preventDefault();
+        const sellerId = adjustForm.dataset.sellerId;
+        const data = U.formData(adjustForm);
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerAdjustment !== 'function') throw new Error('Ajuste manual indisponível no momento.');
+          await L.registerAdjustment(sellerId, { amount: data.amount, direction: data.direction, notes: data.notes });
+          adjustPrefill = null;
+          manageFeedback = { message: 'Ajuste lançado. O histórico original continua intacto.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível lançar o ajuste.', type: 'danger' };
+        }
+        paint();
       }
     });
 
@@ -736,7 +892,30 @@
       if (action === 'toggle-manage') {
         expandedId = String(expandedId) === String(id) ? null : id;
         manageFeedback = null;
+        adjustPrefill = null;
         paint();
+        return;
+      }
+
+      if (action === 'toggle-inactive') {
+        showInactive = !showInactive;
+        paint();
+        return;
+      }
+
+      // "Corrigir" não edita nem apaga o lançamento clicado: só abre o
+      // formulário de ajuste manual já preenchido com o estorno dele, para o
+      // admin conferir valor/motivo antes de confirmar.
+      if (action === 'prefill-adjust') {
+        adjustPrefill = {
+          sellerId: id,
+          amount: button.dataset.amount,
+          direction: button.dataset.direction,
+          notes: `Correção do lançamento de ${button.dataset.date} (${button.dataset.label})`,
+        };
+        paint();
+        const form = container.querySelector('[data-ledger-adjust-form]');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 

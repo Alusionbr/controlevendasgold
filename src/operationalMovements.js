@@ -22,6 +22,18 @@
   // ==========================================================================
 
   const TYPE_LABELS = { return: 'Devolução', waste: 'Desperdício', gift: 'Brinde' };
+
+  // Tipo de lançamento no ledger do vendedor quando a movimentação abate a
+  // dívida dele. Os três já existiam no CHECK de `seller_account_entries`
+  // (migração 0011) — `writeoff`/`bonus_credit` estavam declarados e sem uso
+  // até agora, então não há migração nova aqui.
+  //
+  // Por que brinde e desperdício também podem abater: a mercadoria saiu do
+  // estoque central e virou dívida no valor enviado. Se ela não volta como
+  // devolução, mas também não vira venda (quebrou, ou o admin autorizou dar
+  // de brinde), cobrar do vendedor seria cobrar por mercadoria que ninguém
+  // vendeu. Quem decide é o admin, caso a caso, pelo campo "Abater da dívida".
+  const FINANCE_ENTRY_TYPE = { return: 'return_credit', waste: 'writeoff', gift: 'bonus_credit' };
   const RETURN_STATUS_LABELS = {
     a_devolver: 'A devolver', enviado: 'Enviado', recebido: 'Recebido',
     devolvido: 'Devolvido', devolvido_parcialmente: 'Devolvido parcialmente', recusado: 'Recusado',
@@ -70,6 +82,25 @@
     await S().update('sellerStock', current.id, { quantity: nextQuantity });
   }
 
+  // Abate da dívida do vendedor o valor da mercadoria que saiu das mãos dele
+  // sem virar venda. Sempre um lançamento NOVO de crédito — nunca edita ou
+  // apaga o débito original da reposição/consignado (mesmo princípio do
+  // `ajuste_manual` de estoque).
+  async function creditSellerDebt(movement, { quantity, unitValue, product }) {
+    if (!movement.sellerId) return;
+    const total = U.number(quantity) * U.number(unitValue);
+    if (total <= 0) return;
+    await S().add('sellerAccountEntries', {
+      sellerId: movement.sellerId,
+      type: FINANCE_ENTRY_TYPE[movement.type] || 'manual_adjustment',
+      direction: 'credit',
+      amount: total,
+      sourceType: 'operational_movement',
+      sourceId: movement.id,
+      notes: `${TYPE_LABELS[movement.type] || movement.type} (${U.qty(quantity, product?.unit)})${movement.reason ? ` - ${movement.reason}` : ''}`,
+    });
+  }
+
   async function applyMovementEffects(movement, { quantityReceived, unitValue, affectsFinance }) {
     const qty = U.number(quantityReceived);
     if (qty <= 0) return;
@@ -93,20 +124,7 @@
         refId: movement.id,
         notes: `Devolução conferida${movement.reason ? ` - ${movement.reason}` : ''}`,
       });
-      if (affectsFinance && movement.sellerId) {
-        const total = qty * U.number(unitValue);
-        if (total > 0) {
-          await S().add('sellerAccountEntries', {
-            sellerId: movement.sellerId,
-            type: 'return_credit',
-            direction: 'credit',
-            amount: total,
-            sourceType: 'operational_movement',
-            sourceId: movement.id,
-            notes: `Devolução conferida (${U.qty(qty, product.unit)})`,
-          });
-        }
-      }
+      if (affectsFinance) await creditSellerDebt(movement, { quantity: qty, unitValue, product });
       return;
     }
 
@@ -116,6 +134,7 @@
     // (mesmo padrão de src/returns.js recordDesperdicio).
     if (movement.sellerId) {
       await decrementSellerStock(movement.sellerId, movement.productId, qty);
+      if (affectsFinance) await creditSellerDebt(movement, { quantity: qty, unitValue, product });
       return;
     }
     await S().update('products', product.id, { currentStock: Math.max(U.number(product.currentStock) - qty, 0) });
@@ -159,6 +178,47 @@
       confirmedAt: new Date().toISOString(),
     });
     await S().refresh();
+  }
+
+  // ---------------------------------------------------------------------
+  // Admin — registrar e já aplicar, em uma chamada só.
+  //
+  // A fila de conferência (criar "a_devolver"/"pending" e confirmar depois)
+  // existe porque, no modelo antigo, quem abria a solicitação era o vendedor
+  // e o admin precisava conferir a mercadoria antes de mexer em estoque e
+  // dívida. Com o painel do vendedor somente leitura, quem registra é o
+  // próprio admin, com a mercadoria na mão — pedir dois passos para a mesma
+  // pessoa só cria fila e risco de movimentação esquecida como pendente.
+  //
+  // Reaproveita `confirmMovement` inteiro (que já chama applyMovementEffects
+  // + grava o status final), então estoque, `stock_movements` e ledger seguem
+  // exatamente as mesmas regras do caminho com conferência.
+  // ---------------------------------------------------------------------
+  async function adminRecordMovement({ sellerId, productId, type, quantity, unitValue, affectsFinance, reason } = {}) {
+    const qty = U.number(quantity);
+    if (!['return', 'waste', 'gift'].includes(type)) throw new Error('Tipo de movimentação inválido.');
+    if (!productId) throw new Error('Selecione um produto.');
+    if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
+    if (!reason || !String(reason).trim()) throw new Error('Informe o motivo.');
+    if (sellerId) assertSellerStockAvailable(sellerId, productId, qty);
+
+    const movement = await S().add('operationalMovements', {
+      type,
+      status: type === 'return' ? 'a_devolver' : 'pending',
+      sellerId: sellerId || null,
+      productId,
+      quantityDeclared: qty,
+      reason: String(reason).trim(),
+      notes: '',
+      affectsStock: true,
+    });
+
+    await confirmMovement(movement, {
+      quantityReceived: qty,
+      unitValue: U.number(unitValue),
+      affectsFinance: !!affectsFinance && !!sellerId,
+    });
+    return movement;
   }
 
   // ---------------------------------------------------------------------
@@ -320,11 +380,11 @@
             <label>Qtd. recebida/confirmada
               <input name="quantityReceived" type="number" step="0.001" min="0" value="${U.escapeHtml(movement.quantityDeclared)}">
             </label>
-            ${movement.type === 'return' ? `
+            ${movement.sellerId ? `
               <label>Valor unitário (para o crédito)
                 <input name="unitValue" type="number" step="0.01" min="0" value="${U.escapeHtml(product?.avgCost || 0)}">
               </label>
-              <label class="wide"><input type="checkbox" name="affectsFinance" ${movement.sellerId ? 'checked' : ''}> Abater da dívida do vendedor</label>
+              <label class="wide"><input type="checkbox" name="affectsFinance" ${movement.type === 'return' ? 'checked' : ''}> Abater da dívida do vendedor</label>
             ` : ''}
             <div class="actions">
               <button type="submit">Confirmar</button>
@@ -427,5 +487,5 @@
     paint();
   }
 
-  window.C360.operationalMovements = { mountAdmin, mountSeller };
+  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement };
 })();
