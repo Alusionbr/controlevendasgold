@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-go5R/7B8qZjbqCG2+OT6R4hu79KCyAzC2ReGEM9ccq8=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-6baTSZvwFJRbbAGt5s8IJidbhGg6AlR5zKSRGmbwXnA=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-xWUAGOiNAgoQMqHeBAiDToZK+N8jdNVun1EQ7UlwJOY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-Z3Tz2x13D6QT6Ok1glK/41ulxg0T13HO6JL6a3EWVco=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-6baTSZvwFJRbbAGt5s8IJidbhGg6AlR5zKSRGmbwXnA=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-xWUAGOiNAgoQMqHeBAiDToZK+N8jdNVun1EQ7UlwJOY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -4496,6 +4496,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return (st.products || []).filter((product) => inHand.has(String(product.id)));
   }
 
+  // Valor a abater quando a mercadoria não vira venda: o mesmo preço em que
+  // ela saiu do estoque central, porque foi esse valor que virou dívida. Sem
+  // isto o campo nascia zerado e o admin marcava "abater da dívida" sem abater
+  // nada (crédito de R$ 0 é ignorado em creditSellerDebt).
+  function lastSendPrice(sellerId, productId) {
+    const st = fullState();
+    const sent = (st.consignments || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const price = U.number(sent[0] && sent[0].unitPrice);
+    if (price > 0) return price;
+    const product = (st.products || []).find((item) => String(item.id) === String(productId));
+    return U.number(product && (product.salePrice || product.defaultPrice));
+  }
+
   const LEDGER_TYPE_LABELS = {
     debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
     manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
@@ -4567,13 +4582,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           </select>
         </label>
         <label>Produto
-          <select name="productId" required>${UI.optionList(inHand, '', inHand.length ? 'Selecione o produto' : 'Nada em mãos com este vendedor')}</select>
+          <select name="productId" required>
+            <option value="">${inHand.length ? 'Selecione o produto' : 'Nada em mãos com este vendedor'}</option>
+            ${inHand.map((product) => `<option value="${U.escapeHtml(product.id)}" data-unit-price="${U.escapeHtml(lastSendPrice(seller.id, product.id))}">${U.escapeHtml(product.name)}</option>`).join('')}
+          </select>
         </label>
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" min="0.001" required ${inHand.length ? '' : 'disabled'}>
         </label>
         <label>Valor unitário
           <input name="unitValue" type="number" step="0.01" min="0" value="0" ${inHand.length ? '' : 'disabled'}>
+          <span class="hint-inline">Preenchido com o preço em que saiu; é esse valor que abate.</span>
         </label>
         <label class="wide checkbox-line">
           <input type="checkbox" name="affectsFinance" checked ${inHand.length ? '' : 'disabled'}>
@@ -4943,6 +4962,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         }
         paint();
       }
+    });
+
+    // Escolher o produto preenche o valor unitário com o preço em que ele saiu
+    // do estoque central (data-unit-price na própria <option>). O admin pode
+    // sobrescrever — é só o padrão certo em vez de zero.
+    container.addEventListener('change', (event) => {
+      const select = event.target.closest('[data-om-seller-form] select[name="productId"]');
+      if (!select) return;
+      const form = select.closest('form');
+      const option = select.selectedOptions[0];
+      if (form && form.unitValue && option) form.unitValue.value = option.dataset.unitPrice || 0;
     });
 
     container.addEventListener('click', async (event) => {

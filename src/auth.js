@@ -435,6 +435,21 @@
     return (st.products || []).filter((product) => inHand.has(String(product.id)));
   }
 
+  // Valor a abater quando a mercadoria não vira venda: o mesmo preço em que
+  // ela saiu do estoque central, porque foi esse valor que virou dívida. Sem
+  // isto o campo nascia zerado e o admin marcava "abater da dívida" sem abater
+  // nada (crédito de R$ 0 é ignorado em creditSellerDebt).
+  function lastSendPrice(sellerId, productId) {
+    const st = fullState();
+    const sent = (st.consignments || [])
+      .filter((row) => String(row.sellerId) === String(sellerId) && String(row.productId) === String(productId))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const price = U.number(sent[0] && sent[0].unitPrice);
+    if (price > 0) return price;
+    const product = (st.products || []).find((item) => String(item.id) === String(productId));
+    return U.number(product && (product.salePrice || product.defaultPrice));
+  }
+
   const LEDGER_TYPE_LABELS = {
     debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
     manual_adjustment: 'Ajuste manual', writeoff: 'Baixa de dívida', bonus_credit: 'Bonificação',
@@ -506,13 +521,17 @@
           </select>
         </label>
         <label>Produto
-          <select name="productId" required>${UI.optionList(inHand, '', inHand.length ? 'Selecione o produto' : 'Nada em mãos com este vendedor')}</select>
+          <select name="productId" required>
+            <option value="">${inHand.length ? 'Selecione o produto' : 'Nada em mãos com este vendedor'}</option>
+            ${inHand.map((product) => `<option value="${U.escapeHtml(product.id)}" data-unit-price="${U.escapeHtml(lastSendPrice(seller.id, product.id))}">${U.escapeHtml(product.name)}</option>`).join('')}
+          </select>
         </label>
         <label>Quantidade
           <input name="quantity" type="number" step="0.001" min="0.001" required ${inHand.length ? '' : 'disabled'}>
         </label>
         <label>Valor unitário
           <input name="unitValue" type="number" step="0.01" min="0" value="0" ${inHand.length ? '' : 'disabled'}>
+          <span class="hint-inline">Preenchido com o preço em que saiu; é esse valor que abate.</span>
         </label>
         <label class="wide checkbox-line">
           <input type="checkbox" name="affectsFinance" checked ${inHand.length ? '' : 'disabled'}>
@@ -882,6 +901,17 @@
         }
         paint();
       }
+    });
+
+    // Escolher o produto preenche o valor unitário com o preço em que ele saiu
+    // do estoque central (data-unit-price na própria <option>). O admin pode
+    // sobrescrever — é só o padrão certo em vez de zero.
+    container.addEventListener('change', (event) => {
+      const select = event.target.closest('[data-om-seller-form] select[name="productId"]');
+      if (!select) return;
+      const form = select.closest('form');
+      const option = select.selectedOptions[0];
+      if (form && form.unitValue && option) form.unitValue.value = option.dataset.unitPrice || 0;
     });
 
     container.addEventListener('click', async (event) => {
