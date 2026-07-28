@@ -397,7 +397,10 @@
               <label>Valor unitário (para o crédito)
                 <input name="unitValue" type="number" step="0.01" min="0" value="${U.escapeHtml(product?.avgCost || 0)}">
               </label>
-              <label class="wide"><input type="checkbox" name="affectsFinance" ${movement.type === 'return' ? 'checked' : ''}> Abater da dívida do vendedor</label>
+              <!-- Marcado para os quatro tipos: decisão do usuário é que o
+                   negócio absorve o prejuízo por padrão, inclusive desperdício.
+                   Desmarcar caso a caso deixa a dívida com o vendedor. -->
+              <label class="wide"><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
             ` : ''}
             <div class="actions">
               <button type="submit">Confirmar</button>

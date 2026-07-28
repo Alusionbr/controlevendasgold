@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-aGns+6398yUlp5Nve2n2hM5PSEHCTQjJZt3up1DOylo=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-pIyY4X3zcS1oi4t3AWxzIe0Q+BHQsr9TlICbkaJhlB8=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-A/HpdiOpOCu6S6V1YloRkG41Q8o3+QPJ39pELSpIg7Y='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-aGns+6398yUlp5Nve2n2hM5PSEHCTQjJZt3up1DOylo=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-zDDO5NWfA9FM7t6hmes6ziariiKR3Rgr7buftZWzvxg=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-A/HpdiOpOCu6S6V1YloRkG41Q8o3+QPJ39pELSpIg7Y='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -8958,7 +8958,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
               <label>Valor unitário (para o crédito)
                 <input name="unitValue" type="number" step="0.01" min="0" value="${U.escapeHtml(product?.avgCost || 0)}">
               </label>
-              <label class="wide"><input type="checkbox" name="affectsFinance" ${movement.type === 'return' ? 'checked' : ''}> Abater da dívida do vendedor</label>
+              <!-- Marcado para os quatro tipos: decisão do usuário é que o
+                   negócio absorve o prejuízo por padrão, inclusive desperdício.
+                   Desmarcar caso a caso deixa a dívida com o vendedor. -->
+              <label class="wide"><input type="checkbox" name="affectsFinance" checked> Abater da dívida do vendedor</label>
             ` : ''}
             <div class="actions">
               <button type="submit">Confirmar</button>
