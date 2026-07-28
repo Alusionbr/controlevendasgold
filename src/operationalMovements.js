@@ -21,7 +21,7 @@
   // brinde — sempre passando por conferência do admin antes de valer.
   // ==========================================================================
 
-  const TYPE_LABELS = { return: 'Devolução', waste: 'Desperdício', gift: 'Brinde' };
+  const TYPE_LABELS = { return: 'Devolução', waste: 'Desperdício', gift: 'Brinde', sponsorship: 'Patrocínio' };
 
   // Tipo de lançamento no ledger do vendedor quando a movimentação abate a
   // dívida dele. Os três já existiam no CHECK de `seller_account_entries`
@@ -33,7 +33,14 @@
   // devolução, mas também não vira venda (quebrou, ou o admin autorizou dar
   // de brinde), cobrar do vendedor seria cobrar por mercadoria que ninguém
   // vendeu. Quem decide é o admin, caso a caso, pelo campo "Abater da dívida".
-  const FINANCE_ENTRY_TYPE = { return: 'return_credit', waste: 'writeoff', gift: 'bonus_credit' };
+  const FINANCE_ENTRY_TYPE = {
+    return: 'return_credit', waste: 'writeoff', gift: 'bonus_credit', sponsorship: 'bonus_credit',
+  };
+
+  // Saída sem venda: mercadoria que deixou o estoque e não gerou receita. É o
+  // conjunto que o relatório "Saiu sem venda" mede — devolução fica de fora
+  // porque a mercadoria volta inteira para o estoque central.
+  const NO_SALE_TYPES = ['waste', 'gift', 'sponsorship'];
   const RETURN_STATUS_LABELS = {
     a_devolver: 'A devolver', enviado: 'Enviado', recebido: 'Recebido',
     devolvido: 'Devolvido', devolvido_parcialmente: 'Devolvido parcialmente', recusado: 'Recusado',
@@ -128,7 +135,8 @@
       return;
     }
 
-    // waste | gift: se a mercadoria era do estoque próprio do vendedor, só
+    // waste | gift | sponsorship: se a mercadoria era do estoque próprio do
+    // vendedor, só
     // sai de lá (o central já tinha sido baixado no envio consignado); se
     // era do estoque central do admin, baixa direto e gera stock_movements
     // (mesmo padrão de src/returns.js recordDesperdicio).
@@ -140,6 +148,9 @@
     await S().update('products', product.id, { currentStock: Math.max(U.number(product.currentStock) - qty, 0) });
     await S().recordMovement({
       date: U.today(),
+      // Patrocínio compartilha 'saida_brinde' com brinde de propósito: para o
+      // estoque as duas saídas são idênticas. A diferença é de negócio e vive
+      // em operational_movements.type (ver migração 0029).
       type: movement.type === 'waste' ? 'saida_desperdicio' : 'saida_brinde',
       productId: product.id,
       quantity: -qty,
@@ -147,7 +158,7 @@
       totalCost: -(qty * U.number(product.avgCost)),
       refType: 'operational_movement',
       refId: movement.id,
-      notes: `${movement.type === 'waste' ? 'Desperdício' : 'Brinde'} conferido${movement.reason ? ` - ${movement.reason}` : ''}`,
+      notes: `${TYPE_LABELS[movement.type] || movement.type} conferido${movement.reason ? ` - ${movement.reason}` : ''}`,
     });
   }
 
@@ -196,7 +207,7 @@
   // ---------------------------------------------------------------------
   async function adminRecordMovement({ sellerId, productId, type, quantity, unitValue, affectsFinance, reason } = {}) {
     const qty = U.number(quantity);
-    if (!['return', 'waste', 'gift'].includes(type)) throw new Error('Tipo de movimentação inválido.');
+    if (!['return', ...NO_SALE_TYPES].includes(type)) throw new Error('Tipo de movimentação inválido.');
     if (!productId) throw new Error('Selecione um produto.');
     if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
     if (!reason || !String(reason).trim()) throw new Error('Informe o motivo.');
@@ -251,6 +262,7 @@
             <option value="return">Devolução (ao admin)</option>
             <option value="waste">Desperdício</option>
             <option value="gift">Brinde</option>
+            <option value="sponsorship">Patrocínio</option>
           </select>
         </label>
         <label>Produto
@@ -342,6 +354,7 @@
             <option value="return">Devolução (volta ao estoque central)</option>
             <option value="waste">Desperdício</option>
             <option value="gift">Brinde</option>
+            <option value="sponsorship">Patrocínio</option>
           </select>
         </label>
         <label>Vendedor
@@ -487,5 +500,5 @@
     paint();
   }
 
-  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement };
+  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement, TYPE_LABELS, NO_SALE_TYPES };
 })();

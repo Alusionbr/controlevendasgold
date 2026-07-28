@@ -99,3 +99,15 @@ existe passo de conferência separado: o admin registra e já vale.
    existir nenhum formulário de escrita na tela.
 8. **Lista enxuta**: com pelo menos um vendedor desativado, a lista mostra só
    os ativos e um botão "Mostrar N desativado(s)".
+
+## Saiu sem venda (desperdício, brinde, patrocínio)
+
+1. Com mercadoria em mãos de um vendedor, registre um **patrocínio** em
+   Vendedores → Abrir → "Devolução, brinde, patrocínio ou desperdício".
+2. Na tela **Hoje**, o cartão "Saiu sem venda (mês)" deve somar o custo dessa
+   saída (quantidade × custo médio do produto) e contar a ocorrência.
+3. Em **Relatórios**, o painel "Saiu sem venda" deve listar a linha
+   Patrocínio com custo e "abatido da dívida", mais o total e o detalhe por
+   responsável.
+4. Repita com brinde e desperdício: cada um aparece na sua própria linha, sem
+   se misturar.

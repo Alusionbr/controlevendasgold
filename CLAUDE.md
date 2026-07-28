@@ -1118,3 +1118,54 @@ dívida R$ 150 / mercadoria em mãos 6 un / central inalterado; devolução de
 "Corrigir" na devolução pré-preencheu R$ 50 como débito com a nota certa. A
 tela "Minha conta" do vendedor mostra o mesmo saldo e o mesmo histórico, sem
 nenhum formulário de escrita. Nenhum erro de console em toda a sequência.
+
+---
+
+## Atualização: patrocínio como categoria própria e "Saiu sem venda" no negócio
+
+Pedido do usuário: *"sinalizar no negócio essas informações desperdícios ou
+brindes patrocínio"* — e a confirmação de que *"um produto já enviado pode se
+transformar em brinde"* (que é exatamente o caminho do card do vendedor:
+mercadoria em mãos → "Virou brinde").
+
+### Patrocínio
+
+`operational_movements.type` ganhou `'sponsorship'` (migração
+`0029_sponsorship_movement_type.sql`, aplicada no projeto em uso). Brinde para
+fechar uma venda e patrocínio de marketing são decisões diferentes, com donos
+diferentes — juntar as duas em `gift` apagava essa diferença no relatório.
+
+O que **não** mudou de propósito:
+
+- `stock_movements`: patrocínio continua gravando `saida_brinde`. Para o
+  estoque as duas saídas são idênticas (saiu sem venda, pelo custo médio); a
+  distinção é de negócio e vive em `operational_movements.type`.
+- `seller_account_entries`: patrocínio credita `bonus_credit`, igual a brinde —
+  o efeito no saldo do vendedor é o mesmo.
+
+### "Saiu sem venda" — a informação que faltava no negócio
+
+Desperdício, brinde e patrocínio consomem estoque sem gerar receita. Antes eles
+só existiam como duas tabelinhas soltas em Relatórios ("Desperdício por
+período" e "Brindes por responsável", esta sem valor nenhum), então o dinheiro
+sumia sem explicação entre "Valor em estoque" e "Vendas no período".
+
+- **`src/app.js`, `renderReplicationReports()`**: as duas tabelinhas viraram um
+  painel único "Saiu sem venda — desperdício, brinde e patrocínio", com
+  **custo** (pelo custo médio) e **abatido da dívida** (o quanto o negócio
+  absorveu no lugar do vendedor), por tipo com linha de total, e um
+  detalhamento por responsável.
+- **`src/app.js`, `renderOperationsSnapshot()`**: novo cartão "Saiu sem venda
+  (mês)" na Visão operacional da tela Hoje, com o custo do mês e atalho para o
+  relatório. Sem isso o número existia mas ninguém via.
+- `NO_SALE_TYPES` e `TYPE_LABELS` passaram a ser exportados por
+  `window.C360.operationalMovements` para os dois pontos acima lerem a mesma
+  definição em vez de repetir a lista de tipos.
+
+### Verificação
+
+Skill `run-controlevendasgold`: consignado de 12 un a R$ 30 (dívida R$ 360) →
+patrocínio de 5 un com abatimento → dívida R$ 210, "Saiu sem venda (mês)"
+R$ 50,00 (5 × custo médio 10) na tela Hoje, e o painel de Relatórios mostrando
+Patrocínio / 1 ocorrência / custo R$ 50,00 / abatido R$ 150,00, com o detalhe
+por responsável. Nenhum erro de console.

@@ -517,6 +517,7 @@
           <select name="type" required>
             <option value="return">Devolveu ao estoque central</option>
             <option value="gift">Virou brinde</option>
+            <option value="sponsorship">Virou patrocínio</option>
             <option value="waste">Perdeu / quebrou (desperdício)</option>
           </select>
         </label>
@@ -577,8 +578,8 @@
           balance > 0 ? `Em aberto hoje: <strong>${U.money(balance)}</strong>.` : 'Este vendedor está em dia.',
           paymentBody)}
 
-        ${manageAction('Devolução, brinde ou desperdício',
-          'Tira a mercadoria das mãos do vendedor. Devolução volta ao estoque central; brinde e desperdício saem de circulação. Marque "abater da dívida" para o vendedor não ficar devendo o que não vendeu.',
+        ${manageAction('Devolução, brinde, patrocínio ou desperdício',
+          'Tira a mercadoria das mãos do vendedor — inclusive produto já enviado que depois virou brinde ou patrocínio. Devolução volta ao estoque central; as outras saem de circulação. Marque "abater da dívida" quando o negócio absorve o valor no lugar do vendedor; tudo aparece no relatório "Saiu sem venda".',
           returnBody)}
 
         ${manageAction('Ajuste manual / correção',

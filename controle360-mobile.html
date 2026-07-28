@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-Z3Tz2x13D6QT6Ok1glK/41ulxg0T13HO6JL6a3EWVco=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-6baTSZvwFJRbbAGt5s8IJidbhGg6AlR5zKSRGmbwXnA=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-xWUAGOiNAgoQMqHeBAiDToZK+N8jdNVun1EQ7UlwJOY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-gBRdU+GIeX17XIhUd1y1PlkTEGfU1M8W3ZqmMdSr6Sc=' 'sha256-heGgHWYsfd81CEYeBCR7+LzMJkssvZTos/MKTNgAtrg=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-xJrMBZ+2+60bdtnLqgHNWtruj4AKeiavqLIYANc5hzs=' 'sha256-aGns+6398yUlp5Nve2n2hM5PSEHCTQjJZt3up1DOylo=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-q6GyVQkvWAY3kBcsiP4dg39Oj5ataol8oFBcK8Lqf74=' 'sha256-viyxFkUgZR9FTb6ZAxHpgN1Mcf6fo930F3fDDE27TS8=' 'sha256-pIyY4X3zcS1oi4t3AWxzIe0Q+BHQsr9TlICbkaJhlB8=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-eYOBe9RmlMwNthumRnhoouvVS1jrTyEUfrLHNuSsdvA=' 'sha256-A/HpdiOpOCu6S6V1YloRkG41Q8o3+QPJ39pELSpIg7Y='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -4578,6 +4578,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <select name="type" required>
             <option value="return">Devolveu ao estoque central</option>
             <option value="gift">Virou brinde</option>
+            <option value="sponsorship">Virou patrocínio</option>
             <option value="waste">Perdeu / quebrou (desperdício)</option>
           </select>
         </label>
@@ -4638,8 +4639,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           balance > 0 ? `Em aberto hoje: <strong>${U.money(balance)}</strong>.` : 'Este vendedor está em dia.',
           paymentBody)}
 
-        ${manageAction('Devolução, brinde ou desperdício',
-          'Tira a mercadoria das mãos do vendedor. Devolução volta ao estoque central; brinde e desperdício saem de circulação. Marque "abater da dívida" para o vendedor não ficar devendo o que não vendeu.',
+        ${manageAction('Devolução, brinde, patrocínio ou desperdício',
+          'Tira a mercadoria das mãos do vendedor — inclusive produto já enviado que depois virou brinde ou patrocínio. Devolução volta ao estoque central; as outras saem de circulação. Marque "abater da dívida" quando o negócio absorve o valor no lugar do vendedor; tudo aparece no relatório "Saiu sem venda".',
           returnBody)}
 
         ${manageAction('Ajuste manual / correção',
@@ -8581,7 +8582,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // brinde — sempre passando por conferência do admin antes de valer.
   // ==========================================================================
 
-  const TYPE_LABELS = { return: 'Devolução', waste: 'Desperdício', gift: 'Brinde' };
+  const TYPE_LABELS = { return: 'Devolução', waste: 'Desperdício', gift: 'Brinde', sponsorship: 'Patrocínio' };
 
   // Tipo de lançamento no ledger do vendedor quando a movimentação abate a
   // dívida dele. Os três já existiam no CHECK de `seller_account_entries`
@@ -8593,7 +8594,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // devolução, mas também não vira venda (quebrou, ou o admin autorizou dar
   // de brinde), cobrar do vendedor seria cobrar por mercadoria que ninguém
   // vendeu. Quem decide é o admin, caso a caso, pelo campo "Abater da dívida".
-  const FINANCE_ENTRY_TYPE = { return: 'return_credit', waste: 'writeoff', gift: 'bonus_credit' };
+  const FINANCE_ENTRY_TYPE = {
+    return: 'return_credit', waste: 'writeoff', gift: 'bonus_credit', sponsorship: 'bonus_credit',
+  };
+
+  // Saída sem venda: mercadoria que deixou o estoque e não gerou receita. É o
+  // conjunto que o relatório "Saiu sem venda" mede — devolução fica de fora
+  // porque a mercadoria volta inteira para o estoque central.
+  const NO_SALE_TYPES = ['waste', 'gift', 'sponsorship'];
   const RETURN_STATUS_LABELS = {
     a_devolver: 'A devolver', enviado: 'Enviado', recebido: 'Recebido',
     devolvido: 'Devolvido', devolvido_parcialmente: 'Devolvido parcialmente', recusado: 'Recusado',
@@ -8688,7 +8696,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       return;
     }
 
-    // waste | gift: se a mercadoria era do estoque próprio do vendedor, só
+    // waste | gift | sponsorship: se a mercadoria era do estoque próprio do
+    // vendedor, só
     // sai de lá (o central já tinha sido baixado no envio consignado); se
     // era do estoque central do admin, baixa direto e gera stock_movements
     // (mesmo padrão de src/returns.js recordDesperdicio).
@@ -8700,6 +8709,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     await S().update('products', product.id, { currentStock: Math.max(U.number(product.currentStock) - qty, 0) });
     await S().recordMovement({
       date: U.today(),
+      // Patrocínio compartilha 'saida_brinde' com brinde de propósito: para o
+      // estoque as duas saídas são idênticas. A diferença é de negócio e vive
+      // em operational_movements.type (ver migração 0029).
       type: movement.type === 'waste' ? 'saida_desperdicio' : 'saida_brinde',
       productId: product.id,
       quantity: -qty,
@@ -8707,7 +8719,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       totalCost: -(qty * U.number(product.avgCost)),
       refType: 'operational_movement',
       refId: movement.id,
-      notes: `${movement.type === 'waste' ? 'Desperdício' : 'Brinde'} conferido${movement.reason ? ` - ${movement.reason}` : ''}`,
+      notes: `${TYPE_LABELS[movement.type] || movement.type} conferido${movement.reason ? ` - ${movement.reason}` : ''}`,
     });
   }
 
@@ -8756,7 +8768,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // ---------------------------------------------------------------------
   async function adminRecordMovement({ sellerId, productId, type, quantity, unitValue, affectsFinance, reason } = {}) {
     const qty = U.number(quantity);
-    if (!['return', 'waste', 'gift'].includes(type)) throw new Error('Tipo de movimentação inválido.');
+    if (!['return', ...NO_SALE_TYPES].includes(type)) throw new Error('Tipo de movimentação inválido.');
     if (!productId) throw new Error('Selecione um produto.');
     if (qty <= 0) throw new Error('Informe uma quantidade maior que zero.');
     if (!reason || !String(reason).trim()) throw new Error('Informe o motivo.');
@@ -8811,6 +8823,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             <option value="return">Devolução (ao admin)</option>
             <option value="waste">Desperdício</option>
             <option value="gift">Brinde</option>
+            <option value="sponsorship">Patrocínio</option>
           </select>
         </label>
         <label>Produto
@@ -8902,6 +8915,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             <option value="return">Devolução (volta ao estoque central)</option>
             <option value="waste">Desperdício</option>
             <option value="gift">Brinde</option>
+            <option value="sponsorship">Patrocínio</option>
           </select>
         </label>
         <label>Vendedor
@@ -9047,7 +9061,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     paint();
   }
 
-  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement };
+  window.C360.operationalMovements = { mountAdmin, mountSeller, adminRecordMovement, TYPE_LABELS, NO_SALE_TYPES };
 })();
 </script>
   <script>
@@ -11061,6 +11075,17 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const overdueFinancial = financialOpen.filter((entry) => entry.dueDate && entry.dueDate < U.today());
     const overdueFinancialValue = overdueFinancial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
+    // Saída sem venda no mês corrente (desperdício/brinde/patrocínio): fica ao
+    // lado dos outros indicadores porque é dinheiro que sai do estoque sem
+    // aparecer em "Vendas no período" — sem este cartão, some da vista.
+    const noSaleTypes = (window.C360.operationalMovements && window.C360.operationalMovements.NO_SALE_TYPES)
+      || ['waste', 'gift', 'sponsorship'];
+    const monthPrefix = U.today().slice(0, 7);
+    const noSaleMonth = (baseState.operationalMovements || []).filter((movement) => movement.businessId === businessId
+      && noSaleTypes.includes(movement.type) && movement.status === 'confirmed'
+      && String(movement.confirmedAt || movement.createdAt || '').slice(0, 7) === monthPrefix);
+    const noSaleMonthCost = noSaleMonth.reduce((sum, movement) => sum
+      + U.number(movement.quantityReceived) * U.number(productMap.get(String(movement.productId))?.avgCost), 0);
     const days = Array.from({ length: 7 }, (_, index) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - index));
@@ -11078,6 +11103,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
+          <article><span>Saiu sem venda (mês)</span><strong>${U.money(noSaleMonthCost)}</strong><small>${noSaleMonth.length} desperdício/brinde/patrocínio, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='relatorios'>Ver detalhe</button></article>
         </div>
         <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
       </section>`;
@@ -12219,24 +12245,50 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       ];
     });
 
-    const wasteByMonth = {};
-    movements.filter((movement) => movement.type === 'waste' && movement.status === 'confirmed').forEach((movement) => {
-      const month = (movement.confirmedAt || movement.createdAt || '').slice(0, 7) || '—';
-      const product = productById(movement.productId);
-      const value = U.number(movement.quantityReceived) * U.number(product?.avgCost);
-      wasteByMonth[month] = (wasteByMonth[month] || 0) + value;
-    });
-    const wasteRows = Object.entries(wasteByMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([month, value]) => [U.escapeHtml(month), UI.moneyCell(value)]);
+    // "Saiu sem venda": desperdício, brinde e patrocínio confirmados. Estas são
+    // as saídas que consomem estoque sem gerar receita — o negócio precisa ver
+    // quanto custaram e quanto foi perdoado da dívida do vendedor, senão o
+    // dinheiro some sem explicação entre "valor em estoque" e "vendas".
+    const noSaleTypes = (window.C360.operationalMovements && window.C360.operationalMovements.NO_SALE_TYPES)
+      || ['waste', 'gift', 'sponsorship'];
+    const typeLabels = (window.C360.operationalMovements && window.C360.operationalMovements.TYPE_LABELS)
+      || { waste: 'Desperdício', gift: 'Brinde', sponsorship: 'Patrocínio' };
+    const noSale = movements.filter((movement) => noSaleTypes.includes(movement.type)
+      && ['confirmed', 'pending'].includes(movement.status) && movement.status === 'confirmed');
 
-    const giftsByResponsible = {};
-    movements.filter((movement) => movement.type === 'gift' && movement.status === 'confirmed').forEach((movement) => {
-      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Admin';
+    const noSaleByType = {};
+    const noSaleByResponsible = {};
+    noSale.forEach((movement) => {
       const product = productById(movement.productId);
       const qty = U.number(movement.quantityReceived);
-      if (!giftsByResponsible[label]) giftsByResponsible[label] = [];
-      giftsByResponsible[label].push(`${qty} ${product?.unit || ''} de ${product?.name || 'produto removido'}`);
+      const cost = qty * U.number(product?.avgCost);
+      const forgiven = movement.affectsFinance ? U.number(movement.totalValue) : 0;
+      const type = noSaleByType[movement.type] || (noSaleByType[movement.type] = { count: 0, cost: 0, forgiven: 0 });
+      type.count += 1; type.cost += cost; type.forgiven += forgiven;
+      const label = movement.sellerId ? sellerName(movement.sellerId) : 'Estoque do admin';
+      const who = noSaleByResponsible[label] || (noSaleByResponsible[label] = { cost: 0, forgiven: 0, items: [] });
+      who.cost += cost; who.forgiven += forgiven;
+      who.items.push(`${typeLabels[movement.type] || movement.type}: ${U.qty(qty, product?.unit)} de ${product?.name || 'produto removido'}`);
     });
-    const giftRows = Object.entries(giftsByResponsible).map(([label, items]) => [U.escapeHtml(label), U.escapeHtml(items.join(', '))]);
+
+    const noSaleTotals = Object.values(noSaleByType).reduce(
+      (acc, row) => ({ cost: acc.cost + row.cost, forgiven: acc.forgiven + row.forgiven }), { cost: 0, forgiven: 0 });
+    const noSaleTypeRows = noSaleTypes.filter((type) => noSaleByType[type]).map((type) => [
+      U.escapeHtml(typeLabels[type] || type),
+      String(noSaleByType[type].count),
+      UI.moneyCell(noSaleByType[type].cost),
+      UI.moneyCell(noSaleByType[type].forgiven),
+    ]);
+    if (noSaleTypeRows.length) {
+      noSaleTypeRows.push([
+        '<strong>Total</strong>', '',
+        `<strong>${U.money(noSaleTotals.cost)}</strong>`,
+        `<strong>${U.money(noSaleTotals.forgiven)}</strong>`,
+      ]);
+    }
+    const noSaleResponsibleRows = Object.entries(noSaleByResponsible).map(([label, row]) => [
+      U.escapeHtml(label), UI.moneyCell(row.cost), UI.moneyCell(row.forgiven), U.escapeHtml(row.items.join('; ')),
+    ]);
 
     const inTransit = movements.filter((movement) => movement.type === 'return' && ['a_devolver', 'enviado'].includes(movement.status));
     const inTransitRows = inTransit.map((movement) => {
@@ -12251,9 +12303,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <div class="panel-card"><h3>Saldo por vendedor</h3>${UI.table(['Vendedor', 'Saldo'], sellerBalanceRows, 'Nenhum vendedor com saldo em aberto.')}</div>
         <div class="panel-card"><h3>Pedidos em aberto</h3>${UI.table(['Origem', 'Vendedor', 'Cliente', 'Status', 'Data'], openOrderRows, 'Nenhum pedido em aberto.')}</div>
         <div class="panel-card"><h3>Devoluções pendentes</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.', 'Status'], pendingReturnRows, 'Nenhuma devolução pendente.')}</div>
-        <div class="panel-card"><h3>Desperdício por período</h3>${UI.table(['Mês', 'Valor perdido'], wasteRows, 'Nenhum desperdício confirmado ainda.')}</div>
-        <div class="panel-card"><h3>Brindes por responsável</h3>${UI.table(['Responsável', 'Itens'], giftRows, 'Nenhum brinde confirmado ainda.')}</div>
         <div class="panel-card"><h3>Estoque em trânsito</h3>${UI.table(['Vendedor', 'Produto', 'Qtd.'], inTransitRows, 'Nada em trânsito.')}</div>
+      </div>
+      <div class="panel-card" style="margin-top: 1.2rem;">
+        <h3>Saiu sem venda — desperdício, brinde e patrocínio</h3>
+        <p class="ss-hint">Mercadoria que deixou o estoque e não virou receita. <strong>Custo</strong> é quanto ela valia pelo custo médio;
+          <strong>abatido da dívida</strong> é o quanto disso o negócio absorveu no lugar do vendedor.</p>
+        ${UI.table(['Tipo', 'Ocorrências', 'Custo', 'Abatido da dívida'], noSaleTypeRows, 'Nada saiu sem venda ainda.')}
+        ${noSaleResponsibleRows.length ? `<h3 style="margin-top: 1rem;">Por responsável</h3>
+          ${UI.table(['Responsável', 'Custo', 'Abatido da dívida', 'Detalhe'], noSaleResponsibleRows, '')}` : ''}
       </div>
     `;
   }
