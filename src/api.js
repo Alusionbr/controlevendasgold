@@ -12,6 +12,8 @@
 
   const SUPABASE_URL = 'https://zcwnfrhtlhjfprsjktlx.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjd25mcmh0bGhqZnByc2prdGx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDMyMDIsImV4cCI6MjA5ODg3OTIwMn0.jeOJBNGWXUY9HUU7WTEpGpD98Dqdtv-fcL-iBK0M5eM';
+  const SELLER_LOGIN_DOMAIN = 'example.com';
+  const SELLER_USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{2,31}$/;
 
   const session = {
     accessToken: null,
@@ -176,7 +178,19 @@
     };
   }
 
-  async function signInWithPassword(email, password) {
+  function loginEmailFor(identifier) {
+    const normalized = String(identifier || '').trim().toLowerCase();
+    if (normalized.includes('@')) return normalized;
+    if (!SELLER_USERNAME_PATTERN.test(normalized)) {
+      const error = new Error('Usuário inválido. Use de 3 a 32 letras minúsculas, números, ponto, hífen ou sublinhado.');
+      error.status = 400;
+      throw error;
+    }
+    return `c360.${normalized}@${SELLER_LOGIN_DOMAIN}`;
+  }
+
+  async function signInWithPassword(identifier, password) {
+    const email = loginEmailFor(identifier);
     const raw = await authPost('/auth/v1/token?grant_type=password', { email, password });
     return applySession(raw);
   }
@@ -227,10 +241,10 @@
     const rows = await list('profiles', { id: userId });
     const row = rows[0];
     if (!row) return null;
-    return { id: row.id, role: row.role, name: row.name, businessId: row.business_id, active: row.active };
+    return { id: row.id, role: row.role, name: row.name, username: row.username || null, email: row.email || null, businessId: row.business_id, active: row.active };
   }
 
-  async function createSeller({ email, password, name }) {
+  async function sellerAdminRequest(payload) {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/create-seller`, {
       method: 'POST',
       headers: {
@@ -238,16 +252,25 @@
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.accessToken || ''}`,
       },
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify(payload),
     });
     const parsed = await parseBodySafe(res);
     if (!res.ok) throw buildError(parsed, res.status);
-    return { id: parsed.id, email: parsed.email, name: parsed.name, role: parsed.role, businessId: parsed.business_id };
+    return parsed;
+  }
+
+  async function createSeller({ username, password, name }) {
+    const parsed = await sellerAdminRequest({ action: 'create', username, password, name });
+    return { id: parsed.id, username: parsed.username, name: parsed.name, role: parsed.role, businessId: parsed.business_id };
+  }
+
+  async function resetSellerPassword({ sellerId, username, password }) {
+    return sellerAdminRequest({ action: 'reset-password', sellerId, username, password });
   }
 
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
-    return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: row.email || null }));
+    return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, username: row.username || null, email: row.email || null }));
   }
 
   function mapProductRow(row) {
@@ -548,6 +571,7 @@
     getAuthUser,
     getProfile,
     createSeller,
+    resetSellerPassword,
     listSellers,
     listSellerProducts,
     listSellerPrices,

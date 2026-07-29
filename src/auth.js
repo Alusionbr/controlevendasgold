@@ -15,12 +15,12 @@
   // é responsabilidade do integrador — não presumimos qual carrega primeiro.
   //
   // API consumida (contrato, ver docs/backend.md):
-  //   C360.api.signInWithPassword(email, password) -> {accessToken, refreshToken, expiresAt, user}
+  //   C360.api.signInWithPassword(identifier, password) -> {accessToken, refreshToken, expiresAt, user}
   //   C360.api.refreshSession(refreshToken)         -> {accessToken, refreshToken, expiresAt, user}
   //   C360.api.signOut(accessToken)                 -> void
   //   C360.api.getAuthUser(accessToken)              -> {id, email}
   //   C360.api.getProfile(userId)                    -> {id, role, name, businessId, active}
-  //   C360.api.createSeller({email, password, name}) -> {id, email, name, role, businessId}
+  //   C360.api.createSeller({username, password, name}) -> {id, email, name, role, businessId}
   //   C360.api.listSellers()                         -> Array<{id, name, active}>
   //   (opcional, usado só se existir) C360.api.update('profiles', id, patch)
   //
@@ -127,7 +127,7 @@
     const message = String((error && error.message) || '').trim();
     const lower = message.toLowerCase();
     if (lower.includes('invalid login credentials') || lower.includes('invalid_grant')) {
-      return 'E-mail ou senha inválidos.';
+      return 'Usuário/e-mail ou senha inválidos.';
     }
     if (lower.includes('email not confirmed')) {
       return 'Confirme seu e-mail antes de entrar.';
@@ -148,13 +148,13 @@
       return 'Você não tem permissão para criar vendedores.';
     }
     if (status === 409 || lower.includes('já está em uso') || lower.includes('already') || lower.includes('duplicate')) {
-      return 'Este e-mail já está em uso.';
+      return 'Este usuário já está em uso.';
     }
     if (status === 401) {
       return 'Sua sessão expirou. Faça login novamente.';
     }
     if (status === 400) {
-      return message || 'Dados inválidos. Verifique nome, e-mail e senha (mínimo 6 caracteres).';
+      return message || 'Dados inválidos. Verifique nome, usuário e senha (mínimo 8 caracteres).';
     }
     if (status === 500) {
       return message || 'Erro interno do servidor. Tente novamente em instantes.';
@@ -165,11 +165,11 @@
   // ---------------------------------------------------------------------
   // API pública: signIn / signOut / restoreSession
   // ---------------------------------------------------------------------
-  async function signIn(email, password) {
-    const trimmedEmail = String(email || '').trim();
+  async function signIn(identifier, password) {
+    const trimmedIdentifier = String(identifier || '').trim();
     const pwd = String(password || '');
-    if (!trimmedEmail || !pwd) {
-      return { ok: false, error: 'Informe e-mail e senha.' };
+    if (!trimmedIdentifier || !pwd) {
+      return { ok: false, error: 'Informe usuário/e-mail e senha.' };
     }
     if (!api() || typeof api().signInWithPassword !== 'function') {
       return { ok: false, error: 'Serviço de autenticação indisponível no momento.' };
@@ -177,7 +177,7 @@
 
     let session;
     try {
-      session = await api().signInWithPassword(trimmedEmail, pwd);
+      session = await api().signInWithPassword(trimmedIdentifier, pwd);
     } catch (error) {
       return { ok: false, error: mapSignInError(error) };
     }
@@ -289,11 +289,11 @@
     return `
       <div class="auth-screen">
         <h1 class="auth-title">Controle360</h1>
-        <p class="auth-subtitle">Entre com seu e-mail e senha para continuar.</p>
+        <p class="auth-subtitle">Entre com seu usuário e senha. Administradores também podem usar o e-mail.</p>
         <div id="authError"></div>
         <form id="authLoginForm" class="grid-form" novalidate>
-          <label class="full">E-mail
-            <input type="email" name="email" required autocomplete="username" inputmode="email" placeholder="voce@exemplo.com">
+          <label class="full">Usuário ou e-mail
+            <input type="text" name="identifier" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="seu.usuario">
           </label>
           <label class="full">Senha
             <input type="password" name="password" required autocomplete="current-password" placeholder="Sua senha">
@@ -329,10 +329,10 @@
       clearError();
 
       const data = U.formData(form);
-      const email = (data.email || '').trim();
+      const identifier = (data.identifier || '').trim();
       const password = data.password || '';
-      if (!email || !password) {
-        showError('Informe e-mail e senha.');
+      if (!identifier || !password) {
+        showError('Informe usuário/e-mail e senha.');
         return;
       }
 
@@ -344,7 +344,7 @@
       }
 
       try {
-        const result = await signIn(email, password);
+        const result = await signIn(identifier, password);
         if (result.ok) {
           onSuccess();
         } else {
@@ -452,6 +452,21 @@
             ${pendingReturns > 0 ? `<button type="button" class="small secondary" data-action="goto-tab" data-tab="devolucoes">Ver ${pendingReturns} devolução${pendingReturns === 1 ? '' : 'ões'} pendente${pendingReturns === 1 ? '' : 's'}</button>` : ''}
           </p>` : ''}
 
+        <h3>Acesso do vendedor</h3>
+        <p class="ss-hint">Login: <strong>${U.escapeHtml(seller.username || seller.email || 'conta antiga')}</strong>. A redefinição é feita pelo administrador e não envia e-mail.</p>
+        <form class="grid-form compact-form" data-reset-password-form data-seller-id="${U.escapeHtml(seller.id)}">
+          <label>Usuário
+            <input name="username" type="text" value="${U.escapeHtml(seller.username || '')}" minlength="3" maxlength="32" pattern="[a-z0-9][a-z0-9._-]{2,31}" required autocapitalize="none" spellcheck="false" placeholder="nome.sobrenome">
+          </label>
+          <label>Nova senha
+            <input name="password" type="password" minlength="8" required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+          </label>
+          <label>Confirmar senha
+            <input name="passwordConfirmation" type="password" minlength="8" required autocomplete="new-password" placeholder="Repita a nova senha">
+          </label>
+          <button type="submit" class="small secondary">Redefinir senha</button>
+        </form>
+
         <h3>Enviar estoque consignado</h3>
         <p class="ss-hint">Baixa do estoque central, credita o estoque do vendedor e gera dívida no valor enviado (${UI.help('consignado')}).</p>
         <form class="grid-form compact-form" data-consign-form data-seller-id="${U.escapeHtml(seller.id)}">
@@ -523,7 +538,7 @@
           ${statusBadge}
           ${pendingTotal > 0 ? UI.badge(`${pendingTotal} pendência${pendingTotal === 1 ? '' : 's'}`, 'warn') : ''}
         </div>
-        <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}</p>
+        <p class="ss-approval-detail">${U.escapeHtml(seller.username ? '@' + seller.username : (seller.email || '—'))}</p>
         <div class="seller-stat-strip">
           <div class="seller-stat">
             <span>Mercadoria em mãos</span>
@@ -581,11 +596,11 @@
           <label class="full">Nome
             <input name="name" required placeholder="Nome do vendedor">
           </label>
-          <label>E-mail
-            <input type="email" name="email" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vendedor@exemplo.com">
+          <label>Usuário
+            <input type="text" name="username" required minlength="3" maxlength="32" pattern="[a-z0-9][a-z0-9._-]{2,31}" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="nome.sobrenome">
           </label>
           <label>Senha provisória
-            <input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+            <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
           </label>
           <button type="submit">Criar vendedor</button>
         </form>
@@ -644,6 +659,7 @@
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const resetPasswordForm = event.target.closest('[data-reset-password-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -651,12 +667,12 @@
 
         const data = U.formData(createForm);
         const name = (data.name || '').trim();
-        const email = (data.email || '').trim();
+        const username = (data.username || '').trim().toLowerCase();
         const password = data.password || '';
 
         if (!name) { showError('Informe o nome do vendedor.'); return; }
-        if (!email) { showError('Informe o e-mail do vendedor.'); return; }
-        if (password.length < 6) { showError('A senha provisória precisa ter ao menos 6 caracteres.'); return; }
+        if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(username)) { showError('Use um usuário com 3 a 32 letras minúsculas, números, ponto, hífen ou sublinhado.'); return; }
+        if (password.length < 8) { showError('A senha provisória precisa ter ao menos 8 caracteres.'); return; }
 
         const submitButton = createForm.querySelector('button[type="submit"]');
         const originalLabel = submitButton ? submitButton.textContent : '';
@@ -669,14 +685,10 @@
           if (!api() || typeof api().createSeller !== 'function') {
             throw new Error('Serviço de vendedores indisponível no momento.');
           }
-          const created = await api().createSeller({ email, password, name });
+          const created = await api().createSeller({ username, password, name });
           createForm.reset();
           await loadSellers();
-          // Confirmação explícita do e-mail que ficou gravado: o navegador pode
-          // ter alterado o que foi digitado (autopreenchimento/sugestão de
-          // domínio), então mostramos de volta o valor que o servidor realmente
-          // salvou, não o que o admin digitou.
-          alert(`Vendedor criado. Login: ${(created && created.email) || email} / senha provisória informada.`);
+          alert(`Vendedor criado. Login: ${(created && created.username) || username} / senha provisória informada.`);
         } catch (error) {
           showError(mapCreateSellerError(error));
         } finally {
@@ -685,6 +697,32 @@
             submitButton.textContent = originalLabel;
           }
         }
+        return;
+      }
+
+      if (resetPasswordForm && container.contains(resetPasswordForm)) {
+        event.preventDefault();
+        const sellerId = resetPasswordForm.dataset.sellerId;
+        const data = U.formData(resetPasswordForm);
+        const username = (data.username || '').trim().toLowerCase();
+        const password = data.password || '';
+        if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(username)) { showError('Defina um usuário válido para o vendedor.'); return; }
+        if (password.length < 8) { showError('A nova senha precisa ter ao menos 8 caracteres.'); return; }
+        if (password !== data.passwordConfirmation) { showError('As senhas informadas não são iguais.'); return; }
+
+        const submitButton = resetPasswordForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+          if (!api() || typeof api().resetSellerPassword !== 'function') {
+            throw new Error('Redefinição de senha indisponível no momento.');
+          }
+          await api().resetSellerPassword({ sellerId, username, password });
+          manageFeedback = { message: 'Senha redefinida. Informe a nova senha ao vendedor por um canal seguro.', type: 'success' };
+          resetPasswordForm.reset();
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível redefinir a senha.', type: 'danger' };
+        }
+        paint();
         return;
       }
 
