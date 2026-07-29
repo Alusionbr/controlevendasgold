@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-IiTw6/FnWl96rxs0bzSV2wschwlb6hinFqV1NAdhsHc=' 'sha256-FLOd3mukIbOaXQCfn9D2llnl835faBK71g6K8L/bTAI=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-wy0J+8/2ZaD2vfa7JGcGkjKOWeGwr/NBgEyk3WiENfo=' 'sha256-892AYcIPSfU4Gjh+imxZHcjLzh8nYnyGFAR8Yc+HjuI=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-ocYVV4v5jliFyvLNil3prH8Cq0W6nQY/Ha3hwk2DpN4=' 'sha256-gxEuTg7xVgYlhgu5BBz0ui+lmTSQLf7w8LsPD0UatL8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-L2EBnDrDv3boj/tFvjP9DpsnNFbqm8g6eIo7hD91rXI=' 'sha256-B0ZRxBtIOrVHu5jERJHO1Aw8OLs9O4iQczaeCYzS4a4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-1UK+Q7deJrSDc6cSlvo95kqfejuerkhGmpo8d9289VI=' 'sha256-O9V487Q1MYKPBbDWBjO1BZblqBht1cUC1UojknNVINo=' 'sha256-cDCpEPdSIi7d7kkkvbfAEUnMvShOvaN113UQEnuO5pc=' 'sha256-wy0J+8/2ZaD2vfa7JGcGkjKOWeGwr/NBgEyk3WiENfo=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-ocYVV4v5jliFyvLNil3prH8Cq0W6nQY/Ha3hwk2DpN4=' 'sha256-Zv8bxeCoe/pqoycqA1Gs+ag2Ah9lDewibEklWbfa2m8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-B0ZRxBtIOrVHu5jERJHO1Aw8OLs9O4iQczaeCYzS4a4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1507,6 +1507,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.6rem;
 }
+.seller-order-account-list { display: grid; gap: 0.8rem; }
+.seller-order-account {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.seller-order-account .approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
+.seller-order-account h4 { font-size: 0.82rem; margin: 0.15rem 0 0; }
+.seller-account-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; }
+.seller-account-summary > div {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+.seller-account-summary span { color: var(--muted); font-size: 0.72rem; }
+.seller-account-summary strong { font-family: var(--num); font-size: 0.95rem; }
+.seller-account-summary .is-open { border-color: var(--danger-soft); background: var(--danger-soft); }
+.seller-account-summary .is-open strong { color: var(--danger-deep); }
+.seller-account-summary .is-paid strong { color: var(--success); }
+.seller-order-payment { padding-top: 0.65rem; border-top: 1px dashed var(--line); }
+@media (max-width: 620px) { .seller-account-summary { grid-template-columns: 1fr; } }
 .ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
 .ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
 .seller-permission-card {
@@ -2807,6 +2834,25 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function listSellerOrderAccounts(sellerId = null) {
+    return restRequest('/rest/v1/rpc/list_seller_order_accounts', {
+      method: 'POST',
+      body: { p_seller_id: sellerId || null },
+    });
+  }
+
+  async function registerSellerOrderPayment({ orderGroupId, amount, method, notes }) {
+    return restRequest('/rest/v1/rpc/register_seller_order_payment', {
+      method: 'POST',
+      body: {
+        p_order_group_id: orderGroupId,
+        p_amount: Number(amount),
+        p_method: method || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
   async function registerSaleReturn({ saleId, quantity, notes }) {
     return restRequest('/rest/v1/rpc/register_sale_return', {
       method: 'POST',
@@ -3002,6 +3048,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     adjustOwnStock,
     registerPurchaseGroup,
     registerSellerPayment,
+    listSellerOrderAccounts,
+    registerSellerOrderPayment,
     registerSaleReturn,
     registerSaleWaste,
     convertPublicCartToOrders,
@@ -3123,6 +3171,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       // Fase 3 (conta corrente do vendedor):
       sellerAccountEntries: [],
       sellerPayments: [],
+      sellerPaymentAllocations: [],
+      sellerOrderAccounts: [],
       financialEntries: [],
       recordAuditLog: [],
       // Fase 4 (devolução com status, desperdício, brinde):
@@ -3285,6 +3335,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     saleCartItems: 'sale_cart_items',
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
+    sellerPaymentAllocations: 'seller_payment_allocations',
     financialEntries: 'financial_entries',
     recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
@@ -3398,7 +3449,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, financialEntries, recordAuditLog, operationalMovements,
+      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -3421,6 +3472,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('seller_payment_allocations', { business_id: businessId }),
+      api.listSellerOrderAccounts(),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
@@ -3448,6 +3501,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
@@ -3466,13 +3521,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments,
+      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
       api.listSellerStock(userId),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
+      api.list('seller_payment_allocations', { seller_id: userId }),
+      api.listSellerOrderAccounts(userId),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -3480,6 +3537,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerStock = sellerStock;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];
@@ -4522,6 +4581,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const balance = L ? L.balanceFor(seller.id) : 0;
     const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
     const stockRows = stockRowsForSeller(seller.id);
+    const legacyBalance = L && typeof L.legacyBalanceFor === 'function' ? L.legacyBalanceFor(seller.id) : 0;
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
@@ -4570,22 +4630,29 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <button type="submit" class="small">Enviar consignado</button>
         </form>
 
-        <h3>Estoque atual do vendedor</h3>
-        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
+        <h3>Estoque e contas por pedido</h3>
+        <p class="ss-hint">Cada envio mantém seus itens, pagamentos e saldo. Use “Usar saldo total” para quitar ou informe um valor menor para pagamento parcial.</p>
+        ${L && typeof L.renderOrderAccounts === 'function'
+          ? L.renderOrderAccounts(seller.id, { editable: true })
+          : UI.formNotice('Contas por pedido indisponíveis no momento.', 'warning')}
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
+        ${legacyBalance >= 0.005 ? `
+          <h3>Saldo anterior sem pedido</h3>
+          <p class="ss-hint">Este valor veio de lançamentos antigos ou ajustes gerais. O pagamento abaixo acerta somente esse saldo legado.</p>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" max="${legacyBalance.toFixed(2)}" value="${legacyBalance.toFixed(2)}" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Acertar saldo anterior</button>
+          </form>` : ''}
+
+        <h3>Últimos lançamentos gerais</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
@@ -4747,6 +4814,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const orderPaymentForm = event.target.closest('[data-order-payment-form]');
       const resetPasswordForm = event.target.closest('[data-reset-password-form]');
 
       if (createForm && container.contains(createForm)) {
@@ -4838,6 +4906,24 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         return;
       }
 
+      if (orderPaymentForm && container.contains(orderPaymentForm)) {
+        event.preventDefault();
+        const orderGroupId = orderPaymentForm.dataset.orderGroupId;
+        const data = U.formData(orderPaymentForm);
+        const submitButton = orderPaymentForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerOrderPayment !== 'function') throw new Error('Pagamento por pedido indisponível no momento.');
+          await L.registerOrderPayment(orderGroupId, { amount: data.amount, method: data.method, notes: data.notes });
+          manageFeedback = { message: 'Pagamento registrado no pedido. O saldo e o status foram atualizados.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento do pedido.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
       if (paymentForm && container.contains(paymentForm)) {
         event.preventDefault();
         const sellerId = paymentForm.dataset.sellerId;
@@ -4858,6 +4944,16 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
       const { action, id, tab } = button.dataset;
+
+      if (action === 'fill-order-balance') {
+        const form = button.closest('[data-order-payment-form]');
+        const input = form && form.querySelector('input[name="amount"]');
+        if (input) {
+          input.value = button.dataset.openAmount || '';
+          input.focus();
+        }
+        return;
+      }
 
       if (action === 'toggle-manage') {
         expandedId = String(expandedId) === String(id) ? null : id;
@@ -8262,19 +8358,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   const U = window.C360.utils;
   const UI = window.C360.ui;
 
-  // ==========================================================================
-  // Conta corrente do vendedor com o admin (Fase 3 do pacote de replicação —
-  // ver docs/replication-v1/04-fase3-ledger-vendedor.md). O saldo é sempre a
-  // soma dos lançamentos em `seller_account_entries` (nunca um número
-  // sobrescrito). Débito de reposição consignado/parcial é lançado por
-  // src/salesCart.js na aprovação; este módulo só cuida de:
-  //   - admin: ver saldo de cada vendedor e registrar pagamento recebido;
-  //   - vendedor: ver o próprio saldo e histórico (só leitura).
-  //
-  // "Vendedor informar pagamento" fica fora de escopo por ora (decisão
-  // registrada no doc da fase): toda escrita no ledger é ação do admin.
-  // ==========================================================================
-
   const TYPE_LABELS = {
     debit_replenishment: 'Reposição',
     payment: 'Pagamento',
@@ -8297,8 +8380,20 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return (state().sellerPayments || []).filter((payment) => String(payment.sellerId) === String(sellerId));
   }
 
+  function accountsForSeller(sellerId) {
+    return (state().sellerOrderAccounts || []).filter((account) => String(account.sellerId) === String(sellerId));
+  }
+
   function balanceFor(sellerId) {
     return Calc().sellerBalance(entriesForSeller(sellerId));
+  }
+
+  function openOrdersTotalFor(sellerId) {
+    return accountsForSeller(sellerId).reduce((sum, account) => sum + U.number(account.openAmount), 0);
+  }
+
+  function legacyBalanceFor(sellerId) {
+    return Math.max(balanceFor(sellerId) - openOrdersTotalFor(sellerId), 0);
   }
 
   function entryRow(entry) {
@@ -8313,10 +8408,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     ];
   }
 
-  // Reaproveitado pelo painel consolidado da aba Vendedores (src/auth.js) —
-  // mesma escrita que o formulario de pagamento aqui, sem duplicar a regra
-  // de negocio (pagamento sempre vira um credito no ledger, nunca sobrescreve
-  // saldo).
   async function registerPayment(sellerId, { amount, method, notes } = {}) {
     const value = U.number(amount);
     if (value <= 0) throw new Error('Informe um valor maior que zero.');
@@ -8326,6 +8417,24 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
     const paymentId = await api.registerSellerPayment({
       sellerId,
+      amount: value,
+      method: method || null,
+      notes: notes || '',
+    });
+    await S().refresh();
+    return { id: paymentId };
+  }
+
+  async function registerOrderPayment(orderGroupId, { amount, method, notes } = {}) {
+    const value = U.number(amount);
+    if (!orderGroupId) throw new Error('Selecione o pedido que está sendo pago.');
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    const api = window.C360.api;
+    if (!api || typeof api.registerSellerOrderPayment !== 'function') {
+      throw new Error('Pagamento por pedido indisponível.');
+    }
+    const paymentId = await api.registerSellerOrderPayment({
+      orderGroupId,
       amount: value,
       method: method || null,
       notes: notes || '',
@@ -8347,37 +8456,103 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       });
   }
 
-  // ---------------------------------------------------------------------
-  // Vendedor — somente leitura: saldo, estoque em mãos e histórico
-  // ---------------------------------------------------------------------
+  function accountStatus(account) {
+    if (account.accountStatus === 'quitado' || U.number(account.openAmount) < 0.005) return UI.badge('Quitado', 'ok');
+    if (account.accountStatus === 'parcial') return UI.badge('Parcial', 'warn');
+    return UI.badge('Em aberto', 'warn');
+  }
+
+  function orderItemRows(account) {
+    return (Array.isArray(account.items) ? account.items : []).map((item) => [
+      U.escapeHtml(item.productName || 'Produto'),
+      U.qty(item.quantity, item.unit || ''),
+      U.qty(item.remainingQuantity, item.unit || ''),
+      UI.moneyCell(item.unitPrice),
+    ]);
+  }
+
+  function orderPaymentRows(account) {
+    return (Array.isArray(account.payments) ? account.payments : []).map((payment) => [
+      String(payment.date || '').slice(0, 10),
+      U.escapeHtml(payment.method || '—'),
+      U.escapeHtml(payment.notes || ''),
+      UI.moneyCell(payment.amount),
+    ]);
+  }
+
+  function renderOrderAccount(account, { editable = false } = {}) {
+    const groupId = String(account.orderGroupId || '');
+    const shortId = groupId ? groupId.slice(0, 8).toUpperCase() : '—';
+    const open = Math.max(U.number(account.openAmount), 0);
+    const paid = U.number(account.initialPaid) + U.number(account.paidAmount);
+    const canPay = editable && open >= 0.005;
+    const paymentRows = orderPaymentRows(account);
+
+    return `
+      <article class="seller-order-account" data-order-account="${U.escapeHtml(groupId)}">
+        <div class="approval-card-head">
+          <div><strong>Pedido #${U.escapeHtml(shortId)}</strong><small>${U.escapeHtml(String(account.createdAt || '').slice(0, 10))}</small></div>
+          ${accountStatus(account)}
+        </div>
+        <div class="seller-account-summary">
+          <div><span>Total do pedido</span><strong>${U.money(account.orderTotal)}</strong></div>
+          <div><span>Pagamentos</span><strong>${U.money(paid)}</strong></div>
+          <div class="${open > 0 ? 'is-open' : 'is-paid'}"><span>Em aberto</span><strong>${U.money(open)}</strong></div>
+        </div>
+        <h4>Estoque deste pedido</h4>
+        ${UI.table(['Produto', 'Enviado', 'Em mãos', 'Unitário'], orderItemRows(account), 'Nenhum item neste pedido.')}
+        <h4>Pagamentos deste pedido</h4>
+        ${UI.table(['Data', 'Forma', 'Nota', 'Valor'], paymentRows, paid > 0 ? 'Pago na entrada do pedido.' : 'Nenhum pagamento neste pedido.')}
+        ${canPay ? `
+          <form class="grid-form compact-form seller-order-payment" data-order-payment-form data-order-group-id="${U.escapeHtml(groupId)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" max="${open.toFixed(2)}" value="${open.toFixed(2)}" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <div class="actions">
+              <button type="button" class="small secondary" data-action="fill-order-balance" data-open-amount="${open.toFixed(2)}">Usar saldo total</button>
+              <button type="submit" class="small">Registrar pagamento</button>
+            </div>
+          </form>` : ''}
+      </article>`;
+  }
+
+  function renderOrderAccounts(sellerId, options = {}) {
+    const accounts = accountsForSeller(sellerId);
+    if (!accounts.length) {
+      const legacyStock = ownStockRows(sellerId);
+      return legacyStock.length
+        ? `${UI.formNotice('Este estoque é anterior ao controle por pedido. Ele continua preservado no saldo geral.', 'warning')}${UI.table(['Produto', 'Quantidade'], legacyStock, '')}`
+        : '<div class="empty-state"><strong>Nenhum pedido enviado ainda.</strong><span>Os próximos envios aparecerão aqui com estoque, pagamentos e saldo.</span></div>';
+    }
+    return `<div class="seller-order-account-list">${accounts.map((account) => renderOrderAccount(account, options)).join('')}</div>`;
+  }
+
   function renderSeller() {
     const currentUser = user();
     if (!currentUser) return UI.formNotice('Entre na sua conta.', 'warning');
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
-    const payments = paymentsForSeller(currentUser.id).slice(0, 10);
-    const stockRows = ownStockRows(currentUser.id);
+    const legacy = legacyBalanceFor(currentUser.id);
 
     return UI.section(
       'Minha conta',
-      'Consulta do seu estoque em mãos, saldo e histórico. Movimentações são registradas pelo administrador.',
+      'Cada envio aparece como um pedido, com os produtos que chegaram, os pagamentos registrados e o saldo ainda aberto.',
       `
-        ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', U.money(Math.max(balance, 0)), null)}
-        <h3>Estoque em mãos</h3>
-        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque consignado com você no momento.')}
-        <h3>Histórico</h3>
+        <div class="dashboard seller-overview-metrics">
+          ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
+          ${UI.metric('Pedidos em aberto', String(accountsForSeller(currentUser.id).filter((item) => U.number(item.openAmount) >= 0.005).length), null)}
+        </div>
+        ${legacy >= 0.005 ? UI.formNotice(`Existe ${U.money(legacy)} de saldo anterior ou ajuste sem pedido. O administrador pode acertar essa conta separadamente.`, 'warning') : ''}
+        <h3>Estoque e contas por pedido</h3>
+        ${renderOrderAccounts(currentUser.id)}
+        <h3>Histórico geral da conta</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
-        <h3>Pagamentos já registrados</h3>
-        ${UI.table(
-          ['Data', 'Forma', 'Nota', 'Valor'],
-          payments.map((payment) => [
-            (payment.paymentDate || '').slice(0, 10),
-            U.escapeHtml(payment.method || '—'),
-            U.escapeHtml(payment.notes || ''),
-            UI.moneyCell(payment.amount),
-          ]),
-          'Nenhum pagamento registrado ainda.'
-        )}
       `
     );
   }
@@ -8387,7 +8562,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = {
+    mountSeller,
+    balanceFor,
+    entriesForSeller,
+    paymentsForSeller,
+    accountsForSeller,
+    openOrdersTotalFor,
+    legacyBalanceFor,
+    renderOrderAccounts,
+    registerPayment,
+    registerOrderPayment,
+  };
 })();
 </script>
   <script>
@@ -10108,7 +10294,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
     sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
     paymentDate: 'Data do pagamento', method: 'Forma',
-    receivedBy: 'Recebido por', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
+    receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
     parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
@@ -10156,6 +10342,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // justamente os dados que não dá para reconstruir olhando outra tela.
     { key: 'sellerAccountEntries', sheet: 'Conta corrente vendedor', fields: ['id', 'businessId', 'sellerId', 'type', 'direction', 'amount', 'sourceType', 'sourceId', 'notes', 'createdBy', 'createdAt'] },
     { key: 'sellerPayments', sheet: 'Pagamentos vendedor', fields: ['id', 'businessId', 'sellerId', 'amount', 'paymentDate', 'method', 'notes', 'receivedBy', 'createdAt'] },
+    { key: 'sellerPaymentAllocations', sheet: 'Pagamentos por pedido', fields: ['id', 'businessId', 'sellerId', 'paymentId', 'orderGroupId', 'amount', 'createdAt'] },
     { key: 'sellerStock', sheet: 'Estoque com vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'quantity', 'createdAt', 'updatedAt'] },
     { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
     { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },

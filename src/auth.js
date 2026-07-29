@@ -434,6 +434,7 @@
     const balance = L ? L.balanceFor(seller.id) : 0;
     const entries = L ? L.entriesForSeller(seller.id).slice(0, 5) : [];
     const stockRows = stockRowsForSeller(seller.id);
+    const legacyBalance = L && typeof L.legacyBalanceFor === 'function' ? L.legacyBalanceFor(seller.id) : 0;
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
@@ -482,22 +483,29 @@
           <button type="submit" class="small">Enviar consignado</button>
         </form>
 
-        <h3>Estoque atual do vendedor</h3>
-        ${UI.table(['Produto', 'Quantidade'], stockRows, 'Nenhum estoque com este vendedor.')}
+        <h3>Estoque e contas por pedido</h3>
+        <p class="ss-hint">Cada envio mantém seus itens, pagamentos e saldo. Use “Usar saldo total” para quitar ou informe um valor menor para pagamento parcial.</p>
+        ${L && typeof L.renderOrderAccounts === 'function'
+          ? L.renderOrderAccounts(seller.id, { editable: true })
+          : UI.formNotice('Contas por pedido indisponíveis no momento.', 'warning')}
 
-        <h3>Saldo com o admin</h3>
-        <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
-          <label>Valor recebido
-            <input name="amount" type="number" step="0.01" min="0.01" required>
-          </label>
-          <label>Forma
-            <input name="method" placeholder="Pix, dinheiro...">
-          </label>
-          <label class="wide">Observação
-            <input name="notes" placeholder="Opcional">
-          </label>
-          <button type="submit" class="small">Registrar pagamento</button>
-        </form>
+        ${legacyBalance >= 0.005 ? `
+          <h3>Saldo anterior sem pedido</h3>
+          <p class="ss-hint">Este valor veio de lançamentos antigos ou ajustes gerais. O pagamento abaixo acerta somente esse saldo legado.</p>
+          <form class="grid-form compact-form" data-ledger-payment-form data-seller-id="${U.escapeHtml(seller.id)}">
+            <label>Valor recebido
+              <input name="amount" type="number" step="0.01" min="0.01" max="${legacyBalance.toFixed(2)}" value="${legacyBalance.toFixed(2)}" required>
+            </label>
+            <label>Forma
+              <input name="method" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Observação
+              <input name="notes" placeholder="Opcional">
+            </label>
+            <button type="submit" class="small">Acertar saldo anterior</button>
+          </form>` : ''}
+
+        <h3>Últimos lançamentos gerais</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
@@ -659,6 +667,7 @@
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const orderPaymentForm = event.target.closest('[data-order-payment-form]');
       const resetPasswordForm = event.target.closest('[data-reset-password-form]');
 
       if (createForm && container.contains(createForm)) {
@@ -750,6 +759,24 @@
         return;
       }
 
+      if (orderPaymentForm && container.contains(orderPaymentForm)) {
+        event.preventDefault();
+        const orderGroupId = orderPaymentForm.dataset.orderGroupId;
+        const data = U.formData(orderPaymentForm);
+        const submitButton = orderPaymentForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerOrderPayment !== 'function') throw new Error('Pagamento por pedido indisponível no momento.');
+          await L.registerOrderPayment(orderGroupId, { amount: data.amount, method: data.method, notes: data.notes });
+          manageFeedback = { message: 'Pagamento registrado no pedido. O saldo e o status foram atualizados.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento do pedido.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
       if (paymentForm && container.contains(paymentForm)) {
         event.preventDefault();
         const sellerId = paymentForm.dataset.sellerId;
@@ -770,6 +797,16 @@
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
       const { action, id, tab } = button.dataset;
+
+      if (action === 'fill-order-balance') {
+        const form = button.closest('[data-order-payment-form]');
+        const input = form && form.querySelector('input[name="amount"]');
+        if (input) {
+          input.value = button.dataset.openAmount || '';
+          input.focus();
+        }
+        return;
+      }
 
       if (action === 'toggle-manage') {
         expandedId = String(expandedId) === String(id) ? null : id;

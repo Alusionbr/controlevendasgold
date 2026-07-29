@@ -187,3 +187,13 @@ Substitui a duplicação Vendas/Pedidos por um único painel na aba **Vendas**.
 O vendedor vê a mesma esteira só leitura (status do que pediu) e continua
 podendo **vender o próprio estoque** (baixa imediata, produto já está na mão)
 direto na aba Vendas.
+
+## Fluxo 16 — Estoque e conta do vendedor por pedido
+
+1. Um envio de revenda aprovado mantém o mesmo `order_group_id` para todos os itens do carrinho.
+2. Na tela **Minha conta**, o vendedor vê um cartão por pedido com itens enviados, quantidade ainda em mãos, pagamentos e saldo.
+3. Na aba **Vendedores**, o administrador abre o vendedor e registra o recebimento dentro do pedido correspondente.
+4. Para pagamento parcial, informa um valor menor que o saldo; o pedido muda para **Parcial**.
+5. Para quitação, usa **Usar saldo total** e confirma; o pedido muda para **Quitado**.
+6. O RPC `register_seller_order_payment` grava pagamento, alocação e crédito no ledger na mesma transação.
+7. Valores históricos que não pertencem a um pedido aparecem separadamente como **Saldo anterior sem pedido**.

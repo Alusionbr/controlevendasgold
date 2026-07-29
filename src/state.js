@@ -97,6 +97,8 @@
       // Fase 3 (conta corrente do vendedor):
       sellerAccountEntries: [],
       sellerPayments: [],
+      sellerPaymentAllocations: [],
+      sellerOrderAccounts: [],
       financialEntries: [],
       recordAuditLog: [],
       // Fase 4 (devolução com status, desperdício, brinde):
@@ -259,6 +261,7 @@
     saleCartItems: 'sale_cart_items',
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
+    sellerPaymentAllocations: 'seller_payment_allocations',
     financialEntries: 'financial_entries',
     recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
@@ -372,7 +375,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, financialEntries, recordAuditLog, operationalMovements,
+      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -395,6 +398,8 @@
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('seller_payment_allocations', { business_id: businessId }),
+      api.listSellerOrderAccounts(),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
@@ -422,6 +427,8 @@
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
@@ -440,13 +447,15 @@
     // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments,
+      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
       api.listSellerStock(userId),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
+      api.list('seller_payment_allocations', { seller_id: userId }),
+      api.listSellerOrderAccounts(userId),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -454,6 +463,8 @@
     state.sellerStock = sellerStock;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
+    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];

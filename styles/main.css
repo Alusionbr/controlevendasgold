@@ -1499,6 +1499,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 0.6rem;
 }
+.seller-order-account-list { display: grid; gap: 0.8rem; }
+.seller-order-account {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.seller-order-account .approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
+.seller-order-account h4 { font-size: 0.82rem; margin: 0.15rem 0 0; }
+.seller-account-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; }
+.seller-account-summary > div {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+.seller-account-summary span { color: var(--muted); font-size: 0.72rem; }
+.seller-account-summary strong { font-family: var(--num); font-size: 0.95rem; }
+.seller-account-summary .is-open { border-color: var(--danger-soft); background: var(--danger-soft); }
+.seller-account-summary .is-open strong { color: var(--danger-deep); }
+.seller-account-summary .is-paid strong { color: var(--success); }
+.seller-order-payment { padding-top: 0.65rem; border-top: 1px dashed var(--line); }
+@media (max-width: 620px) { .seller-account-summary { grid-template-columns: 1fr; } }
 .ss-hint { font-size: 0.82rem; color: var(--muted, #5d6f6d); margin-top: 0.5rem; }
 .ss-approval-detail { font-size: 0.88rem; color: var(--muted, #5d6f6d); margin: 0; }
 .seller-permission-card {

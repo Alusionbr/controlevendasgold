@@ -67,3 +67,14 @@ Use este checklist antes de considerar uma alteração aprovada.
 4. Clique em **Baixar JSON** e depois **Importar JSON** do mesmo arquivo: os dados devem permanecer iguais.
 5. Exporte um **CSV** de Produtos e confira acentuação e separador no Excel.
 6. Importe um Excel sem a aba `Backup_NAO_EDITAR`: os dados devem entrar e as configurações locais atuais devem ser mantidas.
+
+## Conta do vendedor por pedido
+
+- [ ] Envio com vários produtos aparece como um único pedido nas telas do admin e do vendedor.
+- [ ] O cartão mostra total, pagamentos e saldo em aberto corretos.
+- [ ] Pagamento parcial muda o pedido para **Parcial** e reduz o saldo geral pelo mesmo valor.
+- [ ] **Usar saldo total** quita exatamente o pedido e muda o status para **Quitado**.
+- [ ] O banco rejeita pagamento maior que o saldo do pedido.
+- [ ] Vendedor visualiza apenas as próprias contas e não vê formulários de pagamento.
+- [ ] Saldo antigo sem pedido aparece separado e pode ser acertado pelo administrador.
+- [ ] Backup Excel contém a aba **Pagamentos por pedido**.

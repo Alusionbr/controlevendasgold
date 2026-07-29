@@ -38,6 +38,7 @@ test('carregamento do vendedor busca apenas dados de leitura', () => {
   for (const required of [
     'api.listSellerProducts', 'api.listSellerStock',
     "api.list('seller_account_entries'", "api.list('seller_payments'",
+    "api.list('seller_payment_allocations'", 'api.listSellerOrderAccounts',
   ]) {
     assert.ok(sellerRefresh.includes(required), `consulta obrigatória ausente: ${required}`);
   }
@@ -48,7 +49,7 @@ test('painel do vendedor não contém formulários de escrita', () => {
   const start = ledger.indexOf('function renderSeller');
   const end = ledger.indexOf('function mountSeller', start);
   const panel = ledger.slice(start, end);
-  assert.match(panel, /Estoque em mãos/);
+  assert.match(panel, /Estoque e contas por pedido/);
   assert.doesNotMatch(panel, /<form|<button|data-action=/i);
 });
 
