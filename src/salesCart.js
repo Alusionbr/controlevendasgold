@@ -540,7 +540,7 @@
         ? `<small>${U.qty(ownStock?.quantity || 0, product.unit)} no seu estoque</small>`
         : (product.stockHidden ? '<small>Disponibilidade protegida</small>' : '');
       return `
-        <button type="button" class="cart-product-pick" data-cart-action="quick-add-product" data-product-id="${U.escapeHtml(product.id)}">
+        <button type="button" class="cart-product-pick ${draft.items.some((item) => String(item.productId) === String(product.id)) ? 'active' : ''}" data-cart-action="quick-add-product" data-product-id="${U.escapeHtml(product.id)}">
           <strong>${U.escapeHtml(product.name)}</strong>
           <span>${U.money(resolvedUnitPrice(product))}</span>
           ${stockHint}

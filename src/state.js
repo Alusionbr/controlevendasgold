@@ -98,6 +98,7 @@
       sellerAccountEntries: [],
       sellerPayments: [],
       financialEntries: [],
+      recordAuditLog: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
       profile: null,
@@ -259,6 +260,7 @@
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
     financialEntries: 'financial_entries',
+    recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
     profiles: 'profiles',
   };
@@ -370,7 +372,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements,
+      sellerAccountEntries, sellerPayments, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -394,6 +396,7 @@
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
+      api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
@@ -420,6 +423,7 @@
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
+    state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([

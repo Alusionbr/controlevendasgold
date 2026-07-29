@@ -2167,3 +2167,76 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
   .quick-actions > .quick-action:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
 }
+
+/* Expansão Controle360: financeiro orientado por vencimento */
+.finance-segmented { display:flex; margin: 0 0 14px auto; width: fit-content; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.finance-segmented button { min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: .78rem; font-weight: 800; }
+.finance-segmented button.active { background: var(--accent); color: var(--accent-contrast); }
+.finance-aging { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin: -6px 0 18px; }
+.finance-aging article { padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.finance-aging article.needs-attention { border-color: var(--danger-soft); background: var(--danger-soft); }
+.finance-aging span { display:block; color:var(--muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+.finance-aging strong { display:block; margin-top:4px; font-family:var(--num); color:var(--ink); }
+.financial-overdue-date { color: var(--danger); font-weight: 750; }
+.finance-mobile-list { display:none; gap:8px; }
+.finance-entry-card { padding:11px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.finance-entry-card.is-overdue { border-color: var(--danger-soft); }
+.finance-entry-card > div, .finance-entry-card footer { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.finance-entry-card b { font-family:var(--num); color:var(--ink); }
+.finance-entry-card small { display:block; margin:5px 0 9px; color:var(--muted); }
+.finance-entry-card footer { justify-content:flex-start; }
+.margin-cell { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.margin-cell i { display:block; width:46px; height:6px; overflow:hidden; border-radius:999px; background:var(--accent-soft); }
+.margin-cell i::after { content:''; display:block; width:var(--margin); height:100%; border-radius:inherit; background:var(--accent); }
+@media (max-width: 760px) { .finance-segmented { width:100%; margin-left:0; } .finance-segmented button { flex:1; min-height:44px; } .finance-aging { grid-template-columns:repeat(2, minmax(0, 1fr)); } .finance-desktop-table { display:none; } .finance-mobile-list { display:grid; } }
+
+/* Dashboard analítico e auditoria */
+.advanced-dashboard { display:grid; gap:14px; margin:16px 0; }
+.dashboard-analytics-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:14px; }
+.trend-card svg { display:block; width:100%; height:120px; margin-top:10px; overflow:visible; }
+.margin-panel { display:grid; gap:9px; }
+.margin-row { display:grid; grid-template-columns:1fr auto; gap:5px 8px; align-items:center; font-size:.78rem; }
+.margin-row i { grid-column:1/-1; height:7px; overflow:hidden; border-radius:999px; background:var(--accent-soft); }
+.margin-row b { display:block; height:100%; border-radius:inherit; background:var(--accent); }
+.seller-ranking > div { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+.seller-ranking > div:last-child { border-bottom:0; }
+.seller-ranking em { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--brand-soft); font-style:normal; font-size:.72rem; font-weight:800; }
+.seller-ranking div:first-of-type em { background:var(--accent); }
+.seller-ranking strong { margin-left:auto; font-family:var(--num); }
+.audit-history { margin-top:2px; }
+.audit-history summary { cursor:pointer; font-weight:800; }
+.audit-history ol { margin:12px 0 0; padding:0; list-style:none; }
+.audit-history li { border-left:1px solid var(--line); padding:0 0 13px 14px; position:relative; }
+.audit-history li::before { content:''; position:absolute; left:-4px; top:4px; width:7px; height:7px; border-radius:50%; background:var(--accent); }
+.audit-history li span { color:var(--muted); font-size:.75rem; }
+.audit-history li p { margin:4px 0 0; }
+.audit-history del { color:var(--danger); }
+.audit-history strong { color:var(--success); }
+.cart-product-pick::before { content:''; width:34px; height:34px; border-radius:7px; background:repeating-linear-gradient(45deg, var(--brand-soft) 0 4px, var(--surface-soft) 4px 8px); }
+.cart-product-pick.active { border:2px solid var(--accent); background:var(--accent-soft); }
+@media (max-width:760px) { .dashboard-analytics-grid { grid-template-columns:1fr; } .sales-cart-summary { position:sticky; bottom:0; z-index:3; border-top:1px solid var(--line); box-shadow:0 -8px 18px rgba(30,22,6,.08); } .cart-primary-actions button:first-child { min-height:44px; flex:1; } }
+
+/* Indicadores comparativos do dashboard */
+.dashboard-advanced-metrics { display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:10px; }
+.dashboard-advanced-metrics .metric-card { min-height:108px; }
+.metric-delta { width:fit-content; padding:2px 6px; border-radius:999px; font-size:.7rem; font-weight:800; }
+.metric-delta.positive { color:var(--success); background:var(--success-soft); }
+.metric-delta.negative { color:var(--danger); background:var(--danger-soft); }
+.mobile-sales-bars { display:none; height:76px; align-items:end; gap:7px; margin-top:10px; }
+.mobile-sales-bars span { display:grid; grid-template-rows:1fr auto; align-items:end; flex:1; height:100%; text-align:center; }
+.mobile-sales-bars i { width:100%; min-height:4px; border-radius:4px 4px 0 0; background:var(--accent-soft); }
+.mobile-sales-bars span:last-child i { background:var(--accent); }
+.mobile-sales-bars small { margin-top:3px; color:var(--muted); font-size:.58rem; }
+@media (max-width:760px) { .dashboard-advanced-metrics { grid-template-columns:repeat(2, minmax(0, 1fr)); } .dashboard-advanced-metrics .metric-card { min-height:92px; } .trend-card svg { display:none; } .mobile-sales-bars { display:flex; } }
+
+/* Relatório mensal e chips mobile */
+.report-period-chips { display:none; gap:6px; margin:0 0 14px; overflow-x:auto; }
+.report-period-chips button { min-height:36px; padding:0 12px; border:1px solid var(--line-strong); border-radius:999px; background:var(--surface); color:var(--muted); white-space:nowrap; }
+.report-period-chips button.active { border-color:var(--accent); background:var(--accent); color:var(--accent-contrast); }
+.report-month-chart { display:flex; align-items:end; gap:8px; height:128px; padding-top:10px; }
+.report-month-chart > span { display:grid; grid-template-rows:1fr auto; align-items:end; flex:1; height:100%; min-width:24px; text-align:center; }
+.report-month-chart i { position:relative; display:block; width:60%; min-height:4px; margin:0 auto; border-radius:4px 4px 0 0; background:var(--accent-soft); }
+.report-month-chart span:last-child i { background:var(--accent); }
+.report-month-chart b { position:absolute; left:-15%; width:130%; height:2px; background:var(--accent-deep); }
+.report-month-chart small { margin-top:4px; color:var(--muted); font-size:.62rem; }
+@media(max-width:760px){.report-period-chips{display:flex}.report-period-bar label:nth-of-type(3){display:none}}

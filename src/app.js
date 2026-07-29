@@ -212,6 +212,7 @@
   let receiptsDate = U.today();
   let reportProductId = '';
   let reportChannel = '';
+  let financeDirection = 'receivable';
   let draggedCard = null;
   let openReturnsSaleId = null;
   let purchaseDraft = [];
@@ -492,6 +493,57 @@
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
   // ações rápidas e listas curtas para não exigir rolar as abas completas.
+  function renderAdvancedDashboard() {
+    const sales = currentSales();
+    const periodEnd = new Date(`${U.today()}T00:00:00`);
+    const periodStart = new Date(periodEnd); periodStart.setDate(periodStart.getDate() - 27);
+    const previousEnd = new Date(periodStart); previousEnd.setDate(previousEnd.getDate() - 1);
+    const previousStart = new Date(previousEnd); previousStart.setDate(previousStart.getDate() - 27);
+    const isoDate = (date) => date.toISOString().slice(0, 10);
+    const currentPeriodSales = sales.filter((sale) => sale.date >= isoDate(periodStart) && sale.date <= isoDate(periodEnd));
+    const previousPeriodSales = sales.filter((sale) => sale.date >= isoDate(previousStart) && sale.date <= isoDate(previousEnd));
+    const currentMetrics = Calc.businessMetrics({ ...state(), sales: currentPeriodSales });
+    const previousMetrics = Calc.businessMetrics({ ...state(), sales: previousPeriodSales });
+    const currentTicket = currentPeriodSales.length ? currentMetrics.netRevenue / new Set(currentPeriodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const previousTicket = previousPeriodSales.length ? previousMetrics.netRevenue / new Set(previousPeriodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const delta = (current, previous) => previous ? ((current - previous) / Math.abs(previous)) * 100 : (current ? 100 : 0);
+    const financialOverdue = currentFinancialEntries().filter((entry) => entry.status !== 'paid' && entry.status !== 'cancelled' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
+    const deltaBadge = (value) => `<small class="metric-delta ${value < 0 ? 'negative' : 'positive'}">${value < 0 ? '' : '+'}${value.toFixed(1)}%</small>`;
+    const metricCard = (label, value, comparison, helpKey, extraClass = '') => `<article class="metric-card ${extraClass}"><span>${U.escapeHtml(label)} ${helpKey ? UI.help(helpKey) : ''}</span><strong>${value}</strong>${comparison === null ? '' : deltaBadge(comparison)}</article>`;
+    const metricsGrid = `<div class="dashboard-advanced-metrics">${metricCard('Receita líquida', U.money(currentMetrics.netRevenue), delta(currentMetrics.netRevenue, previousMetrics.netRevenue), 'receitaLiquida')}${metricCard('Lucro bruto', U.money(currentMetrics.grossProfit), delta(currentMetrics.grossProfit, previousMetrics.grossProfit), 'lucroBruto')}${metricCard('Ticket médio', U.money(currentTicket), delta(currentTicket, previousTicket))}${metricCard('Consignado em aberto', U.money(currentMetrics.consignmentsOpen), null, 'consignadoAberto')}${metricCard('Pedidos pendentes', String(currentMetrics.pendingOrders), null, 'pedidosPendentes')}${metricCard('Financeiro vencido', U.money(financialOverdue), null, '', financialOverdue ? 'needs-attention' : '')}</div>`;
+    const now = new Date();
+    const days = Array.from({ length: 30 }, (_, index) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (29 - index));
+      return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), revenue: 0 };
+    });
+    const byDay = new Map(days.map((day) => [day.key, day]));
+    sales.forEach((sale) => { const day = byDay.get(sale.date); if (day) day.revenue += U.number(sale.netRevenue); });
+    const maxDay = Math.max(...days.map((day) => day.revenue), 1);
+    const points = days.map((day, index) => `${Math.round((index / 29) * 400)},${Math.round(112 - (day.revenue / maxDay) * 100)}`).join(' ');
+    const productRows = new Map();
+    sales.forEach((sale) => {
+      const key = String(sale.productId);
+      const row = productRows.get(key) || { product: productById(sale.productId), revenue: 0, profit: 0 };
+      row.revenue += U.number(sale.netRevenue);
+      row.profit += U.number(sale.grossProfit);
+      productRows.set(key, row);
+    });
+    const margins = [...productRows.values()].filter((row) => row.revenue > 0).sort((a, b) => (b.profit / b.revenue) - (a.profit / a.revenue)).slice(0, 4);
+    const sellerRows = new Map();
+    sales.filter((sale) => String(sale.date || '').slice(0, 7) === U.today().slice(0, 7) && sale.sellerId).forEach((sale) => sellerRows.set(String(sale.sellerId), U.number(sellerRows.get(String(sale.sellerId))) + U.number(sale.netRevenue)));
+    const sellers = [...sellerRows.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return `<section class="advanced-dashboard">
+      <div class="section-head"><div><h2>Visão geral</h2><p>Desempenho recente e pontos que exigem atenção.</p></div></div>
+      ${metricsGrid}
+      <div class="dashboard-analytics-grid">
+        <article class="panel-card trend-card"><h3>Vendas — últimos 30 dias</h3><svg viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Tendência de vendas"><defs><linearGradient id="salesTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"></stop><stop offset="1" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,120 ${points} 400,120" fill="url(#salesTrendFill)"></polygon><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div class="mobile-sales-bars">${days.slice(-7).map((day) => `<span><i style="height:${Math.max(4, Math.round((day.revenue / maxDay) * 100))}%"></i><small>${U.escapeHtml(day.label)}</small></span>`).join('')}</div></article>
+        <article class="panel-card margin-panel"><h3>Margem por produto ${UI.help('margemPorProduto')}</h3>${margins.length ? margins.map((row) => { const pct = Math.max(0, Math.min(100, (row.profit / row.revenue) * 100)); return `<div class="margin-row"><span>${U.escapeHtml(row.product?.name || 'Produto removido')}</span><strong>${pct.toFixed(0)}%</strong><i><b style="width:${pct}%"></b></i></div>`; }).join('') : UI.formNotice('Sem vendas no período.', '')}</article>
+      </div>
+      <article class="panel-card seller-ranking"><h3>Vendedores do mês</h3>${sellers.length ? sellers.map(([id, value], index) => `<div><em>${index + 1}</em><span>${U.escapeHtml(sellerName(id))}</span><strong>${U.money(value)}</strong></div>`).join('') : UI.formNotice('Nenhuma venda de vendedor neste mês.', '')}</article>
+    </section>`;
+  }
+
   function renderToday() {
     const isAdminUser = S.isAdmin();
     const todayStr = U.today();
@@ -565,6 +617,8 @@
             ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
+
+        ${isAdminUser ? renderAdvancedDashboard() : ''}
 
         ${renderDailyReceipts()}
 
@@ -1249,52 +1303,65 @@
     const remaining = (entry) => Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount));
     const receivable = active.filter((entry) => entry.direction === 'receivable').reduce((sum, entry) => sum + remaining(entry), 0);
     const payable = active.filter((entry) => entry.direction === 'payable').reduce((sum, entry) => sum + remaining(entry), 0);
-    const overdue = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + remaining(entry), 0);
-    const cashResult = active.reduce((sum, entry) => sum + (entry.direction === 'receivable' ? 1 : -1) * U.number(entry.paidAmount), 0);
-    const rows = [...entries].sort((a, b) => String(a.dueDate || a.issueDate).localeCompare(String(b.dueDate || b.issueDate))).map((entry) => {
-      const canCancel = entry.status !== 'cancelled' && U.number(entry.paidAmount) === 0;
-      return [
-        U.escapeHtml(entry.dueDate || entry.issueDate),
-        UI.badge(entry.direction === 'receivable' ? 'Receber' : 'Pagar'),
-        U.escapeHtml(entry.description),
-        U.escapeHtml(financialCounterparty(entry)),
-        UI.moneyCell(entry.amount),
-        UI.moneyCell(entry.paidAmount),
-        UI.moneyCell(remaining(entry)),
-        UI.badge(financialDisplayStatus(entry)),
-        '<div class="actions">' +
-          (entry.status !== 'paid' && entry.status !== 'cancelled' ? UI.actionButton('financial-pay', entry.id, entry.direction === 'receivable' ? 'Receber' : 'Pagar') : '') +
-          (canCancel ? UI.actionButton('financial-cancel', entry.id, 'Cancelar', 'danger') : '') +
-          (entry.status === 'cancelled' ? UI.actionButton('financial-restore', entry.id, 'Reabrir') : '') +
-        '</div>',
-      ];
-    });
+    const overdueEntries = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today());
+    const overdue = overdueEntries.reduce((sum, entry) => sum + remaining(entry), 0);
+    const monthKey = U.today().slice(0, 7);
+    const receivedThisMonth = active.filter((entry) => entry.direction === 'receivable' && String(entry.settledAt || '').slice(0, 7) === monthKey).reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const visibleEntries = entries.filter((entry) => entry.direction === financeDirection);
+    const statusBadge = (entry) => {
+      const label = financialDisplayStatus(entry);
+      return UI.badge(label, label === 'Vencido' ? 'danger' : label === 'Pago' ? 'ok' : 'warn');
+    };
+    const todayMs = new Date(`${U.today()}T00:00:00`).getTime();
+    const aging = [
+      { label: '0–7 dias', min: 0, max: 7 },
+      { label: '8–15 dias', min: 8, max: 15 },
+      { label: '16–30 dias', min: 16, max: 30 },
+      { label: '30+ dias', min: 31, max: Infinity, danger: true },
+    ].map((band) => ({ ...band, value: active.filter((entry) => {
+      if (entry.direction !== financeDirection || entry.status === 'paid' || !entry.dueDate) return false;
+      const days = Math.max(0, Math.floor((todayMs - new Date(`${entry.dueDate}T00:00:00`).getTime()) / 86400000));
+      return days >= band.min && days <= band.max;
+    }).reduce((sum, entry) => sum + remaining(entry), 0) }));
+    const sorted = [...visibleEntries].sort((a, b) => String(a.dueDate || a.issueDate).localeCompare(String(b.dueDate || b.issueDate)));
+    const actionsFor = (entry) => '<div class="actions">' +
+      (entry.status !== 'paid' && entry.status !== 'cancelled' ? UI.actionButton('financial-pay', entry.id, 'Registrar pgto.', '') : '') +
+      (entry.status !== 'cancelled' && U.number(entry.paidAmount) === 0 ? UI.actionButton('financial-cancel', entry.id, 'Cancelar', 'danger') : '') +
+      (entry.status === 'cancelled' ? UI.actionButton('financial-restore', entry.id, 'Reabrir') : '') + '</div>';
+    const rows = sorted.map((entry) => [
+      `<span class="${financialDisplayStatus(entry) === 'Vencido' ? 'financial-overdue-date' : ''}">${U.escapeHtml(entry.dueDate || entry.issueDate)}</span>`,
+      U.escapeHtml(entry.description), U.escapeHtml(financialCounterparty(entry)), UI.moneyCell(entry.amount), statusBadge(entry), actionsFor(entry),
+    ]);
+    const mobileCards = sorted.map((entry) => `<article class="finance-entry-card ${financialDisplayStatus(entry) === 'Vencido' ? 'is-overdue' : ''}"><div><strong>${U.escapeHtml(entry.description)}</strong><b>${U.money(remaining(entry))}</b></div><small>${U.escapeHtml(financialCounterparty(entry))} · vence ${U.escapeHtml(entry.dueDate || entry.issueDate || '—')}</small><footer>${statusBadge(entry)}${actionsFor(entry)}</footer></article>`).join('') || '<div class="empty-state"><strong>Nenhum lançamento nesta visão.</strong><span>Os dados aparecerão aqui depois dos lançamentos.</span></div>';
 
-    return UI.section('Financeiro', 'Contas a pagar e receber conectadas à operação. Compras novas geram uma conta automaticamente.', `
+    return UI.section('Financeiro', 'Contas a pagar e a receber, com vencimentos e status.', `
+      <div class="finance-segmented" role="group" aria-label="Tipo de conta"><button type="button" class="${financeDirection === 'receivable' ? 'active' : ''}" data-finance-direction="receivable">A receber</button><button type="button" class="${financeDirection === 'payable' ? 'active' : ''}" data-finance-direction="payable">A pagar</button></div>
       <div class="metric-grid finance-metrics">
-        <article><span>A receber</span><strong>${U.money(receivable)}</strong><small>Saldo ainda não recebido.</small></article>
-        <article><span>A pagar</span><strong>${U.money(payable)}</strong><small>Saldo ainda não pago.</small></article>
-        <article class="${overdue > 0 ? 'needs-attention' : ''}"><span>Vencido</span><strong>${U.money(overdue)}</strong><small>Exige cobrança ou pagamento.</small></article>
-        <article><span>Caixa realizado</span><strong>${U.money(cashResult)}</strong><small>Recebido menos pago.</small></article>
+        <article><span>Total a receber</span><strong>${U.money(receivable)}</strong><small>Saldo ainda não recebido.</small></article>
+        <article><span>Total a pagar</span><strong>${U.money(payable)}</strong><small>Saldo ainda não pago.</small></article>
+        <article class="${overdue > 0 ? 'needs-attention' : ''}"><span>Vencido</span><strong>${U.money(overdue)}</strong><small>Exige atenção.</small></article>
+        <article class="success-metric"><span>Recebido no mês</span><strong>${U.money(receivedThisMonth)}</strong><small>Contas quitadas neste mês.</small></article>
       </div>
+      <div class="finance-aging">${aging.map((band) => `<article class="${band.danger ? 'needs-attention' : ''}"><span>${band.label} ${UI.help('envelhecimento')}</span><strong>${U.money(band.value)}</strong></article>`).join('')}</div>
       <details class="panel-card finance-entry-create">
         <summary>Novo lançamento manual</summary>
         <form id="financialEntryForm" class="grid-form">
           <label>Tipo<select name="direction"><option value="receivable">Conta a receber</option><option value="payable">Conta a pagar</option></select></label>
           <label>Categoria<select name="category"><option value="sale">Venda</option><option value="purchase">Compra</option><option value="consignment">Consignado</option><option value="commission">Comissão</option><option value="operational">Operacional</option><option value="other">Outro</option></select></label>
-          <label class="wide">Descrição<input name="description" required placeholder="Ex.: aluguel, venda balcão, material de embalagem"></label>
+          <label class="wide">Descrição<input name="description" required></label>
           <label>Emissão<input name="issueDate" type="date" required value="${U.today()}"></label>
           <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
           <label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label>
           <label>Valor já pago<input name="paidAmount" type="number" min="0" step="0.01" value="0"></label>
           <label>Cliente<select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select></label>
           <label>Fornecedor<select name="supplierId">${UI.optionList(currentSuppliers(), '', 'Opcional')}</select></label>
-          <label>Forma de pagamento<input name="paymentMethod" placeholder="Pix, dinheiro, cartão..."></label>
-          <label class="wide">Observações<input name="notes" placeholder="Referência, parcela, responsável..."></label>
-          <button type="submit">Salvar lançamento</button>
+          <label>Forma de pagamento<input name="paymentMethod"></label>
+          <label class="wide">Observações<input name="notes"></label>
+          <button type="submit">Lançar</button>
         </form>
       </details>
-      ${UI.table(['Vencimento', 'Tipo', 'Descrição', 'Pessoa', 'Valor', 'Pago', 'Saldo', 'Situação', 'Ações'], rows, 'Nenhum lançamento financeiro.')}
+      <div class="finance-desktop-table">${UI.table(['Vencimento', 'Descrição', 'Cliente/Fornec.', 'Valor', 'Status', 'Ações'], rows, 'Nenhum lançamento financeiro.')}</div>
+      <div class="finance-mobile-list">${mobileCards}</div>
     `);
   }
 
@@ -1362,10 +1429,10 @@
     const byProduct = new Map();
     periodSales.forEach((sale) => {
       const key = String(sale.productId);
-      const row = byProduct.get(key) || { product: productById(sale.productId), quantity: 0, revenue: 0, profit: 0 };
-      row.quantity += U.number(sale.quantity); row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); byProduct.set(key, row);
+      const row = byProduct.get(key) || { product: productById(sale.productId), quantity: 0, revenue: 0, profit: 0, cost: 0 };
+      row.quantity += U.number(sale.quantity); row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); row.cost += U.number(sale.cogs || (U.number(sale.netRevenue) - U.number(sale.grossProfit))); byProduct.set(key, row);
     });
-    const topProductRows = [...byProduct.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 12).map((row) => [UI.productName(row.product), U.qty(row.quantity, row.product?.unit), UI.moneyCell(row.revenue), UI.moneyCell(row.profit), row.revenue ? `${((row.profit / row.revenue) * 100).toFixed(1)}%` : '0%']);
+    const topProductRows = [...byProduct.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 12).map((row) => { const margin = row.revenue ? (row.profit / row.revenue) * 100 : 0; return [UI.productName(row.product), U.qty(row.quantity, row.product?.unit), UI.moneyCell(row.revenue), UI.moneyCell(row.cost), UI.moneyCell(row.profit), `<span class="margin-cell"><i style="--margin:${Math.max(0, Math.min(100, margin))}%"></i>${margin.toFixed(1)}%</span>`]; });
 
     const productLabel = (row) => row.product?.name || 'Produto removido';
     const topByRevenue = [...byProduct.values()]
@@ -1394,6 +1461,12 @@
     const byMonthRows = [...sumBy((sale) => String(sale.date || '').slice(0, 7) || '—').entries()]
       .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
       .map(([label, value]) => ({ label, value }));
+
+    const monthlySeries = new Map();
+    periodSales.forEach((sale) => { const key = String(sale.date || '').slice(0, 7) || '—'; const row = monthlySeries.get(key) || { revenue: 0, profit: 0 }; row.revenue += U.number(sale.netRevenue); row.profit += U.number(sale.grossProfit); monthlySeries.set(key, row); });
+    const monthlyRows = [...monthlySeries.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const maxMonthlyRevenue = Math.max(...monthlyRows.map(([, row]) => row.revenue), 1);
+    const monthlyProfitChart = monthlyRows.length ? `<div class="report-month-chart">${monthlyRows.map(([month, row]) => `<span><i style="height:${Math.max(4, (row.revenue / maxMonthlyRevenue) * 100)}%"><b style="bottom:${Math.max(0, Math.min(100, (row.profit / maxMonthlyRevenue) * 100))}%"></b></i><small>${U.escapeHtml(month.slice(5) + '/' + month.slice(2, 4))}</small></span>`).join('')}</div>` : UI.formNotice('Sem dados no período.', '');
 
     // Canais que realmente aparecem nas vendas + os configurados, sem repetir:
     // filtrar por um canal que nunca foi usado só geraria tela vazia.
@@ -1452,6 +1525,7 @@
           <select data-report-filter="channel">${UI.optionList(channelsInUse, reportChannel, 'Todos')}</select>
         </label>
       </div>
+      <div class="report-period-chips" aria-label="Atalhos de período"><button type="button" data-report-period-button="7">7d</button><button type="button" class="active" data-report-period-button="30">30d</button><button type="button" data-report-period-button="90">90d</button><button type="button" data-report-period-button="mes">Este mês</button></div>
       <div class="metric-grid report-metrics">
         <article><span>Receita líquida</span><strong>${U.money(salesTotal)}</strong><small>${periodSales.length} item(ns) vendidos.</small></article>
         <article><span>Lucro bruto</span><strong>${U.money(profitTotal)}</strong><small>${salesTotal ? ((profitTotal / salesTotal) * 100).toFixed(1) : '0'}% de margem.</small></article>
@@ -1464,9 +1538,9 @@
       </div>
       <div class="two-columns">
         <div class="panel-card"><h3>Receita por canal</h3>${barChart(byChannelRows)}</div>
-        <div class="panel-card"><h3>Receita por mês</h3>${barChart(byMonthRows)}</div>
+        <div class="panel-card"><h3>Receita × lucro por mês</h3>${monthlyProfitChart}</div>
       </div>
-      <div class="panel-card"><h3>Produtos mais vendidos</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
+      <div class="panel-card"><h3>Lucro e margem por produto ${UI.help('margemPorProduto')}</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'CMV', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
       <div class="three-columns">
         <div class="panel-card"><h3>Produtos finais e preço</h3>${UI.table(['Produto', 'Materiais', 'Custo final', 'Preço sugerido', 'Preço usado', 'Margem'], costRows, 'Nenhum produto final cadastrado.')}</div>
         <div class="panel-card"><h3>Estoque atual</h3>${UI.table(['Produto', 'Tipo', 'Estoque', 'Custo médio', 'Valor em estoque'], stockRows, 'Nenhum produto cadastrado.')}</div>
@@ -1668,6 +1742,7 @@
             ${UI.table(['Data', 'Produto', 'Qtd.', 'Valor'], recentRows, 'Nenhuma venda registrada.')}
           </section>
         </div>
+        ${renderAuditHistory('clients', client.id)}
       </div>`;
     dialog.addEventListener('close', () => dialog.remove());
     document.body.appendChild(dialog);
@@ -1682,6 +1757,12 @@
       type: data.type || 'cliente',
       notes: data.notes || '',
     });
+    await S.refresh();
+  }
+
+  function renderAuditHistory(entity, entityId) {
+    const entries = (state().recordAuditLog || []).filter((row) => row.entity === entity && String(row.entityId) === String(entityId)).slice(0, 20);
+    return `<details class="full panel-card audit-history"><summary>Histórico de alterações ${UI.help('historicoAlteracoes')}</summary>${entries.length ? `<ol>${entries.map((entry) => `<li><span>${U.escapeHtml(entry.source === 'system' ? 'Sistema' : sellerName(entry.changedBy))} · ${U.escapeHtml(String(entry.changedAt || '').replace('T', ' ').slice(0, 16))}</span><p>${U.escapeHtml(entry.field)}: <del>${U.escapeHtml(entry.oldValue || 'vazio')}</del> → <strong>${U.escapeHtml(entry.newValue || 'vazio')}</strong></p></li>`).join('')}</ol>` : '<p class="hint-inline">Nenhuma alteração registrada ainda.</p>'}</details>`;
   }
 
   function openProductEditor(productId) {
@@ -1706,6 +1787,7 @@
           <article><span>Em pedidos</span><strong>${U.qty(pendingQuantity, product.unit)}</strong><small>Ainda não concluído.</small></article>
         </div>
         <details class='full panel-card product-movement-history'><summary>Últimas movimentações</summary>${UI.table(['Data', 'Tipo', 'Qtd.', 'Custo', 'Observação'], movementRows, 'Nenhuma movimentação registrada.')}</details>
+        ${renderAuditHistory('products', product.id)}
         <input type='hidden' name='id' value='${U.escapeHtml(product.id)}'>
         <label>Nome<input name='name' required value='${U.escapeHtml(product.name)}'></label>
         <label>Tipo<select name='type' required>${UI.optionList(state().settings.productTypes, product.type, '')}</select></label>
@@ -1809,6 +1891,7 @@
         notes: `Custo médio corrigido de ${U.money(previousCost)} para ${U.money(nextCost)}.`,
       });
     }
+    await S.refresh();
   }
   async function updateBusiness(data) {
     const business = S.activeBusiness();
@@ -2199,6 +2282,10 @@
   }
 
   async function handleClick(event) {
+    const reportPeriodButton = event.target.closest('[data-report-period-button]');
+    if (reportPeriodButton) { applyPeriodPreset(reportPeriodButton.dataset.reportPeriodButton); return; }
+    const financeButton = event.target.closest('[data-finance-direction]');
+    if (financeButton) { financeDirection = financeButton.dataset.financeDirection; renderAll(); return; }
     const button = event.target.closest('[data-action]');
     if (!button) return;
     const { action, id } = button.dataset;
