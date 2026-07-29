@@ -22,6 +22,8 @@ grant select on public.record_audit_log to authenticated;
 grant all on public.record_audit_log to service_role;
 create index if not exists idx_record_audit_log_entity
   on public.record_audit_log (business_id, entity, entity_id, changed_at desc);
+create index if not exists idx_record_audit_log_changed_by
+  on public.record_audit_log (changed_by);
 
 create or replace function public.log_record_audit()
 returns trigger language plpgsql security definer set search_path = public as $$
@@ -50,4 +52,4 @@ create trigger trg_orders_audit after update on public.orders for each row execu
 drop trigger if exists trg_tasks_audit on public.tasks;
 create trigger trg_tasks_audit after update on public.tasks for each row execute function public.log_record_audit();
 
-revoke all on function public.log_record_audit() from public, anon;
+revoke all on function public.log_record_audit() from public, anon, authenticated;
