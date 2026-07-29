@@ -19,8 +19,13 @@ const indexPath = path.join(projectDir, 'index.html');
 const cssPath = path.join(projectDir, 'styles', 'main.css');
 const outPath = process.argv[2] || path.join(projectDir, 'controle360-mobile.html');
 
-let html = fs.readFileSync(indexPath, 'utf8');
-const css = fs.readFileSync(cssPath, 'utf8');
+// Normaliza os finais de linha para que o bundle e os hashes da CSP sejam
+// idênticos no Windows e no Linux (incluindo a validação executada no CI).
+const readText = (filePath) =>
+  fs.readFileSync(filePath, 'utf8').replace(/\r\n?/g, '\n');
+
+let html = readText(indexPath);
+const css = readText(cssPath);
 
 // 1) Inlinar o CSS no lugar do <link>.
 html = html.replace(
@@ -36,7 +41,7 @@ html = html.replace(
 //    que já é feito para o <style> inline com 'unsafe-inline' em style-src.
 const scriptHashes = [];
 html = html.replace(/<script\s+src="(src\/[^"]+)"><\/script>/g, (match, src) => {
-  const code = fs.readFileSync(path.join(projectDir, src), 'utf8').replace(/\s+$/, '');
+  const code = readText(path.join(projectDir, src)).replace(/\s+$/, '');
   const text = `\n${code}\n`;
   scriptHashes.push(`'sha256-${crypto.createHash('sha256').update(text, 'utf8').digest('base64')}'`);
   return `<script>${text}</script>`;
