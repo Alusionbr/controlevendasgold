@@ -323,7 +323,7 @@
       const date = sale.date || '';
       return (!dashboardStart || date >= dashboardStart) && (!dashboardEnd || date <= dashboardEnd);
     });
-    const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales });
+    const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales, revenueDateFrom: dashboardStart, revenueDateTo: dashboardEnd });
     const stockMetrics = Calc.businessMetrics(baseState);
     els.dashboard.innerHTML = `
       <article class="metric-card dashboard-period-card">
@@ -334,11 +334,11 @@
         </div>
       </article>
       ${[
-        UI.metric('Vendas no periodo', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
+        UI.metric('Receita recebida', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
         UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
         UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
         UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
-        UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+        UI.metric('Saiu a prazo', U.money(Calc.creditSalesPosition(baseState).total), 'vendasPrazo'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
       ].join('')}
     `;
@@ -369,8 +369,7 @@
       date.setDate(date.getDate() - (6 - index));
       return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
     });
-    const daysByKey = new Map(days.map((day) => [day.key, day]));
-    (baseState.sales || []).forEach((sale) => { const day = daysByKey.get(sale.date); if (day) day.amount += U.number(sale.netRevenue); });
+    days.forEach((day) => { day.amount = Calc.dailyReceipts(baseState, day.key).total; });
     const maxDay = Math.max(...days.map((day) => day.amount), 1);
     return `
       <section class='operations-snapshot' aria-label='Resumo operacional'>
@@ -382,7 +381,7 @@
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
         </div>
-        <div class='sales-trend-card'><div><h3>Vendas dos últimos 7 dias</h3><p>Receita líquida já registrada, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
+        <div class='sales-trend-card'><div><h3>Receita recebida — últimos 7 dias</h3><p>Somente valores que realmente entraram, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
       </section>`;
   }
 
@@ -493,6 +492,19 @@
   // docs/replication-v1/02-fase1-navegacao-mobile.md). Reaproveita o mesmo
   // Calc.businessMetrics do dashboard, filtrado só no dia de hoje, mais
   // ações rápidas e listas curtas para não exigir rolar as abas completas.
+  function renderCreditSalesPosition() {
+    const position = Calc.creditSalesPosition(state());
+    return `
+      <section class="today-section credit-position-section">
+        <h3>Saiu a prazo ${UI.help('vendasPrazo')}</h3>
+        <p class="hint-inline">Valores separados da receita: só passam a contar como receita quando o pagamento for registrado.</p>
+        <div class="operations-kpis">
+          <article><span>Com clientes</span><strong>${U.money(position.clients.total)}</strong><small>${U.money(position.clients.inHands)} ainda em mãos · ${U.money(position.clients.soldUnpaid)} vendido e não pago.</small><button type="button" class="link-button quick-action" data-tab="consignado">Ver consignados</button></article>
+          <article><span>Com vendedores</span><strong>${U.money(position.sellers.total)}</strong><small>${position.sellers.count} pedido(s) com saldo em aberto.</small><button type="button" class="link-button quick-action" data-tab="vendedores">Ver contas</button></article>
+          <article class="needs-attention"><span>Total a prazo</span><strong>${U.money(position.total)}</strong><small>Mercadoria entregue ou vendida, ainda não recebida.</small></article>
+        </div>
+      </section>`;
+  }
   function renderAdvancedDashboard() {
     const sales = currentSales();
     const periodEnd = new Date(`${U.today()}T00:00:00`);
@@ -502,27 +514,26 @@
     const isoDate = (date) => date.toISOString().slice(0, 10);
     const currentPeriodSales = sales.filter((sale) => sale.date >= isoDate(periodStart) && sale.date <= isoDate(periodEnd));
     const previousPeriodSales = sales.filter((sale) => sale.date >= isoDate(previousStart) && sale.date <= isoDate(previousEnd));
-    const currentMetrics = Calc.businessMetrics({ ...state(), sales: currentPeriodSales });
-    const previousMetrics = Calc.businessMetrics({ ...state(), sales: previousPeriodSales });
-    const currentTicket = currentPeriodSales.length ? currentMetrics.netRevenue / new Set(currentPeriodSales.map((sale) => sale.originId || sale.id)).size : 0;
-    const previousTicket = previousPeriodSales.length ? previousMetrics.netRevenue / new Set(previousPeriodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const currentMetrics = Calc.businessMetrics({ ...state(), sales: currentPeriodSales, revenueDateFrom: isoDate(periodStart), revenueDateTo: isoDate(periodEnd) });
+    const previousMetrics = Calc.businessMetrics({ ...state(), sales: previousPeriodSales, revenueDateFrom: isoDate(previousStart), revenueDateTo: isoDate(previousEnd) });
+    const currentTicket = currentMetrics.recognizedRevenueCount ? currentMetrics.netRevenue / currentMetrics.recognizedRevenueCount : 0;
+    const previousTicket = previousMetrics.recognizedRevenueCount ? previousMetrics.netRevenue / previousMetrics.recognizedRevenueCount : 0;
     const delta = (current, previous) => previous ? ((current - previous) / Math.abs(previous)) * 100 : (current ? 100 : 0);
     const financialOverdue = currentFinancialEntries().filter((entry) => entry.status !== 'paid' && entry.status !== 'cancelled' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const deltaBadge = (value) => `<small class="metric-delta ${value < 0 ? 'negative' : 'positive'}">${value < 0 ? '' : '+'}${value.toFixed(1)}%</small>`;
     const metricCard = (label, value, comparison, helpKey, extraClass = '') => `<article class="metric-card ${extraClass}"><span>${U.escapeHtml(label)} ${helpKey ? UI.help(helpKey) : ''}</span><strong>${value}</strong>${comparison === null ? '' : deltaBadge(comparison)}</article>`;
-    const metricsGrid = `<div class="dashboard-advanced-metrics">${metricCard('Receita líquida', U.money(currentMetrics.netRevenue), delta(currentMetrics.netRevenue, previousMetrics.netRevenue), 'receitaLiquida')}${metricCard('Lucro bruto', U.money(currentMetrics.grossProfit), delta(currentMetrics.grossProfit, previousMetrics.grossProfit), 'lucroBruto')}${metricCard('Ticket médio', U.money(currentTicket), delta(currentTicket, previousTicket))}${metricCard('Consignado em aberto', U.money(currentMetrics.consignmentsOpen), null, 'consignadoAberto')}${metricCard('Pedidos pendentes', String(currentMetrics.pendingOrders), null, 'pedidosPendentes')}${metricCard('Financeiro vencido', U.money(financialOverdue), null, '', financialOverdue ? 'needs-attention' : '')}</div>`;
+    const metricsGrid = `<div class="dashboard-advanced-metrics">${metricCard('Receita recebida', U.money(currentMetrics.netRevenue), delta(currentMetrics.netRevenue, previousMetrics.netRevenue), 'receitaLiquida')}${metricCard('Lucro bruto', U.money(currentMetrics.grossProfit), delta(currentMetrics.grossProfit, previousMetrics.grossProfit), 'lucroBruto')}${metricCard('Ticket médio', U.money(currentTicket), delta(currentTicket, previousTicket))}${metricCard('Saiu a prazo', U.money(Calc.creditSalesPosition(state()).total), null, 'vendasPrazo')}${metricCard('Pedidos pendentes', String(currentMetrics.pendingOrders), null, 'pedidosPendentes')}${metricCard('Financeiro vencido', U.money(financialOverdue), null, '', financialOverdue ? 'needs-attention' : '')}</div>`;
     const now = new Date();
     const days = Array.from({ length: 30 }, (_, index) => {
       const date = new Date(now);
       date.setDate(date.getDate() - (29 - index));
       return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), revenue: 0 };
     });
-    const byDay = new Map(days.map((day) => [day.key, day]));
-    sales.forEach((sale) => { const day = byDay.get(sale.date); if (day) day.revenue += U.number(sale.netRevenue); });
+    days.forEach((day) => { day.revenue = Calc.dailyReceipts(state(), day.key).total; });
     const maxDay = Math.max(...days.map((day) => day.revenue), 1);
     const points = days.map((day, index) => `${Math.round((index / 29) * 400)},${Math.round(112 - (day.revenue / maxDay) * 100)}`).join(' ');
     const productRows = new Map();
-    sales.forEach((sale) => {
+    sales.filter((sale) => sale.origin !== 'consignado' && !sale.sellerId).forEach((sale) => {
       const key = String(sale.productId);
       const row = productRows.get(key) || { product: productById(sale.productId), revenue: 0, profit: 0 };
       row.revenue += U.number(sale.netRevenue);
@@ -531,16 +542,16 @@
     });
     const margins = [...productRows.values()].filter((row) => row.revenue > 0).sort((a, b) => (b.profit / b.revenue) - (a.profit / a.revenue)).slice(0, 4);
     const sellerRows = new Map();
-    sales.filter((sale) => String(sale.date || '').slice(0, 7) === U.today().slice(0, 7) && sale.sellerId).forEach((sale) => sellerRows.set(String(sale.sellerId), U.number(sellerRows.get(String(sale.sellerId))) + U.number(sale.netRevenue)));
+    (state().sellerPayments || []).filter((payment) => String(payment.paymentDate || '').slice(0, 7) === U.today().slice(0, 7)).forEach((payment) => sellerRows.set(String(payment.sellerId), U.number(sellerRows.get(String(payment.sellerId))) + U.number(payment.amount)));
     const sellers = [...sellerRows.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
     return `<section class="advanced-dashboard">
       <div class="section-head"><div><h2>Visão geral</h2><p>Desempenho recente e pontos que exigem atenção.</p></div></div>
       ${metricsGrid}
       <div class="dashboard-analytics-grid">
-        <article class="panel-card trend-card"><h3>Vendas — últimos 30 dias</h3><svg viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Tendência de vendas"><defs><linearGradient id="salesTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"></stop><stop offset="1" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,120 ${points} 400,120" fill="url(#salesTrendFill)"></polygon><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div class="mobile-sales-bars">${days.slice(-7).map((day) => `<span><i style="height:${Math.max(4, Math.round((day.revenue / maxDay) * 100))}%"></i><small>${U.escapeHtml(day.label)}</small></span>`).join('')}</div></article>
+        <article class="panel-card trend-card"><h3>Receita recebida — últimos 30 dias</h3><svg viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Tendência de vendas"><defs><linearGradient id="salesTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"></stop><stop offset="1" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,120 ${points} 400,120" fill="url(#salesTrendFill)"></polygon><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div class="mobile-sales-bars">${days.slice(-7).map((day) => `<span><i style="height:${Math.max(4, Math.round((day.revenue / maxDay) * 100))}%"></i><small>${U.escapeHtml(day.label)}</small></span>`).join('')}</div></article>
         <article class="panel-card margin-panel"><h3>Margem por produto ${UI.help('margemPorProduto')}</h3>${margins.length ? margins.map((row) => { const pct = Math.max(0, Math.min(100, (row.profit / row.revenue) * 100)); return `<div class="margin-row"><span>${U.escapeHtml(row.product?.name || 'Produto removido')}</span><strong>${pct.toFixed(0)}%</strong><i><b style="width:${pct}%"></b></i></div>`; }).join('') : UI.formNotice('Sem vendas no período.', '')}</article>
       </div>
-      <article class="panel-card seller-ranking"><h3>Vendedores do mês</h3>${sellers.length ? sellers.map(([id, value], index) => `<div><em>${index + 1}</em><span>${U.escapeHtml(sellerName(id))}</span><strong>${U.money(value)}</strong></div>`).join('') : UI.formNotice('Nenhuma venda de vendedor neste mês.', '')}</article>
+      <article class="panel-card seller-ranking"><h3>Pagamentos de vendedores no mês</h3>${sellers.length ? sellers.map(([id, value], index) => `<div><em>${index + 1}</em><span>${U.escapeHtml(sellerName(id))}</span><strong>${U.money(value)}</strong></div>`).join('') : UI.formNotice('Nenhum pagamento de vendedor neste mês.', '')}</article>
     </section>`;
   }
 
@@ -549,7 +560,7 @@
     const todayStr = U.today();
     const sales = currentSales();
     const todaySales = sales.filter((sale) => sale.date === todayStr);
-    const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales });
+    const todayMetrics = Calc.businessMetrics({ ...state(), sales: todaySales, revenueDateFrom: todayStr, revenueDateTo: todayStr });
     const stockMetrics = Calc.businessMetrics(state());
 
     const quickActions = isAdminUser
@@ -566,7 +577,7 @@
           { tab: 'meusaldo', label: 'Meu saldo' },
         ];
 
-    const recentSales = U.sortByDateDesc(sales).slice(0, 5);
+    const recentSales = U.sortByDateDesc(sales.filter((sale) => sale.origin !== 'consignado' && !sale.sellerId)).slice(0, 5);
     const recentSalesHtml = recentSales.length
       ? `<ul class="today-list">${recentSales.map((sale) => {
           const product = productById(sale.productId);
@@ -602,11 +613,11 @@
       <div class="today-screen">
         <div class="dashboard">
           ${[
-            UI.metric(isAdminUser ? 'Vendas hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
+            UI.metric(isAdminUser ? 'Receita recebida hoje' : 'Minhas vendas hoje', U.money(todayMetrics.netRevenue), 'receitaLiquida'),
             UI.metric('Lucro bruto hoje', U.money(todayMetrics.grossProfit), 'lucroBruto'),
             isAdminUser
               ? UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque')
-              : UI.metric('Consignado em aberto', U.money(stockMetrics.consignmentsOpen), 'consignadoAberto'),
+              : UI.metric('Saiu a prazo', U.money(Calc.creditSalesPosition(state()).total), 'vendasPrazo'),
             UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
           ].join('')}
         </div>
@@ -622,12 +633,14 @@
 
         ${renderDailyReceipts()}
 
+        ${isAdminUser ? renderCreditSalesPosition() : ''}
+
         ${renderTodayGoals(isAdminUser)}
 
         ${isAdminUser ? renderOperationsSnapshot(state()) : ''}
 
         <section class="today-section">
-          <h3>Últimas vendas</h3>
+          <h3>Últimas vendas à vista</h3>
           ${recentSalesHtml}
         </section>
 
@@ -1162,30 +1175,26 @@
 
   function renderSales() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
-    const rows = U.sortByDateDesc(currentSales()).map((sale) => {
+    const receivedAtSale = currentSales().filter((sale) => sale.origin !== 'consignado' && !sale.sellerId);
+    const rows = U.sortByDateDesc(receivedAtSale).map((sale) => {
       const product = productById(sale.productId);
       const client = clientById(sale.clientId);
       const isReturnOrScrap = sale.quantity < 0 || !!sale.parentSaleId;
       return [
-        U.escapeHtml(sale.date),
-        U.escapeHtml(sale.channel || '—'),
-        U.escapeHtml(client?.name || '—'),
-        UI.productName(product),
-        U.qty(sale.quantity, product?.unit),
-        UI.moneyCell(sale.netRevenue),
-        UI.moneyCell(sale.cogs),
-        UI.moneyCell(sale.grossProfit),
-        `${(U.number(sale.margin) * 100).toFixed(2)}%`,
+        U.escapeHtml(sale.date), U.escapeHtml(sale.channel || '—'), U.escapeHtml(client?.name || '—'),
+        UI.productName(product), U.qty(sale.quantity, product?.unit), UI.moneyCell(sale.netRevenue),
+        UI.moneyCell(sale.cogs), UI.moneyCell(sale.grossProfit), `${(U.number(sale.margin) * 100).toFixed(2)}%`,
         isReturnOrScrap ? '—' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'Devolução/Desperdício')}</div>`,
       ];
     });
     const desc = S.isAdmin()
-      ? 'Escolha o tipo de venda, monte o carrinho e lance. O pedido entra na esteira em Pendente e você avança até Despachado (quando o estoque baixa e a venda conta).'
-      : 'Venda o que já está no seu estoque (baixa na hora) ou peça reposição ao admin. Acompanhe seus pedidos na esteira abaixo.';
+      ? 'Monte o carrinho e lance. Esta lista mostra somente vendas à vista. Consignados e pedidos de vendedores ficam separados e só viram receita quando pagos.'
+      : 'Venda o que já está no seu estoque ou peça reposição ao admin. Acompanhe seus pedidos na esteira abaixo.';
     return UI.section('Vendas', desc, `
       <div id="salesCartPanel"></div>
-      <h3>Histórico de vendas</h3>
-      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita líquida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows)}
+      <div class="notice info"><strong>Regime de caixa:</strong> o que saiu a prazo aparece em Consignado ou Vendedores e não entra nesta receita até o pagamento.</div>
+      <h3>Histórico de vendas à vista</h3>
+      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita recebida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows, 'Nenhuma venda à vista registrada.')}
       <div id="returnsPanel"></div>
     `, 'cmv');
   }
@@ -1193,55 +1202,39 @@
   function renderConsignments() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => product.type !== 'servico');
-    // Só consignado COM CLIENTE aqui. As consignações de admin→vendedor
-    // (clientId nulo, criadas ao enviar estoque consignado) pertencem ao painel
-    // de Vendedores / "Meu estoque" — sem este filtro elas apareciam nesta
-    // tabela como "Cliente removido", misturando os dois conceitos.
-    const rows = currentConsignments().filter((item) => item.clientId).map((item) => {
+    const clientItems = currentConsignments().filter((item) => item.clientId);
+    const position = Calc.creditSalesPosition(state()).clients;
+    const rows = clientItems.map((item) => {
       const product = productById(item.productId);
       const client = clientById(item.clientId);
       const available = Calc.consignmentAvailableWithClient(item);
       const openAmount = Calc.consignmentOpenAmount(item);
+      const sentValue = U.number(item.quantitySent) * U.number(item.unitPrice);
+      const soldValue = U.number(item.quantitySold) * U.number(item.unitPrice);
       return [
-        U.escapeHtml(item.date),
-        U.escapeHtml(client?.name || 'Cliente removido'),
-        UI.productName(product),
-        U.qty(item.quantitySent, product?.unit),
-        U.qty(item.quantitySold, product?.unit),
-        U.qty(item.quantityReturned, product?.unit),
+        U.escapeHtml(item.date), U.escapeHtml(client?.name || 'Cliente removido'), UI.productName(product),
+        UI.moneyCell(sentValue), UI.moneyCell(soldValue), UI.moneyCell(item.amountPaid), UI.moneyCell(openAmount),
         U.qty(available, product?.unit),
-        UI.moneyCell(openAmount),
-        `<div class="actions">
-          ${UI.actionButton('consign-sell', item.id, 'Registrar venda')}
-          ${UI.actionButton('consign-return', item.id, 'Devolver')}
-          ${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}
-        </div>`,
+        `<div class="actions">${UI.actionButton('consign-sell', item.id, 'Registrar venda')}${UI.actionButton('consign-return', item.id, 'Devolver')}${UI.actionButton('consign-pay', item.id, 'Registrar pagamento')}</div>`,
       ];
     });
 
-    return UI.section('Consignado com clientes', 'Mercadoria deixada com um cliente para ele vender/pagar depois. (O consignado enviado a um vendedor fica na aba Vendedores / Meu estoque.) Venda, devolução e pagamento fazem o acerto sem perder rastreio.', `
+    return UI.section('Consignado com clientes', 'O consignado fica separado da receita. Registrar venda informa o que o cliente vendeu a prazo; somente Registrar pagamento transforma o valor em receita recebida.', `
+      <div class="metric-grid report-metrics">
+        <article><span>Total com clientes</span><strong>${U.money(position.total)}</strong><small>Mercadoria ainda não recebida.</small></article>
+        <article><span>Ainda em mãos</span><strong>${U.money(position.inHands)}</strong><small>Enviado, ainda não vendido nem devolvido.</small></article>
+        <article><span>Vendido a prazo</span><strong>${U.money(position.soldUnpaid)}</strong><small>Vendido pelo cliente, pagamento pendente.</small></article>
+      </div>
       <form id="consignmentForm" class="grid-form">
-        <label>Data
-          <input name="date" type="date" required value="${U.today()}">
-        </label>
-        <label>Cliente consignado
-          <select name="clientId" required>${UI.optionList(currentClients(), '', 'Cliente')}</select>
-        </label>
-        <label>Produto
-          <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
-        </label>
-        <label>${UI.fieldLabel('Quantidade enviada', 'qtdEnviada')}
-          <input name="quantitySent" type="number" step="0.001" required>
-        </label>
-        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinadoConsig')}
-          <input name="unitPrice" type="number" step="0.01" required>
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Prazo de acerto, caixa, lote, combinado...">
-        </label>
+        <label>Data<input name="date" type="date" required value="${U.today()}"></label>
+        <label>Cliente consignado<select name="clientId" required>${UI.optionList(currentClients(), '', 'Cliente')}</select></label>
+        <label>Produto<select name="productId" required>${UI.optionList(products, '', 'Produto')}</select></label>
+        <label>${UI.fieldLabel('Quantidade enviada', 'qtdEnviada')}<input name="quantitySent" type="number" step="0.001" required></label>
+        <label>${UI.fieldLabel('Preço unitário combinado', 'precoCombinadoConsig')}<input name="unitPrice" type="number" step="0.01" required></label>
+        <label class="wide">Observações<input name="notes" placeholder="Prazo de acerto, caixa, lote, combinado..."></label>
         <button type="submit">Enviar consignado</button>
       </form>
-      ${UI.table(['Data', 'Cliente', 'Produto', 'Enviado', 'Vendido', 'Devolvido', 'Com cliente', 'Em aberto', 'Ações'], rows)}
+      ${UI.table(['Data', 'Cliente', 'Produto', 'Valor enviado', 'Vendido a prazo', 'Pago', 'Em aberto', 'Em mãos', 'Ações'], rows, 'Nenhum consignado com cliente.')}
       ${renderSellerConsignmentSummary()}
     `, 'consignado');
   }
@@ -1259,24 +1252,25 @@
   // original para sempre, mesmo depois de a mercadoria voltar.
   function renderSellerConsignmentSummary() {
     if (!S.isAdmin()) return '';
-    const held = (state().sellerStock || [])
-      .filter((row) => row.businessId === state().activeBusinessId && U.number(row.quantity) > 0);
-    if (!held.length) return '';
-    const ledger = window.C360.sellerLedger;
-    const rows = held.map((row) => {
+    const accounts = (state().sellerOrderAccounts || []).filter((account) => U.number(account.accountAmount) > 0 || U.number(account.openAmount) > 0);
+    const accountRows = accounts.map((account) => [
+      U.escapeHtml((account.createdAt || '').slice(0, 10)), U.escapeHtml(sellerName(account.sellerId)),
+      U.escapeHtml(String(account.orderGroupId || '').slice(0, 8)), UI.moneyCell(account.orderTotal),
+      UI.moneyCell(U.number(account.initialPaid) + U.number(account.paidAmount)), UI.moneyCell(account.openAmount),
+      UI.badge(U.number(account.openAmount) < 0.005 ? 'Quitado' : U.number(account.paidAmount) + U.number(account.initialPaid) > 0 ? 'Parcial' : 'Em aberto', U.number(account.openAmount) < 0.005 ? 'ok' : 'warn'),
+    ]);
+    const held = (state().sellerStock || []).filter((row) => row.businessId === state().activeBusinessId && U.number(row.quantity) > 0);
+    const stockRows = held.map((row) => {
       const product = productById(row.productId);
-      return [
-        U.escapeHtml(sellerName(row.sellerId)),
-        UI.productName(product),
-        U.qty(row.quantity, product?.unit),
-        UI.moneyCell(U.number(row.quantity) * U.number(product?.avgCost)),
-        ledger && typeof ledger.balanceFor === 'function' ? UI.moneyCell(ledger.balanceFor(row.sellerId)) : '—',
-      ];
+      return [U.escapeHtml(sellerName(row.sellerId)), UI.productName(product), U.qty(row.quantity, product?.unit), UI.moneyCell(U.number(row.quantity) * U.number(product?.avgCost))];
     });
+    if (!accountRows.length && !stockRows.length) return '';
     return `
-      <h3>Consignado com vendedores</h3>
-      <p class="hint-inline">Mercadoria que está com cada vendedor agora. O acerto — pagamento, devolução — é feito na aba Vendedores. A dívida é do vendedor inteiro, não de um produto só.</p>
-      ${UI.table(['Vendedor', 'Produto', 'Em mãos', 'Valor pelo custo', 'Dívida do vendedor'], rows)}
+      <h3>Saídas a prazo para vendedores</h3>
+      <p class="hint-inline">Cada pedido fica separado. O valor só entra na Receita recebida quando o vendedor registra o pagamento daquele pedido.</p>
+      ${UI.table(['Data', 'Vendedor', 'Pedido', 'Total', 'Pago', 'Em aberto', 'Status'], accountRows, 'Nenhum pedido a prazo para vendedor.')}
+      <h3>Estoque em mãos dos vendedores</h3>
+      ${UI.table(['Vendedor', 'Produto', 'Em mãos', 'Valor pelo custo'], stockRows, 'Nenhum item atualmente em mãos.')}
       <div class="actions"><button type="button" class="small secondary" data-action="go-sellers">Abrir aba Vendedores</button></div>
     `;
   }
@@ -1415,15 +1409,23 @@
     const products = currentProducts();
     const inPeriod = (date) => (!dashboardStart || String(date || '') >= dashboardStart) && (!dashboardEnd || String(date || '') <= dashboardEnd);
     const allPeriodSales = currentSales().filter((sale) => inPeriod(sale.date));
+    const immediatePeriodSales = allPeriodSales.filter((sale) => sale.origin !== 'consignado' && !sale.sellerId);
     // Filtros extras do relatório (produto/canal). Aplicados só às vendas —
     // estoque e ficha técnica não dependem de período nem de canal.
-    const periodSales = allPeriodSales.filter((sale) => (!reportProductId || String(sale.productId) === String(reportProductId))
+    const periodSales = immediatePeriodSales.filter((sale) => (!reportProductId || String(sale.productId) === String(reportProductId))
       && (!reportChannel || String(sale.channel || '') === reportChannel));
     const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
     const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
-    const salesTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.netRevenue), 0);
-    const profitTotal = periodSales.reduce((sum, sale) => sum + U.number(sale.grossProfit), 0);
-    const ticket = periodSales.length ? salesTotal / new Set(periodSales.map((sale) => sale.originId || sale.id)).size : 0;
+    const recognized = Calc.recognizedRevenue(state(), { dateFrom: dashboardStart, dateTo: dashboardEnd });
+    const creditPosition = Calc.creditSalesPosition(state());
+    const salesTotal = recognized.total;
+    const profitTotal = recognized.grossProfit;
+    const ticket = recognized.count ? salesTotal / recognized.count : 0;
+    const revenueSourceRows = [
+      { label: 'Vendas à vista', value: recognized.direct.total },
+      { label: 'Pagamentos de clientes', value: recognized.clients.total },
+      { label: 'Pagamentos de vendedores', value: recognized.sellers.total },
+    ].filter((row) => row.value > 0);
     const financialReceived = periodFinancial.filter((entry) => entry.direction === 'receivable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
     const financialPaid = periodFinancial.filter((entry) => entry.direction === 'payable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
     const byProduct = new Map();
@@ -1504,7 +1506,7 @@
       ];
     });
 
-    return UI.section('Relatórios', 'Indicadores filtráveis de vendas, financeiro, produtos, estoque e movimentações.', `
+    return UI.section('Relatórios', 'Receita pelo regime de caixa: consignados e pedidos a prazo só entram quando pagos. Saídas a prazo permanecem separadas.', `
       <div class="panel-card report-period-bar">
         <div><span>Período analisado</span><strong>${U.escapeHtml(dashboardStart || 'Início')} até ${U.escapeHtml(dashboardEnd || 'Hoje')}</strong></div>
         <label>De<input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}"></label>
@@ -1527,18 +1529,18 @@
       </div>
       <div class="report-period-chips" aria-label="Atalhos de período"><button type="button" data-report-period-button="7">7d</button><button type="button" class="active" data-report-period-button="30">30d</button><button type="button" data-report-period-button="90">90d</button><button type="button" data-report-period-button="mes">Este mês</button></div>
       <div class="metric-grid report-metrics">
-        <article><span>Receita líquida</span><strong>${U.money(salesTotal)}</strong><small>${periodSales.length} item(ns) vendidos.</small></article>
+        <article><span>Receita recebida</span><strong>${U.money(salesTotal)}</strong><small>${recognized.count} recebimento(s) no período.</small></article>
         <article><span>Lucro bruto</span><strong>${U.money(profitTotal)}</strong><small>${salesTotal ? ((profitTotal / salesTotal) * 100).toFixed(1) : '0'}% de margem.</small></article>
-        <article><span>Ticket médio</span><strong>${U.money(ticket)}</strong><small>Por venda ou pedido.</small></article>
+        <article><span>Ticket médio recebido</span><strong>${U.money(ticket)}</strong><small>Por recebimento.</small></article>
         <article><span>Caixa no período</span><strong>${U.money(financialReceived - financialPaid)}</strong><small>${U.money(financialReceived)} recebido · ${U.money(financialPaid)} pago.</small></article>
       </div>
       <div class="two-columns">
-        <div class="panel-card"><h3>Mais vendidos por receita</h3>${barChart(topByRevenue)}</div>
+        <div class="panel-card"><h3>Origem da receita recebida</h3>${barChart(revenueSourceRows)}</div><div class="panel-card"><h3>Saiu a prazo</h3><div class="metric-grid"><article><span>Clientes</span><strong>${U.money(creditPosition.clients.total)}</strong></article><article><span>Vendedores</span><strong>${U.money(creditPosition.sellers.total)}</strong></article><article><span>Total</span><strong>${U.money(creditPosition.total)}</strong></article></div></div></div><div class="two-columns"><div class="panel-card"><h3>Mais vendidos à vista por receita</h3>${barChart(topByRevenue)}</div>
         <div class="panel-card"><h3>Mais vendidos por quantidade</h3>${barChart(topByQuantity, (value) => U.qty(value, ''))}</div>
       </div>
       <div class="two-columns">
-        <div class="panel-card"><h3>Receita por canal</h3>${barChart(byChannelRows)}</div>
-        <div class="panel-card"><h3>Receita × lucro por mês</h3>${monthlyProfitChart}</div>
+        <div class="panel-card"><h3>Receita à vista por canal</h3>${barChart(byChannelRows)}</div>
+        <div class="panel-card"><h3>Receita à vista × lucro por mês</h3>${monthlyProfitChart}</div>
       </div>
       <div class="panel-card"><h3>Lucro e margem por produto ${UI.help('margemPorProduto')}</h3>${UI.table(['Produto', 'Qtd.', 'Receita', 'CMV', 'Lucro', 'Margem'], topProductRows, 'Nenhuma venda no período.')}</div>
       <div class="three-columns">
@@ -1738,7 +1740,7 @@
             </form>
           </section>
           <section class="panel-card">
-            <h3>Últimas vendas</h3>
+            <h3>Últimas vendas informadas</h3>
             ${UI.table(['Data', 'Produto', 'Qtd.', 'Valor'], recentRows, 'Nenhuma venda registrada.')}
           </section>
         </div>

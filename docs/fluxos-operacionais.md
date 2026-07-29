@@ -197,3 +197,12 @@ direto na aba Vendas.
 5. Para quitação, usa **Usar saldo total** e confirma; o pedido muda para **Quitado**.
 6. O RPC `register_seller_order_payment` grava pagamento, alocação e crédito no ledger na mesma transação.
 7. Valores históricos que não pertencem a um pedido aparecem separadamente como **Saldo anterior sem pedido**.
+
+## Fluxo 17 — Receita recebida e saída a prazo
+
+1. Venda direta à vista entra imediatamente em **Receita recebida**.
+2. Ao informar a venda de um consignado, o valor passa para **Vendido a prazo** e continua fora da receita.
+3. Ao registrar o pagamento do cliente, o valor pago entra na receita na data do recebimento.
+4. Pedido de revenda despachado aparece em **Saiu a prazo — Vendedores**, por carrinho/pedido.
+5. Ao registrar pagamento no pedido do vendedor, somente o valor recebido entra na receita.
+6. Dashboard, tela Hoje e Relatórios usam a mesma fórmula e mostram separadamente as origens: à vista, pagamentos de clientes e pagamentos de vendedores.
