@@ -142,13 +142,18 @@
 
     const sellerRows = (state.sellerPayments || [])
       .filter((row) => sameBusiness(row) && String(row.paymentDate || '').slice(0, 10) === day);
+    const sellerInitialRows = (state.sellerOrderAccounts || [])
+      .filter((row) => String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
     const clientRows = (state.consignmentEvents || [])
       .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
     const saleRows = (state.sales || [])
       .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
         && row.origin !== 'consignado' && !row.sellerId);
 
-    const sellers = { total: sum(sellerRows, 'amount'), count: sellerRows.length };
+    const sellers = {
+      total: sum(sellerRows, 'amount') + sum(sellerInitialRows, 'initialPaid'),
+      count: sellerRows.length + sellerInitialRows.length,
+    };
     const clients = { total: sum(clientRows, 'amount'), count: clientRows.length };
     const sales = { total: sum(saleRows, 'netRevenue'), count: saleRows.length };
 
@@ -161,6 +166,105 @@
     };
   }
 
+  // Receita reconhecida pelo caixa: consignado informado como vendido continua
+  // fora até o pagamento. Vendas à vista entram na data da venda; consignados
+  // com clientes e vendedores entram na data do recebimento.
+  function recognizedRevenue(state, { dateFrom = '', dateTo = '' } = {}) {
+    const businessId = state.activeBusinessId;
+    const inPeriod = (date) => {
+      const day = String(date || '').slice(0, 10);
+      return (!dateFrom || day >= dateFrom) && (!dateTo || day <= dateTo);
+    };
+    const sameBusiness = (row) => row.businessId === businessId;
+    const directSales = (state.sales || []).filter((sale) => sameBusiness(sale)
+      && inPeriod(sale.date) && sale.origin !== 'consignado' && !sale.sellerId);
+    const clientPayments = (state.consignmentEvents || []).filter((event) => sameBusiness(event)
+      && event.type === 'pagamento' && inPeriod(event.date));
+    const sellerPayments = (state.sellerPayments || []).filter((payment) => sameBusiness(payment)
+      && inPeriod(payment.paymentDate));
+
+    const direct = directSales.reduce((result, sale) => ({
+      total: result.total + number(sale.netRevenue),
+      profit: result.profit + number(sale.grossProfit),
+      count: result.count + 1,
+    }), { total: 0, profit: 0, count: 0 });
+
+    const clients = clientPayments.reduce((result, event) => {
+      const consignment = (state.consignments || []).find((item) => String(item.id) === String(event.consignmentId));
+      const unitPrice = number(consignment?.unitPrice);
+      const unitCost = number(consignment?.costAtSend);
+      const margin = unitPrice > 0 ? (unitPrice - unitCost) / unitPrice : 0;
+      return {
+        total: result.total + number(event.amount),
+        profit: result.profit + number(event.amount) * margin,
+        count: result.count + 1,
+      };
+    }, { total: 0, profit: 0, count: 0 });
+
+    const orders = state.orders || [];
+    const consignments = state.consignments || [];
+    const allocations = state.sellerPaymentAllocations || [];
+    const sellers = sellerPayments.reduce((result, payment) => {
+      const paymentAllocations = allocations.filter((allocation) => String(allocation.paymentId) === String(payment.id));
+      const allocatedProfit = paymentAllocations.reduce((profit, allocation) => {
+        const groupOrders = orders.filter((order) => String(order.orderGroupId || order.id) === String(allocation.orderGroupId));
+        const groupRevenue = groupOrders.reduce((sum, order) => sum + number(order.quantity) * number(order.unitPrice), 0);
+        const groupCost = groupOrders.reduce((sum, order) => {
+          const consignment = consignments.find((item) => String(item.id) === String(order.convertedConsignmentId));
+          return sum + number(order.quantity) * number(consignment?.costAtSend);
+        }, 0);
+        const margin = groupRevenue > 0 ? (groupRevenue - groupCost) / groupRevenue : 0;
+        return profit + number(allocation.amount) * margin;
+      }, 0);
+      return {
+        total: result.total + number(payment.amount),
+        profit: result.profit + allocatedProfit,
+        count: result.count + 1,
+      };
+    }, { total: 0, profit: 0, count: 0 });
+
+    (state.sellerOrderAccounts || [])
+      .filter((account) => inPeriod(account.createdAt) && number(account.initialPaid) > 0)
+      .forEach((account) => {
+        const groupOrders = orders.filter((order) => String(order.orderGroupId || order.id) === String(account.orderGroupId));
+        const groupRevenue = groupOrders.reduce((sum, order) => sum + number(order.quantity) * number(order.unitPrice), 0);
+        const groupCost = groupOrders.reduce((sum, order) => {
+          const consignment = consignments.find((item) => String(item.id) === String(order.convertedConsignmentId));
+          return sum + number(order.quantity) * number(consignment?.costAtSend);
+        }, 0);
+        const margin = groupRevenue > 0 ? (groupRevenue - groupCost) / groupRevenue : 0;
+        sellers.total += number(account.initialPaid);
+        sellers.profit += number(account.initialPaid) * margin;
+        sellers.count += 1;
+      });
+
+    return {
+      direct,
+      clients,
+      sellers,
+      total: direct.total + clients.total + sellers.total,
+      grossProfit: direct.profit + clients.profit + sellers.profit,
+      count: direct.count + clients.count + sellers.count,
+    };
+  }
+
+  function creditSalesPosition(state) {
+    const businessId = state.activeBusinessId;
+    const clientRows = (state.consignments || []).filter((item) => item.businessId === businessId && !item.sellerId);
+    const clients = {
+      inHands: clientRows.reduce((sum, item) => sum + consignmentDeliveredAmount(item), 0),
+      soldUnpaid: clientRows.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
+      count: clientRows.filter((item) => consignmentUnsettledAmount(item) > 0.005).length,
+    };
+    clients.total = clients.inHands + clients.soldUnpaid;
+    const sellerAccounts = state.sellerOrderAccounts || [];
+    const sellers = {
+      total: sellerAccounts.reduce((sum, account) => sum + number(account.openAmount), 0),
+      count: sellerAccounts.filter((account) => number(account.openAmount) > 0.005).length,
+    };
+    return { clients, sellers, total: clients.total + sellers.total };
+  }
+
   function businessMetrics(state) {
     const businessId = state.activeBusinessId;
     if (!businessId) {
@@ -169,6 +273,7 @@
         lowStockCount: 0,
         netRevenue: 0,
         grossProfit: 0,
+        recognizedRevenueCount: 0,
         consignmentsOpen: 0,
         consignmentsSoldUnpaid: 0,
         consignmentsWithSellers: 0,
@@ -177,7 +282,6 @@
     }
 
     const products = state.products.filter((product) => product.businessId === businessId);
-    const sales = state.sales.filter((sale) => sale.businessId === businessId);
     const consignments = state.consignments.filter((item) => item.businessId === businessId);
     const orders = state.orders.filter((order) => order.businessId === businessId);
 
@@ -209,11 +313,17 @@
     let sellerOwed = 0;
     balanceBySeller.forEach((entries) => { sellerOwed += Math.max(sellerBalance(entries), 0); });
 
+    const revenue = recognizedRevenue(state, {
+      dateFrom: state.revenueDateFrom || '',
+      dateTo: state.revenueDateTo || '',
+    });
+
     return {
       stockValue: products.reduce((sum, product) => sum + number(product.currentStock) * number(product.avgCost), 0),
       lowStockCount: products.filter((product) => number(product.minStock) > 0 && number(product.currentStock) <= number(product.minStock)).length,
-      netRevenue: sales.reduce((sum, sale) => sum + number(sale.netRevenue), 0),
-      grossProfit: sales.reduce((sum, sale) => sum + number(sale.grossProfit), 0),
+      netRevenue: revenue.total,
+      grossProfit: revenue.grossProfit,
+      recognizedRevenueCount: revenue.count,
       consignmentsOpen: clientConsignments.reduce((sum, item) => sum + consignmentUnsettledAmount(item), 0) + sellerOwed,
       consignmentsSoldUnpaid: clientConsignments.reduce((sum, item) => sum + consignmentOpenAmount(item), 0),
       consignmentsWithSellers: sellerOwed,
@@ -268,6 +378,8 @@
     consignmentUnsettledAmount,
     consignmentAvailableWithClient,
     dailyReceipts,
+    recognizedRevenue,
+    creditSalesPosition,
     businessMetrics,
     resolveSellerPrice,
     validatePriceFloor,

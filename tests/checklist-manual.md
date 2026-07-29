@@ -78,3 +78,11 @@ Use este checklist antes de considerar uma alteração aprovada.
 - [ ] Vendedor visualiza apenas as próprias contas e não vê formulários de pagamento.
 - [ ] Saldo antigo sem pedido aparece separado e pode ser acertado pelo administrador.
 - [ ] Backup Excel contém a aba **Pagamentos por pedido**.
+
+## Receita recebida e saída a prazo
+
+- [ ] Informar venda consignada não aumenta **Receita recebida**.
+- [ ] O valor informado aparece em **Vendido a prazo**.
+- [ ] Registrar pagamento aumenta a receita exatamente pelo valor pago.
+- [ ] **Saiu a prazo** separa clientes de vendedores.
+- [ ] Pedido de vendedor aparece por carrinho com total, pago, saldo e status.

@@ -192,3 +192,12 @@ Servem para organizar compras, cobrança, produção, despachos e revisão.
 - O pagamento não pode exceder o saldo aberto do pedido.
 - Lançamentos antigos sem pedido continuam em uma conta separada chamada **Saldo anterior sem pedido**.
 - A organização cronológica usada para reconciliar pagamentos antigos é financeira e não altera o método de custo médio do estoque.
+
+## 11.3. Receita de consignados e vendas a prazo
+
+- A receita segue o regime de caixa: venda à vista entra na data da venda.
+- Consignado com cliente entra somente quando um evento `pagamento` é registrado.
+- Revenda para vendedor entra somente quando um `sellerPayment` é registrado.
+- Informar que o consignado foi vendido atualiza o saldo “Vendido a prazo”, mas não aumenta a receita.
+- Mercadoria ainda em mãos e valores vendidos não pagos aparecem em “Saiu a prazo”, separados entre clientes e vendedores.
+- O lucro dos recebimentos parciais é reconhecido proporcionalmente à margem do consignado ou do pedido.

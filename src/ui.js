@@ -10,7 +10,8 @@
     // Painel
     valorEstoque: 'Quanto dinheiro está "parado" no seu estoque agora: soma de (quantidade em estoque × custo médio) de cada produto.',
     alertasEstoque: 'Quantos produtos estão no estoque mínimo ou abaixo dele. Servem de aviso para você repor a tempo.',
-    receitaLiquida: 'Tudo que entrou com as vendas, já tirando descontos e taxas. É o valor antes de descontar o custo dos produtos.',
+    receitaLiquida: 'Dinheiro que realmente entrou: vendas à vista e pagamentos de consignados ou vendedores. Informar uma venda a prazo não aumenta a receita até o pagamento.',
+    vendasPrazo: 'Mercadoria entregue ou vendida sem pagamento concluído. Fica separada da receita e diminui quando há pagamento ou devolução.',
     lucroBruto: 'O que sobra das vendas depois de tirar o custo dos produtos vendidos (CMV). Ainda não desconta despesas fixas como aluguel.',
     consignadoAberto: 'Tudo que ainda te devem em consignado. Conta desde a geração do pedido (venda à vista não entra aqui: já foi paga). Do lado dos vendedores é o saldo devedor deles; do lado dos clientes, a mercadoria em mãos mais o que já venderam e não pagaram. Cai quando o pagamento é registrado ou a mercadoria volta.',
     pedidosPendentes: 'Pedidos que ainda não foram despachados nem concluídos.',

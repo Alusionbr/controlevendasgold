@@ -280,3 +280,13 @@ Regras na importação de Excel: colunas são mapeadas pelo rótulo (ou pela cha
 ```
 
 Liga um recebimento de `sellerPayments` a um grupo de pedido. Um pagamento pode ser dividido entre pedidos e um pedido pode receber vários pagamentos. `sellerOrderAccounts` é uma coleção derivada, carregada pelo RPC seguro `list_seller_order_accounts`, com total do pedido, pagamento inicial, pagamentos posteriores, saldo, status e itens em mãos.
+
+## Indicadores derivados de caixa
+
+Não há uma tabela duplicada de receita. `recognizedRevenue` deriva o valor recebido de:
+
+- `sales`, apenas vendas diretas que não sejam consignadas nem recebidas por vendedor;
+- `consignmentEvents` do tipo `pagamento`, para consignados com clientes;
+- `sellerPayments`, com `sellerPaymentAllocations` para vincular o recebimento ao pedido.
+
+`creditSalesPosition` mantém separado o que saiu sem recebimento: consignados com clientes (em mãos + vendido não pago) e o `openAmount` de `sellerOrderAccounts`.
