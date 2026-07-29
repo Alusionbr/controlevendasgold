@@ -181,3 +181,14 @@ Vendedores antigos podem ter estoque próprio (consignado/mochila) sem registro 
 Tarefas são operacionais e não alteram estoque, vendas ou financeiro.
 
 Servem para organizar compras, cobrança, produção, despachos e revisão.
+
+---
+
+## 11.2. Conta do vendedor por pedido
+
+- O saldo total continua sendo a soma imutável de `seller_account_entries`.
+- Cada pagamento novo deve ser vinculado ao `orderGroupId` do carrinho que está sendo acertado.
+- Um pedido aceita vários pagamentos parciais; o status financeiro é `aberto`, `parcial` ou `quitado`.
+- O pagamento não pode exceder o saldo aberto do pedido.
+- Lançamentos antigos sem pedido continuam em uma conta separada chamada **Saldo anterior sem pedido**.
+- A organização cronológica usada para reconciliar pagamentos antigos é financeira e não altera o método de custo médio do estoque.

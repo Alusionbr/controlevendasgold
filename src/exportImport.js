@@ -39,7 +39,7 @@
     paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
     sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
     paymentDate: 'Data do pagamento', method: 'Forma',
-    receivedBy: 'Recebido por', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
+    receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
     parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
@@ -87,6 +87,7 @@
     // justamente os dados que não dá para reconstruir olhando outra tela.
     { key: 'sellerAccountEntries', sheet: 'Conta corrente vendedor', fields: ['id', 'businessId', 'sellerId', 'type', 'direction', 'amount', 'sourceType', 'sourceId', 'notes', 'createdBy', 'createdAt'] },
     { key: 'sellerPayments', sheet: 'Pagamentos vendedor', fields: ['id', 'businessId', 'sellerId', 'amount', 'paymentDate', 'method', 'notes', 'receivedBy', 'createdAt'] },
+    { key: 'sellerPaymentAllocations', sheet: 'Pagamentos por pedido', fields: ['id', 'businessId', 'sellerId', 'paymentId', 'orderGroupId', 'amount', 'createdAt'] },
     { key: 'sellerStock', sheet: 'Estoque com vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'quantity', 'createdAt', 'updatedAt'] },
     { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
     { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },

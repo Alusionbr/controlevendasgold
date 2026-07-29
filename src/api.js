@@ -387,6 +387,25 @@
     });
   }
 
+  async function listSellerOrderAccounts(sellerId = null) {
+    return restRequest('/rest/v1/rpc/list_seller_order_accounts', {
+      method: 'POST',
+      body: { p_seller_id: sellerId || null },
+    });
+  }
+
+  async function registerSellerOrderPayment({ orderGroupId, amount, method, notes }) {
+    return restRequest('/rest/v1/rpc/register_seller_order_payment', {
+      method: 'POST',
+      body: {
+        p_order_group_id: orderGroupId,
+        p_amount: Number(amount),
+        p_method: method || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
   async function registerSaleReturn({ saleId, quantity, notes }) {
     return restRequest('/rest/v1/rpc/register_sale_return', {
       method: 'POST',
@@ -582,6 +601,8 @@
     adjustOwnStock,
     registerPurchaseGroup,
     registerSellerPayment,
+    listSellerOrderAccounts,
+    registerSellerOrderPayment,
     registerSaleReturn,
     registerSaleWaste,
     convertPublicCartToOrders,

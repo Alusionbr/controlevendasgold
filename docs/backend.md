@@ -669,3 +669,10 @@ Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
 - RLS: `*_all_admin` + vendedor só `select`/`insert` do próprio (`seller_id = auth.uid()`), e o `insert` só é aceito com `status in ('a_devolver', 'pending')` — vendedor nunca confere.
 - `stock_movements.type` ganhou `saida_brinde` (mesma migração). `return` confirmado sempre gera `entrada_devolucao_consignado` (mercadoria volta ao estoque central); `waste`/`gift` só geram `stock_movements` quando a origem é o estoque central do admin (`seller_id` nulo) — quando a origem é o estoque do vendedor, a baixa acontece só em `seller_stock` (o central já tinha sido debitado no envio consignado).
 - Sem RPC `SECURITY DEFINER`: confirmar é sempre uma ação do admin logado, que já tem RLS de escrita em `products`/`stock_movements`/`seller_stock`/`seller_account_entries` via `*_all_admin` — mesmo padrão de `C360.salesCart.approveCart`.
+
+### Contas por pedido — migração `20260729205823_seller_order_accounts`
+
+- `seller_payment_allocations`: distribui cada linha de `seller_payments` para um ou mais `order_group_id`, com RLS de leitura do próprio vendedor e administração restrita ao negócio.
+- `register_seller_order_payment(order_group_id, amount, method, notes)`: RPC `security invoker` exclusiva do admin; bloqueia o grupo, confere o saldo, impede pagamento excedente e grava `seller_payments`, alocação e `seller_account_entries` em uma transação.
+- `list_seller_order_accounts(seller_id)`: RPC `security definer` com `search_path` vazio e validação explícita do perfil. Entrega ao vendedor somente seus próprios pedidos e permite ao admin consultar o negócio; não abre leitura direta das tabelas operacionais ao papel vendedor.
+- Pagamentos anteriores à migração são reconciliados cronologicamente contra contas antigas sem reescrever o ledger.
