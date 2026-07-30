@@ -567,7 +567,7 @@
       ? [
           { tab: 'vendas', label: 'Nova venda / esteira' },
           { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'produtos', label: 'Estoque' },
+          { tab: 'produtos', label: 'Novo produto', focus: 'new-product' },
           { tab: 'vendedores', label: 'Vendedores' },
         ]
       : [
@@ -625,7 +625,7 @@
         <section class="today-section">
           <h3>Ações rápidas</h3>
           <div class="quick-actions">
-            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
+            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}" data-focus="${U.escapeHtml(action.focus || '')}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
 
@@ -669,6 +669,13 @@
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
     setTab(trigger.dataset.tab);
+    if (trigger.dataset.focus === 'new-product') {
+      requestAnimationFrame(() => {
+        const input = document.querySelector('#productForm [name="name"]');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus({ preventScroll: true });
+      });
+    }
   }
 
   // Abas "clássicas": a função devolve uma string HTML, que é jogada em
@@ -867,70 +874,42 @@
     const rows = products.map((product) => {
       const cost = product.type === 'produto_final' || product.type === 'kit' ? Calc.calculateRecipeCost(product.id, state()) : null;
       return [
-        UI.productName(product),
-        UI.badge(labelForProductType(product.type)),
-        U.escapeHtml(product.unit),
-        UI.stockCell(product),
-        UI.moneyCell(product.avgCost),
-        cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
-        UI.moneyCell(product.salePrice),
-        `${U.number(product.targetMarginPercent)}%`,
-        `<div class="actions">
-          ${UI.actionButton('edit-product', product.id, 'Editar')}
-          ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
-        </div>`,
+        UI.productName(product), UI.badge(labelForProductType(product.type)), U.escapeHtml(product.unit),
+        UI.stockCell(product), UI.moneyCell(product.avgCost), cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
+        UI.moneyCell(product.salePrice), `${U.number(product.targetMarginPercent)}%`,
+        `<div class="actions">${UI.actionButton('edit-product', product.id, 'Editar')}${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}</div>`,
       ];
     });
 
-    return UI.section('Produtos, insumos e embalagens', 'Cadastre matéria-prima, vidro, rótulo, caixa, produto final, kit, mercadoria ou serviço. Não há dados modelo preenchidos.', `
+    return UI.section('Produtos, insumos e embalagens', 'Cadastre um produto em poucos campos. Custos, margens e outras configurações ficam em Mais opções.', `
       ${renderMissingCostPanel()}
-      <form id="productForm" class="grid-form">
-        <label>Nome
-          <input name="name" required placeholder="Ex.: Vidro âmbar 100 ml / Rótulo / Essência pronta">
-        </label>
-        <label>${UI.fieldLabel('Tipo', 'tipoProduto')}
-          <select name="type" required>${UI.optionList(state().settings.productTypes, '', 'Tipo')}</select>
-        </label>
-        <label>Unidade
-          <select name="unit" required>${UI.optionList(state().settings.units, 'un', '')}</select>
-        </label>
-        <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}
-          <input name="currentStock" type="number" step="0.001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}
-          <input name="avgCost" type="number" step="0.0001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Preço de venda manual', 'precoVendaManual')}
-          <input name="salePrice" type="number" step="0.01" value="0">
-          <span>Opcional. Se deixar 0, use o preço sugerido no módulo Fichas e custos.</span>
-        </label>
-        <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}
-          <input name="minStock" type="number" step="0.001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}
-          <input name="laborCostPerUnit" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}
-          <input name="overheadCostPerUnit" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}
-          <input name="lossPercent" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}
-          <input name="targetMarginPercent" type="number" step="0.01" value="">
-          <span>Se vazio, usa a margem padrão do negócio.</span>
-        </label>
-        <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}
-          <input name="taxFeePercent" type="number" step="0.01" value="">
-          <span>Marketplace, cartão ou taxa estimada.</span>
-        </label>
-        <label class="full">Observações
-          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea>
-        </label>
-        <button type="submit">Cadastrar produto</button>
+      <form id="productForm" class="grid-form" aria-labelledby="productCreateTitle">
+        <div class="full">
+          <h3 id="productCreateTitle">Adicionar novo produto</h3>
+          <span>Preencha o básico e salve. Você poderá editar os detalhes depois.</span>
+        </div>
+        <label>Nome<input name="name" required placeholder="Ex.: Perfume 100 ml / Rótulo / Caixa"></label>
+        <label>${UI.fieldLabel('Tipo', 'tipoProduto')}<select name="type" required>${UI.optionList(state().settings.productTypes, 'mercadoria', '')}</select></label>
+        <label>Unidade<select name="unit" required>${UI.optionList(state().settings.units, 'un', '')}</select></label>
+        <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}<input name="currentStock" type="number" step="0.001" value="0"></label>
+        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}<input name="avgCost" type="number" step="0.0001" value="0"></label>
+        <label>${UI.fieldLabel('Preço de venda', 'precoVendaManual')}<input name="salePrice" type="number" step="0.01" value="0"><span>Opcional. Pode ser alterado depois.</span></label>
+        <details class="sale-more-options full">
+          <summary>Mais opções: estoque mínimo, custos, margem e observações</summary>
+          <div class="grid-form">
+            <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}<input name="minStock" type="number" step="0.001" value="0"></label>
+            <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}<input name="laborCostPerUnit" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}<input name="overheadCostPerUnit" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}<input name="lossPercent" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}<input name="targetMarginPercent" type="number" step="0.01" value=""><span>Se vazio, usa a margem padrão do negócio.</span></label>
+            <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}<input name="taxFeePercent" type="number" step="0.01" value=""><span>Marketplace, cartão ou taxa estimada.</span></label>
+            <label class="full">Observações<textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea></label>
+          </div>
+        </details>
+        <button type="submit">Adicionar produto</button>
       </form>
       ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
-    `);
+    `, '', '<button type="button" data-action="focus-new-product">+ Novo produto</button>');
   }
 
   function labelForProductType(type) {
@@ -2292,6 +2271,12 @@
     if (!button) return;
     const { action, id } = button.dataset;
     try {
+      if (action === 'focus-new-product') {
+        const input = document.querySelector('#productForm [name="name"]');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus({ preventScroll: true });
+        return;
+      }
       if (action === 'edit-product') { openProductEditor(id); return; }
       if (action === 'client-history') { openClientEditor(id, false); return; }
       if (action === 'edit-client') { openClientEditor(id, true); return; }

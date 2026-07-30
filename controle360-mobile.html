@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-1UK+Q7deJrSDc6cSlvo95kqfejuerkhGmpo8d9289VI=' 'sha256-O9V487Q1MYKPBbDWBjO1BZblqBht1cUC1UojknNVINo=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-ocYVV4v5jliFyvLNil3prH8Cq0W6nQY/Ha3hwk2DpN4=' 'sha256-Zv8bxeCoe/pqoycqA1Gs+ag2Ah9lDewibEklWbfa2m8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-pEOCz2BKFF4atgf6IhkFdK2QXugRGUz74mrUc6yl4Vg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-1UK+Q7deJrSDc6cSlvo95kqfejuerkhGmpo8d9289VI=' 'sha256-O9V487Q1MYKPBbDWBjO1BZblqBht1cUC1UojknNVINo=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-ocYVV4v5jliFyvLNil3prH8Cq0W6nQY/Ha3hwk2DpN4=' 'sha256-Zv8bxeCoe/pqoycqA1Gs+ag2Ah9lDewibEklWbfa2m8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-e1scGtI/D4UboDbmP3uSa0LLJJkfcViKPW/ry2sailg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -11339,7 +11339,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       ? [
           { tab: 'vendas', label: 'Nova venda / esteira' },
           { tab: 'clientes', label: 'Novo cliente' },
-          { tab: 'produtos', label: 'Estoque' },
+          { tab: 'produtos', label: 'Novo produto', focus: 'new-product' },
           { tab: 'vendedores', label: 'Vendedores' },
         ]
       : [
@@ -11397,7 +11397,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <section class="today-section">
           <h3>Ações rápidas</h3>
           <div class="quick-actions">
-            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}">${U.escapeHtml(action.label)}</button>`).join('')}
+            ${quickActions.map((action) => `<button type="button" class="quick-action" data-tab="${U.escapeHtml(action.tab)}" data-focus="${U.escapeHtml(action.focus || '')}">${U.escapeHtml(action.label)}</button>`).join('')}
           </div>
         </section>
 
@@ -11441,6 +11441,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
     setTab(trigger.dataset.tab);
+    if (trigger.dataset.focus === 'new-product') {
+      requestAnimationFrame(() => {
+        const input = document.querySelector('#productForm [name="name"]');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus({ preventScroll: true });
+      });
+    }
   }
 
   // Abas "clássicas": a função devolve uma string HTML, que é jogada em
@@ -11639,70 +11646,42 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const rows = products.map((product) => {
       const cost = product.type === 'produto_final' || product.type === 'kit' ? Calc.calculateRecipeCost(product.id, state()) : null;
       return [
-        UI.productName(product),
-        UI.badge(labelForProductType(product.type)),
-        U.escapeHtml(product.unit),
-        UI.stockCell(product),
-        UI.moneyCell(product.avgCost),
-        cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
-        UI.moneyCell(product.salePrice),
-        `${U.number(product.targetMarginPercent)}%`,
-        `<div class="actions">
-          ${UI.actionButton('edit-product', product.id, 'Editar')}
-          ${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}
-        </div>`,
+        UI.productName(product), UI.badge(labelForProductType(product.type)), U.escapeHtml(product.unit),
+        UI.stockCell(product), UI.moneyCell(product.avgCost), cost ? UI.moneyCell(cost.totalCostPerUnit) : '—',
+        UI.moneyCell(product.salePrice), `${U.number(product.targetMarginPercent)}%`,
+        `<div class="actions">${UI.actionButton('edit-product', product.id, 'Editar')}${product.type !== 'servico' ? UI.actionButton('adjust-stock', product.id, 'Ajustar estoque') : ''}</div>`,
       ];
     });
 
-    return UI.section('Produtos, insumos e embalagens', 'Cadastre matéria-prima, vidro, rótulo, caixa, produto final, kit, mercadoria ou serviço. Não há dados modelo preenchidos.', `
+    return UI.section('Produtos, insumos e embalagens', 'Cadastre um produto em poucos campos. Custos, margens e outras configurações ficam em Mais opções.', `
       ${renderMissingCostPanel()}
-      <form id="productForm" class="grid-form">
-        <label>Nome
-          <input name="name" required placeholder="Ex.: Vidro âmbar 100 ml / Rótulo / Essência pronta">
-        </label>
-        <label>${UI.fieldLabel('Tipo', 'tipoProduto')}
-          <select name="type" required>${UI.optionList(state().settings.productTypes, '', 'Tipo')}</select>
-        </label>
-        <label>Unidade
-          <select name="unit" required>${UI.optionList(state().settings.units, 'un', '')}</select>
-        </label>
-        <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}
-          <input name="currentStock" type="number" step="0.001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}
-          <input name="avgCost" type="number" step="0.0001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Preço de venda manual', 'precoVendaManual')}
-          <input name="salePrice" type="number" step="0.01" value="0">
-          <span>Opcional. Se deixar 0, use o preço sugerido no módulo Fichas e custos.</span>
-        </label>
-        <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}
-          <input name="minStock" type="number" step="0.001" value="0">
-        </label>
-        <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}
-          <input name="laborCostPerUnit" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}
-          <input name="overheadCostPerUnit" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}
-          <input name="lossPercent" type="number" step="0.01" value="0">
-        </label>
-        <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}
-          <input name="targetMarginPercent" type="number" step="0.01" value="">
-          <span>Se vazio, usa a margem padrão do negócio.</span>
-        </label>
-        <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}
-          <input name="taxFeePercent" type="number" step="0.01" value="">
-          <span>Marketplace, cartão ou taxa estimada.</span>
-        </label>
-        <label class="full">Observações
-          <textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea>
-        </label>
-        <button type="submit">Cadastrar produto</button>
+      <form id="productForm" class="grid-form" aria-labelledby="productCreateTitle">
+        <div class="full">
+          <h3 id="productCreateTitle">Adicionar novo produto</h3>
+          <span>Preencha o básico e salve. Você poderá editar os detalhes depois.</span>
+        </div>
+        <label>Nome<input name="name" required placeholder="Ex.: Perfume 100 ml / Rótulo / Caixa"></label>
+        <label>${UI.fieldLabel('Tipo', 'tipoProduto')}<select name="type" required>${UI.optionList(state().settings.productTypes, 'mercadoria', '')}</select></label>
+        <label>Unidade<select name="unit" required>${UI.optionList(state().settings.units, 'un', '')}</select></label>
+        <label>${UI.fieldLabel('Estoque inicial', 'estoqueInicial')}<input name="currentStock" type="number" step="0.001" value="0"></label>
+        <label>${UI.fieldLabel('Custo médio inicial', 'custoMedioInicial')}<input name="avgCost" type="number" step="0.0001" value="0"></label>
+        <label>${UI.fieldLabel('Preço de venda', 'precoVendaManual')}<input name="salePrice" type="number" step="0.01" value="0"><span>Opcional. Pode ser alterado depois.</span></label>
+        <details class="sale-more-options full">
+          <summary>Mais opções: estoque mínimo, custos, margem e observações</summary>
+          <div class="grid-form">
+            <label>${UI.fieldLabel('Estoque mínimo', 'estoqueMinimo')}<input name="minStock" type="number" step="0.001" value="0"></label>
+            <label>${UI.fieldLabel('Mão de obra por unidade', 'maoDeObra')}<input name="laborCostPerUnit" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Custo fixo rateado por unidade', 'custoFixo')}<input name="overheadCostPerUnit" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}<input name="lossPercent" type="number" step="0.01" value="0"></label>
+            <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}<input name="targetMarginPercent" type="number" step="0.01" value=""><span>Se vazio, usa a margem padrão do negócio.</span></label>
+            <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}<input name="taxFeePercent" type="number" step="0.01" value=""><span>Marketplace, cartão ou taxa estimada.</span></label>
+            <label class="full">Observações<textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea></label>
+          </div>
+        </details>
+        <button type="submit">Adicionar produto</button>
       </form>
       ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
-    `);
+    `, '', '<button type="button" data-action="focus-new-product">+ Novo produto</button>');
   }
 
   function labelForProductType(type) {
@@ -13064,6 +13043,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!button) return;
     const { action, id } = button.dataset;
     try {
+      if (action === 'focus-new-product') {
+        const input = document.querySelector('#productForm [name="name"]');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus({ preventScroll: true });
+        return;
+      }
       if (action === 'edit-product') { openProductEditor(id); return; }
       if (action === 'client-history') { openClientEditor(id, false); return; }
       if (action === 'edit-client') { openClientEditor(id, true); return; }
