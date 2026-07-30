@@ -425,6 +425,53 @@
       && ['a_devolver', 'pending'].includes(movement.status)).length;
   }
 
+  function paymentReportsForSeller(sellerId, status = null) {
+    return (fullState().sellerPaymentReports || []).filter((report) => String(report.sellerId) === String(sellerId)
+      && (!status || report.status === status));
+  }
+
+  function pendingPaymentReportsCountForSeller(sellerId) {
+    return paymentReportsForSeller(sellerId, 'pending').length;
+  }
+
+  function renderPendingPaymentReports(sellerId) {
+    const reports = paymentReportsForSeller(sellerId, 'pending');
+    if (!reports.length) return UI.formNotice('Nenhum pagamento informado aguardando conferência.', 'info');
+    return `<div class="seller-payment-review-list">${reports.map((report) => {
+      const reportedDate = new Date(report.reportedAt);
+      const paymentDate = Number.isNaN(reportedDate.getTime()) ? U.today() : reportedDate.toLocaleDateString('sv-SE');
+      const accountLabel = report.orderGroupId
+        ? `Pedido #${String(report.orderGroupId).slice(0, 8).toUpperCase()}`
+        : 'Saldo anterior';
+      return `
+        <form class="panel-card seller-payment-review" data-review-payment-report data-report-id="${U.escapeHtml(report.id)}">
+          <div class="approval-card-head">
+            <div><strong>${U.escapeHtml(accountLabel)}</strong><small>Informado em ${U.escapeHtml(reportedDate.toLocaleString('pt-BR'))}</small></div>
+            ${UI.badge('Conferir', 'warn')}
+          </div>
+          <p class="ss-hint">Vendedor informou <strong>${U.money(report.reportedAmount)}</strong>${report.method ? ` via ${U.escapeHtml(report.method)}` : ''}.${report.notes ? ` ${U.escapeHtml(report.notes)}` : ''}</p>
+          <div class="grid-form compact-form">
+            <label>Valor a lançar
+              <input name="amount" type="number" min="0.01" step="0.01" value="${U.number(report.reportedAmount).toFixed(2)}" required>
+            </label>
+            <label>Data do pagamento
+              <input name="paymentDate" type="date" max="${U.today()}" value="${U.escapeHtml(paymentDate)}" required>
+            </label>
+            <label>Forma
+              <input name="method" maxlength="80" value="${U.escapeHtml(report.method || '')}" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Nota da conferência
+              <input name="reviewNotes" maxlength="1000" placeholder="Opcional; explique se ajustar o valor">
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" class="small secondary" data-action="view-payment-proof" data-report-id="${U.escapeHtml(report.id)}">Ver comprovante</button>
+            <button type="button" class="small danger" data-action="reject-payment-report" data-report-id="${U.escapeHtml(report.id)}">Recusar</button>
+            <button type="submit" class="small">Conferir e lançar pagamento</button>
+          </div>
+        </form>`;
+    }).join('')}</div>`;
+  }
   function productOptionsForConsignment() {
     return (fullState().products || []).filter((product) => product.type !== 'servico');
   }
@@ -437,6 +484,7 @@
     const legacyBalance = L && typeof L.legacyBalanceFor === 'function' ? L.legacyBalanceFor(seller.id) : 0;
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
+    const pendingPayments = pendingPaymentReportsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
 
     return `
@@ -446,6 +494,7 @@
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
           ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
+          ${UI.metric('Pagamentos para conferir', String(pendingPayments), null)}
         </div>
         ${pendingCarts > 0 || pendingReturns > 0 ? `
           <p class="ss-hint">
@@ -483,6 +532,9 @@
           <button type="submit" class="small">Enviar consignado</button>
         </form>
 
+        <h3>Pagamentos informados pelo vendedor</h3>
+        <p class="ss-hint">Confira o comprovante, ajuste o valor ou a data se necessário e lance com um clique. Enquanto estiver pendente, nada entra na receita nem reduz o saldo.</p>
+        ${renderPendingPaymentReports(seller.id)}
         <h3>Estoque e contas por pedido</h3>
         <p class="ss-hint">Cada envio mantém seus itens, pagamentos e saldo. Use “Usar saldo total” para quitar ou informe um valor menor para pagamento parcial.</p>
         ${L && typeof L.renderOrderAccounts === 'function'
@@ -537,7 +589,8 @@
     const lastPayment = lastPaymentForSeller(seller.id);
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
-    const pendingTotal = pendingCarts + pendingReturns;
+    const pendingPayments = pendingPaymentReportsCountForSeller(seller.id);
+    const pendingTotal = pendingCarts + pendingReturns + pendingPayments;
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
@@ -669,6 +722,7 @@
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
       const orderPaymentForm = event.target.closest('[data-order-payment-form]');
       const resetPasswordForm = event.target.closest('[data-reset-password-form]');
+      const reviewPaymentForm = event.target.closest('[data-review-payment-report]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -709,6 +763,28 @@
         return;
       }
 
+      if (reviewPaymentForm && container.contains(reviewPaymentForm)) {
+        event.preventDefault();
+        const data = U.formData(reviewPaymentForm);
+        const submitButton = reviewPaymentForm.querySelector('button[type="submit"]');
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Lançando...'; }
+        try {
+          await api().reviewSellerPaymentReport({
+            reportId: reviewPaymentForm.dataset.reportId,
+            action: 'approve',
+            amount: data.amount,
+            paymentDate: data.paymentDate,
+            method: data.method,
+            reviewNotes: data.reviewNotes,
+          });
+          await state().refresh();
+          manageFeedback = { message: 'Pagamento conferido e lançado. O saldo e a receita foram atualizados.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível lançar o pagamento.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
       if (resetPasswordForm && container.contains(resetPasswordForm)) {
         event.preventDefault();
         const sellerId = resetPasswordForm.dataset.sellerId;
@@ -798,6 +874,40 @@
       if (!button || !container.contains(button)) return;
       const { action, id, tab } = button.dataset;
 
+      if (action === 'view-payment-proof') {
+        button.disabled = true;
+        try {
+          const report = (fullState().sellerPaymentReports || []).find((item) => String(item.id) === String(button.dataset.reportId));
+          if (!report || !report.proofPath) throw new Error('Comprovante não encontrado.');
+          const url = await api().createSellerPaymentProofUrl(report.proofPath);
+          const link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.click();
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível abrir o comprovante.', type: 'danger' };
+          paint();
+        } finally {
+          button.disabled = false;
+        }
+        return;
+      }
+
+      if (action === 'reject-payment-report') {
+        if (!confirm('Recusar este pagamento informado? Ele não será lançado no saldo.')) return;
+        const reason = prompt('Motivo da recusa (opcional):') || '';
+        button.disabled = true;
+        try {
+          await api().reviewSellerPaymentReport({ reportId: button.dataset.reportId, action: 'reject', reviewNotes: reason });
+          await state().refresh();
+          manageFeedback = { message: 'Pagamento informado recusado sem alterar o saldo.', type: 'warning' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível recusar o pagamento.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
       if (action === 'fill-order-balance') {
         const form = button.closest('[data-order-payment-form]');
         const input = form && form.querySelector('input[name="amount"]');

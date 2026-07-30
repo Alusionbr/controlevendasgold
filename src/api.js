@@ -268,6 +268,23 @@
     return sellerAdminRequest({ action: 'reset-password', sellerId, username, password });
   }
 
+  async function changeOwnPassword({ currentPassword, newPassword }) {
+    if (String(newPassword || '').length < 8) throw new Error('A nova senha precisa ter ao menos 8 caracteres.');
+    const authUser = await getAuthUser();
+    const raw = await authPost('/auth/v1/token?grant_type=password', {
+      email: authUser.email,
+      password: String(currentPassword || ''),
+    });
+    applySession(raw);
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: baseHeaders(),
+      body: JSON.stringify({ password: String(newPassword) }),
+    });
+    const parsed = await parseBodySafe(res);
+    if (!res.ok) throw buildError(parsed, res.status);
+    return { id: parsed.id, email: parsed.email };
+  }
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
     return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, username: row.username || null, email: row.email || null }));
@@ -360,6 +377,123 @@
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
   }
 
+  async function alignOwnSellerBalance({ reportedBalance, notes }) {
+    const rows = await restRequest('/rest/v1/rpc/seller_align_balance', {
+      method: 'POST',
+      body: { p_reported_balance: Number(reportedBalance), p_notes: notes || '' },
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+
+  async function registerSellerDailyLogin() {
+    const rows = await restRequest('/rest/v1/rpc/register_seller_daily_login', { method: 'POST', body: {} });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return row ? {
+      currentStreak: row.current_streak,
+      bestStreak: row.best_streak,
+      lastLoginDate: row.last_login_date,
+      giftCredits: row.gift_credits,
+      totalGiftsEarned: row.total_gifts_earned,
+    } : null;
+  }
+
+  async function redeemSellerLoginGift({ sellerId, notes }) {
+    return restRequest('/rest/v1/rpc/redeem_seller_login_gift', {
+      method: 'POST',
+      body: { p_seller_id: sellerId, p_notes: notes || '' },
+    });
+  }
+
+  function encodedStoragePath(path) {
+    return String(path || '').split('/').map((part) => encodeURIComponent(part)).join('/');
+  }
+
+  async function storageRequest(path, { method = 'GET', body, contentType = 'application/json', allowRetry = true } = {}) {
+    const headers = { apikey: SUPABASE_ANON_KEY };
+    if (session.accessToken) headers.Authorization = `Bearer ${session.accessToken}`;
+    if (contentType) headers['Content-Type'] = contentType;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1${path}`, { method, headers, body });
+    if (res.status === 401 && allowRetry && await tryRefreshOnce()) {
+      return storageRequest(path, { method, body, contentType, allowRetry: false });
+    }
+    if (!res.ok) throw buildError(await parseBodySafe(res), res.status);
+    return parseBodySafe(res);
+  }
+
+  async function uploadSellerPaymentProof({ reportId, file }) {
+    const allowed = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+    if (!file || !allowed[file.type]) throw new Error('Envie uma foto JPG, PNG, WebP ou um arquivo PDF.');
+    if (Number(file.size || 0) <= 0 || Number(file.size) > 10 * 1024 * 1024) {
+      throw new Error('O comprovante precisa ter até 10 MB.');
+    }
+    if (!session.userId) throw new Error('Sessão do vendedor indisponível. Entre novamente.');
+    const objectPath = `${session.userId}/${reportId}/${Date.now()}.${allowed[file.type]}`;
+    await storageRequest(`/object/seller-payment-proofs/${encodedStoragePath(objectPath)}`, {
+      method: 'POST',
+      contentType: file.type,
+      body: file,
+    });
+    return objectPath;
+  }
+
+  async function submitSellerPaymentReport({ orderGroupId, reportedAt, amount, method, notes, proofFile }) {
+    const reportId = crypto.randomUUID();
+    const businessId = await currentBusinessId();
+    if (!businessId || !session.userId) throw new Error('Conta do vendedor indisponível. Entre novamente.');
+    const instant = new Date(reportedAt);
+    if (Number.isNaN(instant.getTime())) throw new Error('Informe uma data e hora válidas.');
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) throw new Error('Informe um valor maior que zero.');
+    const proofPath = await uploadSellerPaymentProof({ reportId, file: proofFile });
+    try {
+      return await insert('seller_payment_reports', {
+        id: reportId,
+        business_id: businessId,
+        seller_id: session.userId,
+        order_group_id: orderGroupId || null,
+        reported_at: instant.toISOString(),
+        reported_amount: value,
+        method: method || null,
+        proof_path: proofPath,
+        notes: notes || null,
+      });
+    } catch (error) {
+      try {
+        await storageRequest(`/object/seller-payment-proofs/${encodedStoragePath(proofPath)}`, { method: 'DELETE', contentType: null });
+      } catch (cleanupError) {
+        console.warn('Não foi possível remover o comprovante órfão.', cleanupError);
+      }
+      throw error;
+    }
+  }
+
+  async function reviewSellerPaymentReport({ reportId, action, amount, paymentDate, method, reviewNotes }) {
+    return restRequest('/rest/v1/rpc/review_seller_payment_report', {
+      method: 'POST',
+      body: {
+        p_report_id: reportId,
+        p_action: action,
+        p_amount: action === 'approve' ? Number(amount) : null,
+        p_payment_date: action === 'approve' ? paymentDate : null,
+        p_method: action === 'approve' ? (method || null) : null,
+        p_review_notes: reviewNotes || '',
+      },
+    });
+  }
+
+  async function createSellerPaymentProofUrl(proofPath) {
+    const result = await storageRequest(`/object/sign/seller-payment-proofs/${encodedStoragePath(proofPath)}`, {
+      method: 'POST',
+      body: JSON.stringify({ expiresIn: 300 }),
+    });
+    if (!result || !result.signedURL) throw new Error('Não foi possível abrir o comprovante.');
+    return `${SUPABASE_URL}/storage/v1${result.signedURL}`;
+  }
   async function registerPurchaseGroup({ supplierId, date, dueDate, paymentMode, paidAmount, notes, items }) {
     return restRequest('/rest/v1/rpc/register_purchase_group', {
       method: 'POST',
@@ -459,11 +593,12 @@
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     }));
   }
 
-  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, notes }) {
+  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, balanceAlignmentCredits, notes }) {
     const businessId = await currentBusinessId();
     const payload = {
       business_id: businessId,
@@ -473,6 +608,7 @@
       allow_public_cart_links: allowPublicCartLinks !== false,
       max_discount_percent: maxDiscountPercent === undefined ? 0 : maxDiscountPercent,
       ...(stockAdjustmentCredits === undefined ? {} : { stock_adjustment_credits: stockAdjustmentCredits }),
+      ...(balanceAlignmentCredits === undefined ? {} : { balance_alignment_credits: balanceAlignmentCredits }),
       notes: notes || null,
     };
     const row = await upsert('seller_settings', payload, 'seller_id');
@@ -486,6 +622,7 @@
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     };
   }
@@ -591,6 +728,7 @@
     getProfile,
     createSeller,
     resetSellerPassword,
+    changeOwnPassword,
     listSellers,
     listSellerProducts,
     listSellerPrices,
@@ -599,6 +737,12 @@
     setSellerStock,
     consumeSellerStock,
     adjustOwnStock,
+    alignOwnSellerBalance,
+    registerSellerDailyLogin,
+    redeemSellerLoginGift,
+    submitSellerPaymentReport,
+    reviewSellerPaymentReport,
+    createSellerPaymentProofUrl,
     registerPurchaseGroup,
     registerSellerPayment,
     listSellerOrderAccounts,

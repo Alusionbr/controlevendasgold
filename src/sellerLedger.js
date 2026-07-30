@@ -43,6 +43,15 @@
     return Math.max(balanceFor(sellerId) - openOrdersTotalFor(sellerId), 0);
   }
 
+  function settingsForSeller(sellerId) {
+    return (state().sellerSettings || []).find((item) => String(item.sellerId) === String(sellerId)) || {};
+  }
+
+  function loginRewardForSeller(sellerId) {
+    const ownReward = state().sellerLoginReward;
+    if (ownReward && String(ownReward.sellerId) === String(sellerId)) return ownReward;
+    return (state().sellerLoginRewards || []).find((item) => String(item.sellerId) === String(sellerId)) || {};
+  }
   function entryRow(entry) {
     const label = TYPE_LABELS[entry.type] || entry.type;
     const signedAmount = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
@@ -180,7 +189,126 @@
     return `<div class="seller-order-account-list">${accounts.map((account) => renderOrderAccount(account, options)).join('')}</div>`;
   }
 
-  function renderSeller() {
+  function localDateTimeValue(date = new Date()) {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function paymentReportsForSeller(sellerId) {
+    return (state().sellerPaymentReports || []).filter((report) => String(report.sellerId) === String(sellerId));
+  }
+
+  function paymentReportStatus(report) {
+    if (report.status === 'approved') return UI.badge('Lançado', 'ok');
+    if (report.status === 'rejected') return UI.badge('Recusado', 'warn');
+    return UI.badge('Aguardando conferência', 'warn');
+  }
+
+  function renderPaymentReport(sellerId) {
+    const accounts = accountsForSeller(sellerId).filter((account) => U.number(account.openAmount) >= 0.005);
+    const legacy = legacyBalanceFor(sellerId);
+    const options = accounts.map((account) => {
+      const id = String(account.orderGroupId || '');
+      return `<option value="${U.escapeHtml(id)}">Pedido #${U.escapeHtml(id.slice(0, 8).toUpperCase())} — ${U.money(account.openAmount)} em aberto</option>`;
+    });
+    if (legacy >= 0.005) options.push(`<option value="legacy">Saldo anterior — ${U.money(legacy)} em aberto</option>`);
+    const reports = paymentReportsForSeller(sellerId).slice(0, 10);
+    const rows = reports.map((report) => [
+      U.escapeHtml(new Date(report.reportedAt).toLocaleString('pt-BR')),
+      U.escapeHtml(report.orderGroupId ? `Pedido #${String(report.orderGroupId).slice(0, 8).toUpperCase()}` : 'Saldo anterior'),
+      UI.moneyCell(report.reportedAmount),
+      report.status === 'approved' ? `<strong>${U.money(report.reviewedAmount)}</strong>` : '—',
+      paymentReportStatus(report),
+      `<button type="button" class="small secondary" data-payment-proof="${U.escapeHtml(report.id)}">Ver comprovante</button>`,
+    ]);
+    return `
+      <section class="panel-card seller-payment-report-card">
+        <div class="approval-card-head">
+          <div><strong>Informar pagamento</strong><small>O saldo muda somente depois da conferência do administrador.</small></div>
+          ${UI.badge(`${reports.filter((item) => item.status === 'pending').length} pendente(s)`, reports.some((item) => item.status === 'pending') ? 'warn' : '')}
+        </div>
+        ${options.length ? `
+          <form class="grid-form compact-form" data-seller-payment-report-form>
+            <label class="wide">Conta ou pedido
+              <select name="orderGroupId" required>${options.join('')}</select>
+            </label>
+            <label>Data e hora do pagamento
+              <input name="reportedAt" type="datetime-local" max="${localDateTimeValue(new Date(Date.now() + 5 * 60000))}" value="${localDateTimeValue()}" required>
+            </label>
+            <label>Valor pago
+              <input name="amount" type="number" min="0.01" step="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" maxlength="80" placeholder="Pix, dinheiro, transferência...">
+            </label>
+            <label class="wide">Comprovante (foto ou PDF, até 10 MB)
+              <input name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+            </label>
+            <label class="wide">Observação
+              <input name="notes" maxlength="1000" placeholder="Opcional">
+            </label>
+            <div class="actions"><button type="submit">Enviar para conferência</button></div>
+          </form>` : UI.formNotice('Você não tem pedido ou saldo anterior em aberto para informar pagamento.', 'info')}
+        <h4>Pagamentos informados</h4>
+        ${UI.table(['Data/hora', 'Conta', 'Informado', 'Lançado', 'Situação', ''], rows, 'Nenhum pagamento informado ainda.')}
+      </section>`;
+  }
+  function renderLoginTask(sellerId) {
+    const reward = loginRewardForSeller(sellerId);
+    const streak = U.number(reward.currentStreak);
+    const gifts = U.number(reward.giftCredits);
+    const cycleProgress = streak > 0 && streak % 15 === 0 ? 15 : streak % 15;
+    const remaining = Math.max(15 - cycleProgress, 0);
+    return `
+      <section class="panel-card seller-login-task">
+        <div class="approval-card-head">
+          <div><strong>Tarefa: entrar 15 dias seguidos</strong><small>Uma entrada por dia conta para a sequência.</small></div>
+          ${UI.badge(`${gifts} brinde(s) disponível(is)`, gifts > 0 ? 'ok' : '')}
+        </div>
+        <div class="dashboard seller-overview-metrics">
+          ${UI.metric('Sequência atual', `${streak} dia(s)`, null)}
+          ${UI.metric('Progresso do próximo brinde', `${cycleProgress}/15`, null)}
+        </div>
+        <p class="hint-inline">${remaining > 0 ? `Faltam ${remaining} dia(s) seguido(s) para ganhar 1 brinde.` : 'Brinde conquistado! O administrador pode marcar a entrega.'}</p>
+      </section>`;
+  }
+
+  function renderBalanceAlignment(sellerId, balance) {
+    const settings = settingsForSeller(sellerId);
+    if (U.number(settings.balanceAlignmentCredits) < 1) return '';
+    return `
+      <section class="panel-card seller-balance-alignment">
+        <div class="approval-card-head">
+          <div><strong>Alinhamento de saldo liberado</strong><small>Disponível uma única vez.</small></div>
+          ${UI.badge('Ação liberada', 'ok')}
+        </div>
+        ${UI.formNotice(`O sistema mostra ${U.money(balance)}. Informe abaixo o total que você reconhece como devido. A diferença será registrada no histórico e esta opção desaparecerá após o uso.`, 'warning')}
+        <form class="grid-form compact-form" data-balance-alignment-form>
+          <label>Quanto devo no total
+            <input name="reportedBalance" type="number" min="0" step="0.01" value="${U.number(balance).toFixed(2)}" required>
+          </label>
+          <label class="wide">Observação
+            <input name="notes" maxlength="500" placeholder="Ex.: conferido com extrato e pagamentos">
+          </label>
+          <div class="actions"><button type="submit">Confirmar alinhamento</button></div>
+        </form>
+      </section>`;
+  }
+
+  function renderPasswordForm() {
+    return `
+      <details class="panel-card seller-password-card">
+        <summary><strong>Alterar minha senha</strong></summary>
+        <form class="grid-form compact-form" data-change-password-form>
+          <label>Senha atual<input name="currentPassword" type="password" autocomplete="current-password" required></label>
+          <label>Nova senha<input name="newPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+          <label>Confirmar nova senha<input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+          <div class="actions"><button type="submit">Salvar nova senha</button></div>
+        </form>
+      </details>`;
+  }
+
+  function renderSeller(feedback) {
     const currentUser = user();
     if (!currentUser) return UI.formNotice('Entre na sua conta.', 'warning');
     const balance = balanceFor(currentUser.id);
@@ -195,20 +323,80 @@
           ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos em aberto', String(accountsForSeller(currentUser.id).filter((item) => U.number(item.openAmount) >= 0.005).length), null)}
         </div>
+        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+        ${renderLoginTask(currentUser.id)}
+        ${renderPaymentReport(currentUser.id)}
+        ${renderBalanceAlignment(currentUser.id, balance)}
         ${legacy >= 0.005 ? UI.formNotice(`Existe ${U.money(legacy)} de saldo anterior ou ajuste sem pedido. O administrador pode acertar essa conta separadamente.`, 'warning') : ''}
         <h3>Estoque e contas por pedido</h3>
         ${renderOrderAccounts(currentUser.id)}
         <h3>Histórico geral da conta</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
+        ${renderPasswordForm()}
       `
     );
   }
 
   function mountSeller(container) {
     if (!container) return;
-    container.innerHTML = renderSeller();
+    let feedback = null;
+    function paint() { container.innerHTML = renderSeller(feedback); }
+    container.addEventListener('submit', async (event) => {
+      const paymentReportForm = event.target.closest('[data-seller-payment-report-form]');
+      const alignmentForm = event.target.closest('[data-balance-alignment-form]');
+      const passwordForm = event.target.closest('[data-change-password-form]');
+      if (!paymentReportForm && !alignmentForm && !passwordForm) return;
+      event.preventDefault();
+      try {
+        const data = U.formData(event.target);
+        if (paymentReportForm) {
+          const proofFile = paymentReportForm.elements.proof.files[0];
+          const submitButton = paymentReportForm.querySelector('button[type="submit"]');
+          if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Enviando comprovante...'; }
+          await window.C360.api.submitSellerPaymentReport({
+            orderGroupId: data.orderGroupId === 'legacy' ? null : data.orderGroupId,
+            reportedAt: data.reportedAt,
+            amount: U.number(data.amount),
+            method: data.method || '',
+            notes: data.notes || '',
+            proofFile,
+          });
+          feedback = { message: 'Pagamento enviado para conferência. Ele ainda não alterou seu saldo.', type: 'success' };
+        } else if (alignmentForm) {
+          if (!confirm(`Confirmar que o saldo devido correto é ${U.money(data.reportedBalance)}? Esta liberação será consumida.`)) return;
+          await window.C360.api.alignOwnSellerBalance({ reportedBalance: U.number(data.reportedBalance), notes: data.notes || '' });
+          feedback = { message: 'Saldo alinhado com sucesso. A liberação foi utilizada.', type: 'success' };
+        } else {
+          if (String(data.newPassword || '').length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
+          if (data.newPassword !== data.confirmPassword) throw new Error('A confirmação da nova senha não confere.');
+          if (data.currentPassword === data.newPassword) throw new Error('A nova senha precisa ser diferente da senha atual.');
+          await window.C360.api.changeOwnPassword({ currentPassword: data.currentPassword, newPassword: data.newPassword });
+          feedback = { message: 'Senha alterada com sucesso.', type: 'success' };
+        }
+        await S().refresh();
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+    });
+    container.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-payment-proof]');
+      if (!button) return;
+      const report = (state().sellerPaymentReports || []).find((item) => String(item.id) === String(button.dataset.paymentProof));
+      if (!report || !report.proofPath) return;
+      button.disabled = true;
+      try {
+        const url = await window.C360.api.createSellerPaymentProofUrl(report.proofPath);
+        window.open(url, '_blank', 'noopener');
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+        paint();
+      } finally {
+        button.disabled = false;
+      }
+    });
+    paint();
   }
-
   window.C360.sellerLedger = {
     mountSeller,
     balanceFor,
