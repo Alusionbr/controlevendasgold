@@ -2274,3 +2274,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .seller-payment-review .grid-form { margin-top:10px; }
 .seller-payment-report-card { display:grid; gap:12px; margin:14px 0; }
 @media(max-width:760px){.seller-payment-review .actions button,.seller-payment-report-card .actions button{width:100%;min-height:44px}.seller-payment-report-card .table-wrap{overflow-x:auto}}
+.seller-filter-bar { display:flex; gap:.45rem; flex-wrap:wrap; margin:.7rem 0; }
+.seller-create-disclosure { margin:.6rem 0 .8rem; padding:.2rem .8rem .8rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-soft); }
+.seller-create-disclosure summary { cursor:pointer; font-weight:800; padding:.65rem 0; }
+.seller-create-disclosure[open] summary { margin-bottom:.45rem; }
+.metric-card-action { text-align:left; color:var(--ink); cursor:pointer; box-shadow:var(--shadow-sm); }
+.metric-card-action small { color:var(--muted); font-weight:500; }
+.metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }

@@ -319,6 +319,7 @@
 
   function renderDashboard() {
     const baseState = state();
+    const pendingSellerPayments = (baseState.sellerPaymentReports || []).filter((report) => report.status === 'pending').length;
     const periodSales = baseState.sales.filter((sale) => {
       const date = sale.date || '';
       return (!dashboardStart || date >= dashboardStart) && (!dashboardEnd || date <= dashboardEnd);
@@ -340,6 +341,7 @@
         UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
         UI.metric('Saiu a prazo', U.money(Calc.creditSalesPosition(baseState).total), 'vendasPrazo'),
         UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
+        `<button type="button" class="metric-card metric-card-action quick-action ${pendingSellerPayments ? 'needs-attention' : ''}" data-tab="vendedores" data-focus="seller-payments"><span>Pagamentos para conferir</span><strong>${pendingSellerPayments}</strong><small>${pendingSellerPayments ? 'Abrir fila de conferência' : 'Nenhum pendente'}</small></button>`,
       ].join('')}
     `;
     // "Visão operacional" NÃO entra aqui de propósito. O painel fixo aparece
@@ -668,6 +670,9 @@
   function handleQuickAction(event) {
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
+    if (trigger.dataset.focus === 'seller-payments' && window.C360.auth && typeof window.C360.auth.focusPendingPayments === 'function') {
+      window.C360.auth.focusPendingPayments();
+    }
     setTab(trigger.dataset.tab);
     if (trigger.dataset.focus === 'new-product') {
       requestAnimationFrame(() => {

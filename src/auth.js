@@ -576,13 +576,15 @@
     `;
   }
 
-  function sellerRow(seller, expandedId, feedback) {
+  let requestedSellerFilter = 'active';
+
+  function sellerRow(seller, expandedId, feedback, focusPayments = false) {
     const isActive = seller.active !== false;
     const statusBadge = isActive ? UI.badge('Ativo', 'ok') : UI.badge('Inativo', 'warn');
     const toggleAction = isActive ? 'deactivate-seller' : 'activate-seller';
     const toggleLabel = isActive ? 'Desativar' : 'Reativar';
     const toggleClass = isActive ? 'danger' : 'secondary';
-    const isExpanded = String(expandedId) === String(seller.id);
+    const isExpanded = String(expandedId) === String(seller.id) || (focusPayments && pendingPayments > 0);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
     const stock = sellerStockSummary(seller.id);
@@ -629,11 +631,20 @@
   function renderSellers(data = {}) {
     const sellers = Array.isArray(data.sellers) ? data.sellers : [];
     const loading = !!data.loading;
+    const filter = data.filter || 'active';
+    const pendingReports = (fullState().sellerPaymentReports || []).filter((report) => report.status === 'pending');
+    const activeCount = sellers.filter((seller) => seller.active !== false).length;
+    const inactiveCount = sellers.length - activeCount;
+    const visibleSellers = sellers.filter((seller) => {
+      if (filter === 'inactive') return seller.active === false;
+      if (filter === 'payments') return pendingPaymentReportsCountForSeller(seller.id) > 0;
+      return seller.active !== false;
+    });
     const listHtml = loading
       ? UI.formNotice('Carregando vendedores...', 'info')
-      : (sellers.length
-        ? `<div class="seller-ledger-grid">${sellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback)).join('')}</div>`
-        : '<div class="empty-state"><strong>Nenhum vendedor cadastrado ainda.</strong><span>Crie um vendedor abaixo.</span></div>');
+      : (visibleSellers.length
+        ? `<div class="seller-ledger-grid">${visibleSellers.map((seller) => sellerRow(seller, data.expandedId, data.manageFeedback, filter === 'payments')).join('')}</div>`
+        : `<div class="empty-state"><strong>${filter === 'inactive' ? 'Nenhum vendedor inativo.' : filter === 'payments' ? 'Nenhum pagamento aguardando conferência.' : 'Nenhum vendedor ativo.'}</strong><span>${filter === 'inactive' ? 'Vendedores desativados ficam organizados aqui.' : 'Tudo certo por aqui.'}</span></div>`);
 
     const L = ledger();
     const activeSellers = sellers.filter((seller) => seller.active !== false);
@@ -653,7 +664,8 @@
           ${UI.metric('Total a receber', U.money(totalOpen), null)}
         </div>` : ''}
         <div id="authSellersError"></div>
-        <form id="authCreateSellerForm" class="grid-form">
+        <div class="seller-filter-bar"><button type="button" class="small ${filter === 'active' ? '' : 'secondary'}" data-action="seller-filter" data-filter="active">Ativos (${activeCount})</button><button type="button" class="small ${filter === 'payments' ? '' : 'secondary'}" data-action="seller-filter" data-filter="payments">Pagamentos para conferir (${pendingReports.length})</button><button type="button" class="small ${filter === 'inactive' ? '' : 'secondary'}" data-action="seller-filter" data-filter="inactive">Inativos (${inactiveCount})</button></div>
+        <details class="seller-create-disclosure"><summary>Criar novo vendedor</summary><form id="authCreateSellerForm" class="grid-form compact-form">
           <label class="full">Nome
             <input name="name" required placeholder="Nome do vendedor">
           </label>
@@ -663,8 +675,7 @@
           <label>Senha provisória
             <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
           </label>
-          <button type="submit">Criar vendedor</button>
-        </form>
+          <button type="submit">Criar vendedor</button></form></details>
         ${listHtml}
       `
     );
@@ -677,9 +688,11 @@
     let loading = true;
     let expandedId = null;
     let manageFeedback = null;
+    let filter = requestedSellerFilter;
+    requestedSellerFilter = 'active';
 
     function paint() {
-      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback });
+      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback, filter });
     }
 
     function errorHost() {
@@ -873,6 +886,7 @@
       const button = event.target.closest('[data-action]');
       if (!button || !container.contains(button)) return;
       const { action, id, tab } = button.dataset;
+      if (action === 'seller-filter') { filter = button.dataset.filter || 'active'; expandedId = null; manageFeedback = null; paint(); return; }
 
       if (action === 'view-payment-proof') {
         button.disabled = true;
@@ -971,5 +985,6 @@
     mount,
     renderSellers,
     mountSellers,
+    focusPendingPayments: () => { requestedSellerFilter = 'payments'; },
   };
 })();
