@@ -10,6 +10,10 @@ Use este checklist antes de considerar uma alteração aprovada.
 
 ## Produtos
 
+- [ ] Botão **+ Novo produto** aparece no cabeçalho da aba Produtos e leva o foco ao campo Nome.
+- [ ] Cadastro básico exige somente nome, tipo e unidade; estoque, custo e preço podem ficar em zero.
+- [ ] **Mais opções** abre estoque mínimo, custos, margem, taxas e observações.
+- [ ] Após salvar, o produto aparece na tabela e fica disponível em compras, vendas e consignados.
 - [ ] Produto é cadastrado com tipo e unidade.
 - [ ] Produto final aceita margem, taxa, mão de obra, custo fixo e perda.
 - [ ] Serviço não deve movimentar estoque físico.
