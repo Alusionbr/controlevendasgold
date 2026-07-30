@@ -77,6 +77,7 @@
       allowPublicCartLinks: true,
       maxDiscountPercent: 0,
       stockAdjustmentCredits: 0,
+      balanceAlignmentCredits: 0,
     };
   }
   function itemsForCart(cartId) {
@@ -987,6 +988,9 @@
     const cards = sellers.map((seller) => {
       const settings = settingForSeller(seller.id);
       const credits = U.number(settings.stockAdjustmentCredits);
+      const alignmentCredits = U.number(settings.balanceAlignmentCredits);
+      const reward = (state().sellerLoginRewards || []).find((item) => String(item.sellerId) === String(seller.id)) || {};
+      const giftCredits = U.number(reward.giftCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
           <div><strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong><p class="hint-inline">Configure o que aparece para este vendedor.</p></div>
@@ -997,6 +1001,14 @@
           <div class="seller-permission-stock-adjust">
             ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
             <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
+          </div>
+          <div class="seller-permission-stock-adjust">
+            ${alignmentCredits > 0 ? UI.badge('Alinhamento de saldo liberado', 'ok') : UI.badge('Sem alinhamento liberado')}
+            <button type="button" class="small secondary" data-cart-action="grant-balance-alignment" data-seller-id="${U.escapeHtml(seller.id)}" ${alignmentCredits > 0 ? 'disabled' : ''}>Liberar alinhamento de saldo</button>
+          </div>
+          <div class="seller-permission-stock-adjust">
+            <span>${UI.badge(`${U.number(reward.currentStreak)} dias seguidos`, U.number(reward.currentStreak) >= 15 ? 'ok' : '')} ${UI.badge(`${giftCredits} brinde(s) disponível(is)`, giftCredits > 0 ? 'ok' : '')}</span>
+            <button type="button" class="small secondary" data-cart-action="redeem-login-gift" data-seller-id="${U.escapeHtml(seller.id)}" ${giftCredits > 0 ? '' : 'disabled'}>Marcar brinde entregue</button>
           </div>
         </form>`;
     }).join('');
@@ -1023,6 +1035,7 @@
           allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
           maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
           stockAdjustmentCredits: U.number(current.stockAdjustmentCredits),
+          balanceAlignmentCredits: U.number(current.balanceAlignmentCredits),
         };
         if (current.id) await S().update('sellerSettings', current.id, payload);
         else await S().add('sellerSettings', payload);
@@ -1036,23 +1049,32 @@
     });
 
     container.addEventListener('click', async (event) => {
-      const button = event.target.closest('[data-cart-action="grant-stock-adjustment"]');
+      const button = event.target.closest('[data-cart-action]');
       if (!button) return;
+      const action = button.dataset.cartAction;
+      if (!['grant-stock-adjustment', 'grant-balance-alignment', 'redeem-login-gift'].includes(action)) return;
       try {
         const sellerId = button.dataset.sellerId;
         const current = settingForSeller(sellerId);
-        const payload = {
-          sellerId,
-          allowAdminStockSales: current.allowAdminStockSales !== false,
-          allowConsignment: !!current.allowConsignment,
-          allowPublicCartLinks: current.allowPublicCartLinks !== false,
-          maxDiscountPercent: U.number(current.maxDiscountPercent),
-          stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
-        };
-        if (current.id) await S().update('sellerSettings', current.id, payload);
-        else await S().add('sellerSettings', payload);
+        if (action === 'redeem-login-gift') {
+          if (!confirm('Confirmar que 1 brinde foi entregue a este vendedor?')) return;
+          await api().redeemSellerLoginGift({ sellerId, notes: prompt('Observação da entrega (opcional):') || '' });
+          settingsFeedback = { message: 'Brinde marcado como entregue.', type: 'success' };
+        } else {
+          const payload = {
+            sellerId,
+            allowAdminStockSales: current.allowAdminStockSales !== false,
+            allowConsignment: !!current.allowConsignment,
+            allowPublicCartLinks: current.allowPublicCartLinks !== false,
+            maxDiscountPercent: U.number(current.maxDiscountPercent),
+            stockAdjustmentCredits: action === 'grant-stock-adjustment' ? 1 : U.number(current.stockAdjustmentCredits),
+            balanceAlignmentCredits: action === 'grant-balance-alignment' ? 1 : U.number(current.balanceAlignmentCredits),
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          settingsFeedback = { message: action === 'grant-balance-alignment' ? 'Alinhamento de saldo liberado.' : 'Acerto de estoque liberado.', type: 'success' };
+        }
         await S().refresh();
-        settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
       } catch (error) {
         settingsFeedback = { message: error.message, type: 'danger' };
       }

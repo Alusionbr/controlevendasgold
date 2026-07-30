@@ -90,3 +90,12 @@ Use este checklist antes de considerar uma alteração aprovada.
 - [ ] Registrar pagamento aumenta a receita exatamente pelo valor pago.
 - [ ] **Saiu a prazo** separa clientes de vendedores.
 - [ ] Pedido de vendedor aparece por carrinho com total, pago, saldo e status.
+## Alinhamento, tarefa de login e senha
+
+- [ ] Sem liberação do admin, o alinhamento de saldo não aparece para o vendedor.
+- [ ] Após liberar, o vendedor informa o saldo; a diferença aparece no histórico e o formulário desaparece.
+- [ ] Uma segunda tentativa direta ao RPC é rejeitada sem alterar a conta.
+- [ ] Recarregar várias vezes no mesmo dia não aumenta a sequência.
+- [ ] O 15º dia consecutivo gera exatamente 1 brinde; o admin consegue marcar a entrega uma vez.
+- [ ] A troca de senha rejeita senha atual incorreta e confirma a nova senha em novo login.
+- [ ] O vendedor não enxerga dados, saldos ou recompensas de outro vendedor.

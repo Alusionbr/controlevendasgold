@@ -14,7 +14,7 @@
   const STEPS = [
     {
       title: 'Faça login',
-      text: 'Entre com o usuário e a senha que o dono do negócio criou para você. Se esquecer a senha, peça para o administrador criar uma nova.',
+      text: 'Entre com o usuário e a senha que o dono do negócio criou para você. Para trocar a senha, abra Minha conta e use Alterar minha senha. Se esquecer a senha atual, peça uma redefinição ao administrador.',
     },
     {
       title: 'Cadastre seu primeiro cliente',
@@ -115,7 +115,7 @@
     },
     {
       question: 'Esqueci minha senha. Como faço para entrar?',
-      answer: 'Peça para o administrador do negócio criar uma nova senha para você. Por segurança, apenas ele pode redefinir o acesso de vendedores.',
+      answer: 'Se ainda consegue entrar, abra Minha conta e use Alterar minha senha, confirmando a senha atual. Se esqueceu a senha atual, peça ao administrador do negócio para redefini-la.',
       keywords: 'senha esqueci login entrar acesso redefinir',
     },
     {

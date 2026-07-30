@@ -290,3 +290,9 @@ Não há uma tabela duplicada de receita. `recognizedRevenue` deriva o valor rec
 - `sellerPayments`, com `sellerPaymentAllocations` para vincular o recebimento ao pedido.
 
 `creditSalesPosition` mantém separado o que saiu sem recebimento: consignados com clientes (em mãos + vendido não pago) e o `openAmount` de `sellerOrderAccounts`.
+## Alinhamento e recompensas do vendedor
+
+- `seller_settings.balanceAlignmentCredits`: permissão binária (0 ou 1) para um alinhamento de saldo.
+- `sellerBalanceAlignments`: auditoria do saldo anterior, saldo informado, direção e valor da diferença.
+- `sellerLoginRewards`: sequência atual/máxima, último dia contado, brindes disponíveis e total conquistado.
+- `sellerGiftRedemptions`: histórico de cada brinde entregue, administrador responsável, data e observação.

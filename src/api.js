@@ -268,6 +268,23 @@
     return sellerAdminRequest({ action: 'reset-password', sellerId, username, password });
   }
 
+  async function changeOwnPassword({ currentPassword, newPassword }) {
+    if (String(newPassword || '').length < 8) throw new Error('A nova senha precisa ter ao menos 8 caracteres.');
+    const authUser = await getAuthUser();
+    const raw = await authPost('/auth/v1/token?grant_type=password', {
+      email: authUser.email,
+      password: String(currentPassword || ''),
+    });
+    applySession(raw);
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: baseHeaders(),
+      body: JSON.stringify({ password: String(newPassword) }),
+    });
+    const parsed = await parseBodySafe(res);
+    if (!res.ok) throw buildError(parsed, res.status);
+    return { id: parsed.id, email: parsed.email };
+  }
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
     return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, username: row.username || null, email: row.email || null }));
@@ -358,6 +375,33 @@
     });
     if (!row) return null;
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
+
+  async function alignOwnSellerBalance({ reportedBalance, notes }) {
+    const rows = await restRequest('/rest/v1/rpc/seller_align_balance', {
+      method: 'POST',
+      body: { p_reported_balance: Number(reportedBalance), p_notes: notes || '' },
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+
+  async function registerSellerDailyLogin() {
+    const rows = await restRequest('/rest/v1/rpc/register_seller_daily_login', { method: 'POST', body: {} });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return row ? {
+      currentStreak: row.current_streak,
+      bestStreak: row.best_streak,
+      lastLoginDate: row.last_login_date,
+      giftCredits: row.gift_credits,
+      totalGiftsEarned: row.total_gifts_earned,
+    } : null;
+  }
+
+  async function redeemSellerLoginGift({ sellerId, notes }) {
+    return restRequest('/rest/v1/rpc/redeem_seller_login_gift', {
+      method: 'POST',
+      body: { p_seller_id: sellerId, p_notes: notes || '' },
+    });
   }
 
   async function registerPurchaseGroup({ supplierId, date, dueDate, paymentMode, paidAmount, notes, items }) {
@@ -459,11 +503,12 @@
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     }));
   }
 
-  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, notes }) {
+  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, balanceAlignmentCredits, notes }) {
     const businessId = await currentBusinessId();
     const payload = {
       business_id: businessId,
@@ -473,6 +518,7 @@
       allow_public_cart_links: allowPublicCartLinks !== false,
       max_discount_percent: maxDiscountPercent === undefined ? 0 : maxDiscountPercent,
       ...(stockAdjustmentCredits === undefined ? {} : { stock_adjustment_credits: stockAdjustmentCredits }),
+      ...(balanceAlignmentCredits === undefined ? {} : { balance_alignment_credits: balanceAlignmentCredits }),
       notes: notes || null,
     };
     const row = await upsert('seller_settings', payload, 'seller_id');
@@ -486,6 +532,7 @@
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     };
   }
@@ -591,6 +638,7 @@
     getProfile,
     createSeller,
     resetSellerPassword,
+    changeOwnPassword,
     listSellers,
     listSellerProducts,
     listSellerPrices,
@@ -599,6 +647,9 @@
     setSellerStock,
     consumeSellerStock,
     adjustOwnStock,
+    alignOwnSellerBalance,
+    registerSellerDailyLogin,
+    redeemSellerLoginGift,
     registerPurchaseGroup,
     registerSellerPayment,
     listSellerOrderAccounts,

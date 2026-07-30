@@ -92,6 +92,8 @@
       salesGoals: [],
       goalsProgress: [],
       sellerSettings: [],
+      sellerLoginRewards: [],
+      sellerLoginReward: null,
       saleCarts: [],
       saleCartItems: [],
       // Fase 3 (conta corrente do vendedor):
@@ -374,7 +376,7 @@
     const [
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
-      profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
+      profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
       sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
@@ -394,6 +396,7 @@
       api.list('seller_prices', { business_id: businessId }),
       api.list('seller_stock', { business_id: businessId }),
       api.list('seller_settings', { business_id: businessId }),
+      api.list('seller_login_rewards', { business_id: businessId }),
       api.list('sale_carts', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
@@ -423,6 +426,7 @@
     state.sellerPrices = sellerPrices.map(toCamelCaseRow);
     state.sellerStock = sellerStock.map(toCamelCaseRow);
     state.sellerSettings = sellerSettings.map(toCamelCaseRow);
+    state.sellerLoginRewards = sellerLoginRewards.map(toCamelCaseRow);
     state.saleCarts = saleCarts.map(toCamelCaseRow);
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
@@ -447,11 +451,13 @@
     // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
+      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
       api.listSellerStock(userId),
+      api.list('seller_settings', { seller_id: userId }),
+      api.registerSellerDailyLogin(),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payment_allocations', { seller_id: userId }),
@@ -461,6 +467,8 @@
     state.businesses = businesses.map(toCamelCaseRow);
     state.products = sellerProducts;
     state.sellerStock = sellerStock;
+    state.sellerSettings = sellerSettings.map(toCamelCaseRow);
+    state.sellerLoginReward = loginReward || null;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
@@ -473,7 +481,6 @@
     state.consignments = [];
     state.consignmentEvents = [];
     state.sellerPrices = [];
-    state.sellerSettings = [];
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];

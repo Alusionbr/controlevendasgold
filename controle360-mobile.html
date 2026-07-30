@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-1UK+Q7deJrSDc6cSlvo95kqfejuerkhGmpo8d9289VI=' 'sha256-O9V487Q1MYKPBbDWBjO1BZblqBht1cUC1UojknNVINo=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-ocYVV4v5jliFyvLNil3prH8Cq0W6nQY/Ha3hwk2DpN4=' 'sha256-Zv8bxeCoe/pqoycqA1Gs+ag2Ah9lDewibEklWbfa2m8=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-5+mGU+FqhGIaBmg74PhzQPhP0Xt6BFs6wkXk9U2iFzM=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-e1scGtI/D4UboDbmP3uSa0LLJJkfcViKPW/ry2sailg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-sQq5ZQgeHPl+oq00Aia+yTjkk2kiBhyrCMuKE5EZLk0=' 'sha256-4pHnk+eCLIN0U7EmBoWrnlcit7WfoqnQhAOSCtd1X2c=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-gLS5lPJwUJO/MANaMs7ibwOWfOO2X2zVNOmOJeG8XbU=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-e1scGtI/D4UboDbmP3uSa0LLJJkfcViKPW/ry2sailg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2715,6 +2715,23 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return sellerAdminRequest({ action: 'reset-password', sellerId, username, password });
   }
 
+  async function changeOwnPassword({ currentPassword, newPassword }) {
+    if (String(newPassword || '').length < 8) throw new Error('A nova senha precisa ter ao menos 8 caracteres.');
+    const authUser = await getAuthUser();
+    const raw = await authPost('/auth/v1/token?grant_type=password', {
+      email: authUser.email,
+      password: String(currentPassword || ''),
+    });
+    applySession(raw);
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: baseHeaders(),
+      body: JSON.stringify({ password: String(newPassword) }),
+    });
+    const parsed = await parseBodySafe(res);
+    if (!res.ok) throw buildError(parsed, res.status);
+    return { id: parsed.id, email: parsed.email };
+  }
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
     return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, username: row.username || null, email: row.email || null }));
@@ -2805,6 +2822,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
     if (!row) return null;
     return { id: row.id, businessId: row.business_id, sellerId: row.seller_id, productId: row.product_id, quantity: row.quantity };
+  }
+
+  async function alignOwnSellerBalance({ reportedBalance, notes }) {
+    const rows = await restRequest('/rest/v1/rpc/seller_align_balance', {
+      method: 'POST',
+      body: { p_reported_balance: Number(reportedBalance), p_notes: notes || '' },
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+
+  async function registerSellerDailyLogin() {
+    const rows = await restRequest('/rest/v1/rpc/register_seller_daily_login', { method: 'POST', body: {} });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return row ? {
+      currentStreak: row.current_streak,
+      bestStreak: row.best_streak,
+      lastLoginDate: row.last_login_date,
+      giftCredits: row.gift_credits,
+      totalGiftsEarned: row.total_gifts_earned,
+    } : null;
+  }
+
+  async function redeemSellerLoginGift({ sellerId, notes }) {
+    return restRequest('/rest/v1/rpc/redeem_seller_login_gift', {
+      method: 'POST',
+      body: { p_seller_id: sellerId, p_notes: notes || '' },
+    });
   }
 
   async function registerPurchaseGroup({ supplierId, date, dueDate, paymentMode, paidAmount, notes, items }) {
@@ -2906,11 +2950,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     }));
   }
 
-  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, notes }) {
+  async function setSellerSettings({ sellerId, allowAdminStockSales, allowConsignment, allowPublicCartLinks, maxDiscountPercent, stockAdjustmentCredits, balanceAlignmentCredits, notes }) {
     const businessId = await currentBusinessId();
     const payload = {
       business_id: businessId,
@@ -2920,6 +2965,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       allow_public_cart_links: allowPublicCartLinks !== false,
       max_discount_percent: maxDiscountPercent === undefined ? 0 : maxDiscountPercent,
       ...(stockAdjustmentCredits === undefined ? {} : { stock_adjustment_credits: stockAdjustmentCredits }),
+      ...(balanceAlignmentCredits === undefined ? {} : { balance_alignment_credits: balanceAlignmentCredits }),
       notes: notes || null,
     };
     const row = await upsert('seller_settings', payload, 'seller_id');
@@ -2933,6 +2979,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       allowPublicCartLinks: row.allow_public_cart_links,
       maxDiscountPercent: row.max_discount_percent,
       stockAdjustmentCredits: row.stock_adjustment_credits,
+      balanceAlignmentCredits: row.balance_alignment_credits,
       notes: row.notes,
     };
   }
@@ -3038,6 +3085,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     getProfile,
     createSeller,
     resetSellerPassword,
+    changeOwnPassword,
     listSellers,
     listSellerProducts,
     listSellerPrices,
@@ -3046,6 +3094,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     setSellerStock,
     consumeSellerStock,
     adjustOwnStock,
+    alignOwnSellerBalance,
+    registerSellerDailyLogin,
+    redeemSellerLoginGift,
     registerPurchaseGroup,
     registerSellerPayment,
     listSellerOrderAccounts,
@@ -3166,6 +3217,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       salesGoals: [],
       goalsProgress: [],
       sellerSettings: [],
+      sellerLoginRewards: [],
+      sellerLoginReward: null,
       saleCarts: [],
       saleCartItems: [],
       // Fase 3 (conta corrente do vendedor):
@@ -3448,7 +3501,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const [
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
-      profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
+      profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
       sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
@@ -3468,6 +3521,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('seller_prices', { business_id: businessId }),
       api.list('seller_stock', { business_id: businessId }),
       api.list('seller_settings', { business_id: businessId }),
+      api.list('seller_login_rewards', { business_id: businessId }),
       api.list('sale_carts', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('sale_cart_items', { business_id: businessId }),
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
@@ -3497,6 +3551,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerPrices = sellerPrices.map(toCamelCaseRow);
     state.sellerStock = sellerStock.map(toCamelCaseRow);
     state.sellerSettings = sellerSettings.map(toCamelCaseRow);
+    state.sellerLoginRewards = sellerLoginRewards.map(toCamelCaseRow);
     state.saleCarts = saleCarts.map(toCamelCaseRow);
     state.saleCartItems = saleCartItems.map(toCamelCaseRow);
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
@@ -3521,11 +3576,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, sellerStock, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
+      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
       api.listSellerStock(userId),
+      api.list('seller_settings', { seller_id: userId }),
+      api.registerSellerDailyLogin(),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payment_allocations', { seller_id: userId }),
@@ -3535,6 +3592,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.businesses = businesses.map(toCamelCaseRow);
     state.products = sellerProducts;
     state.sellerStock = sellerStock;
+    state.sellerSettings = sellerSettings.map(toCamelCaseRow);
+    state.sellerLoginReward = loginReward || null;
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
@@ -3547,7 +3606,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.consignments = [];
     state.consignmentEvents = [];
     state.sellerPrices = [];
-    state.sellerSettings = [];
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];
@@ -7385,6 +7443,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       allowPublicCartLinks: true,
       maxDiscountPercent: 0,
       stockAdjustmentCredits: 0,
+      balanceAlignmentCredits: 0,
     };
   }
   function itemsForCart(cartId) {
@@ -8295,6 +8354,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const cards = sellers.map((seller) => {
       const settings = settingForSeller(seller.id);
       const credits = U.number(settings.stockAdjustmentCredits);
+      const alignmentCredits = U.number(settings.balanceAlignmentCredits);
+      const reward = (state().sellerLoginRewards || []).find((item) => String(item.sellerId) === String(seller.id)) || {};
+      const giftCredits = U.number(reward.giftCredits);
       return `
         <form class="seller-permission-card" data-seller-settings-form data-seller-id="${U.escapeHtml(seller.id)}">
           <div><strong>${U.escapeHtml(seller.name || 'Vendedor')}</strong><p class="hint-inline">Configure o que aparece para este vendedor.</p></div>
@@ -8305,6 +8367,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <div class="seller-permission-stock-adjust">
             ${credits > 0 ? UI.badge('Acerto de estoque liberado', 'ok') : UI.badge('Sem acerto liberado')}
             <button type="button" class="small secondary" data-cart-action="grant-stock-adjustment" data-seller-id="${U.escapeHtml(seller.id)}" ${credits > 0 ? 'disabled' : ''}>Liberar 1 acerto de estoque</button>
+          </div>
+          <div class="seller-permission-stock-adjust">
+            ${alignmentCredits > 0 ? UI.badge('Alinhamento de saldo liberado', 'ok') : UI.badge('Sem alinhamento liberado')}
+            <button type="button" class="small secondary" data-cart-action="grant-balance-alignment" data-seller-id="${U.escapeHtml(seller.id)}" ${alignmentCredits > 0 ? 'disabled' : ''}>Liberar alinhamento de saldo</button>
+          </div>
+          <div class="seller-permission-stock-adjust">
+            <span>${UI.badge(`${U.number(reward.currentStreak)} dias seguidos`, U.number(reward.currentStreak) >= 15 ? 'ok' : '')} ${UI.badge(`${giftCredits} brinde(s) disponível(is)`, giftCredits > 0 ? 'ok' : '')}</span>
+            <button type="button" class="small secondary" data-cart-action="redeem-login-gift" data-seller-id="${U.escapeHtml(seller.id)}" ${giftCredits > 0 ? '' : 'disabled'}>Marcar brinde entregue</button>
           </div>
         </form>`;
     }).join('');
@@ -8331,6 +8401,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           allowPublicCartLinks: !!settingsForm.elements.allowPublicCartLinks.checked,
           maxDiscountPercent: U.number(settingsForm.elements.maxDiscountPercent.value),
           stockAdjustmentCredits: U.number(current.stockAdjustmentCredits),
+          balanceAlignmentCredits: U.number(current.balanceAlignmentCredits),
         };
         if (current.id) await S().update('sellerSettings', current.id, payload);
         else await S().add('sellerSettings', payload);
@@ -8344,23 +8415,32 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
 
     container.addEventListener('click', async (event) => {
-      const button = event.target.closest('[data-cart-action="grant-stock-adjustment"]');
+      const button = event.target.closest('[data-cart-action]');
       if (!button) return;
+      const action = button.dataset.cartAction;
+      if (!['grant-stock-adjustment', 'grant-balance-alignment', 'redeem-login-gift'].includes(action)) return;
       try {
         const sellerId = button.dataset.sellerId;
         const current = settingForSeller(sellerId);
-        const payload = {
-          sellerId,
-          allowAdminStockSales: current.allowAdminStockSales !== false,
-          allowConsignment: !!current.allowConsignment,
-          allowPublicCartLinks: current.allowPublicCartLinks !== false,
-          maxDiscountPercent: U.number(current.maxDiscountPercent),
-          stockAdjustmentCredits: U.number(current.stockAdjustmentCredits) + 1,
-        };
-        if (current.id) await S().update('sellerSettings', current.id, payload);
-        else await S().add('sellerSettings', payload);
+        if (action === 'redeem-login-gift') {
+          if (!confirm('Confirmar que 1 brinde foi entregue a este vendedor?')) return;
+          await api().redeemSellerLoginGift({ sellerId, notes: prompt('Observação da entrega (opcional):') || '' });
+          settingsFeedback = { message: 'Brinde marcado como entregue.', type: 'success' };
+        } else {
+          const payload = {
+            sellerId,
+            allowAdminStockSales: current.allowAdminStockSales !== false,
+            allowConsignment: !!current.allowConsignment,
+            allowPublicCartLinks: current.allowPublicCartLinks !== false,
+            maxDiscountPercent: U.number(current.maxDiscountPercent),
+            stockAdjustmentCredits: action === 'grant-stock-adjustment' ? 1 : U.number(current.stockAdjustmentCredits),
+            balanceAlignmentCredits: action === 'grant-balance-alignment' ? 1 : U.number(current.balanceAlignmentCredits),
+          };
+          if (current.id) await S().update('sellerSettings', current.id, payload);
+          else await S().add('sellerSettings', payload);
+          settingsFeedback = { message: action === 'grant-balance-alignment' ? 'Alinhamento de saldo liberado.' : 'Acerto de estoque liberado.', type: 'success' };
+        }
         await S().refresh();
-        settingsFeedback = { message: 'Acerto de estoque liberado para o vendedor.', type: 'success' };
       } catch (error) {
         settingsFeedback = { message: error.message, type: 'danger' };
       }
@@ -8509,6 +8589,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return Math.max(balanceFor(sellerId) - openOrdersTotalFor(sellerId), 0);
   }
 
+  function settingsForSeller(sellerId) {
+    return (state().sellerSettings || []).find((item) => String(item.sellerId) === String(sellerId)) || {};
+  }
+
+  function loginRewardForSeller(sellerId) {
+    const ownReward = state().sellerLoginReward;
+    if (ownReward && String(ownReward.sellerId) === String(sellerId)) return ownReward;
+    return (state().sellerLoginRewards || []).find((item) => String(item.sellerId) === String(sellerId)) || {};
+  }
   function entryRow(entry) {
     const label = TYPE_LABELS[entry.type] || entry.type;
     const signedAmount = entry.direction === 'credit' ? -U.number(entry.amount) : U.number(entry.amount);
@@ -8646,7 +8735,62 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return `<div class="seller-order-account-list">${accounts.map((account) => renderOrderAccount(account, options)).join('')}</div>`;
   }
 
-  function renderSeller() {
+  function renderLoginTask(sellerId) {
+    const reward = loginRewardForSeller(sellerId);
+    const streak = U.number(reward.currentStreak);
+    const gifts = U.number(reward.giftCredits);
+    const cycleProgress = streak > 0 && streak % 15 === 0 ? 15 : streak % 15;
+    const remaining = Math.max(15 - cycleProgress, 0);
+    return `
+      <section class="panel-card seller-login-task">
+        <div class="approval-card-head">
+          <div><strong>Tarefa: entrar 15 dias seguidos</strong><small>Uma entrada por dia conta para a sequência.</small></div>
+          ${UI.badge(`${gifts} brinde(s) disponível(is)`, gifts > 0 ? 'ok' : '')}
+        </div>
+        <div class="dashboard seller-overview-metrics">
+          ${UI.metric('Sequência atual', `${streak} dia(s)`, null)}
+          ${UI.metric('Progresso do próximo brinde', `${cycleProgress}/15`, null)}
+        </div>
+        <p class="hint-inline">${remaining > 0 ? `Faltam ${remaining} dia(s) seguido(s) para ganhar 1 brinde.` : 'Brinde conquistado! O administrador pode marcar a entrega.'}</p>
+      </section>`;
+  }
+
+  function renderBalanceAlignment(sellerId, balance) {
+    const settings = settingsForSeller(sellerId);
+    if (U.number(settings.balanceAlignmentCredits) < 1) return '';
+    return `
+      <section class="panel-card seller-balance-alignment">
+        <div class="approval-card-head">
+          <div><strong>Alinhamento de saldo liberado</strong><small>Disponível uma única vez.</small></div>
+          ${UI.badge('Ação liberada', 'ok')}
+        </div>
+        ${UI.formNotice(`O sistema mostra ${U.money(balance)}. Informe abaixo o total que você reconhece como devido. A diferença será registrada no histórico e esta opção desaparecerá após o uso.`, 'warning')}
+        <form class="grid-form compact-form" data-balance-alignment-form>
+          <label>Quanto devo no total
+            <input name="reportedBalance" type="number" min="0" step="0.01" value="${U.number(balance).toFixed(2)}" required>
+          </label>
+          <label class="wide">Observação
+            <input name="notes" maxlength="500" placeholder="Ex.: conferido com extrato e pagamentos">
+          </label>
+          <div class="actions"><button type="submit">Confirmar alinhamento</button></div>
+        </form>
+      </section>`;
+  }
+
+  function renderPasswordForm() {
+    return `
+      <details class="panel-card seller-password-card">
+        <summary><strong>Alterar minha senha</strong></summary>
+        <form class="grid-form compact-form" data-change-password-form>
+          <label>Senha atual<input name="currentPassword" type="password" autocomplete="current-password" required></label>
+          <label>Nova senha<input name="newPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+          <label>Confirmar nova senha<input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></label>
+          <div class="actions"><button type="submit">Salvar nova senha</button></div>
+        </form>
+      </details>`;
+  }
+
+  function renderSeller(feedback) {
     const currentUser = user();
     if (!currentUser) return UI.formNotice('Entre na sua conta.', 'warning');
     const balance = balanceFor(currentUser.id);
@@ -8661,20 +8805,49 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.metric(balance > 0 ? 'Você deve' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos em aberto', String(accountsForSeller(currentUser.id).filter((item) => U.number(item.openAmount) >= 0.005).length), null)}
         </div>
+        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+        ${renderLoginTask(currentUser.id)}
+        ${renderBalanceAlignment(currentUser.id, balance)}
         ${legacy >= 0.005 ? UI.formNotice(`Existe ${U.money(legacy)} de saldo anterior ou ajuste sem pedido. O administrador pode acertar essa conta separadamente.`, 'warning') : ''}
         <h3>Estoque e contas por pedido</h3>
         ${renderOrderAccounts(currentUser.id)}
         <h3>Histórico geral da conta</h3>
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map(entryRow), 'Nenhum lançamento ainda.')}
+        ${renderPasswordForm()}
       `
     );
   }
 
   function mountSeller(container) {
     if (!container) return;
-    container.innerHTML = renderSeller();
+    let feedback = null;
+    function paint() { container.innerHTML = renderSeller(feedback); }
+    container.addEventListener('submit', async (event) => {
+      const alignmentForm = event.target.closest('[data-balance-alignment-form]');
+      const passwordForm = event.target.closest('[data-change-password-form]');
+      if (!alignmentForm && !passwordForm) return;
+      event.preventDefault();
+      try {
+        const data = U.formData(event.target);
+        if (alignmentForm) {
+          if (!confirm(`Confirmar que o saldo devido correto é ${U.money(data.reportedBalance)}? Esta liberação será consumida.`)) return;
+          await window.C360.api.alignOwnSellerBalance({ reportedBalance: U.number(data.reportedBalance), notes: data.notes || '' });
+          feedback = { message: 'Saldo alinhado com sucesso. A liberação foi utilizada.', type: 'success' };
+        } else {
+          if (String(data.newPassword || '').length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
+          if (data.newPassword !== data.confirmPassword) throw new Error('A confirmação da nova senha não confere.');
+          if (data.currentPassword === data.newPassword) throw new Error('A nova senha precisa ser diferente da senha atual.');
+          await window.C360.api.changeOwnPassword({ currentPassword: data.currentPassword, newPassword: data.newPassword });
+          feedback = { message: 'Senha alterada com sucesso.', type: 'success' };
+        }
+        await S().refresh();
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+      }
+      paint();
+    });
+    paint();
   }
-
   window.C360.sellerLedger = {
     mountSeller,
     balanceFor,
@@ -9692,7 +9865,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   const STEPS = [
     {
       title: 'Faça login',
-      text: 'Entre com o usuário e a senha que o dono do negócio criou para você. Se esquecer a senha, peça para o administrador criar uma nova.',
+      text: 'Entre com o usuário e a senha que o dono do negócio criou para você. Para trocar a senha, abra Minha conta e use Alterar minha senha. Se esquecer a senha atual, peça uma redefinição ao administrador.',
     },
     {
       title: 'Cadastre seu primeiro cliente',
@@ -9793,7 +9966,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     },
     {
       question: 'Esqueci minha senha. Como faço para entrar?',
-      answer: 'Peça para o administrador do negócio criar uma nova senha para você. Por segurança, apenas ele pode redefinir o acesso de vendedores.',
+      answer: 'Se ainda consegue entrar, abra Minha conta e use Alterar minha senha, confirmando a senha atual. Se esqueceu a senha atual, peça ao administrador do negócio para redefini-la.',
       keywords: 'senha esqueci login entrar acesso redefinir',
     },
     {

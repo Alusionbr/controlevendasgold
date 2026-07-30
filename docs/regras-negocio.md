@@ -201,3 +201,10 @@ Servem para organizar compras, cobrança, produção, despachos e revisão.
 - Informar que o consignado foi vendido atualiza o saldo “Vendido a prazo”, mas não aumenta a receita.
 - Mercadoria ainda em mãos e valores vendidos não pagos aparecem em “Saiu a prazo”, separados entre clientes e vendedores.
 - O lucro dos recebimentos parciais é reconhecido proporcionalmente à margem do consignado ou do pedido.
+## 11.4. Alinhamento de saldo e tarefa de login
+
+- O administrador pode liberar exatamente um alinhamento de saldo por vendedor. A opção aparece em **Minha conta** somente enquanto estiver liberada.
+- O vendedor informa o total que reconhece como devido. O sistema não sobrescreve o saldo: grava somente a diferença como `manual_adjustment`, mantém auditoria e consome a liberação na mesma transação.
+- Cada dia de login no fuso de São Paulo conta uma vez. Dias consecutivos aumentam a sequência; uma interrupção reinicia em 1.
+- A cada 15 dias consecutivos o vendedor recebe 1 crédito de brinde. O administrador marca a entrega, mantendo o histórico.
+- O vendedor pode alterar a própria senha em **Minha conta**, confirmando a senha atual. Senha esquecida continua sendo redefinida pelo administrador.

@@ -676,3 +676,10 @@ Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
 - `register_seller_order_payment(order_group_id, amount, method, notes)`: RPC `security invoker` exclusiva do admin; bloqueia o grupo, confere o saldo, impede pagamento excedente e grava `seller_payments`, alocação e `seller_account_entries` em uma transação.
 - `list_seller_order_accounts(seller_id)`: RPC `security definer` com `search_path` vazio e validação explícita do perfil. Entrega ao vendedor somente seus próprios pedidos e permite ao admin consultar o negócio; não abre leitura direta das tabelas operacionais ao papel vendedor.
 - Pagamentos anteriores à migração são reconciliados cronologicamente contra contas antigas sem reescrever o ledger.
+
+### Alinhamento de saldo e recompensa de login — migração `20260730125828`
+
+- `seller_align_balance(reported_balance, notes)`: exclusiva do vendedor ativo e condicionada a `balance_alignment_credits = 1`; bloqueia concorrência, registra somente a diferença no ledger, audita e zera a permissão atomicamente.
+- `register_seller_daily_login()`: idempotente por dia no fuso `America/Sao_Paulo`, reinicia a sequência após intervalo e concede um crédito a cada múltiplo de 15 dias.
+- `redeem_seller_login_gift(seller_id, notes)`: exclusiva do administrador da mesma empresa; consome um crédito e registra a entrega.
+- A troca de senha própria reautentica a senha atual no Supabase Auth e então atualiza a senha do usuário autenticado.

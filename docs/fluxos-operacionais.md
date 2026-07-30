@@ -206,3 +206,10 @@ direto na aba Vendas.
 4. Pedido de revenda despachado aparece em **Saiu a prazo — Vendedores**, por carrinho/pedido.
 5. Ao registrar pagamento no pedido do vendedor, somente o valor recebido entra na receita.
 6. Dashboard, tela Hoje e Relatórios usam a mesma fórmula e mostram separadamente as origens: à vista, pagamentos de clientes e pagamentos de vendedores.
+## Fluxo 18 — Alinhamento de saldo, sequência e senha do vendedor
+
+1. Na aba **Vendedores**, o administrador clica em **Liberar alinhamento de saldo**.
+2. Em **Minha conta**, o vendedor informa o total devido e confirma. A diferença entra no histórico e o formulário desaparece imediatamente.
+3. Ao entrar no aplicativo, o vendedor registra no máximo um dia da sequência. No 15º dia consecutivo recebe 1 brinde disponível.
+4. O administrador usa **Marcar brinde entregue** para consumir um crédito e registrar a entrega.
+5. Em **Alterar minha senha**, o vendedor informa senha atual, nova senha e confirmação; a sessão é reautenticada antes da alteração.
