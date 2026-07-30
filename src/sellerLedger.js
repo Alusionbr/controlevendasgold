@@ -189,6 +189,70 @@
     return `<div class="seller-order-account-list">${accounts.map((account) => renderOrderAccount(account, options)).join('')}</div>`;
   }
 
+  function localDateTimeValue(date = new Date()) {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function paymentReportsForSeller(sellerId) {
+    return (state().sellerPaymentReports || []).filter((report) => String(report.sellerId) === String(sellerId));
+  }
+
+  function paymentReportStatus(report) {
+    if (report.status === 'approved') return UI.badge('Lançado', 'ok');
+    if (report.status === 'rejected') return UI.badge('Recusado', 'warn');
+    return UI.badge('Aguardando conferência', 'warn');
+  }
+
+  function renderPaymentReport(sellerId) {
+    const accounts = accountsForSeller(sellerId).filter((account) => U.number(account.openAmount) >= 0.005);
+    const legacy = legacyBalanceFor(sellerId);
+    const options = accounts.map((account) => {
+      const id = String(account.orderGroupId || '');
+      return `<option value="${U.escapeHtml(id)}">Pedido #${U.escapeHtml(id.slice(0, 8).toUpperCase())} — ${U.money(account.openAmount)} em aberto</option>`;
+    });
+    if (legacy >= 0.005) options.push(`<option value="legacy">Saldo anterior — ${U.money(legacy)} em aberto</option>`);
+    const reports = paymentReportsForSeller(sellerId).slice(0, 10);
+    const rows = reports.map((report) => [
+      U.escapeHtml(new Date(report.reportedAt).toLocaleString('pt-BR')),
+      U.escapeHtml(report.orderGroupId ? `Pedido #${String(report.orderGroupId).slice(0, 8).toUpperCase()}` : 'Saldo anterior'),
+      UI.moneyCell(report.reportedAmount),
+      report.status === 'approved' ? `<strong>${U.money(report.reviewedAmount)}</strong>` : '—',
+      paymentReportStatus(report),
+      `<button type="button" class="small secondary" data-payment-proof="${U.escapeHtml(report.id)}">Ver comprovante</button>`,
+    ]);
+    return `
+      <section class="panel-card seller-payment-report-card">
+        <div class="approval-card-head">
+          <div><strong>Informar pagamento</strong><small>O saldo muda somente depois da conferência do administrador.</small></div>
+          ${UI.badge(`${reports.filter((item) => item.status === 'pending').length} pendente(s)`, reports.some((item) => item.status === 'pending') ? 'warn' : '')}
+        </div>
+        ${options.length ? `
+          <form class="grid-form compact-form" data-seller-payment-report-form>
+            <label class="wide">Conta ou pedido
+              <select name="orderGroupId" required>${options.join('')}</select>
+            </label>
+            <label>Data e hora do pagamento
+              <input name="reportedAt" type="datetime-local" max="${localDateTimeValue(new Date(Date.now() + 5 * 60000))}" value="${localDateTimeValue()}" required>
+            </label>
+            <label>Valor pago
+              <input name="amount" type="number" min="0.01" step="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" maxlength="80" placeholder="Pix, dinheiro, transferência...">
+            </label>
+            <label class="wide">Comprovante (foto ou PDF, até 10 MB)
+              <input name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+            </label>
+            <label class="wide">Observação
+              <input name="notes" maxlength="1000" placeholder="Opcional">
+            </label>
+            <div class="actions"><button type="submit">Enviar para conferência</button></div>
+          </form>` : UI.formNotice('Você não tem pedido ou saldo anterior em aberto para informar pagamento.', 'info')}
+        <h4>Pagamentos informados</h4>
+        ${UI.table(['Data/hora', 'Conta', 'Informado', 'Lançado', 'Situação', ''], rows, 'Nenhum pagamento informado ainda.')}
+      </section>`;
+  }
   function renderLoginTask(sellerId) {
     const reward = loginRewardForSeller(sellerId);
     const streak = U.number(reward.currentStreak);
@@ -261,6 +325,7 @@
         </div>
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         ${renderLoginTask(currentUser.id)}
+        ${renderPaymentReport(currentUser.id)}
         ${renderBalanceAlignment(currentUser.id, balance)}
         ${legacy >= 0.005 ? UI.formNotice(`Existe ${U.money(legacy)} de saldo anterior ou ajuste sem pedido. O administrador pode acertar essa conta separadamente.`, 'warning') : ''}
         <h3>Estoque e contas por pedido</h3>
@@ -277,13 +342,27 @@
     let feedback = null;
     function paint() { container.innerHTML = renderSeller(feedback); }
     container.addEventListener('submit', async (event) => {
+      const paymentReportForm = event.target.closest('[data-seller-payment-report-form]');
       const alignmentForm = event.target.closest('[data-balance-alignment-form]');
       const passwordForm = event.target.closest('[data-change-password-form]');
-      if (!alignmentForm && !passwordForm) return;
+      if (!paymentReportForm && !alignmentForm && !passwordForm) return;
       event.preventDefault();
       try {
         const data = U.formData(event.target);
-        if (alignmentForm) {
+        if (paymentReportForm) {
+          const proofFile = paymentReportForm.elements.proof.files[0];
+          const submitButton = paymentReportForm.querySelector('button[type="submit"]');
+          if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Enviando comprovante...'; }
+          await window.C360.api.submitSellerPaymentReport({
+            orderGroupId: data.orderGroupId === 'legacy' ? null : data.orderGroupId,
+            reportedAt: data.reportedAt,
+            amount: U.number(data.amount),
+            method: data.method || '',
+            notes: data.notes || '',
+            proofFile,
+          });
+          feedback = { message: 'Pagamento enviado para conferência. Ele ainda não alterou seu saldo.', type: 'success' };
+        } else if (alignmentForm) {
           if (!confirm(`Confirmar que o saldo devido correto é ${U.money(data.reportedBalance)}? Esta liberação será consumida.`)) return;
           await window.C360.api.alignOwnSellerBalance({ reportedBalance: U.number(data.reportedBalance), notes: data.notes || '' });
           feedback = { message: 'Saldo alinhado com sucesso. A liberação foi utilizada.', type: 'success' };
@@ -299,6 +378,22 @@
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
+    });
+    container.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-payment-proof]');
+      if (!button) return;
+      const report = (state().sellerPaymentReports || []).find((item) => String(item.id) === String(button.dataset.paymentProof));
+      if (!report || !report.proofPath) return;
+      button.disabled = true;
+      try {
+        const url = await window.C360.api.createSellerPaymentProofUrl(report.proofPath);
+        window.open(url, '_blank', 'noopener');
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+        paint();
+      } finally {
+        button.disabled = false;
+      }
     });
     paint();
   }

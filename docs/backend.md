@@ -683,3 +683,9 @@ Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
 - `register_seller_daily_login()`: idempotente por dia no fuso `America/Sao_Paulo`, reinicia a sequência após intervalo e concede um crédito a cada múltiplo de 15 dias.
 - `redeem_seller_login_gift(seller_id, notes)`: exclusiva do administrador da mesma empresa; consome um crédito e registra a entrega.
 - A troca de senha própria reautentica a senha atual no Supabase Auth e então atualiza a senha do usuário autenticado.
+### Pagamentos informados — migração `20260730132326`
+
+- `seller_payment_reports`: fila auditável de pagamentos informados, com RLS por vendedor/negócio e escrita direta do vendedor limitada às colunas de envio.
+- Bucket privado `seller-payment-proofs`: upload autenticado no caminho `<seller_id>/<report_id>/arquivo`, limite de 10 MB e MIME restrito a imagens e PDF.
+- `review_seller_payment_report(report_id, action, amount, payment_date, method, notes)`: RPC `security invoker` exclusiva do admin; bloqueia o informe e a conta, impede duplicidade/excesso e grava pagamento, alocação e crédito na mesma transação.
+- O frontend gera URL assinada por 5 minutos somente depois da política de leitura autorizar o usuário.

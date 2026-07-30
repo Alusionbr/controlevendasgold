@@ -296,3 +296,8 @@ Não há uma tabela duplicada de receita. `recognizedRevenue` deriva o valor rec
 - `sellerBalanceAlignments`: auditoria do saldo anterior, saldo informado, direção e valor da diferença.
 - `sellerLoginRewards`: sequência atual/máxima, último dia contado, brindes disponíveis e total conquistado.
 - `sellerGiftRedemptions`: histórico de cada brinde entregue, administrador responsável, data e observação.
+## Pagamentos informados pelo vendedor
+
+`sellerPaymentReports` mantém `sellerId`, `orderGroupId`, data/hora e valor informados, forma, caminho privado do comprovante, observação, status, valor/data revisados, administrador responsável e `paymentId`. O status é `pending`, `approved` ou `rejected`. Somente um registro aprovado gera linhas em `sellerPayments`, `sellerPaymentAllocations` e `sellerAccountEntries`.
+
+Os arquivos ficam no bucket privado `seller-payment-proofs`, limitados a 10 MB e aos tipos JPG, PNG, WebP e PDF. O vendedor acessa somente seus arquivos; o administrador acessa somente comprovantes do próprio negócio.

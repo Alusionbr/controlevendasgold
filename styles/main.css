@@ -2267,3 +2267,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .report-month-chart b { position:absolute; left:-15%; width:130%; height:2px; background:var(--accent-deep); }
 .report-month-chart small { margin-top:4px; color:var(--muted); font-size:.62rem; }
 @media(max-width:760px){.report-period-chips{display:flex}.report-period-bar label:nth-of-type(3){display:none}}
+
+/* Conferência de pagamentos informados por vendedores */
+.seller-payment-review-list { display:grid; gap:10px; }
+.seller-payment-review { margin:0; border-color:var(--line-strong); }
+.seller-payment-review .grid-form { margin-top:10px; }
+.seller-payment-report-card { display:grid; gap:12px; margin:14px 0; }
+@media(max-width:760px){.seller-payment-review .actions button,.seller-payment-report-card .actions button{width:100%;min-height:44px}.seller-payment-report-card .table-wrap{overflow-x:auto}}

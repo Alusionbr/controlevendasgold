@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-sQq5ZQgeHPl+oq00Aia+yTjkk2kiBhyrCMuKE5EZLk0=' 'sha256-4pHnk+eCLIN0U7EmBoWrnlcit7WfoqnQhAOSCtd1X2c=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-C1W4Wi68cbKmP+Ka/uVnDxYlddvI++i2N3LIZcBc6MY=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-gLS5lPJwUJO/MANaMs7ibwOWfOO2X2zVNOmOJeG8XbU=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-77Tr5fb3kyGO5lIZ3Q9n1jANiJQOE5maEVay8XfAO3c=' 'sha256-e1scGtI/D4UboDbmP3uSa0LLJJkfcViKPW/ry2sailg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bNFPdP9thZcd5JedtoWxnBkMxqJg2JW00cD5rR95dC0=' 'sha256-VMouXbyYRKUPLcBb2waedxxpSH1Xf6G8vaN2041Pqnc=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-fozRCRHcB32sYkdR53EQTbbWqbNMjm4IdJlb0s4lyT8=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-l9hMbP39s1EjOQcYkyySlrwio2eWHBuSmQqDbqsAUP0=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-0lxa9o9XZk/Cw+GZ7Yeu7tPAyfGLNknVKDIpHt1puC8=' 'sha256-e1scGtI/D4UboDbmP3uSa0LLJJkfcViKPW/ry2sailg='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2276,6 +2276,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .report-month-chart small { margin-top:4px; color:var(--muted); font-size:.62rem; }
 @media(max-width:760px){.report-period-chips{display:flex}.report-period-bar label:nth-of-type(3){display:none}}
 
+/* Conferência de pagamentos informados por vendedores */
+.seller-payment-review-list { display:grid; gap:10px; }
+.seller-payment-review { margin:0; border-color:var(--line-strong); }
+.seller-payment-review .grid-form { margin-top:10px; }
+.seller-payment-report-card { display:grid; gap:12px; margin:14px 0; }
+@media(max-width:760px){.seller-payment-review .actions button,.seller-payment-report-card .actions button{width:100%;min-height:44px}.seller-payment-report-card .table-wrap{overflow-x:auto}}
   </style>
 </head>
 <body>
@@ -2851,6 +2857,96 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  function encodedStoragePath(path) {
+    return String(path || '').split('/').map((part) => encodeURIComponent(part)).join('/');
+  }
+
+  async function storageRequest(path, { method = 'GET', body, contentType = 'application/json', allowRetry = true } = {}) {
+    const headers = { apikey: SUPABASE_ANON_KEY };
+    if (session.accessToken) headers.Authorization = `Bearer ${session.accessToken}`;
+    if (contentType) headers['Content-Type'] = contentType;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1${path}`, { method, headers, body });
+    if (res.status === 401 && allowRetry && await tryRefreshOnce()) {
+      return storageRequest(path, { method, body, contentType, allowRetry: false });
+    }
+    if (!res.ok) throw buildError(await parseBodySafe(res), res.status);
+    return parseBodySafe(res);
+  }
+
+  async function uploadSellerPaymentProof({ reportId, file }) {
+    const allowed = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+    if (!file || !allowed[file.type]) throw new Error('Envie uma foto JPG, PNG, WebP ou um arquivo PDF.');
+    if (Number(file.size || 0) <= 0 || Number(file.size) > 10 * 1024 * 1024) {
+      throw new Error('O comprovante precisa ter até 10 MB.');
+    }
+    if (!session.userId) throw new Error('Sessão do vendedor indisponível. Entre novamente.');
+    const objectPath = `${session.userId}/${reportId}/${Date.now()}.${allowed[file.type]}`;
+    await storageRequest(`/object/seller-payment-proofs/${encodedStoragePath(objectPath)}`, {
+      method: 'POST',
+      contentType: file.type,
+      body: file,
+    });
+    return objectPath;
+  }
+
+  async function submitSellerPaymentReport({ orderGroupId, reportedAt, amount, method, notes, proofFile }) {
+    const reportId = crypto.randomUUID();
+    const businessId = await currentBusinessId();
+    if (!businessId || !session.userId) throw new Error('Conta do vendedor indisponível. Entre novamente.');
+    const instant = new Date(reportedAt);
+    if (Number.isNaN(instant.getTime())) throw new Error('Informe uma data e hora válidas.');
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) throw new Error('Informe um valor maior que zero.');
+    const proofPath = await uploadSellerPaymentProof({ reportId, file: proofFile });
+    try {
+      return await insert('seller_payment_reports', {
+        id: reportId,
+        business_id: businessId,
+        seller_id: session.userId,
+        order_group_id: orderGroupId || null,
+        reported_at: instant.toISOString(),
+        reported_amount: value,
+        method: method || null,
+        proof_path: proofPath,
+        notes: notes || null,
+      });
+    } catch (error) {
+      try {
+        await storageRequest(`/object/seller-payment-proofs/${encodedStoragePath(proofPath)}`, { method: 'DELETE', contentType: null });
+      } catch (cleanupError) {
+        console.warn('Não foi possível remover o comprovante órfão.', cleanupError);
+      }
+      throw error;
+    }
+  }
+
+  async function reviewSellerPaymentReport({ reportId, action, amount, paymentDate, method, reviewNotes }) {
+    return restRequest('/rest/v1/rpc/review_seller_payment_report', {
+      method: 'POST',
+      body: {
+        p_report_id: reportId,
+        p_action: action,
+        p_amount: action === 'approve' ? Number(amount) : null,
+        p_payment_date: action === 'approve' ? paymentDate : null,
+        p_method: action === 'approve' ? (method || null) : null,
+        p_review_notes: reviewNotes || '',
+      },
+    });
+  }
+
+  async function createSellerPaymentProofUrl(proofPath) {
+    const result = await storageRequest(`/object/sign/seller-payment-proofs/${encodedStoragePath(proofPath)}`, {
+      method: 'POST',
+      body: JSON.stringify({ expiresIn: 300 }),
+    });
+    if (!result || !result.signedURL) throw new Error('Não foi possível abrir o comprovante.');
+    return `${SUPABASE_URL}/storage/v1${result.signedURL}`;
+  }
   async function registerPurchaseGroup({ supplierId, date, dueDate, paymentMode, paidAmount, notes, items }) {
     return restRequest('/rest/v1/rpc/register_purchase_group', {
       method: 'POST',
@@ -3097,6 +3193,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     alignOwnSellerBalance,
     registerSellerDailyLogin,
     redeemSellerLoginGift,
+    submitSellerPaymentReport,
+    reviewSellerPaymentReport,
+    createSellerPaymentProofUrl,
     registerPurchaseGroup,
     registerSellerPayment,
     listSellerOrderAccounts,
@@ -3225,6 +3324,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       sellerAccountEntries: [],
       sellerPayments: [],
       sellerPaymentAllocations: [],
+      sellerPaymentReports: [],
       sellerOrderAccounts: [],
       financialEntries: [],
       recordAuditLog: [],
@@ -3389,6 +3489,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     sellerAccountEntries: 'seller_account_entries',
     sellerPayments: 'seller_payments',
     sellerPaymentAllocations: 'seller_payment_allocations',
+    sellerPaymentReports: 'seller_payment_reports',
     financialEntries: 'financial_entries',
     recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
@@ -3502,7 +3603,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
+      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -3527,6 +3628,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('seller_account_entries', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('seller_payment_allocations', { business_id: businessId }),
+      api.list('seller_payment_reports', { business_id: businessId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
@@ -3557,6 +3659,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
     state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
@@ -3576,7 +3679,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
-      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerOrderAccounts,
+      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -3586,6 +3689,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payment_allocations', { seller_id: userId }),
+      api.list('seller_payment_reports', { seller_id: userId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(userId),
     ]);
 
@@ -3597,6 +3701,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
+    state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
     state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
 
     // Todo o restante é admin-only no modelo operacional oficial.
@@ -4743,6 +4848,53 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       && ['a_devolver', 'pending'].includes(movement.status)).length;
   }
 
+  function paymentReportsForSeller(sellerId, status = null) {
+    return (fullState().sellerPaymentReports || []).filter((report) => String(report.sellerId) === String(sellerId)
+      && (!status || report.status === status));
+  }
+
+  function pendingPaymentReportsCountForSeller(sellerId) {
+    return paymentReportsForSeller(sellerId, 'pending').length;
+  }
+
+  function renderPendingPaymentReports(sellerId) {
+    const reports = paymentReportsForSeller(sellerId, 'pending');
+    if (!reports.length) return UI.formNotice('Nenhum pagamento informado aguardando conferência.', 'info');
+    return `<div class="seller-payment-review-list">${reports.map((report) => {
+      const reportedDate = new Date(report.reportedAt);
+      const paymentDate = Number.isNaN(reportedDate.getTime()) ? U.today() : reportedDate.toLocaleDateString('sv-SE');
+      const accountLabel = report.orderGroupId
+        ? `Pedido #${String(report.orderGroupId).slice(0, 8).toUpperCase()}`
+        : 'Saldo anterior';
+      return `
+        <form class="panel-card seller-payment-review" data-review-payment-report data-report-id="${U.escapeHtml(report.id)}">
+          <div class="approval-card-head">
+            <div><strong>${U.escapeHtml(accountLabel)}</strong><small>Informado em ${U.escapeHtml(reportedDate.toLocaleString('pt-BR'))}</small></div>
+            ${UI.badge('Conferir', 'warn')}
+          </div>
+          <p class="ss-hint">Vendedor informou <strong>${U.money(report.reportedAmount)}</strong>${report.method ? ` via ${U.escapeHtml(report.method)}` : ''}.${report.notes ? ` ${U.escapeHtml(report.notes)}` : ''}</p>
+          <div class="grid-form compact-form">
+            <label>Valor a lançar
+              <input name="amount" type="number" min="0.01" step="0.01" value="${U.number(report.reportedAmount).toFixed(2)}" required>
+            </label>
+            <label>Data do pagamento
+              <input name="paymentDate" type="date" max="${U.today()}" value="${U.escapeHtml(paymentDate)}" required>
+            </label>
+            <label>Forma
+              <input name="method" maxlength="80" value="${U.escapeHtml(report.method || '')}" placeholder="Pix, dinheiro...">
+            </label>
+            <label class="wide">Nota da conferência
+              <input name="reviewNotes" maxlength="1000" placeholder="Opcional; explique se ajustar o valor">
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" class="small secondary" data-action="view-payment-proof" data-report-id="${U.escapeHtml(report.id)}">Ver comprovante</button>
+            <button type="button" class="small danger" data-action="reject-payment-report" data-report-id="${U.escapeHtml(report.id)}">Recusar</button>
+            <button type="submit" class="small">Conferir e lançar pagamento</button>
+          </div>
+        </form>`;
+    }).join('')}</div>`;
+  }
   function productOptionsForConsignment() {
     return (fullState().products || []).filter((product) => product.type !== 'servico');
   }
@@ -4755,6 +4907,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const legacyBalance = L && typeof L.legacyBalanceFor === 'function' ? L.legacyBalanceFor(seller.id) : 0;
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
+    const pendingPayments = pendingPaymentReportsCountForSeller(seller.id);
     const products = productOptionsForConsignment();
 
     return `
@@ -4764,6 +4917,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
           ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
+          ${UI.metric('Pagamentos para conferir', String(pendingPayments), null)}
         </div>
         ${pendingCarts > 0 || pendingReturns > 0 ? `
           <p class="ss-hint">
@@ -4801,6 +4955,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <button type="submit" class="small">Enviar consignado</button>
         </form>
 
+        <h3>Pagamentos informados pelo vendedor</h3>
+        <p class="ss-hint">Confira o comprovante, ajuste o valor ou a data se necessário e lance com um clique. Enquanto estiver pendente, nada entra na receita nem reduz o saldo.</p>
+        ${renderPendingPaymentReports(seller.id)}
         <h3>Estoque e contas por pedido</h3>
         <p class="ss-hint">Cada envio mantém seus itens, pagamentos e saldo. Use “Usar saldo total” para quitar ou informe um valor menor para pagamento parcial.</p>
         ${L && typeof L.renderOrderAccounts === 'function'
@@ -4855,7 +5012,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const lastPayment = lastPaymentForSeller(seller.id);
     const pendingCarts = pendingCartsCountForSeller(seller.id);
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
-    const pendingTotal = pendingCarts + pendingReturns;
+    const pendingPayments = pendingPaymentReportsCountForSeller(seller.id);
+    const pendingTotal = pendingCarts + pendingReturns + pendingPayments;
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
@@ -4987,6 +5145,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
       const orderPaymentForm = event.target.closest('[data-order-payment-form]');
       const resetPasswordForm = event.target.closest('[data-reset-password-form]');
+      const reviewPaymentForm = event.target.closest('[data-review-payment-report]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -5027,6 +5186,28 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         return;
       }
 
+      if (reviewPaymentForm && container.contains(reviewPaymentForm)) {
+        event.preventDefault();
+        const data = U.formData(reviewPaymentForm);
+        const submitButton = reviewPaymentForm.querySelector('button[type="submit"]');
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Lançando...'; }
+        try {
+          await api().reviewSellerPaymentReport({
+            reportId: reviewPaymentForm.dataset.reportId,
+            action: 'approve',
+            amount: data.amount,
+            paymentDate: data.paymentDate,
+            method: data.method,
+            reviewNotes: data.reviewNotes,
+          });
+          await state().refresh();
+          manageFeedback = { message: 'Pagamento conferido e lançado. O saldo e a receita foram atualizados.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível lançar o pagamento.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
       if (resetPasswordForm && container.contains(resetPasswordForm)) {
         event.preventDefault();
         const sellerId = resetPasswordForm.dataset.sellerId;
@@ -5116,6 +5297,40 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       if (!button || !container.contains(button)) return;
       const { action, id, tab } = button.dataset;
 
+      if (action === 'view-payment-proof') {
+        button.disabled = true;
+        try {
+          const report = (fullState().sellerPaymentReports || []).find((item) => String(item.id) === String(button.dataset.reportId));
+          if (!report || !report.proofPath) throw new Error('Comprovante não encontrado.');
+          const url = await api().createSellerPaymentProofUrl(report.proofPath);
+          const link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.click();
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível abrir o comprovante.', type: 'danger' };
+          paint();
+        } finally {
+          button.disabled = false;
+        }
+        return;
+      }
+
+      if (action === 'reject-payment-report') {
+        if (!confirm('Recusar este pagamento informado? Ele não será lançado no saldo.')) return;
+        const reason = prompt('Motivo da recusa (opcional):') || '';
+        button.disabled = true;
+        try {
+          await api().reviewSellerPaymentReport({ reportId: button.dataset.reportId, action: 'reject', reviewNotes: reason });
+          await state().refresh();
+          manageFeedback = { message: 'Pagamento informado recusado sem alterar o saldo.', type: 'warning' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível recusar o pagamento.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
       if (action === 'fill-order-balance') {
         const form = button.closest('[data-order-payment-form]');
         const input = form && form.querySelector('input[name="amount"]');
@@ -8735,6 +8950,70 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return `<div class="seller-order-account-list">${accounts.map((account) => renderOrderAccount(account, options)).join('')}</div>`;
   }
 
+  function localDateTimeValue(date = new Date()) {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function paymentReportsForSeller(sellerId) {
+    return (state().sellerPaymentReports || []).filter((report) => String(report.sellerId) === String(sellerId));
+  }
+
+  function paymentReportStatus(report) {
+    if (report.status === 'approved') return UI.badge('Lançado', 'ok');
+    if (report.status === 'rejected') return UI.badge('Recusado', 'warn');
+    return UI.badge('Aguardando conferência', 'warn');
+  }
+
+  function renderPaymentReport(sellerId) {
+    const accounts = accountsForSeller(sellerId).filter((account) => U.number(account.openAmount) >= 0.005);
+    const legacy = legacyBalanceFor(sellerId);
+    const options = accounts.map((account) => {
+      const id = String(account.orderGroupId || '');
+      return `<option value="${U.escapeHtml(id)}">Pedido #${U.escapeHtml(id.slice(0, 8).toUpperCase())} — ${U.money(account.openAmount)} em aberto</option>`;
+    });
+    if (legacy >= 0.005) options.push(`<option value="legacy">Saldo anterior — ${U.money(legacy)} em aberto</option>`);
+    const reports = paymentReportsForSeller(sellerId).slice(0, 10);
+    const rows = reports.map((report) => [
+      U.escapeHtml(new Date(report.reportedAt).toLocaleString('pt-BR')),
+      U.escapeHtml(report.orderGroupId ? `Pedido #${String(report.orderGroupId).slice(0, 8).toUpperCase()}` : 'Saldo anterior'),
+      UI.moneyCell(report.reportedAmount),
+      report.status === 'approved' ? `<strong>${U.money(report.reviewedAmount)}</strong>` : '—',
+      paymentReportStatus(report),
+      `<button type="button" class="small secondary" data-payment-proof="${U.escapeHtml(report.id)}">Ver comprovante</button>`,
+    ]);
+    return `
+      <section class="panel-card seller-payment-report-card">
+        <div class="approval-card-head">
+          <div><strong>Informar pagamento</strong><small>O saldo muda somente depois da conferência do administrador.</small></div>
+          ${UI.badge(`${reports.filter((item) => item.status === 'pending').length} pendente(s)`, reports.some((item) => item.status === 'pending') ? 'warn' : '')}
+        </div>
+        ${options.length ? `
+          <form class="grid-form compact-form" data-seller-payment-report-form>
+            <label class="wide">Conta ou pedido
+              <select name="orderGroupId" required>${options.join('')}</select>
+            </label>
+            <label>Data e hora do pagamento
+              <input name="reportedAt" type="datetime-local" max="${localDateTimeValue(new Date(Date.now() + 5 * 60000))}" value="${localDateTimeValue()}" required>
+            </label>
+            <label>Valor pago
+              <input name="amount" type="number" min="0.01" step="0.01" required>
+            </label>
+            <label>Forma
+              <input name="method" maxlength="80" placeholder="Pix, dinheiro, transferência...">
+            </label>
+            <label class="wide">Comprovante (foto ou PDF, até 10 MB)
+              <input name="proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+            </label>
+            <label class="wide">Observação
+              <input name="notes" maxlength="1000" placeholder="Opcional">
+            </label>
+            <div class="actions"><button type="submit">Enviar para conferência</button></div>
+          </form>` : UI.formNotice('Você não tem pedido ou saldo anterior em aberto para informar pagamento.', 'info')}
+        <h4>Pagamentos informados</h4>
+        ${UI.table(['Data/hora', 'Conta', 'Informado', 'Lançado', 'Situação', ''], rows, 'Nenhum pagamento informado ainda.')}
+      </section>`;
+  }
   function renderLoginTask(sellerId) {
     const reward = loginRewardForSeller(sellerId);
     const streak = U.number(reward.currentStreak);
@@ -8807,6 +9086,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </div>
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         ${renderLoginTask(currentUser.id)}
+        ${renderPaymentReport(currentUser.id)}
         ${renderBalanceAlignment(currentUser.id, balance)}
         ${legacy >= 0.005 ? UI.formNotice(`Existe ${U.money(legacy)} de saldo anterior ou ajuste sem pedido. O administrador pode acertar essa conta separadamente.`, 'warning') : ''}
         <h3>Estoque e contas por pedido</h3>
@@ -8823,13 +9103,27 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     let feedback = null;
     function paint() { container.innerHTML = renderSeller(feedback); }
     container.addEventListener('submit', async (event) => {
+      const paymentReportForm = event.target.closest('[data-seller-payment-report-form]');
       const alignmentForm = event.target.closest('[data-balance-alignment-form]');
       const passwordForm = event.target.closest('[data-change-password-form]');
-      if (!alignmentForm && !passwordForm) return;
+      if (!paymentReportForm && !alignmentForm && !passwordForm) return;
       event.preventDefault();
       try {
         const data = U.formData(event.target);
-        if (alignmentForm) {
+        if (paymentReportForm) {
+          const proofFile = paymentReportForm.elements.proof.files[0];
+          const submitButton = paymentReportForm.querySelector('button[type="submit"]');
+          if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Enviando comprovante...'; }
+          await window.C360.api.submitSellerPaymentReport({
+            orderGroupId: data.orderGroupId === 'legacy' ? null : data.orderGroupId,
+            reportedAt: data.reportedAt,
+            amount: U.number(data.amount),
+            method: data.method || '',
+            notes: data.notes || '',
+            proofFile,
+          });
+          feedback = { message: 'Pagamento enviado para conferência. Ele ainda não alterou seu saldo.', type: 'success' };
+        } else if (alignmentForm) {
           if (!confirm(`Confirmar que o saldo devido correto é ${U.money(data.reportedBalance)}? Esta liberação será consumida.`)) return;
           await window.C360.api.alignOwnSellerBalance({ reportedBalance: U.number(data.reportedBalance), notes: data.notes || '' });
           feedback = { message: 'Saldo alinhado com sucesso. A liberação foi utilizada.', type: 'success' };
@@ -8845,6 +9139,22 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
+    });
+    container.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-payment-proof]');
+      if (!button) return;
+      const report = (state().sellerPaymentReports || []).find((item) => String(item.id) === String(button.dataset.paymentProof));
+      if (!report || !report.proofPath) return;
+      button.disabled = true;
+      try {
+        const url = await window.C360.api.createSellerPaymentProofUrl(report.proofPath);
+        window.open(url, '_blank', 'noopener');
+      } catch (error) {
+        feedback = { message: error.message, type: 'danger' };
+        paint();
+      } finally {
+        button.disabled = false;
+      }
     });
     paint();
   }
@@ -10579,7 +10889,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     direction: 'Direção', category: 'Categoria', description: 'Descrição', issueDate: 'Emissão',
     paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
     sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
-    paymentDate: 'Data do pagamento', method: 'Forma',
+    paymentDate: 'Data do pagamento', method: 'Forma', reportedAt: 'Informado em', reportedAmount: 'Valor informado',
+    proofPath: 'Caminho do comprovante', reviewedAmount: 'Valor lançado', reviewedPaymentDate: 'Data lançada', reviewNotes: 'Nota da conferência', reviewedBy: 'Conferido por', reviewedAt: 'Conferido em',
     receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
@@ -10596,11 +10907,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     'cogs', 'grossProfit', 'margin', 'quantitySent', 'quantitySold', 'quantityReturned',
     'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
     'paidAmount', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue',
-    'price', 'floor', 'targetAmount',
+    'price', 'floor', 'targetAmount', 'reportedAmount', 'reviewedAmount',
   ]);
 
   const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
-    'submittedAt', 'approvedAt', 'paymentDate', 'confirmedAt', 'periodStart', 'periodEnd']);
+    'submittedAt', 'approvedAt', 'paymentDate', 'reportedAt', 'reviewedPaymentDate', 'reviewedAt', 'confirmedAt', 'periodStart', 'periodEnd']);
 
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
@@ -10629,6 +10940,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'sellerAccountEntries', sheet: 'Conta corrente vendedor', fields: ['id', 'businessId', 'sellerId', 'type', 'direction', 'amount', 'sourceType', 'sourceId', 'notes', 'createdBy', 'createdAt'] },
     { key: 'sellerPayments', sheet: 'Pagamentos vendedor', fields: ['id', 'businessId', 'sellerId', 'amount', 'paymentDate', 'method', 'notes', 'receivedBy', 'createdAt'] },
     { key: 'sellerPaymentAllocations', sheet: 'Pagamentos por pedido', fields: ['id', 'businessId', 'sellerId', 'paymentId', 'orderGroupId', 'amount', 'createdAt'] },
+    { key: 'sellerPaymentReports', sheet: 'Pagamentos informados', fields: ['id', 'businessId', 'sellerId', 'orderGroupId', 'reportedAt', 'reportedAmount', 'method', 'proofPath', 'notes', 'status', 'reviewedAmount', 'reviewedPaymentDate', 'reviewNotes', 'reviewedBy', 'reviewedAt', 'paymentId', 'createdAt', 'updatedAt'] },
     { key: 'sellerStock', sheet: 'Estoque com vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'quantity', 'createdAt', 'updatedAt'] },
     { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
     { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },

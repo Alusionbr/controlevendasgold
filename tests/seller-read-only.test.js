@@ -40,10 +40,11 @@ test('carregamento do vendedor busca somente dados próprios e registra o login 
   ]) assert.ok(sellerRefresh.includes(required), `consulta obrigatória ausente: ${required}`);
 });
 
-test('painel do vendedor limita escrita a senha própria e alinhamento autorizado', () => {
+test('painel do vendedor limita escrita a senha própria, alinhamento e pagamento informado', () => {
   const ledger = read('src/sellerLedger.js');
   assert.match(ledger, /data-balance-alignment-form/);
   assert.match(ledger, /data-change-password-form/);
+  assert.match(ledger, /data-seller-payment-report-form/);
   assert.match(ledger, /alignOwnSellerBalance/);
   assert.match(ledger, /changeOwnPassword/);
   assert.doesNotMatch(ledger, /data-payment-form|data-stock-adjustment-form/i);

@@ -208,3 +208,10 @@ Servem para organizar compras, cobrança, produção, despachos e revisão.
 - Cada dia de login no fuso de São Paulo conta uma vez. Dias consecutivos aumentam a sequência; uma interrupção reinicia em 1.
 - A cada 15 dias consecutivos o vendedor recebe 1 crédito de brinde. O administrador marca a entrega, mantendo o histórico.
 - O vendedor pode alterar a própria senha em **Minha conta**, confirmando a senha atual. Senha esquecida continua sendo redefinida pelo administrador.
+## 11.5. Pagamento informado pelo vendedor
+
+- O vendedor escolhe um pedido em aberto ou o saldo anterior, informa data/hora, valor, forma, observação e anexa foto ou PDF do comprovante.
+- O envio cria somente uma pendência. Não reduz saldo e não entra na receita enquanto o administrador não conferir.
+- O administrador abre o comprovante privado, pode corrigir valor, data e forma e então usa **Conferir e lançar pagamento**.
+- A aprovação grava pagamento, alocação por pedido, crédito no ledger e auditoria em uma única transação. O mesmo informe não pode ser lançado duas vezes.
+- Valor acima do saldo aberto é rejeitado pelo banco. Uma recusa mantém o informe e o comprovante para auditoria, sem impacto financeiro.

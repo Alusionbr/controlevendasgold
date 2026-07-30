@@ -99,3 +99,14 @@ Use este checklist antes de considerar uma alteração aprovada.
 - [ ] O 15º dia consecutivo gera exatamente 1 brinde; o admin consegue marcar a entrega uma vez.
 - [ ] A troca de senha rejeita senha atual incorreta e confirma a nova senha em novo login.
 - [ ] O vendedor não enxerga dados, saldos ou recompensas de outro vendedor.
+## Pagamento informado pelo vendedor
+
+- [ ] Vendedor escolhe pedido, informa data/hora, valor e envia foto ou PDF.
+- [ ] Arquivo acima de 10 MB ou com tipo diferente dos permitidos é rejeitado.
+- [ ] Informe pendente não reduz o saldo nem aumenta a receita.
+- [ ] Admin abre o comprovante e vê os dados informados.
+- [ ] Admin corrige o valor e lança com um clique; saldo e receita usam o valor corrigido.
+- [ ] Banco rejeita valor maior que o saldo aberto e uma segunda aprovação do mesmo informe.
+- [ ] Recusar preserva o histórico e não cria pagamento.
+- [ ] Vendedor e administrador não conseguem acessar comprovantes de outro negócio.
+- [ ] Backup Excel contém a aba **Pagamentos informados**.

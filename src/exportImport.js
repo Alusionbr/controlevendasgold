@@ -38,7 +38,8 @@
     direction: 'Direção', category: 'Categoria', description: 'Descrição', issueDate: 'Emissão',
     paidAmount: 'Valor pago', paymentMethod: 'Forma de pagamento', supplierId: 'ID do fornecedor',
     sourceType: 'Tipo de origem', sourceId: 'ID de origem', settledAt: 'Quitado em',
-    paymentDate: 'Data do pagamento', method: 'Forma',
+    paymentDate: 'Data do pagamento', method: 'Forma', reportedAt: 'Informado em', reportedAmount: 'Valor informado',
+    proofPath: 'Caminho do comprovante', reviewedAmount: 'Valor lançado', reviewedPaymentDate: 'Data lançada', reviewNotes: 'Nota da conferência', reviewedBy: 'Conferido por', reviewedAt: 'Conferido em',
     receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
@@ -55,11 +56,11 @@
     'cogs', 'grossProfit', 'margin', 'quantitySent', 'quantitySold', 'quantityReturned',
     'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
     'paidAmount', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue',
-    'price', 'floor', 'targetAmount',
+    'price', 'floor', 'targetAmount', 'reportedAmount', 'reviewedAmount',
   ]);
 
   const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
-    'submittedAt', 'approvedAt', 'paymentDate', 'confirmedAt', 'periodStart', 'periodEnd']);
+    'submittedAt', 'approvedAt', 'paymentDate', 'reportedAt', 'reviewedPaymentDate', 'reviewedAt', 'confirmedAt', 'periodStart', 'periodEnd']);
 
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
@@ -88,6 +89,7 @@
     { key: 'sellerAccountEntries', sheet: 'Conta corrente vendedor', fields: ['id', 'businessId', 'sellerId', 'type', 'direction', 'amount', 'sourceType', 'sourceId', 'notes', 'createdBy', 'createdAt'] },
     { key: 'sellerPayments', sheet: 'Pagamentos vendedor', fields: ['id', 'businessId', 'sellerId', 'amount', 'paymentDate', 'method', 'notes', 'receivedBy', 'createdAt'] },
     { key: 'sellerPaymentAllocations', sheet: 'Pagamentos por pedido', fields: ['id', 'businessId', 'sellerId', 'paymentId', 'orderGroupId', 'amount', 'createdAt'] },
+    { key: 'sellerPaymentReports', sheet: 'Pagamentos informados', fields: ['id', 'businessId', 'sellerId', 'orderGroupId', 'reportedAt', 'reportedAmount', 'method', 'proofPath', 'notes', 'status', 'reviewedAmount', 'reviewedPaymentDate', 'reviewNotes', 'reviewedBy', 'reviewedAt', 'paymentId', 'createdAt', 'updatedAt'] },
     { key: 'sellerStock', sheet: 'Estoque com vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'quantity', 'createdAt', 'updatedAt'] },
     { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
     { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },
