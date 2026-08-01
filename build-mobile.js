@@ -41,7 +41,10 @@ html = html.replace(
 //    que já é feito para o <style> inline com 'unsafe-inline' em style-src.
 const scriptHashes = [];
 html = html.replace(/<script\s+src="(src\/[^"]+)"><\/script>/g, (match, src) => {
-  const code = readText(path.join(projectDir, src)).replace(/\s+$/, '');
+  // index.html versiona os scripts com "?v=..." para furar cache do navegador;
+  // no disco o arquivo não tem esse sufixo. Sem remover, o build quebrava com
+  // ENOENT em src/utils.js?v=...
+  const code = readText(path.join(projectDir, src.split('?')[0])).replace(/\s+$/, '');
   const text = `\n${code}\n`;
   scriptHashes.push(`'sha256-${crypto.createHash('sha256').update(text, 'utf8').digest('base64')}'`);
   return `<script>${text}</script>`;

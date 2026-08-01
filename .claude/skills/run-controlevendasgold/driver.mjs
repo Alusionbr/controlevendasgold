@@ -478,6 +478,67 @@ async function installMocks(pg) {
         return json(route, { group_id: groupId, status, orders: orders.length, changed: true });
       }
 
+      // migration 20260729205823: list_seller_order_accounts(p_seller_id)
+      // Nao move dado, mas TEM de ser implementado: state.js faz .map() no
+      // resultado, entao o marcador `rpc-not-implemented` (um objeto) derrubava
+      // o refresh inteiro no login com "sellerOrderAccounts.map is not a
+      // function" — o app abria vazio e o motivo nao aparecia na tela.
+      if (fn === 'list_seller_order_accounts') {
+        const target = currentFixture.role === 'vendedor'
+          ? currentFixture.uid
+          : (body.p_seller_id || null);
+        const orders = rowsOf('orders').filter((o) => o.sale_type === 'revenda'
+          && o.approval_status === 'aprovado'
+          && (!target || String(o.seller_id) === String(target)));
+        const groups = new Map();
+        for (const o of orders) {
+          const key = String(o.order_group_id || o.id);
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(o);
+        }
+        const accounts = [...groups.entries()].map(([groupId, groupOrders]) => {
+          const first = groupOrders[0];
+          const orderIds = new Set(groupOrders.map((o) => String(o.id)));
+          const debt = rowsOf('seller_account_entries')
+            .filter((e) => orderIds.has(String(e.source_id))
+              && ['order', 'order_edit', 'order_cancel'].includes(e.source_type))
+            .reduce((sum, e) => sum + (e.direction === 'credit' ? -Number(e.amount) : Number(e.amount)), 0);
+          const allocations = rowsOf('seller_payment_allocations')
+            .filter((a) => String(a.order_group_id) === groupId);
+          const paid = allocations.reduce((sum, a) => sum + Number(a.amount || 0), 0);
+          const open = Math.max(debt - paid, 0);
+          const stockFor = (productId) => {
+            const row = rowsOf('seller_stock').find((r) => String(r.seller_id) === String(first.seller_id)
+              && String(r.product_id) === String(productId));
+            return row ? Number(row.quantity) : 0;
+          };
+          return {
+            order_group_id: groupId,
+            seller_id: first.seller_id,
+            created_at: first.created_at,
+            order_status: first.status,
+            order_total: groupOrders.reduce((s, o) => s + Number(o.quantity) * Number(o.unit_price || 0), 0),
+            initial_paid: groupOrders.reduce((s, o) => s + Number(o.paid_amount || 0), 0),
+            account_amount: debt,
+            paid_amount: paid,
+            open_amount: open,
+            account_status: open < 0.005 ? 'quitado' : (paid > 0 ? 'parcial' : 'aberto'),
+            items: groupOrders.map((o) => ({
+              product_id: o.product_id,
+              product_name: (rowsOf('products').find((pr) => String(pr.id) === String(o.product_id)) || {}).name || 'Produto',
+              quantity: Number(o.quantity),
+              on_hand: stockFor(o.product_id),
+              unit_price: Number(o.unit_price || 0),
+            })),
+            payments: allocations.map((a) => {
+              const payment = rowsOf('seller_payments').find((pmt) => String(pmt.id) === String(a.payment_id)) || {};
+              return { date: payment.payment_date, amount: Number(a.amount), method: payment.method, notes: payment.notes };
+            }),
+          };
+        });
+        return json(route, accounts);
+      }
+
       return json(route, { mock: 'rpc-not-implemented', fn });
     }
 
@@ -559,7 +620,10 @@ const COMMANDS = {
   async login(role) {
     if (!page) return console.log('ERROR: launch first');
     if (role) await COMMANDS.mock(role);
-    await page.fill('#authRoot form input[type="email"]', currentFixture.email);
+    // Campo de identificacao e' type="text" name="identifier" desde que o login
+    // passou a aceitar usuario alem de e-mail (commit f3660af). Era
+    // input[type=email] aqui, e por isso `login` sempre dava timeout.
+    await page.fill('#authRoot form input[name="identifier"]', currentFixture.email);
     await page.fill('#authRoot form input[type="password"]', 'anything123');
     await page.click('#authRoot form button[type="submit"]');
     try {

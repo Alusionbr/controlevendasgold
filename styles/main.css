@@ -305,6 +305,10 @@ button.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; border-radius: 8px; m
   scrollbar-width: thin;
   box-shadow: var(--shadow-sm);
 }
+/* `display: flex` acima vence o atributo `hidden` sozinho — mesmo motivo das
+   regras equivalentes em .business-bar, .dashboard e .bottom-nav. Necessária
+   desde que a barra passou a sumir para papel com uma aba só. */
+.tabs[hidden] { display: none; }
 .tabs::-webkit-scrollbar { height: 6px; }
 .tabs::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
 .tab-button {
@@ -1338,6 +1342,11 @@ pre {
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
+/* O padrao de cabecalho aqui e' <div><strong>titulo</strong><small>descricao</small></div>.
+   <small> e' inline, entao sem isto a descricao cola no titulo ("Tarefa: entrar 15
+   dias seguidosUma entrada por dia conta..."). A regra existia so' dentro de
+   .seller-order-account; vale para todo card que usa esta classe. */
+.approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
 .approval-items { display: grid; gap: 0.55rem; margin: 0.8rem 0; }
 .approval-line {
   display: grid;
@@ -1508,7 +1517,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   border-radius: var(--radius);
   background: var(--surface);
 }
-.seller-order-account .approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
 .seller-order-account h4 { font-size: 0.82rem; margin: 0.15rem 0 0; }
 .seller-account-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; }
 .seller-account-summary > div {
@@ -1560,16 +1568,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   flex-wrap: wrap;
   padding-top: 0.5rem;
   border-top: 1px dashed var(--line);
-}
-.dashboard-period-card { gap: 0.5rem; }
-.dashboard-period-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
-}
-.dashboard-period-fields input { min-width: 0; padding: 0.45rem; }
-@media (max-width: 420px) {
-  .dashboard-period-fields { grid-template-columns: 1fr; }
 }
 
 
@@ -2141,6 +2139,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
      conteúdo dentro ficava espremido e alto. */
   .app-shell { max-width: 1320px; padding-bottom: 3rem; }
   .app-body { grid-template-columns: 208px 1fr; gap: 1.25rem; }
+  /* Papel com uma aba só (vendedor): sem barra lateral, sem coluna vazia. */
+  .app-body.no-nav { grid-template-columns: 1fr; }
 
   /* 2 — menos caixa */
   .business-bar,

@@ -14,10 +14,10 @@
       <h1>Controle360 <span>Multi</span></h1>
       <p>Vendas, carrinhos, estoque e consignado em um painel direto.</p>
     </div>
+    <!-- "Backup" e "Ajuda" saíram: eram atalhos para as abas `dados` e `ajuda`,
+         que já estão na navegação lateral. -->
     <div class="header-actions" id="headerActions" hidden>
       <button id="btnExport" class="secondary">Baixar Excel</button>
-      <button id="btnDataTab" class="ghost">Backup</button>
-      <button id="btnHelp" class="ghost">Ajuda</button>
       <button id="btnLogout" class="ghost">Sair</button>
     </div>
   </header>
@@ -25,12 +25,13 @@
   <div id="authRoot"></div>
 
   <main class="app-shell" id="appShell" hidden>
-    <section class="business-bar" aria-label="Negócio ativo">
+    <!-- Só aparece com 2+ negócios (ver renderBusinessSelector em src/app.js).
+         "Zerar dados locais" mudou para a aba Dados, junto do backup. -->
+    <section class="business-bar" aria-label="Negócio ativo" hidden>
       <div>
         <label for="activeBusiness">Negócio ativo</label>
         <select id="activeBusiness"></select>
       </div>
-      <button id="btnReset" class="danger ghost">Zerar dados locais</button>
     </section>
 
     <section id="dashboard" class="dashboard"></section>

@@ -677,6 +677,17 @@
           </label>
           <button type="submit">Criar vendedor</button></form></details>
         ${listHtml}
+
+        <!-- "Permissões dos vendedores" (src/salesCart.js, renderAdminSettings/
+             mountSettings) ficou órfã quando a aba "Aprovações" saiu da
+             navegação: o código existia mas nenhuma tela o montava, então
+             consignado permitido, link público, desconto máximo e créditos de
+             acerto estavam inacessíveis pela interface. Mora aqui, que é onde
+             o admin já administra vendedor. -->
+        <details class="panel-card" id="sellerSettingsDisclosure">
+          <summary>Permissões dos vendedores</summary>
+          <div id="sellerSettingsPanel"></div>
+        </details>
       `
     );
   }
@@ -693,6 +704,12 @@
 
     function paint() {
       container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback, filter });
+      // O módulo de permissões gerencia o próprio HTML e listeners num
+      // container escopado (padrão mount/paint), então remonta a cada paint.
+      const settingsPanel = container.querySelector('#sellerSettingsPanel');
+      if (settingsPanel && window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
+        window.C360.salesCart.mountSettings(settingsPanel);
+      }
     }
 
     function errorHost() {

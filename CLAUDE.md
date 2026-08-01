@@ -1028,3 +1028,133 @@ Ou seja: exportar funciona (e agora é completo), **restaurar não**. Consertar
 exige upsert das ~23 coleções respeitando ordem de FK e RLS — é trabalho de
 backend, com decisão de produto no meio (substituir tudo? mesclar? o que fazer
 com id que já existe?), por isso não foi feito junto.
+
+---
+
+## Atualização: enxugar a interface do admin (20 → 15 abas) e limpar a conta do vendedor
+
+Pedido do usuário: verificar a conta do vendedor com uma conta de teste e
+"melhorar a interface, a tela está muito grande no administrador". Tudo medido
+ao vivo com a skill `run-controlevendasgold` (Supabase mockado), com o banco
+quase vazio — 1 venda de R$ 50.
+
+### O que estava grande, em números
+
+| | Antes | Depois |
+|---|---|---|
+| Cabeçalho antes do conteúdo (toda aba menos Hoje) | 439px | 225px |
+| `#dashboard` | 216px (8 cards, **quebrando em 2 linhas** a 1280px) | 98px (4 cards, 1 linha) |
+| Tela "Hoje" | 2363px | 1721px |
+| Aba Configurações (soma de Negócios+Dados+Ajuda) | — | 721px (era 5903px sem os `<details>`) |
+| Abas visíveis ao admin | 20 | 15 |
+
+### Duplicação removida da tela "Hoje"
+
+Era **um defeito de composição**, não de cálculo: as mesmas funções
+(`Calc.businessMetrics`, `Calc.creditSalesPosition`, `Calc.dailyReceipts`)
+alimentavam blocos diferentes da mesma tela. Receita e Lucro apareciam 2×,
+"Saiu a prazo" 3×, "Financeiro vencido" 2×, e havia **dois gráficos da mesma
+série** de receita (linha de 30 dias + barras de 7 dias).
+
+- `renderAdvancedDashboard` ficou só com os três cards que **têm** delta vs. os
+  28 dias anteriores — é o que aquela grade tem de único. Os outros três
+  passavam `null` como comparação, ou seja, eram repetição pura. Os rótulos
+  ganharam "(28 dias)" porque o strip do topo mostra os mesmos nomes referentes
+  ao dia — era isso que fazia a tela parecer repetida.
+- `renderOperationsSnapshot` ficou só com o que exige ação (Aprovações, Para
+  despachar, Financeiro vencido). Saíram "Com vendedores"/"Consignado a
+  receber" (a seção "Saiu a prazo" logo acima já decompõe os dois) e o gráfico
+  de 7 dias.
+- "Pagamentos de vendedores no mês" só renderiza quando há pagamento, e dentro
+  de `dashboard-analytics-grid` em vez de numa faixa própria.
+
+### Abas: 4 destinos viraram seção de uma tela vizinha
+
+Nenhuma funcionalidade foi removida — só deixaram de ser destino na navegação:
+
+| Saiu | Foi para | Por quê |
+|---|---|---|
+| `fornecedores` | `<details>` no fim de **Compras** | o único uso do cadastro é o campo "Fornecedor" da compra |
+| `precos` | `<details>` no fim de **Produtos** (`mountProductsExtras`) | preço padrão/piso/por vendedor é atributo de produto |
+| `calculadora` | nada — o `.calc-fab` já existe em toda tela | a aba era uma segunda porta para a mesma coisa |
+| `negocios`+`dados`+`ajuda` | aba **`configuracoes`** | três telas raras, consultadas uma de cada vez |
+
+`TAB_ORDER`/`TAB_LABELS`/`TAB_ROLES`/`TAB_GROUPS` e `mountModuleTab` continuam
+sendo a fonte única — a bottom-nav e o menu "Mais" derivam dali, não há lista
+duplicada. **O `default` de `mountModuleTab` deixou de renderizar Negócios**:
+isso fazia um `data-tab` com erro de digitação parecer uma tela legítima; agora
+devolve aviso nomeando a aba não encontrada.
+
+### Topo: o que saiu do painel fixo
+
+- **Seletor de período**: a aba Relatórios já tem um melhor (faixa de datas +
+  atalhos 7d/30d/90d/mês) sobre as **mesmas** variáveis `dashboardStart`/`End`.
+  No painel fixo o período passa a ser o mês corrente.
+- **Barra "Negócio ativo"**: escondida com 1 negócio só (o caso normal — o
+  bootstrap é 1 por conta). `applyRoleVisibility` agora só *esconde*; quem
+  decide mostrar é `renderBusinessSelector`, que sabe a contagem.
+- **"Zerar dados locais"** saiu do topo (botão vermelho em toda tela) para a
+  aba Configurações, junto do backup. Como agora nasce e morre a cada render,
+  o listener virou delegado no `document`.
+- **"Backup" e "Ajuda"** do header: eram atalhos para abas que já estavam na
+  navegação.
+
+### Conta do vendedor: verificada, 3 defeitos corrigidos
+
+O fluxo está **correto** — login por usuário, papel resolvido por
+`profiles.role`, e a tela "Minha conta" (`src/sellerLedger.js`) renderiza
+situação, tarefa de login, informar pagamento, contas por pedido, histórico e
+troca de senha. Os defeitos eram de interface:
+
+1. **Título colado na descrição** — `styles/main.css` tinha
+   `display:block` no `<small>` de `.approval-card-head` escopado a
+   `.seller-order-account`, mas o mesmo markup é usado por
+   `seller-payment-report-card` e `seller-login-task`. Lia-se *"Tarefa: entrar
+   15 dias seguidos**Uma entrada por dia conta...**"*. A regra foi desescopada.
+2. **Navegação com um destino só** — com uma aba apenas, a barra lateral
+   gastava uma coluna de 208px e a bottom-nav do celular uma faixa fixa
+   permanente, ambas com um botão que leva à tela onde o usuário já está.
+   `applyRoleVisibility` esconde as duas quando o papel tem ≤1 aba permitida
+   (`.app-body.no-nav` tira a coluna). **Precisou de `.tabs[hidden]
+   { display:none }`**: `display:flex` vence o atributo `hidden` sozinho —
+   mesmo motivo das regras já existentes em `.business-bar`/`.dashboard`.
+
+O vendedor continua somente-leitura com 1 aba (decisão do PR #18 /
+`0023_seller_read_only.sql`). Reativar "Meu estoque"/"Devoluções" exigiria
+migration, não só trocar `SEM_PAPEL` por `['vendedor']`.
+
+### Tela que estava inacessível
+
+`renderAdminSettings`/`mountSettings` ("Permissões dos vendedores",
+`src/salesCart.js`) **não era montada em lugar nenhum** desde que a aba
+"Aprovações" saiu da navegação — consignado permitido, link público, desconto
+máximo e créditos de acerto estavam inalcançáveis pela interface. Agora é um
+`<details>` no fim da aba **Vendedores**, remontado a cada `paint()` de
+`mountSellers`.
+
+### Robustez: um endpoint ruim derrubava o app inteiro
+
+`refresh()` carrega ~25 endpoints em `Promise.all` e fazia `.map()` direto em
+cada resultado. Uma resposta inesperada de **qualquer** um deles quebrava o
+refresh inteiro e o usuário entrava num app sem dado nenhum — foi exatamente o
+que aconteceu no primeiro teste (`sellerOrderAccounts.map is not a function`).
+Novo helper `rows()` em `src/state.js`: um endpoint com problema agora custa só
+a própria coleção vazia.
+
+### Ferramentas que estavam quebradas
+
+- **`build-mobile.js`**: falhava com ENOENT em `src/utils.js?v=20260730b` — não
+  removia o `?v=` de cache-busting que o `index.html` usa. Estava assim antes
+  desta mudança; `controle360-mobile.html` não era regenerável.
+- **`.claude/skills/run-controlevendasgold/driver.mjs`**: `login` procurava
+  `input[type="email"]`, mas o campo virou `input[name="identifier"]` quando o
+  login passou a aceitar usuário. E o RPC `list_seller_order_accounts` não era
+  mockado — devolvia um objeto onde o app espera array, derrubando o refresh.
+  Ambos corrigidos; o RPC agora é reimplementado a partir de `orders` +
+  `seller_account_entries` + `seller_payment_allocations`.
+
+### Verificação
+
+`node --test tests/*.test.js` → 37/37. As 15 abas do admin percorridas uma a
+uma (nenhuma vazia, nenhuma caindo no `default`), vendedor conferido em desktop
+e em 390×844, e `node build-mobile.js` regenerado.

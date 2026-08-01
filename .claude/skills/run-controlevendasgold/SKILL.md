@@ -70,7 +70,7 @@ binary, which then hangs on a `Password:` prompt — `Ctrl-C` to escape it).
 | `mock admin \| mock vendedor` | pick which fixture profile the *next* login returns |
 | `login [admin\|vendedor]` | fill + submit the login form, wait for `#appShell` |
 | `ss [name]` | full-page screenshot → `/tmp/shots/<name>.png` |
-| `tab <tabId>` | jump straight to a tab via `window.C360.app.setTab(tabId)` — see `TAB_ORDER` in `src/app.js` for valid ids (`hoje`, `vendedores`, `meuestoque`, `devolucoes`, `aprovacoes`, …) |
+| `tab <tabId>` | jump straight to a tab via `window.C360.app.setTab(tabId)` — see `TAB_ORDER` in `src/app.js` for valid ids (`hoje`, `vendas`, `vendedores`, `produtos`, `compras`, `devolucoes`, `configuracoes`, …). `setTab` also checks the role, so as vendedor only `meusaldo` works and anything else is silently ignored |
 | `click <css-sel>` / `click-text <text>` | click via DOM (`el.click()`), not coordinates |
 | `type <text>` / `press <key>` | keyboard input |
 | `resize <WxH>` | change viewport, e.g. `resize 390x844` for a phone-sized layout (nav switches to bottom-nav under 720px wide) |
@@ -124,10 +124,18 @@ useful headless.
 
 ## Troubleshooting
 
-- **`page.fill` timeout waiting for `#authRoot form input[type="email"]`
-  after `login`:** you're not actually on the login screen — either
-  `launch` didn't finish, or a previous `confirm()`-gated logout silently
-  failed (see Gotchas). Run `ss` and look at the PNG before retrying.
+- **`page.fill` timeout waiting for the login field after `login`:** you're
+  not actually on the login screen — either `launch` didn't finish, or a
+  previous `confirm()`-gated logout silently failed (see Gotchas). Run `ss`
+  and look at the PNG before retrying. Note the field is
+  `input[name="identifier"]` ("Usuário ou e-mail"), not `input[type="email"]`
+  — the driver looked for the latter until the login-by-username change and
+  timed out every time.
+- **`login <role>` seems to keep the previous role:** `login admin` sets the
+  mock *and* submits in one go, but a reload racing with it can land on the
+  old page. If the role looks wrong, do `mock <role>`, then reload, then a
+  bare `login`, and confirm with
+  `eval ({role:(window.C360.state.getCurrentUser()||{}).role})`.
 - **Command typed into `-bash` instead of `driver>`:** the driver process
   wasn't ready yet. Always poll `tmux capture-pane … | grep -q "driver>"`
   (or the relevant "done" marker) before sending the next `send-keys`, per

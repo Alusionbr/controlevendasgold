@@ -234,6 +234,15 @@
     return result;
   }
 
+  // refresh() carrega ~25 endpoints em paralelo e antes fazia .map() direto no
+  // resultado de cada um. Uma resposta inesperada de QUALQUER um (RPC que não
+  // existe no ambiente, erro devolvido como objeto) derrubava o refresh inteiro
+  // com "x.map is not a function" e o usuário entrava num app sem dado nenhum.
+  // Agora um endpoint com problema custa só a própria coleção vazia.
+  function rows(value) {
+    return (Array.isArray(value) ? value : []).map(toCamelCaseRow);
+  }
+
   // ---------------------------------------------------------------------
   // Nome de coleção local (camelCase, shape antigo do app) <-> nome de
   // tabela real no Postgres (snake_case). Chamadores que já passam o nome de
@@ -411,42 +420,42 @@
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
 
-    state.businesses = businesses.map(toCamelCaseRow);
-    state.products = products.map(toCamelCaseRow);
-    state.clients = clients.map(toCamelCaseRow);
-    state.suppliers = suppliers.map(toCamelCaseRow);
-    state.purchases = purchases.map(toCamelCaseRow);
-    state.stockMovements = stockMovements.map(toCamelCaseRow);
-    state.recipes = recipes.map(toCamelCaseRow);
-    state.productions = productions.map(toCamelCaseRow);
-    state.sales = sales.map(toCamelCaseRow);
-    state.orders = orders.map(toCamelCaseRow);
-    state.consignments = consignments.map(toCamelCaseRow);
-    state.consignmentEvents = consignmentEvents.map(toCamelCaseRow);
-    state.tasks = tasks.map(toCamelCaseRow);
-    state.profiles = profiles.map(toCamelCaseRow);
+    state.businesses = rows(businesses);
+    state.products = rows(products);
+    state.clients = rows(clients);
+    state.suppliers = rows(suppliers);
+    state.purchases = rows(purchases);
+    state.stockMovements = rows(stockMovements);
+    state.recipes = rows(recipes);
+    state.productions = rows(productions);
+    state.sales = rows(sales);
+    state.orders = rows(orders);
+    state.consignments = rows(consignments);
+    state.consignmentEvents = rows(consignmentEvents);
+    state.tasks = rows(tasks);
+    state.profiles = rows(profiles);
     state.sellers = state.profiles.filter((profile) => profile.role === 'vendedor');
-    state.sellerPrices = sellerPrices.map(toCamelCaseRow);
-    state.sellerStock = sellerStock.map(toCamelCaseRow);
-    state.sellerSettings = sellerSettings.map(toCamelCaseRow);
-    state.sellerLoginRewards = sellerLoginRewards.map(toCamelCaseRow);
-    state.saleCarts = saleCarts.map(toCamelCaseRow);
-    state.saleCartItems = saleCartItems.map(toCamelCaseRow);
-    state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
-    state.sellerPayments = sellerPayments.map(toCamelCaseRow);
-    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
-    state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
-    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
-    state.financialEntries = financialEntries.map(toCamelCaseRow);
-    state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
-    state.operationalMovements = operationalMovements.map(toCamelCaseRow);
+    state.sellerPrices = rows(sellerPrices);
+    state.sellerStock = rows(sellerStock);
+    state.sellerSettings = rows(sellerSettings);
+    state.sellerLoginRewards = rows(sellerLoginRewards);
+    state.saleCarts = rows(saleCarts);
+    state.saleCartItems = rows(saleCartItems);
+    state.sellerAccountEntries = rows(sellerAccountEntries);
+    state.sellerPayments = rows(sellerPayments);
+    state.sellerPaymentAllocations = rows(sellerPaymentAllocations);
+    state.sellerPaymentReports = rows(sellerPaymentReports);
+    state.sellerOrderAccounts = rows(sellerOrderAccounts);
+    state.financialEntries = rows(financialEntries);
+    state.recordAuditLog = rows(recordAuditLog);
+    state.operationalMovements = rows(operationalMovements);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),
       api.listGoalsProgress(),
     ]);
-    state.salesGoals = salesGoals;
-    state.goalsProgress = goalsProgress;
+    state.salesGoals = Array.isArray(salesGoals) ? salesGoals : [];
+    state.goalsProgress = Array.isArray(goalsProgress) ? goalsProgress : [];
   }
 
   async function refreshAsSeller(businessId, userId) {
@@ -469,16 +478,16 @@
       api.listSellerOrderAccounts(userId),
     ]);
 
-    state.businesses = businesses.map(toCamelCaseRow);
-    state.products = sellerProducts;
-    state.sellerStock = sellerStock;
-    state.sellerSettings = sellerSettings.map(toCamelCaseRow);
+    state.businesses = rows(businesses);
+    state.products = Array.isArray(sellerProducts) ? sellerProducts : [];
+    state.sellerStock = Array.isArray(sellerStock) ? sellerStock : [];
+    state.sellerSettings = rows(sellerSettings);
     state.sellerLoginReward = loginReward || null;
-    state.sellerAccountEntries = sellerAccountEntries.map(toCamelCaseRow);
-    state.sellerPayments = sellerPayments.map(toCamelCaseRow);
-    state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
-    state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
-    state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
+    state.sellerAccountEntries = rows(sellerAccountEntries);
+    state.sellerPayments = rows(sellerPayments);
+    state.sellerPaymentAllocations = rows(sellerPaymentAllocations);
+    state.sellerPaymentReports = rows(sellerPaymentReports);
+    state.sellerOrderAccounts = rows(sellerOrderAccounts);
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];

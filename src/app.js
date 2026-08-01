@@ -16,20 +16,24 @@
   // Modelo operacional oficial: vendedores têm uma única tela somente leitura
   // ("Minha conta"). Toda movimentação de estoque e dinheiro é feita pelo admin.
   // A RLS aplica a mesma regra no banco; isto é apenas a camada de interface.
+  // Eram 20 abas visíveis ao admin. Quatro viraram seção de uma tela vizinha,
+  // em vez de destino próprio na navegação:
+  // - `fornecedores` → seção da aba Compras (é onde fornecedor é usado);
+  // - `precos`       → seção da aba Produtos (preço é atributo de produto);
+  // - `calculadora`  → só o botão flutuante, que já existe em toda tela;
+  // - `negocios`+`dados`+`ajuda` → aba única `configuracoes`.
   const TAB_ORDER = [
-    'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
+    'hoje', 'produtos', 'clientes', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
-    'tarefas', 'relatorios', 'vendedores', 'precos',
-    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
-    'ajuda', 'dados',
+    'tarefas', 'relatorios', 'vendedores',
+    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'metas',
+    'configuracoes',
   ];
 
   const TAB_LABELS = {
     hoje: 'Hoje',
-    negocios: 'Negócios',
     produtos: 'Produtos',
     clientes: 'Clientes',
-    fornecedores: 'Fornecedores',
     compras: 'Compras',
     fichas: 'Fichas e custos',
     producao: 'Produção',
@@ -40,7 +44,6 @@
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
-    precos: 'Preços',
     meusaldo: 'Minha conta',
     // Rótulo de navegação é destino, não descrição: "Devoluções,
     // desperdícios e brindes" quebrava em 3 linhas na barra lateral e
@@ -49,10 +52,8 @@
     // ele ensina o que cabe ali.
     devolucoes: 'Devoluções e brindes',
     minhasdevolucoes: 'Devoluções e brindes',
-    calculadora: 'Calculadora',
     metas: 'Metas',
-    ajuda: 'Ajuda',
-    dados: 'Dados',
+    configuracoes: 'Configurações',
   };
 
   // Defesa em profundidade: a RLS do banco já bloqueia o acesso real, isto
@@ -68,10 +69,8 @@
   const SEM_PAPEL = [];
   const TAB_ROLES = {
     hoje: ['admin'],
-    negocios: ['admin'],
     produtos: ['admin'],
     clientes: ['admin'],
-    fornecedores: ['admin'],
     compras: ['admin'],
     fichas: ['admin'],
     producao: ['admin'],
@@ -82,14 +81,11 @@
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
-    precos: ['admin'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: SEM_PAPEL, // "Devoluções e brindes" do vendedor
-    calculadora: ['admin'],
     metas: ['admin'],
-    ajuda: ['admin'],
-    dados: ['admin'],
+    configuracoes: ['admin'],
   };
 
   // Agrupamento das abas por assunto/frequência de uso (decisão do usuário:
@@ -106,9 +102,9 @@
     { id: 'mercadoria', label: 'Mercadoria e produção',
       tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
     { id: 'cadastros', label: 'Cadastros',
-      tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
+      tabs: ['clientes'] },
     { id: 'ferramentas', label: 'Ferramentas',
-      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+      tabs: ['relatorios', 'tarefas', 'configuracoes'] },
   ];
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
@@ -188,9 +184,6 @@
     dashboard: document.getElementById('dashboard'),
     activeBusiness: document.getElementById('activeBusiness'),
     btnExport: document.getElementById('btnExport'),
-    btnDataTab: document.getElementById('btnDataTab'),
-    btnHelp: document.getElementById('btnHelp'),
-    btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
     headerActions: document.getElementById('headerActions'),
@@ -257,11 +250,22 @@
       const anyVisible = [...group.querySelectorAll('.tab-button')].some((button) => !button.hidden);
       group.hidden = !anyVisible;
     });
-    if (els.businessBar) els.businessBar.hidden = role !== 'admin';
-    [els.btnExport, els.btnDataTab, els.btnHelp].forEach((button) => {
+    // Só esconde. Quem decide mostrar é renderBusinessSelector(), que sabe
+    // quantos negócios existem — com um só, a barra não aparece nem para admin.
+    if (els.businessBar && role !== 'admin') els.businessBar.hidden = true;
+    [els.btnExport].forEach((button) => {
       if (button) button.hidden = role !== 'admin';
     });
+    // Com um destino só, navegação é ruído: a barra lateral gastava uma coluna
+    // de 208px e a bottom-nav do celular uma faixa fixa permanente, ambas com
+    // um único botão que leva à tela onde o usuário já está. É o caso do
+    // vendedor hoje (só "Minha conta").
+    const allowedCount = TAB_ORDER.filter(tabAllowed).length;
+    const tabsBar = document.getElementById('tabsBar');
+    if (tabsBar) tabsBar.hidden = allowedCount <= 1;
+    document.querySelector('.app-body')?.classList.toggle('no-nav', allowedCount <= 1);
     if (els.bottomNav) {
+      els.bottomNav.hidden = allowedCount <= 1;
       els.bottomNav.querySelectorAll('[data-role-set]').forEach((node) => {
         node.hidden = node.dataset.roleSet !== role;
       });
@@ -315,6 +319,14 @@
     const businesses = state().businesses;
     els.activeBusiness.innerHTML = UI.optionList(businesses, state().activeBusinessId, businesses.length ? 'Selecione' : 'Nenhum negócio cadastrado');
     els.activeBusiness.disabled = businesses.length === 0;
+    // Com um negócio só (o caso normal: o bootstrap é 1 negócio por conta) o
+    // seletor tem uma opção única e custava ~100px no topo de TODA aba. Some
+    // sozinho e volta assim que existir um segundo negócio para alternar.
+    // applyRoleVisibility() também mexe em .hidden aqui — quem chama por
+    // último vence, e renderAll() chama esta função depois.
+    if (els.businessBar && currentRole() === 'admin') {
+      els.businessBar.hidden = businesses.length <= 1;
+    }
   }
 
   function renderDashboard() {
@@ -326,39 +338,36 @@
     });
     const periodMetrics = Calc.businessMetrics({ ...baseState, sales: periodSales, revenueDateFrom: dashboardStart, revenueDateTo: dashboardEnd });
     const stockMetrics = Calc.businessMetrics(baseState);
-    els.dashboard.innerHTML = `
-      <article class="metric-card dashboard-period-card">
-        <span>Periodo</span>
-        <div class="dashboard-period-fields">
-          <input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}" aria-label="Inicio do periodo">
-          <input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}" aria-label="Fim do periodo">
-        </div>
-      </article>
-      ${[
-        UI.metric('Receita recebida', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
-        UI.metric('Lucro bruto', U.money(periodMetrics.grossProfit), 'lucroBruto'),
-        UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
-        UI.metric('Alertas de estoque', String(stockMetrics.lowStockCount), 'alertasEstoque'),
-        UI.metric('Saiu a prazo', U.money(Calc.creditSalesPosition(baseState).total), 'vendasPrazo'),
-        UI.metric('Pedidos pendentes', String(stockMetrics.pendingOrders), 'pedidosPendentes'),
-        `<button type="button" class="metric-card metric-card-action quick-action ${pendingSellerPayments ? 'needs-attention' : ''}" data-tab="vendedores" data-focus="seller-payments"><span>Pagamentos para conferir</span><strong>${pendingSellerPayments}</strong><small>${pendingSellerPayments ? 'Abrir fila de conferência' : 'Nenhum pendente'}</small></button>`,
-      ].join('')}
-    `;
-    // "Visão operacional" NÃO entra aqui de propósito. O painel fixo aparece
-    // em todas as abas menos "Hoje" (que tem a própria versão), então esse
-    // bloco alto se repetia no topo de Vendas, Produtos, Compras... empurrando
-    // o conteúdo de trabalho — e a barra lateral inteira — para baixo da
-    // dobra, sem mostrar nada que a tela "Hoje" já não mostre melhor. As seis
-    // métricas acima continuam em todas as abas por serem compactas.
+    els.dashboard.innerHTML = [
+      UI.metric('Receita recebida', U.money(periodMetrics.netRevenue), 'receitaLiquida'),
+      UI.metric('Valor em estoque', U.money(stockMetrics.stockValue), 'valorEstoque'),
+      UI.metric('Saiu a prazo', U.money(Calc.creditSalesPosition(baseState).total), 'vendasPrazo'),
+      `<button type="button" class="metric-card metric-card-action quick-action ${pendingSellerPayments ? 'needs-attention' : ''}" data-tab="vendedores" data-focus="seller-payments"><span>Pagamentos para conferir</span><strong>${pendingSellerPayments}</strong><small>${pendingSellerPayments ? 'Abrir fila de conferência' : 'Nenhum pendente'}</small></button>`,
+    ].join('');
+    // Este painel aparece em TODA aba menos "Hoje", então cada card aqui é um
+    // imposto cobrado de Vendas, Produtos, Compras... Antes eram 8 (período +
+    // 7 métricas): quebravam em duas linhas a 1280px e empurravam o conteúdo
+    // de trabalho ~440px para baixo. Ficaram 4, que cabem numa linha.
+    //
+    // O que saiu e por quê:
+    // - seletor de período: a aba Relatórios já tem um melhor (faixa de datas +
+    //   atalhos 7d/30d/90d/mês) sobre as MESMAS variáveis dashboardStart/End.
+    //   Aqui o período passa a ser sempre o mês corrente.
+    // - Lucro bruto, Alertas de estoque, Pedidos pendentes: todos na tela
+    //   "Hoje" e em Relatórios.
+    //
+    // "Visão operacional" continua fora daqui de propósito — bloco alto demais
+    // para repetir no topo de toda tela.
   }
 
+  // Só "o que exige atenção agora": cada card aqui pede uma ação do admin.
+  // Saíram deste bloco, por serem repetição dentro da própria tela "Hoje":
+  // - "Com vendedores" e "Consignado a receber" → a seção "Saiu a prazo", logo
+  //   acima, já mostra os dois decompostos em clientes × vendedores;
+  // - o gráfico "Receita recebida — últimos 7 dias" → é a MESMA série de
+  //   Calc.dailyReceipts já desenhada como linha de 30 dias em "Visão geral".
   function renderOperationsSnapshot(baseState) {
     const businessId = baseState.activeBusinessId;
-    const products = (baseState.products || []).filter((product) => product.businessId === businessId);
-    const productMap = new Map(products.map((product) => [String(product.id), product]));
-    const withSellers = (baseState.sellerStock || []).filter((row) => row.businessId === businessId)
-      .reduce((sum, row) => sum + U.number(row.quantity) * U.number(productMap.get(String(row.productId))?.avgCost), 0);
-    const snapshotMetrics = Calc.businessMetrics(baseState);
     const openOrders = (baseState.orders || []).filter((order) => order.businessId === businessId && !['despachado', 'concluido'].includes(order.status));
     const approvalOrders = openOrders.filter((order) => order.approvalStatus === 'pendente_aprovacao');
     const readyToShip = openOrders.filter((order) => order.approvalStatus === 'aprovado');
@@ -366,24 +375,14 @@
     const overdueFinancial = financialOpen.filter((entry) => entry.dueDate && entry.dueDate < U.today());
     const overdueFinancialValue = overdueFinancial.reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const orderTotal = (rows) => rows.reduce((sum, order) => sum + U.number(order.quantity) * U.number(order.unitPrice), 0);
-    const days = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - index));
-      return { key: date.toISOString().slice(0, 10), label: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), amount: 0 };
-    });
-    days.forEach((day) => { day.amount = Calc.dailyReceipts(baseState, day.key).total; });
-    const maxDay = Math.max(...days.map((day) => day.amount), 1);
     return `
       <section class='operations-snapshot' aria-label='Resumo operacional'>
         <div class='operations-snapshot-head'><div><span>Visão operacional</span><h2>O que exige atenção agora</h2></div><button type='button' class='small secondary quick-action' data-tab='vendas'>Abrir esteira</button></div>
         <div class='operations-kpis'>
-          <article><span>Com vendedores</span><strong>${U.money(withSellers)}</strong><small>Mercadoria já repassada, pelo custo.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
-          <article><span>Consignado a receber</span><strong>${U.money(snapshotMetrics.consignmentsOpen)}</strong><small>${U.money(snapshotMetrics.consignmentsWithSellers)} de vendedores; o resto é consignado com clientes.</small><button type='button' class='link-button quick-action' data-tab='vendedores'>Ver vendedores</button></article>
           <article class='${approvalOrders.length ? 'needs-attention' : ''}'><span>Aprovações</span><strong>${approvalOrders.length}</strong><small>${U.money(orderTotal(approvalOrders))} aguardando decisão.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Revisar pedidos</button></article>
           <article><span>Para despachar</span><strong>${readyToShip.length}</strong><small>${U.money(orderTotal(readyToShip))} aprovado, ainda no estoque central.</small><button type='button' class='link-button quick-action' data-tab='vendas'>Preparar envios</button></article>
           <article class='${overdueFinancial.length ? 'needs-attention' : ''}'><span>Financeiro vencido</span><strong>${U.money(overdueFinancialValue)}</strong><small>${overdueFinancial.length} lançamento(s) exigem atenção.</small><button type='button' class='link-button quick-action' data-tab='financeiro'>Abrir financeiro</button></article>
         </div>
-        <div class='sales-trend-card'><div><h3>Receita recebida — últimos 7 dias</h3><p>Somente valores que realmente entraram, por dia.</p></div><div class='sales-bars' role='img' aria-label='Gráfico de vendas dos últimos sete dias'>${days.map((day) => `<div class='sales-bar'><i style='height:${Math.max(4, Math.round((day.amount / maxDay) * 100))}%'></i><span>${U.escapeHtml(day.label)}</span></div>`).join('')}</div></div>
       </section>`;
   }
 
@@ -521,10 +520,18 @@
     const currentTicket = currentMetrics.recognizedRevenueCount ? currentMetrics.netRevenue / currentMetrics.recognizedRevenueCount : 0;
     const previousTicket = previousMetrics.recognizedRevenueCount ? previousMetrics.netRevenue / previousMetrics.recognizedRevenueCount : 0;
     const delta = (current, previous) => previous ? ((current - previous) / Math.abs(previous)) * 100 : (current ? 100 : 0);
-    const financialOverdue = currentFinancialEntries().filter((entry) => entry.status !== 'paid' && entry.status !== 'cancelled' && entry.dueDate && entry.dueDate < U.today()).reduce((sum, entry) => sum + Math.max(0, U.number(entry.amount) - U.number(entry.paidAmount)), 0);
     const deltaBadge = (value) => `<small class="metric-delta ${value < 0 ? 'negative' : 'positive'}">${value < 0 ? '' : '+'}${value.toFixed(1)}%</small>`;
     const metricCard = (label, value, comparison, helpKey, extraClass = '') => `<article class="metric-card ${extraClass}"><span>${U.escapeHtml(label)} ${helpKey ? UI.help(helpKey) : ''}</span><strong>${value}</strong>${comparison === null ? '' : deltaBadge(comparison)}</article>`;
-    const metricsGrid = `<div class="dashboard-advanced-metrics">${metricCard('Receita recebida', U.money(currentMetrics.netRevenue), delta(currentMetrics.netRevenue, previousMetrics.netRevenue), 'receitaLiquida')}${metricCard('Lucro bruto', U.money(currentMetrics.grossProfit), delta(currentMetrics.grossProfit, previousMetrics.grossProfit), 'lucroBruto')}${metricCard('Ticket médio', U.money(currentTicket), delta(currentTicket, previousTicket))}${metricCard('Saiu a prazo', U.money(Calc.creditSalesPosition(state()).total), null, 'vendasPrazo')}${metricCard('Pedidos pendentes', String(currentMetrics.pendingOrders), null, 'pedidosPendentes')}${metricCard('Financeiro vencido', U.money(financialOverdue), null, '', financialOverdue ? 'needs-attention' : '')}</div>`;
+    // O que esta grade tem de único é a comparação contra os 28 dias
+    // anteriores. Ficaram só os três cards que TÊM delta; os outros três não
+    // tinham (passavam `null`) e por isso eram repetição pura de outra seção
+    // da mesma tela "Hoje":
+    // - Saiu a prazo → a seção "Saiu a prazo" decompõe em clientes × vendedores;
+    // - Pedidos pendentes → está no strip do topo;
+    // - Financeiro vencido → está na "Visão operacional", com atalho.
+    // Os rótulos ganharam "(28 dias)" porque o strip do topo mostra os mesmos
+    // nomes referentes ao dia — era o que fazia a tela parecer repetida.
+    const metricsGrid = `<div class="dashboard-advanced-metrics">${metricCard('Receita recebida (28 dias)', U.money(currentMetrics.netRevenue), delta(currentMetrics.netRevenue, previousMetrics.netRevenue), 'receitaLiquida')}${metricCard('Lucro bruto (28 dias)', U.money(currentMetrics.grossProfit), delta(currentMetrics.grossProfit, previousMetrics.grossProfit), 'lucroBruto')}${metricCard('Ticket médio (28 dias)', U.money(currentTicket), delta(currentTicket, previousTicket))}</div>`;
     const now = new Date();
     const days = Array.from({ length: 30 }, (_, index) => {
       const date = new Date(now);
@@ -552,8 +559,8 @@
       <div class="dashboard-analytics-grid">
         <article class="panel-card trend-card"><h3>Receita recebida — últimos 30 dias</h3><svg viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Tendência de vendas"><defs><linearGradient id="salesTrendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"></stop><stop offset="1" stop-color="var(--accent)" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,120 ${points} 400,120" fill="url(#salesTrendFill)"></polygon><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div class="mobile-sales-bars">${days.slice(-7).map((day) => `<span><i style="height:${Math.max(4, Math.round((day.revenue / maxDay) * 100))}%"></i><small>${U.escapeHtml(day.label)}</small></span>`).join('')}</div></article>
         <article class="panel-card margin-panel"><h3>Margem por produto ${UI.help('margemPorProduto')}</h3>${margins.length ? margins.map((row) => { const pct = Math.max(0, Math.min(100, (row.profit / row.revenue) * 100)); return `<div class="margin-row"><span>${U.escapeHtml(row.product?.name || 'Produto removido')}</span><strong>${pct.toFixed(0)}%</strong><i><b style="width:${pct}%"></b></i></div>`; }).join('') : UI.formNotice('Sem vendas no período.', '')}</article>
+        ${sellers.length ? `<article class="panel-card seller-ranking"><h3>Pagamentos de vendedores no mês</h3>${sellers.map(([id, value], index) => `<div><em>${index + 1}</em><span>${U.escapeHtml(sellerName(id))}</span><strong>${U.money(value)}</strong></div>`).join('')}</article>` : ''}
       </div>
-      <article class="panel-card seller-ranking"><h3>Pagamentos de vendedores no mês</h3>${sellers.length ? sellers.map(([id, value], index) => `<div><em>${index + 1}</em><span>${U.escapeHtml(sellerName(id))}</span><strong>${U.money(value)}</strong></div>`).join('') : UI.formNotice('Nenhum pagamento de vendedor neste mês.', '')}</article>
     </section>`;
   }
 
@@ -688,10 +695,8 @@
   // handleSubmit) definido mais abaixo neste arquivo.
   const LEGACY_RENDERERS = {
     hoje: renderToday,
-    negocios: renderBusinesses,
     produtos: renderProducts,
     clientes: renderClients,
-    fornecedores: renderSuppliers,
     compras: renderPurchases,
     fichas: renderRecipes,
     producao: renderProduction,
@@ -700,7 +705,6 @@
     financeiro: renderFinancial,
     tarefas: renderTasks,
     relatorios: renderReports,
-    dados: renderData,
   };
 
   // Abas "modulares": vêm de src/auth.js, src/pricing.js, src/sellerStock.js,
@@ -723,6 +727,7 @@
     if (legacy) {
       els.view.innerHTML = legacy();
       if (activeTab === 'vendas') mountSalesExtras();
+      if (activeTab === 'produtos') mountProductsExtras();
       // Kanban de Tarefas usa o mesmo componente UI.kanban() da esteira de
       // pedidos — mesma marcação de overflow (ver UI.markKanbanOverflow).
       if (activeTab === 'tarefas' && UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(els.view);
@@ -741,12 +746,6 @@
         els.view.innerHTML = '<div id="sellersPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
-        }
-        break;
-      case 'precos':
-        els.view.innerHTML = '<div id="pricingPanel"></div>';
-        if (window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
-          window.C360.pricing.mountAdmin(document.getElementById('pricingPanel'));
         }
         break;
       case 'meusaldo':
@@ -773,14 +772,6 @@
           window.C360.sellerStock.mountMyStock(document.getElementById('myStockPanel'));
         }
         break;
-      case 'calculadora':
-        if (window.C360.calculator) {
-          els.view.innerHTML = window.C360.calculator.render();
-          window.C360.calculator.mount(els.view);
-        } else {
-          els.view.innerHTML = UI.formNotice('Calculadora indisponível.', 'warning');
-        }
-        break;
       case 'metas':
         els.view.innerHTML = '<div id="goalsPanel"></div>';
         if (window.C360.goals) {
@@ -792,14 +783,34 @@
           }
         }
         break;
-      case 'ajuda':
-        els.view.innerHTML = '';
+      // Três telas raras num lugar só: dados do negócio (1 formulário),
+      // backup/exportação e a central de ajuda. Nenhuma justificava aba
+      // própria na navegação diária.
+      case 'configuracoes':
+        // Cada bloco fechado por padrão: são três telas longas (a central de
+        // ajuda sozinha passa de 4000px) que se consulta uma de cada vez.
+        els.view.innerHTML = `
+          <details class="panel-card" open>
+            <summary>Dados do negócio</summary>
+            ${renderBusinesses()}
+          </details>
+          <details class="panel-card">
+            <summary>Backup e exportação</summary>
+            ${renderData()}
+          </details>
+          <details class="panel-card" id="helpDisclosure">
+            <summary>Central de ajuda</summary>
+            <div id="helpPanel"></div>
+          </details>
+        `;
         if (window.C360.sellerHelp && typeof window.C360.sellerHelp.mount === 'function') {
-          window.C360.sellerHelp.mount(els.view);
+          window.C360.sellerHelp.mount(document.getElementById('helpPanel'));
         }
         break;
       default:
-        els.view.innerHTML = renderBusinesses();
+        // Aba desconhecida não deve renderizar Negócios silenciosamente: isso
+        // fazia um erro de digitação em data-tab parecer uma tela legítima.
+        els.view.innerHTML = UI.formNotice(`Tela "${U.escapeHtml(String(tab))}" não encontrada.`, 'warning');
     }
   }
 
@@ -914,7 +925,22 @@
         <button type="submit">Adicionar produto</button>
       </form>
       ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
+
+      <!-- Preços deixou de ser aba própria: preço padrão, piso e preço por
+           vendedor são atributos do produto. O módulo src/pricing.js monta
+           aqui dentro (ver mountProductsExtras). -->
+      <details class="panel-card">
+        <summary>Preço padrão, piso e preço por vendedor</summary>
+        <div id="pricingPanel"></div>
+      </details>
     `, '', '<button type="button" data-action="focus-new-product">+ Novo produto</button>');
+  }
+
+  function mountProductsExtras() {
+    const panel = document.getElementById('pricingPanel');
+    if (panel && window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
+      window.C360.pricing.mountAdmin(panel);
+    }
   }
 
   function labelForProductType(type) {
@@ -951,31 +977,6 @@
         <button type="submit">Cadastrar cliente</button>
       </form>
       ${UI.table(['Nome', 'Telefone', 'Tipo', 'Observações', 'Ações'], rows)}
-    `);
-  }
-
-  function renderSuppliers() {
-    if (!state().activeBusinessId) return activeBusinessRequiredHtml();
-    const rows = currentSuppliers().map((supplier) => [
-      U.escapeHtml(supplier.name),
-      U.escapeHtml(supplier.phone || '—'),
-      U.escapeHtml(supplier.notes || '—'),
-      `<div class="actions">${UI.actionButton('delete-supplier', supplier.id, 'Excluir', 'danger')}</div>`,
-    ]);
-    return UI.section('Fornecedores', 'Fornecedores alimentam as compras e ajudam a rastrear custo de matéria-prima e embalagem.', `
-      <form id="supplierForm" class="grid-form">
-        <label>Nome
-          <input name="name" required placeholder="Fornecedor">
-        </label>
-        <label>Telefone / contato
-          <input name="phone" placeholder="Opcional">
-        </label>
-        <label class="wide">Observações
-          <input name="notes" placeholder="Prazo, desconto, pedido mínimo...">
-        </label>
-        <button type="submit">Cadastrar fornecedor</button>
-      </form>
-      ${UI.table(['Nome', 'Contato', 'Observações', 'Ações'], rows)}
     `);
   }
 
@@ -1049,7 +1050,39 @@
       </details>
       <h3>Histórico de compras</h3>
       ${UI.table(['Data', 'Vencimento', 'Fornecedor', 'Produtos', 'Itens', 'Total', 'Pago', 'Situação', 'Obs.'], rows, 'Nenhuma compra registrada.')}
+
+      ${renderSuppliersSection()}
     `);
+  }
+
+  // Fornecedores deixou de ser aba própria: o único uso do cadastro é o campo
+  // "Fornecedor" da compra logo acima, então mora aqui, fechado por padrão.
+  function renderSuppliersSection() {
+    const rows = currentSuppliers().map((supplier) => [
+      U.escapeHtml(supplier.name),
+      U.escapeHtml(supplier.phone || '—'),
+      U.escapeHtml(supplier.notes || '—'),
+      `<div class="actions">${UI.actionButton('delete-supplier', supplier.id, 'Excluir', 'danger')}</div>`,
+    ]);
+    return `
+      <details class="panel-card">
+        <summary>Fornecedores cadastrados (${currentSuppliers().length})</summary>
+        <p class="hint">Fornecedores alimentam o campo "Fornecedor" da compra e ajudam a rastrear custo de matéria-prima e embalagem.</p>
+        <form id="supplierForm" class="grid-form">
+          <label>Nome
+            <input name="name" required placeholder="Fornecedor">
+          </label>
+          <label>Telefone / contato
+            <input name="phone" placeholder="Opcional">
+          </label>
+          <label class="wide">Observações
+            <input name="notes" placeholder="Prazo, desconto, pedido mínimo...">
+          </label>
+          <button type="submit">Cadastrar fornecedor</button>
+        </form>
+        ${UI.table(['Nome', 'Contato', 'Observações', 'Ações'], rows)}
+      </details>
+    `;
   }
 
   function renderRecipes() {
@@ -1674,6 +1707,12 @@
       <div class="panel-card">
         <h3>O que está salvo agora</h3>
         ${UI.table(['Módulo', 'Registros'], countRows, 'Nenhum dado ainda.')}
+      </div>
+
+      <div class="panel-card">
+        <h3>Zerar dados locais</h3>
+        <p class="hint">Limpa o cache deste navegador e recarrega tudo do servidor. Não apaga nada no servidor.</p>
+        <button type="button" class="danger ghost" id="btnReset">Zerar dados locais</button>
       </div>
     `);
   }
@@ -2711,9 +2750,12 @@
     document.addEventListener('click', handleQuickAction);
     els.activeBusiness.addEventListener('change', (event) => { S.setActiveBusiness(event.target.value); renderAll(); });
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
-    els.btnDataTab.addEventListener('click', () => setTab('dados'));
-    if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
-    els.btnReset.addEventListener('click', () => {
+    // "Zerar dados locais" saiu da barra fixa do topo (onde era um botão
+    // vermelho presente em toda tela) para dentro da aba Dados, junto do
+    // backup. Como agora nasce e morre a cada render da aba, o listener é
+    // delegado no document em vez de preso ao nó.
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#btnReset')) return;
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
         renderAll();
