@@ -390,6 +390,53 @@
   // Resumo da mercadoria física em mãos do vendedor (seller_stock), avaliada
   // pelo custo médio real do produto — o admin tem acesso a avg_cost pela RLS,
   // então este valor bate com "Valor em estoque" do dashboard.
+  // Engajamento e recompensas: o brinde por 15 dias seguidos de login já
+  // existia (migration 20260730125828) e o resgate mora no painel de
+  // permissões, mas o admin não tinha onde ver como está a sequência de cada
+  // vendedor — só o próprio vendedor via a dele. Leitura pura de
+  // seller_login_rewards, sem cálculo novo.
+  function loginRewardFor(sellerId) {
+    return (state().sellerLoginRewards || [])
+      .find((row) => String(row.sellerId) === String(sellerId)) || null;
+  }
+
+  function renderRewardsPanel(sellers) {
+    const active = sellers.filter((seller) => seller.active !== false);
+    if (!active.length) return '';
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayIso = yesterday.toISOString().slice(0, 10);
+    const rows = active.map((seller) => {
+      const reward = loginRewardFor(seller.id) || {};
+      const streak = U.number(reward.currentStreak);
+      const credits = U.number(reward.giftCredits);
+      const last = reward.lastLoginDate || null;
+      // A sequência só continua se ele entrou hoje ou ontem; senão já quebrou
+      // e o número guardado no banco está velho até o próximo login.
+      const stale = last && last < yesterdayIso;
+      return [
+        U.escapeHtml(seller.name || seller.username || '—'),
+        `${streak} dia(s)${stale ? ' ' + UI.badge('sequência quebrada', 'warn') : ''}`,
+        `${U.number(reward.bestStreak)} dia(s)`,
+        `${Math.min(streak % 15 === 0 && streak > 0 ? 15 : streak % 15, 15)}/15`,
+        credits > 0 ? UI.badge(`${credits} brinde(s) a entregar`, 'warn') : '—',
+        String(U.number(reward.totalGiftsEarned)),
+        U.escapeHtml(last ? new Date(`${last}T00:00:00`).toLocaleDateString('pt-BR') : 'nunca entrou'),
+      ];
+    });
+    const pendingGifts = active.reduce((sum, seller) => sum + U.number((loginRewardFor(seller.id) || {}).giftCredits), 0);
+    return `
+      <details class="panel-card" ${pendingGifts > 0 ? 'open' : ''}>
+        <summary>Engajamento e recompensas${pendingGifts > 0 ? ` — ${pendingGifts} brinde(s) a entregar` : ''}</summary>
+        <p class="hint">Tarefa do vendedor: entrar 15 dias seguidos para ganhar 1 brinde. A entrega do brinde é registrada em "Permissões dos vendedores", logo abaixo.</p>
+        ${UI.table(
+          ['Vendedor', 'Sequência atual', 'Melhor sequência', 'Progresso', 'Brindes a entregar', 'Brindes ganhos', 'Último acesso'],
+          rows,
+          'Nenhum vendedor ativo.'
+        )}
+      </details>`;
+  }
+
   function sellerStockSummary(sellerId) {
     const st = fullState();
     const rows = (st.sellerStock || [])
@@ -677,6 +724,8 @@
           </label>
           <button type="submit">Criar vendedor</button></form></details>
         ${listHtml}
+
+        ${renderRewardsPanel(sellers)}
 
         <!-- "Permissões dos vendedores" (src/salesCart.js, renderAdminSettings/
              mountSettings) ficou órfã quando a aba "Aprovações" saiu da

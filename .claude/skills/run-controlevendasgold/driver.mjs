@@ -76,6 +76,7 @@ const FIXTURES = {
 };
 const BUSINESS_ID = '99999999-9999-9999-9999-999999999999';
 const PRODUCT_ID = '33333333-3333-3333-3333-333333333333';
+const INTERNAL_PRODUCT_ID = '33333333-3333-3333-3333-333333333334';
 // A small fixed roster so the admin's "Vendedores" panel (and per-seller
 // management) has more than one row to expand/collapse and switch between.
 const SELLER_ROSTER = [
@@ -102,6 +103,17 @@ const DB = {
     current_stock: 100, avg_cost: 10, sale_price: 25, default_price: 25, price_floor: 15, min_stock: 5,
     notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 50,
     tax_fee_percent: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    orderable_by_sellers: true,
+  }, {
+    // Insumo de controle interno: NAO liberado para o vendedor. Existe na
+    // fixture de proposito — sem um produto bloqueado, a trava de catalogo
+    // (migration 20260801143000) passaria no teste sem nunca ser exercitada.
+    id: INTERNAL_PRODUCT_ID, business_id: BUSINESS_ID, name: 'Essencia a granel (interno)',
+    type: 'materia_prima', unit: 'ml',
+    current_stock: 5000, avg_cost: 0.5, sale_price: 0, default_price: 0, price_floor: null, min_stock: 0,
+    notes: '', labor_cost_per_unit: 0, overhead_cost_per_unit: 0, loss_percent: 0, target_margin_percent: 0,
+    tax_fee_percent: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    orderable_by_sellers: false,
   }],
   sales: [{
     id: SALE_ID, business_id: BUSINESS_ID, product_id: PRODUCT_ID, client_id: null, seller_id: null,
@@ -158,13 +170,19 @@ function applyOrder(rows, params) {
 // vendedores. Mirroring it here is what makes admin-vs-vendedor screens
 // differ in the mock the same way they differ in production.
 function sellerProductsView() {
-  return rowsOf('products').map((p) => ({
-    id: p.id, business_id: p.business_id, name: p.name, type: p.type, unit: p.unit,
-    current_stock: null, sale_price: p.sale_price, default_price: p.default_price,
-    price_floor: p.price_floor, min_stock: p.min_stock, notes: p.notes,
-    created_at: p.created_at, updated_at: p.updated_at,
-    stock_available: Number(p.current_stock) > 0, stock_hidden: true,
-  }));
+  return rowsOf('products')
+    // migration 20260801143000: a RLS de seller_products so' entrega ao
+    // vendedor o que o admin liberou. Sem espelhar isto, a tela de pedido
+    // mostraria materia-prima no mock e nao mostraria em producao.
+    .filter((p) => currentFixture.role !== 'vendedor' || p.orderable_by_sellers === true)
+    .map((p) => ({
+      id: p.id, business_id: p.business_id, name: p.name, type: p.type, unit: p.unit,
+      current_stock: null, sale_price: p.sale_price, default_price: p.default_price,
+      price_floor: p.price_floor, min_stock: p.min_stock, notes: p.notes,
+      created_at: p.created_at, updated_at: p.updated_at,
+      stock_available: Number(p.current_stock) > 0, stock_hidden: true,
+      orderable_by_sellers: p.orderable_by_sellers === true,
+    }));
 }
 
 // Triggers do Postgres que o app DEPENDE mas não executa: sem emular, uma
@@ -192,6 +210,31 @@ function applyDbTriggers(table, row) {
     }
   }
   return row;
+}
+
+// migration 0023_order_integrity_and_price_floor + 20260801143000: o trigger
+// enforce_order_approval_lock recusa pedido de vendedor fora das regras. Sem
+// emular, o mock aceitaria tudo e a trava de catalogo passaria no teste sem
+// nunca ter sido testada. Devolve a mensagem de erro, ou null se pode gravar.
+function insertRejectReason(table, row) {
+  if (table !== 'orders' || currentFixture.role === 'admin') return null;
+  const product = rowsOf('products').find((p) => String(p.id) === String(row.product_id));
+  if (!product) return 'Produto nao encontrado.';
+  if (Number(row.quantity) <= 0) return 'Quantidade do pedido precisa ser maior que zero';
+  if (Number(row.unit_price) <= 0) return 'Preço unitário do pedido precisa ser maior que zero';
+  if (row.approval_status !== 'pendente_aprovacao') {
+    return 'Vendedor só pode criar pedidos aguardando aprovação';
+  }
+  if (product.orderable_by_sellers !== true) {
+    return `O produto ${product.name} não está liberado para pedido de vendedor`;
+  }
+  const sellerPrice = rowsOf('seller_prices').find((sp) => String(sp.product_id) === String(row.product_id)
+    && String(sp.seller_id) === String(row.seller_id));
+  const floor = sellerPrice && sellerPrice.floor != null ? Number(sellerPrice.floor) : product.price_floor;
+  if (floor != null && Number(row.unit_price) < Number(floor)) {
+    return `Preço unitário (${row.unit_price}) abaixo do piso permitido (${floor}) para este produto`;
+  }
+  return null;
 }
 
 // migration 0024: trg_purchases_create_payable / trg_sales_create_receivable.
@@ -550,6 +593,10 @@ async function installMocks(pg) {
       if (method === 'POST') {
         const payload = req.postDataJSON();
         const list = Array.isArray(payload) ? payload : [payload];
+        const blocked = list
+          .map((body) => insertRejectReason(table, { business_id: BUSINESS_ID, ...body }))
+          .find(Boolean);
+        if (blocked) return json(route, { message: blocked, code: 'P0001' }, 400);
         const created = list.map((body) => {
           const row = {
             id: nextId(table),

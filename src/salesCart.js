@@ -1174,5 +1174,28 @@
     }
   }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
+  // Pedido de reposição do vendedor ao admin. Assinatura enxuta para a tela
+  // do vendedor (src/sellerOrderRequest.js) — nenhuma lógica nova: delega para
+  // launchOrderFromCart no modo 'request', o mesmo caminho que já cria os
+  // `orders` como 'pendente_aprovacao'. Quem aprova (esteira, boardCard),
+  // lança a dívida (syncOrderDebt) e baixa o estoque (advance_order_group)
+  // continua sendo o admin, sem alteração.
+  async function requestStockFromAdmin({ items, paymentMode = 'consignado', notes = '' } = {}) {
+    if (!Array.isArray(items) || !items.length) throw new Error('Adicione pelo menos um produto.');
+    return launchOrderFromCart({
+      mode: 'request',
+      paymentMode,
+      notes,
+      items: items.map((item) => ({
+        productId: item.productId,
+        quantity: U.number(item.quantity),
+        unitPrice: U.number(item.unitPrice),
+      })),
+      clientId: null,
+      targetSellerId: null,
+      paidInitialAmount: 0,
+    });
+  }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, requestStockFromAdmin };
 })();

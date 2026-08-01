@@ -460,11 +460,12 @@
 
   async function refreshAsSeller(businessId, userId) {
     const api = window.C360.api;
-    // Perfil vendedor é somente leitura. Carregamos apenas o necessário para
-    // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
-    // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
+    // O vendedor escreve em um lugar só: pedido de reposição ao admin
+    // (`orders` com approval_status = 'pendente_aprovacao'). Todo o resto
+    // continua leitura. Carregamos o necessário para "Minha conta" e para a
+    // tela de pedido: catálogo liberado, preço próprio e os pedidos dele.
     const [
-      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts,
+      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, orders, sellerPrices,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -476,6 +477,8 @@
       api.list('seller_payment_allocations', { seller_id: userId }),
       api.list('seller_payment_reports', { seller_id: userId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(userId),
+      api.list('orders', { seller_id: userId, _order: 'created_at.desc' }),
+      api.listSellerPrices(userId),
     ]);
 
     state.businesses = rows(businesses);
@@ -488,14 +491,15 @@
     state.sellerPaymentAllocations = rows(sellerPaymentAllocations);
     state.sellerPaymentReports = rows(sellerPaymentReports);
     state.sellerOrderAccounts = rows(sellerOrderAccounts);
+    state.orders = rows(orders);
+    // listSellerPrices já devolve camelCase (src/api.js), diferente de list().
+    state.sellerPrices = Array.isArray(sellerPrices) ? sellerPrices : [];
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];
     state.sales = [];
-    state.orders = [];
     state.consignments = [];
     state.consignmentEvents = [];
-    state.sellerPrices = [];
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];

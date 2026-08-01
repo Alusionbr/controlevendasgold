@@ -26,7 +26,7 @@
     'hoje', 'produtos', 'clientes', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores',
-    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'metas',
+    'pedir', 'meusaldo', 'devolucoes', 'minhasdevolucoes', 'metas',
     'configuracoes',
   ];
 
@@ -44,6 +44,7 @@
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
+    pedir: 'Pedir produtos',
     meusaldo: 'Minha conta',
     // Rótulo de navegação é destino, não descrição: "Devoluções,
     // desperdícios e brindes" quebrava em 3 linhas na barra lateral e
@@ -81,6 +82,9 @@
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
+    // Única escrita do vendedor: pedido de reposição ao admin. A RLS de
+    // `orders` (migration 20260801143000) é a garantia real.
+    pedir: ['vendedor'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: SEM_PAPEL, // "Devoluções e brindes" do vendedor
@@ -98,7 +102,7 @@
   // grupo (senão some da navegação).
   const TAB_GROUPS = [
     { id: 'diaadia', label: 'Dia a dia',
-      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'pedir', 'meusaldo', 'metas'] },
     { id: 'mercadoria', label: 'Mercadoria e produção',
       tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
     { id: 'cadastros', label: 'Cadastros',
@@ -111,7 +115,7 @@
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['meusaldo'],
+    vendedor: ['pedir', 'meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -748,6 +752,12 @@
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
         }
         break;
+      case 'pedir':
+        els.view.innerHTML = '<div id="sellerRequestPanel"></div>';
+        if (window.C360.sellerOrderRequest && typeof window.C360.sellerOrderRequest.mount === 'function') {
+          window.C360.sellerOrderRequest.mount(document.getElementById('sellerRequestPanel'));
+        }
+        break;
       case 'meusaldo':
         els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
         if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
@@ -919,12 +929,15 @@
             <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}<input name="lossPercent" type="number" step="0.01" value="0"></label>
             <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}<input name="targetMarginPercent" type="number" step="0.01" value=""><span>Se vazio, usa a margem padrão do negócio.</span></label>
             <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}<input name="taxFeePercent" type="number" step="0.01" value=""><span>Marketplace, cartão ou taxa estimada.</span></label>
+            <label class="checkbox-label full"><input type="checkbox" name="orderableBySellers" checked> Disponível para vendedores pedirem<span>Desmarque em itens de controle interno (matéria-prima, embalagem): eles somem do catálogo do vendedor.</span></label>
             <label class="full">Observações<textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea></label>
           </div>
         </details>
         <button type="submit">Adicionar produto</button>
       </form>
       ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
+
+      ${renderSellerCatalogPanel()}
 
       <!-- Preços deixou de ser aba própria: preço padrão, piso e preço por
            vendedor são atributos do produto. O módulo src/pricing.js monta
@@ -936,10 +949,52 @@
     `, '', '<button type="button" data-action="focus-new-product">+ Novo produto</button>');
   }
 
+  // Tipos que o negócio revende. Matéria-prima, embalagem e serviço são
+  // controle interno e não devem aparecer no catálogo do vendedor.
+  const SELLABLE_TYPES = ['produto_final', 'mercadoria', 'kit'];
+
+  // Quais produtos o vendedor pode pedir. A lista fica num lugar só porque
+  // liberar/bloquear é uma decisão que se toma olhando o catálogo inteiro —
+  // abrir o editor produto a produto para isso seria trabalhoso. A garantia
+  // real é a RLS de seller_products + o trigger de pedido (migration
+  // 20260801143000); esta tela é a interface dessa marca.
+  function renderSellerCatalogPanel() {
+    const products = currentProducts().filter((product) => product.type !== 'servico');
+    if (!products.length) return '';
+    const released = products.filter((product) => product.orderableBySellers);
+    const rows = products.map((product) => `
+      <li class="catalog-toggle-row">
+        <label>
+          <input type="checkbox" data-catalog-toggle="${U.escapeHtml(product.id)}" ${product.orderableBySellers ? 'checked' : ''}>
+          <span>${U.escapeHtml(product.name)}</span>
+        </label>
+        ${UI.badge(labelForProductType(product.type))}
+      </li>`).join('');
+    return `
+      <details class="panel-card" ${released.length ? '' : 'open'}>
+        <summary>Catálogo do vendedor — ${released.length} de ${products.length} liberado(s)</summary>
+        <p class="hint">Marque o que os vendedores podem pedir. O que ficar desmarcado nem aparece para eles, e o servidor recusa o pedido mesmo que alguém tente por fora. Deixe desmarcado o que é só de controle interno.</p>
+        ${released.length ? '' : UI.formNotice('Nenhum produto liberado: hoje o vendedor abre a tela de pedido e não vê nada.', 'warning')}
+        <ul class="catalog-toggle-list">${rows}</ul>
+      </details>`;
+  }
+
   function mountProductsExtras() {
     const panel = document.getElementById('pricingPanel');
     if (panel && window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
       window.C360.pricing.mountAdmin(panel);
+    }
+    // O checkbox "Disponível para vendedores" mora dentro de "Mais opções",
+    // fechado por padrão — quem cadastra matéria-prima não abriria para
+    // desmarcar. Acompanhar o tipo faz o padrão certo acontecer sozinho, sem
+    // tirar do admin a possibilidade de mudar.
+    const form = document.getElementById('productForm');
+    const typeSelect = form?.elements?.type;
+    const orderable = form?.elements?.orderableBySellers;
+    if (typeSelect && orderable) {
+      const syncDefault = () => { orderable.checked = SELLABLE_TYPES.includes(typeSelect.value); };
+      syncDefault();
+      typeSelect.addEventListener('change', syncDefault);
     }
   }
 
@@ -1823,6 +1878,7 @@
         <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
         <label>Margem desejada (%)<input name='targetMarginPercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.targetMarginPercent || 0)}'></label>
         <label>Taxas (%)<input name='taxFeePercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.taxFeePercent || 0)}'></label>
+        <label class='checkbox-label full'><input type='checkbox' name='orderableBySellers' ${product.orderableBySellers ? 'checked' : ''}> Disponível para vendedores pedirem<span>Desmarcado, o produto some do catálogo do vendedor e não pode entrar em pedido de reposição.</span></label>
         <label class='full'>Observações<textarea name='notes'>${U.escapeHtml(product.notes || '')}</textarea></label>
         <footer><button type='button' class='ghost' data-action='close-product-editor'>Cancelar</button><button type='submit'>Salvar alterações</button></footer>
       </form>`;
@@ -1900,6 +1956,7 @@
       minStock: U.number(data.minStock),
       targetMarginPercent: U.number(data.targetMarginPercent ?? business?.defaultTargetMargin),
       taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
+      orderableBySellers: data.orderableBySellers === 'on',
       notes: data.notes || '',
     });
     // Mudar o custo médio muda o valor do estoque, então deixa rastro pelo
@@ -1951,6 +2008,11 @@
       lossPercent: U.number(data.lossPercent),
       targetMarginPercent: data.targetMarginPercent === '' ? U.number(business?.defaultTargetMargin) : U.number(data.targetMarginPercent),
       taxFeePercent: data.taxFeePercent === '' ? U.number(business?.defaultFeePercent) : U.number(data.taxFeePercent),
+      // Checkbox sempre presente no formulário, então ausente = desmarcado.
+      // O valor inicial dele acompanha o tipo escolhido (ver
+      // mountProductsExtras): o que o negócio revende vem marcado,
+      // matéria-prima/embalagem/serviço vêm desmarcados.
+      orderableBySellers: data.orderableBySellers === 'on',
       notes: data.notes || '',
     });
     // Estoque inicial é estoque: sem esta movimentação o saldo nascia do nada
@@ -2623,6 +2685,27 @@
   // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
   // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
   // ver UI.kanban() em src/ui.js.
+  // Salva na hora, sem botão "Salvar": é um interruptor por produto, e uma
+  // lista de 30 checkboxes com um submit no fim convida a perder alteração.
+  // Em caso de erro o checkbox volta para o estado anterior.
+  async function handleSellerCatalogToggle(event) {
+    const input = event.target.closest('[data-catalog-toggle]');
+    if (!input) return;
+    const productId = input.dataset.catalogToggle;
+    const next = input.checked;
+    input.disabled = true;
+    try {
+      await S.update('products', productId, { orderableBySellers: next });
+      const product = productById(productId);
+      toast(`${product ? product.name : 'Produto'} ${next ? 'liberado para' : 'removido do'} catálogo do vendedor.`, 'success');
+      renderTab();
+    } catch (error) {
+      input.checked = !next;
+      input.disabled = false;
+      toast(error.message || 'Não foi possível alterar o produto.', 'error');
+    }
+  }
+
   async function handleKanbanMove(event) {
     const select = event.target.closest('[data-kanban-move]');
     if (!select) return;
@@ -2787,6 +2870,7 @@
     document.addEventListener('dragleave', handleKanbanDragLeave);
     document.addEventListener('drop', handleKanbanDrop);
     document.addEventListener('change', handleKanbanMove);
+    document.addEventListener('change', handleSellerCatalogToggle);
   }
 
   function handleDashboardPeriod(event) {

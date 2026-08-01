@@ -1158,3 +1158,111 @@ a própria coleção vazia.
 `node --test tests/*.test.js` → 37/37. As 15 abas do admin percorridas uma a
 uma (nenhuma vazia, nenhuma caindo no `default`), vendedor conferido em desktop
 e em 390×844, e `node build-mobile.js` regenerado.
+
+---
+
+## Atualização: vendedor volta a pedir produtos, com catálogo controlado pelo admin
+
+Pedido do usuário: o vendedor precisa montar carrinho de pedido para o
+administrador, mas o administrador decide **quais produtos** entram nesse
+carrinho — há itens no estoque que são só de controle interno e não podem
+gerar divergência. Mais preço individual e visão de recompensas no painel do
+admin.
+
+### Decisão central: `orders`, não `sale_carts`
+
+O pedido do vendedor entra como `orders` com
+`approval_status = 'pendente_aprovacao'` — não como carrinho. Motivo: esse
+caminho já existe inteiro e é testado. `enforce_order_approval_lock` (0023)
+valida piso de preço, `setGroupApproval` + `syncOrderDebt` lançam a dívida na
+aprovação, `advance_order_group` (20260725142236) baixa o estoque no despacho,
+e `list_seller_order_accounts` (20260729205823) monta a conta por pedido que o
+vendedor vê em "Minha conta". **Nenhuma lógica nova de estoque ou financeiro
+foi escrita.** A tela de aprovação do admin também já existia: `boardCard`
+(`src/salesCart.js`) mostra "Aprovar"/"Rejeitar"/"Ajustar itens" para grupo
+pendente na esteira da aba Vendas.
+
+`sale_carts` continua sem escrita do vendedor. Quando o carrinho de cliente
+final chegar (pedido futuro do usuário), é aquela tabela que volta a ser usada.
+
+### Trava de catálogo (migration `20260801143000_seller_cart_requests.sql`)
+
+`products.orderable_by_sellers`, propagada para `seller_products` pelo trigger
+de sincronia de 0027. Três camadas, da mais fraca para a mais forte:
+
+1. A tela do vendedor filtra por `orderableBySellers`.
+2. A RLS de `seller_products` foi partida em duas — admin vê tudo (precisa,
+   para configurar), vendedor só o que está liberado. A policy antiga
+   (`seller_products_select_active_business`) entregava o catálogo inteiro para
+   qualquer perfil ativo do negócio.
+3. `enforce_order_approval_lock` recusa `INSERT` de produto não liberado.
+   Verificado: chamando `state.add('orders', ...)` direto no console com o id
+   da matéria-prima, o servidor responde 400 com *"O produto Essencia a granel
+   (interno) não está liberado para pedido de vendedor"*.
+
+Backfill por tipo, não default cego: `produto_final`/`mercadoria`/`kit` nascem
+liberados; `materia_prima`/`embalagem`/`servico`, não. `false` para tudo
+deixaria o vendedor sem catálogo no dia seguinte à migração; `true` para tudo
+exporia exatamente o que motivou a trava. No cadastro de produto o checkbox
+acompanha o tipo escolhido (`mountProductsExtras`), porque ele mora dentro de
+"Mais opções" — quem cadastra matéria-prima não abriria a seção para desmarcar.
+
+Gestão em massa: `renderSellerCatalogPanel` (aba Produtos), lista de
+checkboxes que salvam na hora. Avisa quando **nenhum** produto está liberado —
+senão o vendedor abre a tela de pedido e vê o vazio sem entender por quê.
+
+### Preço individual
+
+Já existia e passou a ser usado no fluxo: `seller_prices` (preço + piso por
+vendedor, aba Produtos → "Preço padrão, piso e preço por vendedor"). O trigger
+de pedido já resolvia o piso com `coalesce(sp.floor, p.price_floor)`, ou seja,
+o preço individual sempre teve precedência no servidor. Faltava o vendedor
+conseguir **ler** o próprio preço — `0023_seller_read_only` tinha removido a
+policy de select. Devolvida, e `refreshAsSeller` passou a carregar
+`listSellerPrices(userId)` + `orders` próprios.
+
+Preço por **cliente final** não foi feito: o carrinho do vendedor não tem
+cliente, e isso só faz sentido junto do carrinho de cliente, que o usuário
+deixou para depois.
+
+### Teste ponta a ponta (skill `run-controlevendasgold`)
+
+| Etapa | Resultado |
+|---|---|
+| Catálogo do vendedor | só "Produto Demo"; a matéria-prima interna não aparece |
+| Vendedor pede 3 × R$ 25 a prazo | `orders` com `pendente_aprovacao`, `revenda`, `paid_amount 0` |
+| Antes da aprovação | 0 lançamentos no ledger — dívida não nasce no pedido |
+| Admin aprova na esteira | débito R$ 75 (`debit_replenishment`), estoque central intacto (100) |
+| Admin move para "Despachado" | estoque 100 → 97, `saida_envio_consignado`, `seller_stock` 3 |
+| **Consignado gerado** | `quantity_sent 3`, `unit_price 25`, **`cost_at_send 10`** (custo médio real), `seller_id` preenchido, nota apontando o pedido |
+| Dívida após despacho | continua R$ 75 — `syncOrderDebt` é idempotente, não cobrou duas vezes |
+| Admin desmarca o produto | catálogo do vendedor fica vazio, com aviso explicativo |
+
+### Recompensas
+
+`renderRewardsPanel` (aba Vendedores): sequência atual, melhor sequência,
+progresso /15, brindes a entregar, brindes ganhos e último acesso por vendedor.
+Marca "sequência quebrada" quando o último login é anterior a ontem — o número
+guardado em `seller_login_rewards` fica velho até o vendedor entrar de novo. A
+entrega do brinde continua em "Permissões dos vendedores"
+(`redeemSellerLoginGift`), que já existia.
+
+Níveis por volume de vendas ou por pontualidade **não** foram feitos: dependem
+de faixas que o usuário ainda não definiu. Multinível/indicação idem — o
+usuário marcou como futuro.
+
+### Driver
+
+`sellerProductsView()` passou a filtrar por `orderable_by_sellers` para o papel
+vendedor, a fixture ganhou um segundo produto **não** liberado
+(`INTERNAL_PRODUCT_ID`, matéria-prima), e `insertRejectReason()` emula
+`enforce_order_approval_lock` no POST de `orders`. Sem isso o mock aceitaria
+qualquer pedido e a trava passaria no teste sem nunca ser exercitada.
+
+### Pendente: aplicar a migration
+
+`supabase/migrations/20260801143000_seller_cart_requests.sql` **não foi
+aplicada no projeto de produção** — está só no repositório. Enquanto não for
+aplicada, `orderable_by_sellers` não existe no banco: `mapProductRow` trata
+ausente como `false`, então nada vaza, mas o vendedor também não consegue
+pedir. Aplicar com `supabase db push` ou pelo MCP (`apply_migration`).

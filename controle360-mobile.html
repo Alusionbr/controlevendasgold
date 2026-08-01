@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-bNFPdP9thZcd5JedtoWxnBkMxqJg2JW00cD5rR95dC0=' 'sha256-eOzyPSMUvVhb2NxG+SGziDW/LcgQARhYWrFkUQ/05Hw=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-7wpnTC+x0HESpGV4Yx0dyVmf6AXvc9HWGx29hUQOt/o=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-l9hMbP39s1EjOQcYkyySlrwio2eWHBuSmQqDbqsAUP0=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-0lxa9o9XZk/Cw+GZ7Yeu7tPAyfGLNknVKDIpHt1puC8=' 'sha256-RdYAu/Co9us3JvbdNUs4+LUJ+fwqAd1yDQ4HLGVMCWo='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-DlLtxrmvi6kH2J/wi81BRSRcyje2yHnm6LEQ690wrdg=' 'sha256-NSHPgbvKpEfyD/tkoTeBZZ02qQHNZUw/TfSrAhdy5mM=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-CAzZ/3Lo/DaaRwYY2JXH7wefa7FKA2XBH1JivGah1do=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-5aKQ2oX2QqKshPcKQI4iARI8fuJyrj++B9uS69ALedg=' 'sha256-l9hMbP39s1EjOQcYkyySlrwio2eWHBuSmQqDbqsAUP0=' 'sha256-W3mTuU8sBo1FUW4EiKWDKxgRbpUMGW5u4DkMD9PkhGA=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-0lxa9o9XZk/Cw+GZ7Yeu7tPAyfGLNknVKDIpHt1puC8=' 'sha256-NAX2TMZGiRUo1M+gxS64LdnYqhE+0YDdS1Za65NlH0M='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2290,6 +2290,47 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .metric-card-action small { color:var(--muted); font-weight:500; }
 .metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }
 
+/* Pedido de reposicao do vendedor (src/sellerOrderRequest.js) e catalogo
+   liberado (aba Produtos). Mobile-first: o vendedor trabalha no celular. */
+.request-layout { display: grid; gap: 1rem; }
+.request-catalog { display: grid; gap: 0.5rem; }
+.request-product {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.65rem 0.8rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.request-product.is-in-cart { border-color: var(--accent); background: var(--accent-soft); }
+.request-product-info { display: grid; gap: 0.1rem; min-width: 0; }
+.request-product-info strong { font-size: 0.95rem; }
+.request-product-info span { color: var(--muted); font-family: var(--num); font-size: 0.88rem; }
+.request-stepper { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+.request-stepper button { min-width: 40px; min-height: 40px; padding: 0; font-size: 1.1rem; line-height: 1; }
+.request-stepper input { width: 56px; min-height: 40px; padding: 0.35rem; text-align: center; font-family: var(--num); }
+.request-cart { align-self: start; }
+.request-cart-total { font-family: var(--num); font-size: 1.15rem; }
+.request-cart-lines { list-style: none; margin: 0.6rem 0; padding: 0; display: grid; gap: 0.35rem; }
+.request-cart-lines li { display: flex; justify-content: space-between; gap: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--line); }
+.request-cart-lines li:last-child { border-bottom: 0; }
+.request-cart-lines strong { font-family: var(--num); }
+.request-send-form { display: grid; gap: 0.6rem; }
+.request-send-form button { min-height: 46px; }
+.request-pending-list { display: grid; gap: 0.6rem; }
+
+.catalog-toggle-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.25rem; }
+.catalog-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); }
+.catalog-toggle-row:nth-child(odd) { background: var(--surface-soft); }
+.catalog-toggle-row label { display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; }
+.catalog-toggle-row input { width: 18px; height: 18px; margin: 0; }
+.checkbox-label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
+.checkbox-label input { width: 18px; height: 18px; margin: 0.15rem 0 0; flex-shrink: 0; }
+.checkbox-label span { flex-basis: 100%; color: var(--muted); font-size: 0.8rem; }
+
+/* Carrinho ao lado do catalogo quando ha' largura; empilhado no celular. */
+@media (min-width: 860px) {
+  .request-layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .request-cart { position: sticky; top: 1rem; }
+}
+
   </style>
 </head>
 <body>
@@ -2773,6 +2814,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       lossPercent: row.loss_percent,
       targetMarginPercent: row.target_margin_percent,
       taxFeePercent: row.tax_fee_percent,
+      // Marca "liberado para o vendedor pedir" (migration
+      // 20260801143000_seller_cart_requests). Ausente = false, para uma base
+      // ainda sem a migração não liberar o catálogo inteiro por omissão.
+      orderableBySellers: row.orderable_by_sellers === true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -3693,11 +3738,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   async function refreshAsSeller(businessId, userId) {
     const api = window.C360.api;
-    // Perfil vendedor é somente leitura. Carregamos apenas o necessário para
-    // "Minha conta": nome dos produtos, estoque em mãos, saldo e pagamentos.
-    // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
+    // O vendedor escreve em um lugar só: pedido de reposição ao admin
+    // (`orders` com approval_status = 'pendente_aprovacao'). Todo o resto
+    // continua leitura. Carregamos o necessário para "Minha conta" e para a
+    // tela de pedido: catálogo liberado, preço próprio e os pedidos dele.
     const [
-      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts,
+      businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, orders, sellerPrices,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -3709,6 +3755,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('seller_payment_allocations', { seller_id: userId }),
       api.list('seller_payment_reports', { seller_id: userId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(userId),
+      api.list('orders', { seller_id: userId, _order: 'created_at.desc' }),
+      api.listSellerPrices(userId),
     ]);
 
     state.businesses = rows(businesses);
@@ -3721,14 +3769,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerPaymentAllocations = rows(sellerPaymentAllocations);
     state.sellerPaymentReports = rows(sellerPaymentReports);
     state.sellerOrderAccounts = rows(sellerOrderAccounts);
+    state.orders = rows(orders);
+    // listSellerPrices já devolve camelCase (src/api.js), diferente de list().
+    state.sellerPrices = Array.isArray(sellerPrices) ? sellerPrices : [];
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];
     state.sales = [];
-    state.orders = [];
     state.consignments = [];
     state.consignmentEvents = [];
-    state.sellerPrices = [];
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];
@@ -4831,6 +4880,53 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Resumo da mercadoria física em mãos do vendedor (seller_stock), avaliada
   // pelo custo médio real do produto — o admin tem acesso a avg_cost pela RLS,
   // então este valor bate com "Valor em estoque" do dashboard.
+  // Engajamento e recompensas: o brinde por 15 dias seguidos de login já
+  // existia (migration 20260730125828) e o resgate mora no painel de
+  // permissões, mas o admin não tinha onde ver como está a sequência de cada
+  // vendedor — só o próprio vendedor via a dele. Leitura pura de
+  // seller_login_rewards, sem cálculo novo.
+  function loginRewardFor(sellerId) {
+    return (state().sellerLoginRewards || [])
+      .find((row) => String(row.sellerId) === String(sellerId)) || null;
+  }
+
+  function renderRewardsPanel(sellers) {
+    const active = sellers.filter((seller) => seller.active !== false);
+    if (!active.length) return '';
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayIso = yesterday.toISOString().slice(0, 10);
+    const rows = active.map((seller) => {
+      const reward = loginRewardFor(seller.id) || {};
+      const streak = U.number(reward.currentStreak);
+      const credits = U.number(reward.giftCredits);
+      const last = reward.lastLoginDate || null;
+      // A sequência só continua se ele entrou hoje ou ontem; senão já quebrou
+      // e o número guardado no banco está velho até o próximo login.
+      const stale = last && last < yesterdayIso;
+      return [
+        U.escapeHtml(seller.name || seller.username || '—'),
+        `${streak} dia(s)${stale ? ' ' + UI.badge('sequência quebrada', 'warn') : ''}`,
+        `${U.number(reward.bestStreak)} dia(s)`,
+        `${Math.min(streak % 15 === 0 && streak > 0 ? 15 : streak % 15, 15)}/15`,
+        credits > 0 ? UI.badge(`${credits} brinde(s) a entregar`, 'warn') : '—',
+        String(U.number(reward.totalGiftsEarned)),
+        U.escapeHtml(last ? new Date(`${last}T00:00:00`).toLocaleDateString('pt-BR') : 'nunca entrou'),
+      ];
+    });
+    const pendingGifts = active.reduce((sum, seller) => sum + U.number((loginRewardFor(seller.id) || {}).giftCredits), 0);
+    return `
+      <details class="panel-card" ${pendingGifts > 0 ? 'open' : ''}>
+        <summary>Engajamento e recompensas${pendingGifts > 0 ? ` — ${pendingGifts} brinde(s) a entregar` : ''}</summary>
+        <p class="hint">Tarefa do vendedor: entrar 15 dias seguidos para ganhar 1 brinde. A entrega do brinde é registrada em "Permissões dos vendedores", logo abaixo.</p>
+        ${UI.table(
+          ['Vendedor', 'Sequência atual', 'Melhor sequência', 'Progresso', 'Brindes a entregar', 'Brindes ganhos', 'Último acesso'],
+          rows,
+          'Nenhum vendedor ativo.'
+        )}
+      </details>`;
+  }
+
   function sellerStockSummary(sellerId) {
     const st = fullState();
     const rows = (st.sellerStock || [])
@@ -5118,6 +5214,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           </label>
           <button type="submit">Criar vendedor</button></form></details>
         ${listHtml}
+
+        ${renderRewardsPanel(sellers)}
 
         <!-- "Permissões dos vendedores" (src/salesCart.js, renderAdminSettings/
              mountSettings) ficou órfã quando a aba "Aprovações" saiu da
@@ -8805,7 +8903,30 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
   }
 
-  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller };
+  // Pedido de reposição do vendedor ao admin. Assinatura enxuta para a tela
+  // do vendedor (src/sellerOrderRequest.js) — nenhuma lógica nova: delega para
+  // launchOrderFromCart no modo 'request', o mesmo caminho que já cria os
+  // `orders` como 'pendente_aprovacao'. Quem aprova (esteira, boardCard),
+  // lança a dívida (syncOrderDebt) e baixa o estoque (advance_order_group)
+  // continua sendo o admin, sem alteração.
+  async function requestStockFromAdmin({ items, paymentMode = 'consignado', notes = '' } = {}) {
+    if (!Array.isArray(items) || !items.length) throw new Error('Adicione pelo menos um produto.');
+    return launchOrderFromCart({
+      mode: 'request',
+      paymentMode,
+      notes,
+      items: items.map((item) => ({
+        productId: item.productId,
+        quantity: U.number(item.quantity),
+        unitPrice: U.number(item.unitPrice),
+      })),
+      clientId: null,
+      targetSellerId: null,
+      paidInitialAmount: 0,
+    });
+  }
+
+  window.C360.salesCart = { mount, mountSettings, mountPublic, sendConsignmentToSeller, requestStockFromAdmin };
 })();
 </script>
   <script>
@@ -9220,6 +9341,257 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     registerPayment,
     registerOrderPayment,
   };
+})();
+</script>
+  <script>
+/**
+ * Tela "Pedir produtos" (vendedor).
+ *
+ * O vendedor monta um carrinho com os produtos que o admin liberou e envia
+ * como pedido de reposição. Nada de estoque ou financeiro acontece aqui: o
+ * envio só cria `orders` com approval_status = 'pendente_aprovacao'. Quem
+ * aprova, lança a dívida e baixa o estoque é o admin, pela esteira de pedidos
+ * — código que já existia e não mudou.
+ *
+ * Catálogo: `state().products` para o vendedor vem de `seller_products`, que
+ * a RLS já filtra por `orderable_by_sellers` (migration
+ * 20260801143000_seller_cart_requests). O filtro daqui é só conveniência de
+ * interface — a garantia é do banco.
+ */
+(function () {
+  const U = window.C360.utils;
+  const UI = window.C360.ui;
+  const Calc = window.C360.calc;
+
+  function S() { return window.C360.state; }
+  function state() { return S().getState(); }
+  function user() { return S().getCurrentUser(); }
+
+  function catalog() {
+    return (state().products || [])
+      .filter((product) => product.orderableBySellers !== false)
+      .filter((product) => product.type !== 'servico');
+  }
+
+  function sellerPriceFor(productId) {
+    return (state().sellerPrices || []).find((row) => String(row.productId) === String(productId)) || null;
+  }
+
+  function priceInfo(product) {
+    if (Calc && typeof Calc.resolveSellerPrice === 'function') {
+      return Calc.resolveSellerPrice({ product, sellerPrice: sellerPriceFor(product.id) });
+    }
+    return { price: U.number(product.salePrice) || U.number(product.defaultPrice), floor: null };
+  }
+
+  function myPendingOrders() {
+    const me = user();
+    if (!me) return [];
+    return (state().orders || [])
+      .filter((order) => String(order.sellerId) === String(me.id))
+      .filter((order) => order.approvalStatus === 'pendente_aprovacao' || order.approvalStatus === 'rejeitado');
+  }
+
+  // Pedido é enviado como um grupo (orderGroupId comum), então a tela agrupa
+  // de volta para mostrar "1 pedido com 3 itens" em vez de 3 linhas soltas.
+  function groupOrders(orders) {
+    const groups = new Map();
+    orders.forEach((order) => {
+      const key = String(order.orderGroupId || order.id);
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          createdAt: order.createdAt,
+          approvalStatus: order.approvalStatus,
+          paymentMode: order.paymentMode,
+          items: [],
+          total: 0,
+        });
+      }
+      const group = groups.get(key);
+      group.items.push(order);
+      group.total += U.number(order.quantity) * U.number(order.unitPrice);
+    });
+    return [...groups.values()].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  }
+
+  function productCard(product, quantityInCart) {
+    const { price } = priceInfo(product);
+    const inCart = U.number(quantityInCart);
+    return `
+      <article class="request-product ${inCart > 0 ? 'is-in-cart' : ''}">
+        <div class="request-product-info">
+          <strong>${U.escapeHtml(product.name)}</strong>
+          <span>${U.money(price)} <small>/ ${U.escapeHtml(product.unit || 'un')}</small></span>
+        </div>
+        <div class="request-stepper">
+          <button type="button" class="small secondary" data-request-action="dec" data-product="${U.escapeHtml(product.id)}" aria-label="Diminuir ${U.escapeHtml(product.name)}">−</button>
+          <input type="number" min="0" step="1" value="${inCart}" data-request-qty="${U.escapeHtml(product.id)}" aria-label="Quantidade de ${U.escapeHtml(product.name)}">
+          <button type="button" class="small" data-request-action="inc" data-product="${U.escapeHtml(product.id)}" aria-label="Aumentar ${U.escapeHtml(product.name)}">+</button>
+        </div>
+      </article>`;
+  }
+
+  function cartSummary(cart, products) {
+    const lines = Object.entries(cart)
+      .filter(([, quantity]) => U.number(quantity) > 0)
+      .map(([productId, quantity]) => {
+        const product = products.find((item) => String(item.id) === String(productId));
+        if (!product) return null;
+        const { price } = priceInfo(product);
+        return { product, quantity: U.number(quantity), price, total: U.number(quantity) * price };
+      })
+      .filter(Boolean);
+    const total = lines.reduce((sum, line) => sum + line.total, 0);
+    return { lines, total };
+  }
+
+  function statusBadge(approvalStatus) {
+    if (approvalStatus === 'rejeitado') return UI.badge('Recusado', 'danger');
+    return UI.badge('Aguardando aprovação', 'warn');
+  }
+
+  function render(data = {}) {
+    const { cart = {}, feedback = null, sending = false } = data;
+    const products = catalog();
+    const { lines, total } = cartSummary(cart, products);
+    const pendingGroups = groupOrders(myPendingOrders());
+
+    const catalogHtml = products.length
+      ? `<div class="request-catalog">${products.map((product) => productCard(product, cart[product.id])).join('')}</div>`
+      : UI.formNotice('O administrador ainda não liberou nenhum produto para pedido. Fale com ele.', 'warning');
+
+    const cartHtml = lines.length
+      ? `
+        <ul class="request-cart-lines">
+          ${lines.map((line) => `<li><span>${U.escapeHtml(line.product.name)} <small>× ${line.quantity}</small></span><strong>${U.money(line.total)}</strong></li>`).join('')}
+        </ul>
+        <form class="request-send-form" data-request-form>
+          <label>Como você vai pagar
+            <select name="paymentMode">
+              <option value="consignado">A prazo (entra como dívida)</option>
+              <option value="avista">À vista</option>
+            </select>
+          </label>
+          <label>Observações
+            <input name="notes" placeholder="Opcional: prazo, urgência, combinado...">
+          </label>
+          <button type="submit" ${sending ? 'disabled' : ''}>${sending ? 'Enviando...' : `Enviar pedido de ${U.money(total)}`}</button>
+        </form>`
+      : UI.formNotice('Toque em + nos produtos para montar seu pedido.', '');
+
+    const pendingHtml = pendingGroups.length
+      ? `<div class="request-pending-list">${pendingGroups.map((group) => `
+          <article class="panel-card request-pending">
+            <div class="approval-card-head">
+              <div>
+                <strong>${U.money(group.total)}</strong>
+                <small>${group.items.length} item(ns) · ${group.paymentMode === 'avista' ? 'À vista' : 'A prazo'} · ${U.escapeHtml(new Date(group.createdAt).toLocaleDateString('pt-BR'))}</small>
+              </div>
+              ${statusBadge(group.approvalStatus)}
+            </div>
+            <ul class="today-list">
+              ${group.items.map((order) => {
+                const product = (state().products || []).find((item) => String(item.id) === String(order.productId));
+                return `<li><span>${U.escapeHtml(product ? product.name : 'Produto')} <small>× ${U.number(order.quantity)}</small></span><strong>${U.money(U.number(order.quantity) * U.number(order.unitPrice))}</strong></li>`;
+              }).join('')}
+            </ul>
+          </article>`).join('')}</div>`
+      : UI.formNotice('Nenhum pedido aguardando resposta do administrador.', '');
+
+    return UI.section(
+      'Pedir produtos',
+      'Monte seu pedido com os produtos liberados e envie para o administrador aprovar. O estoque só sai depois que ele aprovar e despachar.',
+      `
+        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+        <div class="request-layout">
+          <div>
+            <h3>Catálogo</h3>
+            ${catalogHtml}
+          </div>
+          <aside class="panel-card request-cart">
+            <div class="approval-card-head">
+              <div><strong>Meu pedido</strong><small>${lines.length} produto(s)</small></div>
+              <strong class="request-cart-total">${U.money(total)}</strong>
+            </div>
+            ${cartHtml}
+          </aside>
+        </div>
+
+        <h3>Aguardando aprovação</h3>
+        ${pendingHtml}
+      `
+    );
+  }
+
+  function mount(container) {
+    if (!container) return null;
+    let cart = {};
+    let feedback = null;
+    let sending = false;
+
+    function paint() {
+      container.innerHTML = render({ cart, feedback, sending });
+    }
+
+    function setQuantity(productId, quantity) {
+      const value = Math.max(0, Math.round(U.number(quantity)));
+      if (value <= 0) delete cart[productId];
+      else cart[productId] = value;
+      feedback = null;
+      paint();
+    }
+
+    container.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-request-action]');
+      if (!button) return;
+      const productId = button.dataset.product;
+      const current = U.number(cart[productId]);
+      setQuantity(productId, button.dataset.requestAction === 'inc' ? current + 1 : current - 1);
+    });
+
+    container.addEventListener('change', (event) => {
+      const input = event.target.closest('[data-request-qty]');
+      if (!input) return;
+      setQuantity(input.dataset.requestQty, input.value);
+    });
+
+    container.addEventListener('submit', async (event) => {
+      const form = event.target.closest('[data-request-form]');
+      if (!form) return;
+      event.preventDefault();
+      const products = catalog();
+      const { lines } = cartSummary(cart, products);
+      if (!lines.length) return;
+
+      sending = true;
+      feedback = null;
+      paint();
+      try {
+        await window.C360.salesCart.requestStockFromAdmin({
+          paymentMode: form.elements.paymentMode.value,
+          notes: form.elements.notes.value,
+          items: lines.map((line) => ({
+            productId: line.product.id,
+            quantity: line.quantity,
+            unitPrice: line.price,
+          })),
+        });
+        cart = {};
+        feedback = { message: 'Pedido enviado. O administrador vai analisar e você acompanha aqui.', type: 'success' };
+      } catch (error) {
+        feedback = { message: error.message || 'Não foi possível enviar o pedido.', type: 'error' };
+      } finally {
+        sending = false;
+        paint();
+      }
+    });
+
+    paint();
+    return { refresh: paint };
+  }
+
+  window.C360.sellerOrderRequest = { render, mount };
 })();
 </script>
   <script>
@@ -11333,7 +11705,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     'hoje', 'produtos', 'clientes', 'compras',
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores',
-    'meusaldo', 'devolucoes', 'minhasdevolucoes', 'metas',
+    'pedir', 'meusaldo', 'devolucoes', 'minhasdevolucoes', 'metas',
     'configuracoes',
   ];
 
@@ -11351,6 +11723,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     tarefas: 'Tarefas',
     relatorios: 'Relatórios',
     vendedores: 'Vendedores',
+    pedir: 'Pedir produtos',
     meusaldo: 'Minha conta',
     // Rótulo de navegação é destino, não descrição: "Devoluções,
     // desperdícios e brindes" quebrava em 3 linhas na barra lateral e
@@ -11388,6 +11761,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     tarefas: ['admin'],
     relatorios: ['admin'],
     vendedores: ['admin'],
+    // Única escrita do vendedor: pedido de reposição ao admin. A RLS de
+    // `orders` (migration 20260801143000) é a garantia real.
+    pedir: ['vendedor'],
     meusaldo: ['vendedor'],
     devolucoes: ['admin'],
     minhasdevolucoes: SEM_PAPEL, // "Devoluções e brindes" do vendedor
@@ -11405,7 +11781,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // grupo (senão some da navegação).
   const TAB_GROUPS = [
     { id: 'diaadia', label: 'Dia a dia',
-      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
+      tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'pedir', 'meusaldo', 'metas'] },
     { id: 'mercadoria', label: 'Mercadoria e produção',
       tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
     { id: 'cadastros', label: 'Cadastros',
@@ -11418,7 +11794,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // (sempre o 5º item) para o restante das abas permitidas ao papel.
   const BOTTOM_NAV_PRIMARY = {
     admin: ['hoje', 'vendas', 'financeiro', 'produtos'],
-    vendedor: ['meusaldo'],
+    vendedor: ['pedir', 'meusaldo'],
   };
   const BOTTOM_NAV_SHORT_LABELS = { vendas: 'Vender', produtos: 'Estoque', financeiro: 'Financeiro' };
 
@@ -12055,6 +12431,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
         }
         break;
+      case 'pedir':
+        els.view.innerHTML = '<div id="sellerRequestPanel"></div>';
+        if (window.C360.sellerOrderRequest && typeof window.C360.sellerOrderRequest.mount === 'function') {
+          window.C360.sellerOrderRequest.mount(document.getElementById('sellerRequestPanel'));
+        }
+        break;
       case 'meusaldo':
         els.view.innerHTML = '<div id="sellerLedgerPanel"></div>';
         if (window.C360.sellerLedger && typeof window.C360.sellerLedger.mountSeller === 'function') {
@@ -12226,12 +12608,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
             <label>${UI.fieldLabel('Perda técnica (%)', 'perdaTecnica')}<input name="lossPercent" type="number" step="0.01" value="0"></label>
             <label>${UI.fieldLabel('Margem desejada (%)', 'margemDesejadaProduto')}<input name="targetMarginPercent" type="number" step="0.01" value=""><span>Se vazio, usa a margem padrão do negócio.</span></label>
             <label>${UI.fieldLabel('Taxas sobre venda (%)', 'taxasProduto')}<input name="taxFeePercent" type="number" step="0.01" value=""><span>Marketplace, cartão ou taxa estimada.</span></label>
+            <label class="checkbox-label full"><input type="checkbox" name="orderableBySellers" checked> Disponível para vendedores pedirem<span>Desmarque em itens de controle interno (matéria-prima, embalagem): eles somem do catálogo do vendedor.</span></label>
             <label class="full">Observações<textarea name="notes" placeholder="Lote, fornecedor preferencial, uso na produção..."></textarea></label>
           </div>
         </details>
         <button type="submit">Adicionar produto</button>
       </form>
       ${UI.table(['Produto', 'Tipo', 'Un.', 'Estoque', 'Custo médio', 'Custo ficha', 'Preço manual', 'Margem', 'Ações'], rows)}
+
+      ${renderSellerCatalogPanel()}
 
       <!-- Preços deixou de ser aba própria: preço padrão, piso e preço por
            vendedor são atributos do produto. O módulo src/pricing.js monta
@@ -12243,10 +12628,52 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     `, '', '<button type="button" data-action="focus-new-product">+ Novo produto</button>');
   }
 
+  // Tipos que o negócio revende. Matéria-prima, embalagem e serviço são
+  // controle interno e não devem aparecer no catálogo do vendedor.
+  const SELLABLE_TYPES = ['produto_final', 'mercadoria', 'kit'];
+
+  // Quais produtos o vendedor pode pedir. A lista fica num lugar só porque
+  // liberar/bloquear é uma decisão que se toma olhando o catálogo inteiro —
+  // abrir o editor produto a produto para isso seria trabalhoso. A garantia
+  // real é a RLS de seller_products + o trigger de pedido (migration
+  // 20260801143000); esta tela é a interface dessa marca.
+  function renderSellerCatalogPanel() {
+    const products = currentProducts().filter((product) => product.type !== 'servico');
+    if (!products.length) return '';
+    const released = products.filter((product) => product.orderableBySellers);
+    const rows = products.map((product) => `
+      <li class="catalog-toggle-row">
+        <label>
+          <input type="checkbox" data-catalog-toggle="${U.escapeHtml(product.id)}" ${product.orderableBySellers ? 'checked' : ''}>
+          <span>${U.escapeHtml(product.name)}</span>
+        </label>
+        ${UI.badge(labelForProductType(product.type))}
+      </li>`).join('');
+    return `
+      <details class="panel-card" ${released.length ? '' : 'open'}>
+        <summary>Catálogo do vendedor — ${released.length} de ${products.length} liberado(s)</summary>
+        <p class="hint">Marque o que os vendedores podem pedir. O que ficar desmarcado nem aparece para eles, e o servidor recusa o pedido mesmo que alguém tente por fora. Deixe desmarcado o que é só de controle interno.</p>
+        ${released.length ? '' : UI.formNotice('Nenhum produto liberado: hoje o vendedor abre a tela de pedido e não vê nada.', 'warning')}
+        <ul class="catalog-toggle-list">${rows}</ul>
+      </details>`;
+  }
+
   function mountProductsExtras() {
     const panel = document.getElementById('pricingPanel');
     if (panel && window.C360.pricing && typeof window.C360.pricing.mountAdmin === 'function') {
       window.C360.pricing.mountAdmin(panel);
+    }
+    // O checkbox "Disponível para vendedores" mora dentro de "Mais opções",
+    // fechado por padrão — quem cadastra matéria-prima não abriria para
+    // desmarcar. Acompanhar o tipo faz o padrão certo acontecer sozinho, sem
+    // tirar do admin a possibilidade de mudar.
+    const form = document.getElementById('productForm');
+    const typeSelect = form?.elements?.type;
+    const orderable = form?.elements?.orderableBySellers;
+    if (typeSelect && orderable) {
+      const syncDefault = () => { orderable.checked = SELLABLE_TYPES.includes(typeSelect.value); };
+      syncDefault();
+      typeSelect.addEventListener('change', syncDefault);
     }
   }
 
@@ -13130,6 +13557,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <label>Estoque mínimo<input name='minStock' type='number' min='0' step='0.001' value='${U.escapeHtml(product.minStock || 0)}'></label>
         <label>Margem desejada (%)<input name='targetMarginPercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.targetMarginPercent || 0)}'></label>
         <label>Taxas (%)<input name='taxFeePercent' type='number' min='0' step='0.01' value='${U.escapeHtml(product.taxFeePercent || 0)}'></label>
+        <label class='checkbox-label full'><input type='checkbox' name='orderableBySellers' ${product.orderableBySellers ? 'checked' : ''}> Disponível para vendedores pedirem<span>Desmarcado, o produto some do catálogo do vendedor e não pode entrar em pedido de reposição.</span></label>
         <label class='full'>Observações<textarea name='notes'>${U.escapeHtml(product.notes || '')}</textarea></label>
         <footer><button type='button' class='ghost' data-action='close-product-editor'>Cancelar</button><button type='submit'>Salvar alterações</button></footer>
       </form>`;
@@ -13207,6 +13635,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       minStock: U.number(data.minStock),
       targetMarginPercent: U.number(data.targetMarginPercent ?? business?.defaultTargetMargin),
       taxFeePercent: U.number(data.taxFeePercent ?? business?.defaultFeePercent),
+      orderableBySellers: data.orderableBySellers === 'on',
       notes: data.notes || '',
     });
     // Mudar o custo médio muda o valor do estoque, então deixa rastro pelo
@@ -13258,6 +13687,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       lossPercent: U.number(data.lossPercent),
       targetMarginPercent: data.targetMarginPercent === '' ? U.number(business?.defaultTargetMargin) : U.number(data.targetMarginPercent),
       taxFeePercent: data.taxFeePercent === '' ? U.number(business?.defaultFeePercent) : U.number(data.taxFeePercent),
+      // Checkbox sempre presente no formulário, então ausente = desmarcado.
+      // O valor inicial dele acompanha o tipo escolhido (ver
+      // mountProductsExtras): o que o negócio revende vem marcado,
+      // matéria-prima/embalagem/serviço vêm desmarcados.
+      orderableBySellers: data.orderableBySellers === 'on',
       notes: data.notes || '',
     });
     // Estoque inicial é estoque: sem esta movimentação o saldo nascia do nada
@@ -13930,6 +14364,27 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Alternativa ao arrastar-e-soltar (arrastar com o dedo não dispara os
   // eventos HTML5 de drag-and-drop): select "mover para" em cada cartão,
   // ver UI.kanban() em src/ui.js.
+  // Salva na hora, sem botão "Salvar": é um interruptor por produto, e uma
+  // lista de 30 checkboxes com um submit no fim convida a perder alteração.
+  // Em caso de erro o checkbox volta para o estado anterior.
+  async function handleSellerCatalogToggle(event) {
+    const input = event.target.closest('[data-catalog-toggle]');
+    if (!input) return;
+    const productId = input.dataset.catalogToggle;
+    const next = input.checked;
+    input.disabled = true;
+    try {
+      await S.update('products', productId, { orderableBySellers: next });
+      const product = productById(productId);
+      toast(`${product ? product.name : 'Produto'} ${next ? 'liberado para' : 'removido do'} catálogo do vendedor.`, 'success');
+      renderTab();
+    } catch (error) {
+      input.checked = !next;
+      input.disabled = false;
+      toast(error.message || 'Não foi possível alterar o produto.', 'error');
+    }
+  }
+
   async function handleKanbanMove(event) {
     const select = event.target.closest('[data-kanban-move]');
     if (!select) return;
@@ -14094,6 +14549,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     document.addEventListener('dragleave', handleKanbanDragLeave);
     document.addEventListener('drop', handleKanbanDrop);
     document.addEventListener('change', handleKanbanMove);
+    document.addEventListener('change', handleSellerCatalogToggle);
   }
 
   function handleDashboardPeriod(event) {

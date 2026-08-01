@@ -311,6 +311,10 @@
       lossPercent: row.loss_percent,
       targetMarginPercent: row.target_margin_percent,
       taxFeePercent: row.tax_fee_percent,
+      // Marca "liberado para o vendedor pedir" (migration
+      // 20260801143000_seller_cart_requests). Ausente = false, para uma base
+      // ainda sem a migração não liberar o catálogo inteiro por omissão.
+      orderableBySellers: row.orderable_by_sellers === true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

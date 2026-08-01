@@ -2281,3 +2281,44 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .metric-card-action { text-align:left; color:var(--ink); cursor:pointer; box-shadow:var(--shadow-sm); }
 .metric-card-action small { color:var(--muted); font-weight:500; }
 .metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }
+
+/* Pedido de reposicao do vendedor (src/sellerOrderRequest.js) e catalogo
+   liberado (aba Produtos). Mobile-first: o vendedor trabalha no celular. */
+.request-layout { display: grid; gap: 1rem; }
+.request-catalog { display: grid; gap: 0.5rem; }
+.request-product {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.65rem 0.8rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.request-product.is-in-cart { border-color: var(--accent); background: var(--accent-soft); }
+.request-product-info { display: grid; gap: 0.1rem; min-width: 0; }
+.request-product-info strong { font-size: 0.95rem; }
+.request-product-info span { color: var(--muted); font-family: var(--num); font-size: 0.88rem; }
+.request-stepper { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+.request-stepper button { min-width: 40px; min-height: 40px; padding: 0; font-size: 1.1rem; line-height: 1; }
+.request-stepper input { width: 56px; min-height: 40px; padding: 0.35rem; text-align: center; font-family: var(--num); }
+.request-cart { align-self: start; }
+.request-cart-total { font-family: var(--num); font-size: 1.15rem; }
+.request-cart-lines { list-style: none; margin: 0.6rem 0; padding: 0; display: grid; gap: 0.35rem; }
+.request-cart-lines li { display: flex; justify-content: space-between; gap: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--line); }
+.request-cart-lines li:last-child { border-bottom: 0; }
+.request-cart-lines strong { font-family: var(--num); }
+.request-send-form { display: grid; gap: 0.6rem; }
+.request-send-form button { min-height: 46px; }
+.request-pending-list { display: grid; gap: 0.6rem; }
+
+.catalog-toggle-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.25rem; }
+.catalog-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); }
+.catalog-toggle-row:nth-child(odd) { background: var(--surface-soft); }
+.catalog-toggle-row label { display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer; }
+.catalog-toggle-row input { width: 18px; height: 18px; margin: 0; }
+.checkbox-label { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
+.checkbox-label input { width: 18px; height: 18px; margin: 0.15rem 0 0; flex-shrink: 0; }
+.checkbox-label span { flex-basis: 100%; color: var(--muted); font-size: 0.8rem; }
+
+/* Carrinho ao lado do catalogo quando ha' largura; empilhado no celular. */
+@media (min-width: 860px) {
+  .request-layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .request-cart { position: sticky; top: 1rem; }
+}
