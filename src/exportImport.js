@@ -45,6 +45,9 @@
     parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
     periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
     targetAmount: 'Meta', rewardDescription: 'Premiação',
+    entity: 'Cadastro', entityId: 'ID do registro', field: 'Campo',
+    oldValue: 'Valor antigo', newValue: 'Valor novo', changedBy: 'Alterado por',
+    changedAt: 'Alterado em', source: 'Origem',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -59,7 +62,7 @@
   ]);
 
   const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
-    'submittedAt', 'approvedAt', 'paymentDate', 'confirmedAt', 'periodStart', 'periodEnd']);
+    'submittedAt', 'approvedAt', 'paymentDate', 'confirmedAt', 'periodStart', 'periodEnd', 'changedAt']);
 
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
@@ -90,6 +93,7 @@
     { key: 'operationalMovements', sheet: 'Devolucoes e brindes', fields: ['id', 'businessId', 'sellerId', 'productId', 'type', 'status', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue', 'affectsFinance', 'reason', 'notes', 'approvedBy', 'confirmedAt', 'createdAt', 'updatedAt'] },
     { key: 'sellerPrices', sheet: 'Precos por vendedor', fields: ['id', 'businessId', 'sellerId', 'productId', 'price', 'floor', 'createdAt', 'updatedAt'] },
     { key: 'salesGoals', sheet: 'Metas', fields: ['id', 'businessId', 'sellerId', 'periodType', 'periodStart', 'periodEnd', 'targetAmount', 'rewardDescription', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'recordAuditLog', sheet: 'Historico de edicao', fields: ['id', 'businessId', 'entity', 'entityId', 'field', 'oldValue', 'newValue', 'changedBy', 'changedAt', 'source'] },
   ];
 
   const BACKUP_SHEET = 'Backup_NAO_EDITAR';

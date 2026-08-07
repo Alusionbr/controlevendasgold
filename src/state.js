@@ -100,6 +100,8 @@
       financialEntries: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
+      // Edição com auditoria: histórico de campo alterado, só para admin.
+      recordAuditLog: [],
       profile: null,
       profiles: [],
       sellers: [],
@@ -260,6 +262,7 @@
     sellerPayments: 'seller_payments',
     financialEntries: 'financial_entries',
     operationalMovements: 'operational_movements',
+    recordAuditLog: 'record_audit_log',
     profiles: 'profiles',
   };
 
@@ -370,7 +373,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements,
+      sellerAccountEntries, sellerPayments, financialEntries, operationalMovements, recordAuditLog,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -395,6 +398,7 @@
       api.list('seller_payments', { business_id: businessId, _order: 'created_at.desc' }),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
+      api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -421,6 +425,7 @@
     state.sellerPayments = sellerPayments.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
+    state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),

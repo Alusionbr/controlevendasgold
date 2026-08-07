@@ -628,6 +628,7 @@
           <div class="cart-draft-list">${itemCards || '<div class="empty-state"><strong>Carrinho vazio.</strong><span>Toque em um produto para adicionar.</span></div>'}</div>
           ${parcialHint}
           <div class="actions cart-primary-actions">
+            <div class="cart-primary-total"><span>Total</span><strong>${U.money(cartTotal(draft.items))}</strong></div>
             <button type="button" data-cart-action="launch" ${draft.items.length ? '' : 'disabled'}>${primaryLabel(draft.mode)}</button>
             <button type="button" class="ghost" data-cart-action="clear-draft">Limpar</button>
           </div>
