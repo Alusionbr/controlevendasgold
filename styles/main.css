@@ -2278,6 +2278,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .seller-create-disclosure { margin:.6rem 0 .8rem; padding:.2rem .8rem .8rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-soft); }
 .seller-create-disclosure summary { cursor:pointer; font-weight:800; padding:.65rem 0; }
 .seller-create-disclosure[open] summary { margin-bottom:.45rem; }
+.seller-quick-debit { border-color:var(--danger-soft); border-left:4px solid var(--danger); background:linear-gradient(90deg,var(--danger-soft),var(--surface-soft) 42%); }
+.seller-quick-debit summary { color:var(--danger-deep); }
+.seller-quick-debit .grid-form { margin-bottom:0; background:var(--surface); }
+.seller-quick-debit .form-notice { margin-bottom:.7rem; }
 .metric-card-action { text-align:left; color:var(--ink); cursor:pointer; box-shadow:var(--shadow-sm); }
 .metric-card-action small { color:var(--muted); font-weight:500; }
 .metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }

@@ -81,6 +81,28 @@
     return { id: paymentId };
   }
 
+  async function registerManualDebit(sellerId, { amount, reason, requestId } = {}) {
+    const value = U.number(amount);
+    const cleanReason = String(reason || '').trim();
+    if (!sellerId) throw new Error('Selecione um vendedor.');
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    if (cleanReason.length < 3) throw new Error('Explique o motivo do débito.');
+    if (cleanReason.length > 500) throw new Error('O motivo deve ter no máximo 500 caracteres.');
+    const api = window.C360.api;
+    if (!api || typeof api.registerManualSellerDebit !== 'function') {
+      throw new Error('Lançamento manual de débito indisponível.');
+    }
+    const operationId = requestId || crypto.randomUUID();
+    const entryId = await api.registerManualSellerDebit({
+      sellerId,
+      amount: value,
+      reason: cleanReason,
+      requestId: operationId,
+    });
+    await S().refresh();
+    return { id: entryId, requestId: operationId };
+  }
+
   async function registerOrderPayment(orderGroupId, { amount, method, notes } = {}) {
     const value = U.number(amount);
     if (!orderGroupId) throw new Error('Selecione o pedido que está sendo pago.');
@@ -407,6 +429,7 @@
     legacyBalanceFor,
     renderOrderAccounts,
     registerPayment,
+    registerManualDebit,
     registerOrderPayment,
   };
 })();
