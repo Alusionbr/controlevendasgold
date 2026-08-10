@@ -65,8 +65,7 @@ test('painel rápido seleciona vendedor, confirma impacto e não depende de carr
   const use = auth.indexOf('const isExpanded =', declaration - 300);
   assert.ok(declaration >= 0 && use > declaration, 'pendingPayments deve ser calculado antes de isExpanded');
   assert.match(ledger, /Total pendente/);
-  assert.match(ledger, /Ajustes sem pedido/);
-  assert.match(ledger, /Ajuste avulso pendente/);
+  assert.doesNotMatch(ledger, /Ajustes sem pedido|Ajuste avulso pendente/);
   assert.match(auth, /Total pendente/);
   assert.match(auth, /Ajustes sem pedido/);
 });
