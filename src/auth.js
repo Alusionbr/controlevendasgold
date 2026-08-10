@@ -584,7 +584,6 @@
     const toggleAction = isActive ? 'deactivate-seller' : 'activate-seller';
     const toggleLabel = isActive ? 'Desativar' : 'Reativar';
     const toggleClass = isActive ? 'danger' : 'secondary';
-    const isExpanded = String(expandedId) === String(seller.id) || (focusPayments && pendingPayments > 0);
     const L = ledger();
     const balance = L ? L.balanceFor(seller.id) : 0;
     const stock = sellerStockSummary(seller.id);
@@ -593,6 +592,7 @@
     const pendingReturns = pendingReturnsCountForSeller(seller.id);
     const pendingPayments = pendingPaymentReportsCountForSeller(seller.id);
     const pendingTotal = pendingCarts + pendingReturns + pendingPayments;
+    const isExpanded = String(expandedId) === String(seller.id) || (focusPayments && pendingPayments > 0);
 
     return `
       <article class="panel-card seller-manage-card" data-seller-card="${U.escapeHtml(seller.id)}">
@@ -627,11 +627,38 @@
       </article>
     `;
   }
+  function renderQuickDebitPanel(sellers, feedback) {
+    const activeSellers = sellers.filter((seller) => seller.active !== false);
+    const options = activeSellers.map((seller) =>
+      `<option value="${U.escapeHtml(seller.id)}">${U.escapeHtml(seller.name || seller.username || 'Vendedor')}</option>`
+    ).join('');
+    return `
+      <details class="seller-create-disclosure seller-quick-debit" ${feedback ? 'open' : ''}>
+        <summary>Incluir dívida sem carrinho</summary>
+        <p class="ss-hint">Use somente para acertar um débito que não nasceu de venda, pedido ou envio de estoque. O lançamento ficará identificado no histórico.</p>
+        ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
+        ${activeSellers.length ? `
+          <form class="grid-form compact-form" data-manual-debit-form>
+            <label>Vendedor
+              <select name="sellerId" required><option value="">Selecione o vendedor</option>${options}</select>
+            </label>
+            <label>Valor da dívida
+              <input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0,00">
+            </label>
+            <label class="wide">Motivo do ajuste
+              <input name="reason" minlength="3" maxlength="500" required placeholder="Ex.: saldo conferido fora do histórico de carrinhos">
+            </label>
+            <button type="submit" class="small danger">Lançar débito</button>
+          </form>` : UI.formNotice('Cadastre ou reative um vendedor antes de lançar o débito.', 'warning')}
+      </details>
+    `;
+  }
 
   function renderSellers(data = {}) {
     const sellers = Array.isArray(data.sellers) ? data.sellers : [];
     const loading = !!data.loading;
     const filter = data.filter || 'active';
+    const quickDebitFeedback = data.quickDebitFeedback || null;
     const pendingReports = (fullState().sellerPaymentReports || []).filter((report) => report.status === 'pending');
     const activeCount = sellers.filter((seller) => seller.active !== false).length;
     const inactiveCount = sellers.length - activeCount;
@@ -665,6 +692,7 @@
         </div>` : ''}
         <div id="authSellersError"></div>
         <div class="seller-filter-bar"><button type="button" class="small ${filter === 'active' ? '' : 'secondary'}" data-action="seller-filter" data-filter="active">Ativos (${activeCount})</button><button type="button" class="small ${filter === 'payments' ? '' : 'secondary'}" data-action="seller-filter" data-filter="payments">Pagamentos para conferir (${pendingReports.length})</button><button type="button" class="small ${filter === 'inactive' ? '' : 'secondary'}" data-action="seller-filter" data-filter="inactive">Inativos (${inactiveCount})</button></div>
+        ${!loading ? renderQuickDebitPanel(activeSellers, quickDebitFeedback) : ''}
         <details class="seller-create-disclosure"><summary>Criar novo vendedor</summary><form id="authCreateSellerForm" class="grid-form compact-form">
           <label class="full">Nome
             <input name="name" required placeholder="Nome do vendedor">
@@ -688,11 +716,15 @@
     let loading = true;
     let expandedId = null;
     let manageFeedback = null;
+    let quickDebitFeedback = null;
+    let manualDebitBusy = false;
     let filter = requestedSellerFilter;
     requestedSellerFilter = 'active';
 
     function paint() {
-      container.innerHTML = renderSellers({ sellers, loading, expandedId, manageFeedback, filter });
+      container.innerHTML = renderSellers({
+        sellers, loading, expandedId, manageFeedback, quickDebitFeedback, filter,
+      });
     }
 
     function errorHost() {
@@ -731,6 +763,7 @@
 
     container.addEventListener('submit', async (event) => {
       const createForm = event.target.closest('#authCreateSellerForm');
+      const manualDebitForm = event.target.closest('[data-manual-debit-form]');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
       const orderPaymentForm = event.target.closest('[data-order-payment-form]');
@@ -773,6 +806,43 @@
             submitButton.textContent = originalLabel;
           }
         }
+        return;
+      }
+
+      if (manualDebitForm && container.contains(manualDebitForm)) {
+        event.preventDefault();
+        if (manualDebitBusy) return;
+        const data = U.formData(manualDebitForm);
+        const seller = sellers.find((item) => String(item.id) === String(data.sellerId) && item.active !== false);
+        const amount = U.number(data.amount);
+        const reason = String(data.reason || '').trim();
+        if (!seller) { quickDebitFeedback = { message: 'Selecione um vendedor ativo.', type: 'danger' }; paint(); return; }
+        if (amount <= 0) { quickDebitFeedback = { message: 'Informe um valor maior que zero.', type: 'danger' }; paint(); return; }
+        if (reason.length < 3) { quickDebitFeedback = { message: 'Explique o motivo do débito.', type: 'danger' }; paint(); return; }
+        const L = ledger();
+        const currentBalance = L ? L.balanceFor(seller.id) : 0;
+        if (!confirm(`Lançar ${U.money(amount)} de débito para ${seller.name}? O saldo passará de ${U.money(currentBalance)} para ${U.money(currentBalance + amount)}.`)) return;
+
+        const submitButton = manualDebitForm.querySelector('button[type="submit"]');
+        manualDebitBusy = true;
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Lançando...'; }
+        try {
+          if (!L || typeof L.registerManualDebit !== 'function') throw new Error('Lançamento manual indisponível no momento.');
+          await L.registerManualDebit(seller.id, {
+            amount,
+            reason,
+            requestId: crypto.randomUUID(),
+          });
+          const message = `Débito de ${U.money(amount)} lançado para ${seller.name}, sem vínculo com carrinho.`;
+          quickDebitFeedback = { message, type: 'success' };
+          manageFeedback = { message, type: 'success' };
+          expandedId = seller.id;
+        } catch (error) {
+          quickDebitFeedback = { message: (error && error.message) || 'Não foi possível lançar o débito.', type: 'danger' };
+        } finally {
+          manualDebitBusy = false;
+        }
+        paint();
         return;
       }
 

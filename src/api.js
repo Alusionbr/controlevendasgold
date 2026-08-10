@@ -521,6 +521,18 @@
     });
   }
 
+  async function registerManualSellerDebit({ sellerId, amount, reason, requestId }) {
+    return restRequest('/rest/v1/rpc/register_manual_seller_debit', {
+      method: 'POST',
+      body: {
+        p_seller_id: sellerId,
+        p_amount: Number(amount),
+        p_reason: reason || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
   async function listSellerOrderAccounts(sellerId = null) {
     return restRequest('/rest/v1/rpc/list_seller_order_accounts', {
       method: 'POST',
@@ -745,6 +757,7 @@
     createSellerPaymentProofUrl,
     registerPurchaseGroup,
     registerSellerPayment,
+    registerManualSellerDebit,
     listSellerOrderAccounts,
     registerSellerOrderPayment,
     registerSaleReturn,

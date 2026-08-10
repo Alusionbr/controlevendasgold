@@ -40,7 +40,7 @@ html = html.replace(
 //    de cada bloco inline e listamos em script-src (passo 3), do mesmo jeito
 //    que já é feito para o <style> inline com 'unsafe-inline' em style-src.
 const scriptHashes = [];
-html = html.replace(/<script\s+src="(src\/[^"]+)"><\/script>/g, (match, src) => {
+html = html.replace(/<script\s+src="(src\/[^"?]+)(?:\?[^"]*)?"><\/script>/g, (match, src) => {
   const code = readText(path.join(projectDir, src)).replace(/\s+$/, '');
   const text = `\n${code}\n`;
   scriptHashes.push(`'sha256-${crypto.createHash('sha256').update(text, 'utf8').digest('base64')}'`);
