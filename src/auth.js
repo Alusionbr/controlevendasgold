@@ -491,7 +491,8 @@
       <div class="seller-manage-panel" data-seller-manage="${U.escapeHtml(seller.id)}">
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         <div class="seller-manage-grid">
-          ${UI.metric(balance > 0 ? 'Deve ao admin' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
+          ${UI.metric(balance > 0 ? 'Total pendente' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
+          ${UI.metric('Ajustes sem pedido', legacyBalance >= 0.005 ? U.money(legacyBalance) : 'Nenhum', null)}
           ${UI.metric('Pedidos aguardando aprovação', String(pendingCarts), null)}
           ${UI.metric('Devoluções pendentes', String(pendingReturns), null)}
           ${UI.metric('Pagamentos para conferir', String(pendingPayments), null)}

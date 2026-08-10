@@ -43,6 +43,7 @@ test('API e ledger expõem uma única operação de débito manual', () => {
 
 test('painel rápido seleciona vendedor, confirma impacto e não depende de carrinho', () => {
   const auth = read('src/auth.js');
+  const ledger = read('src/sellerLedger.js');
   for (const hook of [
     'data-manual-debit-form',
     'name="sellerId"',
@@ -63,4 +64,9 @@ test('painel rápido seleciona vendedor, confirma impacto e não depende de carr
   const declaration = auth.indexOf('const pendingPayments = pendingPaymentReportsCountForSeller');
   const use = auth.indexOf('const isExpanded =', declaration - 300);
   assert.ok(declaration >= 0 && use > declaration, 'pendingPayments deve ser calculado antes de isExpanded');
+  assert.match(ledger, /Total pendente/);
+  assert.match(ledger, /Ajustes sem pedido/);
+  assert.match(ledger, /Ajuste avulso pendente/);
+  assert.match(auth, /Total pendente/);
+  assert.match(auth, /Ajustes sem pedido/);
 });
