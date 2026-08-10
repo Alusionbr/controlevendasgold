@@ -384,6 +384,7 @@
       'Minha conta',
       'Veja o total pendente e os pedidos que compõem a sua conta.',
       `
+        ${renderPaymentPulse(currentUser.id)}
         <div class="dashboard seller-overview-metrics">
           ${UI.metric(balance > 0 ? 'Total pendente' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos em aberto', String(accountsForSeller(currentUser.id).filter((item) => U.number(item.openAmount) >= 0.005).length), null)}
@@ -391,7 +392,6 @@
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         ${renderLoginTask(currentUser.id)}
         ${renderPaymentReport(currentUser.id)}
-        ${renderPaymentPulse(currentUser.id)}
         ${renderBalanceAlignment(currentUser.id, balance)}
         <h3>Estoque e contas por pedido</h3>
         ${renderOrderAccounts(currentUser.id)}
