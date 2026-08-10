@@ -1456,6 +1456,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   margin-bottom: 0.4rem;
 }
 
+
+.seller-payment-pulse { display: grid; gap: 0.7rem; border-left: 4px solid var(--line-strong); }
+.seller-payment-pulse.is-ok { border-color: var(--success); background: linear-gradient(90deg, var(--success-soft), var(--surface) 58%); }
+.seller-payment-pulse.is-warning { border-color: var(--warning); background: linear-gradient(90deg, var(--accent-soft), var(--surface) 58%); }
+.seller-payment-pulse.is-danger { border-color: var(--danger); background: linear-gradient(90deg, var(--danger-soft), var(--surface) 58%); }
+.payment-pulse-status { font-size: 0.76rem; font-weight: 800; border-radius: 999px; padding: 0.28rem 0.55rem; background: var(--surface); border: 1px solid currentColor; white-space: nowrap; }
+.seller-payment-pulse.is-ok .payment-pulse-status { color: var(--success); }
+.seller-payment-pulse.is-warning .payment-pulse-status { color: var(--warning); }
+.seller-payment-pulse.is-danger .payment-pulse-status { color: var(--danger); }
+.payment-pulse-main { display: flex; align-items: center; gap: 0.8rem; }
+.payment-pulse-main > strong { font-family: var(--num); font-size: 1.5rem; line-height: 1; color: var(--ink); }
+.payment-pulse-main div { display: grid; gap: 0.12rem; }
+.payment-pulse-main span { font-size: 0.78rem; font-weight: 750; color: var(--ink); }
+.payment-pulse-main small { color: var(--muted); font-size: 0.76rem; }
+@media (max-width: 480px) { .payment-pulse-main { align-items: flex-start; } }
 /* Faixa de resumo dentro de cada card de vendedor (visível sem expandir):
    mercadoria em mãos, dívida e último pagamento — o "mapa" que o admin quer
    ver de relance. */

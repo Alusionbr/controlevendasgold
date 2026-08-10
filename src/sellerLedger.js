@@ -27,6 +27,30 @@
     return (state().sellerPayments || []).filter((payment) => String(payment.sellerId) === String(sellerId));
   }
 
+
+  function paymentDateFor(payment) {
+    return String(payment.paymentDate || payment.createdAt || '').slice(0, 10);
+  }
+
+  function daysSince(dateText) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return null;
+    const [year, month, day] = dateText.split('-').map(Number);
+    const [todayYear, todayMonth, todayDay] = U.today().split('-').map(Number);
+    const elapsed = Math.floor((Date.UTC(todayYear, todayMonth - 1, todayDay) - Date.UTC(year, month - 1, day)) / 86400000);
+    return Math.max(elapsed, 0);
+  }
+
+  function paymentPulseForSeller(sellerId) {
+    const lastPaymentDate = paymentsForSeller(sellerId).reduce((latest, payment) => {
+      const date = paymentDateFor(payment);
+      return date > latest ? date : latest;
+    }, '');
+    const days = daysSince(lastPaymentDate);
+    if (days === null) return { tone: 'danger', headline: 'Sem pagamento registrado', message: 'Registre seu primeiro pagamento para acompanhar este prazo.', lastPaymentDate: null, days: null };
+    if (days <= 7) return { tone: 'ok', headline: 'Em dia', message: 'Otimo ritmo. Continue acompanhando sua conta.', lastPaymentDate, days };
+    if (days <= 30) return { tone: 'warning', headline: 'Atencao ao prazo', message: 'Organize seu proximo pagamento para manter a conta em dia.', lastPaymentDate, days };
+    return { tone: 'danger', headline: 'Pagamento em atraso', message: 'Informe seu pagamento para regularizar sua conta.', lastPaymentDate, days };
+  }
   function accountsForSeller(sellerId) {
     return (state().sellerOrderAccounts || []).filter((account) => String(account.sellerId) === String(sellerId));
   }
@@ -297,6 +321,24 @@
       </section>`;
   }
 
+  function renderPaymentPulse(sellerId) {
+    const pulse = paymentPulseForSeller(sellerId);
+    const date = pulse.lastPaymentDate ? new Date(`${pulse.lastPaymentDate}T12:00:00`).toLocaleDateString('pt-BR') : null;
+    const elapsed = pulse.days === null ? '-' : `${pulse.days} dia(s)`;
+    return `
+      <section class="panel-card seller-payment-pulse is-${pulse.tone}">
+        <div class="approval-card-head">
+          <div><strong>Acompanhamento de pagamento</strong><small>O prazo e contado desde o ultimo pagamento confirmado.</small></div>
+          <span class="payment-pulse-status">${U.escapeHtml(pulse.headline)}</span>
+        </div>
+        <div class="payment-pulse-main">
+          <strong>${elapsed}</strong>
+          <div><span>desde o ultimo pagamento</span><small>${date ? `Ultimo pagamento em ${date}.` : 'Nenhum pagamento confirmado ainda.'}</small></div>
+        </div>
+        <p class="hint-inline">${U.escapeHtml(pulse.message)}</p>
+      </section>`;
+  }
+
   function renderBalanceAlignment(sellerId, balance) {
     const settings = settingsForSeller(sellerId);
     if (U.number(settings.balanceAlignmentCredits) < 1) return '';
@@ -349,6 +391,7 @@
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         ${renderLoginTask(currentUser.id)}
         ${renderPaymentReport(currentUser.id)}
+        ${renderPaymentPulse(currentUser.id)}
         ${renderBalanceAlignment(currentUser.id, balance)}
         <h3>Estoque e contas por pedido</h3>
         ${renderOrderAccounts(currentUser.id)}
