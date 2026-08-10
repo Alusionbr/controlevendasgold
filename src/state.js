@@ -461,7 +461,7 @@
       api.listSellerProducts(businessId),
       api.listSellerStock(userId),
       api.list('seller_settings', { seller_id: userId }),
-      api.registerSellerDailyLogin(),
+      api.registerSellerDailyLogin().catch(() => null),
       api.list('seller_account_entries', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payments', { seller_id: userId, _order: 'created_at.desc' }),
       api.list('seller_payment_allocations', { seller_id: userId }),
