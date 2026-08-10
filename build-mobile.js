@@ -29,7 +29,7 @@ const css = readText(cssPath);
 
 // 1) Inlinar o CSS no lugar do <link>.
 html = html.replace(
-  /\s*<link\s+rel="stylesheet"\s+href="styles\/main\.css"\s*>/,
+  /\s*<link\s+rel="stylesheet"\s+href="styles\/main\.css(?:\?[^\"]*)?"\s*>/,
   `\n  <style>\n${css}\n  </style>`
 );
 

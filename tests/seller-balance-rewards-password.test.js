@@ -64,3 +64,14 @@ test('interfaces expõem a tarefa, a liberação do admin e a troca de senha', (
   assert.match(admin, /grant-balance-alignment/);
   assert.match(admin, /redeem-login-gift/);
 });
+test('seller payment pulse uses green, yellow, and red thresholds', () => {
+  const seller = read('src/sellerLedger.js');
+  const styles = read('styles/main.css');
+  assert.match(seller, /function paymentPulseForSeller/);
+  assert.match(seller, /days <= 7/);
+  assert.match(seller, /days <= 30/);
+  assert.match(seller, /Acompanhamento de pagamento/);
+  assert.match(styles, /seller-payment-pulse\.is-ok/);
+  assert.match(styles, /seller-payment-pulse\.is-warning/);
+  assert.match(styles, /seller-payment-pulse\.is-danger/);
+});
