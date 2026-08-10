@@ -335,22 +335,19 @@
     if (!currentUser) return UI.formNotice('Entre na sua conta.', 'warning');
     const balance = balanceFor(currentUser.id);
     const entries = entriesForSeller(currentUser.id).slice(0, 30);
-    const legacy = legacyBalanceFor(currentUser.id);
 
     return UI.section(
       'Minha conta',
-      'Veja o total pendente, os pedidos e os ajustes avulsos que compõem a sua conta.',
+      'Veja o total pendente e os pedidos que compõem a sua conta.',
       `
         <div class="dashboard seller-overview-metrics">
           ${UI.metric(balance > 0 ? 'Total pendente' : 'Situação', balance > 0 ? U.money(balance) : 'Em dia', null)}
           ${UI.metric('Pedidos em aberto', String(accountsForSeller(currentUser.id).filter((item) => U.number(item.openAmount) >= 0.005).length), null)}
-          ${UI.metric('Ajustes sem pedido', legacy >= 0.005 ? U.money(legacy) : 'Nenhum', null)}
         </div>
         ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
         ${renderLoginTask(currentUser.id)}
         ${renderPaymentReport(currentUser.id)}
         ${renderBalanceAlignment(currentUser.id, balance)}
-        ${legacy >= 0.005 ? UI.formNotice(`Ajuste avulso pendente: ${U.money(legacy)}. Este valor já está incluído no total pendente acima, mas não pertence a nenhum pedido.`, 'warning') : ''}
         <h3>Estoque e contas por pedido</h3>
         ${renderOrderAccounts(currentUser.id)}
         <h3>Histórico geral da conta</h3>
