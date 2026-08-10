@@ -38,6 +38,7 @@ test('carregamento do vendedor busca somente dados próprios e registra o login 
     "api.list('seller_payments'", "api.list('seller_payment_allocations'",
     'api.listSellerOrderAccounts',
   ]) assert.ok(sellerRefresh.includes(required), `consulta obrigatória ausente: ${required}`);
+  assert.match(sellerRefresh, /api\.registerSellerDailyLogin\(\)\.catch\(\(\) => null\)/);
 });
 
 test('painel do vendedor limita escrita a senha própria, alinhamento e pagamento informado', () => {
