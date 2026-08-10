@@ -483,6 +483,25 @@
           </label>
           <button type="submit" class="small">Registrar pagamento</button>
         </form>
+
+        <h3>Ajustar dívida manualmente ${UI.help('ajusteManualDivida')}</h3>
+        <p class="ss-hint">Use para lançar uma dívida antiga cuja venda/consignado você não tem mais registrado, ou para corrigir um valor errado. O motivo é obrigatório e fica no histórico abaixo.</p>
+        <form class="grid-form compact-form" data-ledger-adjust-form data-seller-id="${U.escapeHtml(seller.id)}">
+          <label>Ajuste
+            <select name="direction" required>
+              <option value="debit">Aumentar dívida (lançar valor que falta)</option>
+              <option value="credit">Reduzir dívida (correção / perdão)</option>
+            </select>
+          </label>
+          <label>Valor
+            <input name="amount" type="number" step="0.01" min="0.01" required>
+          </label>
+          <label class="wide">Motivo (obrigatório)
+            <input name="notes" required placeholder="Ex.: venda de 03/2025 sem registro no sistema antigo">
+          </label>
+          <button type="submit" class="small secondary">Ajustar dívida</button>
+        </form>
+
         ${UI.table(['Data', 'Tipo', '', 'Nota', 'Valor'], entries.map((entry) => {
           const label = ({
             debit_replenishment: 'Reposição', payment: 'Pagamento', return_credit: 'Devolução',
@@ -644,6 +663,7 @@
       const createForm = event.target.closest('#authCreateSellerForm');
       const consignForm = event.target.closest('[data-consign-form]');
       const paymentForm = event.target.closest('[data-ledger-payment-form]');
+      const adjustForm = event.target.closest('[data-ledger-adjust-form]');
 
       if (createForm && container.contains(createForm)) {
         event.preventDefault();
@@ -723,6 +743,22 @@
           manageFeedback = { message: 'Pagamento registrado.', type: 'success' };
         } catch (error) {
           manageFeedback = { message: (error && error.message) || 'Não foi possível registrar o pagamento.', type: 'danger' };
+        }
+        paint();
+        return;
+      }
+
+      if (adjustForm && container.contains(adjustForm)) {
+        event.preventDefault();
+        const sellerId = adjustForm.dataset.sellerId;
+        const data = U.formData(adjustForm);
+        try {
+          const L = ledger();
+          if (!L || typeof L.registerManualAdjustment !== 'function') throw new Error('Ajuste manual indisponível no momento.');
+          await L.registerManualAdjustment(sellerId, { direction: data.direction, amount: data.amount, notes: data.notes });
+          manageFeedback = { message: 'Dívida ajustada.', type: 'success' };
+        } catch (error) {
+          manageFeedback = { message: (error && error.message) || 'Não foi possível ajustar a dívida.', type: 'danger' };
         }
         paint();
       }

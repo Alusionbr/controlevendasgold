@@ -77,6 +77,31 @@
     return { id: paymentId };
   }
 
+  // Ajuste manual de dívida — para lançar saldo antigo cujo histórico de
+  // venda/consignado já não existe mais (ex.: migração de outro controle,
+  // registro perdido). Sempre exige motivo, no mesmo espírito do ajuste
+  // manual de estoque (CLAUDE.md: "motivo obrigatório"). Não mexe em
+  // estoque nem gera stock_movements — é só o saldo do ledger.
+  async function registerManualAdjustment(sellerId, { direction, amount, notes } = {}) {
+    const value = U.number(amount);
+    if (value <= 0) throw new Error('Informe um valor maior que zero.');
+    if (direction !== 'debit' && direction !== 'credit') throw new Error('Escolha se o ajuste aumenta ou reduz a dívida.');
+    if (!notes || !notes.trim()) throw new Error('Descreva o motivo do ajuste.');
+    const record = await S().add('sellerAccountEntries', {
+      sellerId,
+      type: 'manual_adjustment',
+      direction,
+      amount: value,
+      notes: notes.trim(),
+    });
+    // refresh() (não só o add local) para o painel fixo do topo redesenhar o
+    // "Consignado em aberto" — ver CLAUDE.md "números do painel congelados
+    // após gravar por um módulo": só refresh() dispara o onRefresh que
+    // redesenha o dashboard fora desta aba.
+    await S().refresh();
+    return record;
+  }
+
   function ownStockRows(sellerId) {
     const st = state();
     return (st.sellerStock || [])
@@ -130,5 +155,5 @@
     container.innerHTML = renderSeller();
   }
 
-  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment };
+  window.C360.sellerLedger = { mountSeller, balanceFor, entriesForSeller, registerPayment, registerManualAdjustment };
 })();

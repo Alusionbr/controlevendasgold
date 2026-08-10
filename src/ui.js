@@ -19,6 +19,7 @@
     envelhecimento: 'Agrupa as contas vencidas por quanto tempo estão em atraso, para você saber quais cobrar ou pagar primeiro.',
     margemPorProduto: 'Lucro bruto dividido pela receita líquida daquele produto no período: quanto sobra de cada real vendido.',
     historicoAlteracoes: 'Quem mudou o quê neste cadastro, campo por campo, com data e hora. "Sistema" é uma mudança automática (ex.: custo médio recalculado após uma compra).',
+    ajusteManualDivida: 'Lança ou reduz a dívida do vendedor na mão, sem precisar de uma venda ou consignado registrado. Use para dívidas antigas sem histórico no sistema, ou para corrigir um valor errado. Não mexe em estoque.',
     // Negócio
     margemDesejada: 'Quanto você quer ganhar sobre o preço de venda, em %. Ex.: 50% = metade do preço é lucro planejado. O sistema usa isso para sugerir o preço de venda.',
     taxasPadrao: 'Taxas que costumam cair nas suas vendas, em %: maquininha de cartão, comissão de marketplace, etc. Entram no cálculo do preço sugerido.',
