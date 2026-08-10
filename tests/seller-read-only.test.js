@@ -62,3 +62,7 @@ test('migração antiga continua bloqueando operações gerais do vendedor', () 
     'revoke execute on function public.seller_adjust_own_stock',
   ]) assert.ok(sql.includes(required), `proteção ausente: ${required}`);
 });
+test('painel mostra a sequ?ncia retornada para o vendedor autenticado', () => {
+  const ledger = read('src/sellerLedger.js');
+  assert.match(ledger, /if \(ownReward\) return ownReward;/);
+});

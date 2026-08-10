@@ -49,7 +49,9 @@
 
   function loginRewardForSeller(sellerId) {
     const ownReward = state().sellerLoginReward;
-    if (ownReward && String(ownReward.sellerId) === String(sellerId)) return ownReward;
+    // The daily-login RPC returns the data of the authenticated seller only.
+    // It has no sellerId, so this value is already the correct one for this screen.
+    if (ownReward) return ownReward;
     return (state().sellerLoginRewards || []).find((item) => String(item.sellerId) === String(sellerId)) || {};
   }
   function entryRow(entry) {
