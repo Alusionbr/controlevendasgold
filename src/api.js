@@ -227,7 +227,14 @@
     const rows = await list('profiles', { id: userId });
     const row = rows[0];
     if (!row) return null;
-    return { id: row.id, role: row.role, name: row.name, businessId: row.business_id, active: row.active };
+    return {
+      id: row.id,
+      role: row.role,
+      name: row.name,
+      businessId: row.business_id,
+      active: row.active,
+      lastAccessAt: row.last_access_at || null,
+    };
   }
 
   async function createSeller({ email, password, name }) {
@@ -247,7 +254,13 @@
 
   async function listSellers() {
     const rows = await list('profiles', { role: 'vendedor', _order: 'name.asc' });
-    return rows.map((row) => ({ id: row.id, name: row.name, active: row.active, email: row.email || null }));
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      active: row.active,
+      email: row.email || null,
+      lastAccessAt: row.last_access_at || null,
+    }));
   }
 
   function mapProductRow(row) {

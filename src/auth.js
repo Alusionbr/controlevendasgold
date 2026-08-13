@@ -19,7 +19,7 @@
   //   C360.api.refreshSession(refreshToken)         -> {accessToken, refreshToken, expiresAt, user}
   //   C360.api.signOut(accessToken)                 -> void
   //   C360.api.getAuthUser(accessToken)              -> {id, email}
-  //   C360.api.getProfile(userId)                    -> {id, role, name, businessId, active}
+  //   C360.api.getProfile(userId)                    -> {id, role, name, businessId, active, lastAccessAt}
   //   C360.api.createSeller({email, password, name}) -> {id, email, name, role, businessId}
   //   C360.api.listSellers()                         -> Array<{id, name, active}>
   //   (opcional, usado só se existir) C360.api.update('profiles', id, patch)
@@ -105,6 +105,19 @@
     }
   }
 
+  // O banco carimba o horário no trigger de profiles. O valor
+  // enviado aqui só faz o PATCH disparar; assim o cliente não consegue forjar
+  // o horário exibido ao administrador.
+  async function markLastAccess(profile) {
+    if (!profile || !profile.id || !api() || typeof api().update !== 'function') return;
+    try {
+      await api().update('profiles', profile.id, { last_access_at: new Date().toISOString() });
+    } catch (error) {
+      // Falha de telemetria não deve impedir um login válido.
+      console.error('C360.auth: não foi possível registrar o último acesso.', error);
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Mapeamento de erros -> mensagens amigáveis em PT-BR
   // ---------------------------------------------------------------------
@@ -182,6 +195,8 @@
       return { ok: false, error: 'Login feito, mas não foi possível carregar seu perfil. Tente novamente.' };
     }
 
+    await markLastAccess(profile);
+
     try {
       if (state() && typeof state().refresh === 'function') {
         await state().refresh();
@@ -239,6 +254,8 @@
       clearStoredSession();
       return false;
     }
+
+    await markLastAccess(profile);
 
     try {
       if (state() && typeof state().refresh === 'function') {
@@ -353,6 +370,13 @@
   }
 
   function ledger() { return window.C360.sellerLedger || null; }
+
+  function formatLastAccess(value) {
+    if (!value) return 'Nunca acessou';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Data indisponível';
+    return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
 
   function stockRowsForSeller(sellerId) {
     const st = fullState();
@@ -471,6 +495,7 @@
           ${statusBadge}
         </div>
         <p class="ss-approval-detail">${U.escapeHtml(seller.email || '—')}${balance > 0 ? ` · ${UI.badge(`Deve ${U.money(balance)}`, 'danger')}` : ''}</p>
+        <p class="ss-approval-detail">Último acesso: ${U.escapeHtml(formatLastAccess(seller.lastAccessAt))}</p>
         <div class="actions">
           <button type="button" class="small" data-action="toggle-manage" data-id="${U.escapeHtml(seller.id)}">${isExpanded ? 'Fechar' : 'Gerenciar'}</button>
           ${UI.actionButton(toggleAction, seller.id, toggleLabel, toggleClass)}
