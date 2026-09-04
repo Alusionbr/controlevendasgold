@@ -115,6 +115,18 @@
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  // Pagamento de consignação de CLIENTE. Consignação de vendedor também gera
+  // `consignment_events` do tipo 'pagamento' (o RPC de despacho grava o valor
+  // pago na entrada do pedido de revenda), mas esse dinheiro já é contado pelo
+  // lado do vendedor — `sellerOrderAccounts.initialPaid` em dailyReceipts e em
+  // recognizedRevenue. Sem este filtro a mesma entrada aparecia duas vezes e
+  // inflava a receita recebida. Evento cuja consignação não está mais no cache
+  // continua contando: é histórico de cliente, não dá para descartar.
+  function isClientConsignmentEvent(state, event) {
+    const consignment = (state.consignments || []).find((item) => String(item.id) === String(event.consignmentId));
+    return !consignment || !consignment.sellerId;
+  }
+
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
   // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
   //
@@ -145,7 +157,8 @@
     const sellerInitialRows = (state.sellerOrderAccounts || [])
       .filter((row) => String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
     const clientRows = (state.consignmentEvents || [])
-      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
+      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day
+        && isClientConsignmentEvent(state, row));
     const saleRows = (state.sales || [])
       .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
         && row.origin !== 'consignado' && !row.sellerId);
@@ -179,7 +192,7 @@
     const directSales = (state.sales || []).filter((sale) => sameBusiness(sale)
       && inPeriod(sale.date) && sale.origin !== 'consignado' && !sale.sellerId);
     const clientPayments = (state.consignmentEvents || []).filter((event) => sameBusiness(event)
-      && event.type === 'pagamento' && inPeriod(event.date));
+      && event.type === 'pagamento' && inPeriod(event.date) && isClientConsignmentEvent(state, event));
     const sellerPayments = (state.sellerPayments || []).filter((payment) => sameBusiness(payment)
       && inPeriod(payment.paymentDate));
 

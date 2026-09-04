@@ -21,7 +21,7 @@
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
-    'ajuda', 'dados',
+    'ajuda', 'novidades', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -52,6 +52,7 @@
     calculadora: 'Calculadora',
     metas: 'Metas',
     ajuda: 'Ajuda',
+    novidades: 'Novidades',
     dados: 'Dados',
   };
 
@@ -89,6 +90,9 @@
     calculadora: ['admin'],
     metas: ['admin'],
     ajuda: ['admin'],
+    // Histórico de atualizações: leitura pura, sem dado operacional — os dois
+    // papéis podem abrir (o vendedor chega por "Mais" na barra inferior).
+    novidades: ['admin', 'vendedor'],
     dados: ['admin'],
   };
 
@@ -108,7 +112,7 @@
     { id: 'cadastros', label: 'Cadastros',
       tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
     { id: 'ferramentas', label: 'Ferramentas',
-      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'novidades', 'dados'] },
   ];
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
@@ -190,6 +194,7 @@
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
     btnHelp: document.getElementById('btnHelp'),
+    btnChangelog: document.getElementById('btnChangelog'),
     btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
@@ -656,6 +661,21 @@
     `;
   }
 
+  // Selo de versão no cabeçalho: mostra a versão atual e destaca quando há
+  // atualização que este navegador ainda não abriu (src/changelog.js guarda o
+  // "visto" em localStorage). Só um indicador — nenhum dado de negócio.
+  function syncChangelogBadge() {
+    const button = els.btnChangelog;
+    const changelog = window.C360.changelog;
+    if (!button || !changelog) return;
+    const unseen = changelog.hasUnseen();
+    button.textContent = unseen ? `Novidades · v${changelog.VERSION}` : `v${changelog.VERSION}`;
+    button.classList.toggle('has-update', unseen);
+    button.title = unseen
+      ? 'Há atualizações que você ainda não leu. Toque para ver o que mudou.'
+      : `Versão ${changelog.VERSION}. Toque para ver o histórico de atualizações.`;
+  }
+
   function setTab(tab) {
     // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
     // um botão apontando para uma aba já removida) cairia no `default` do
@@ -738,9 +758,23 @@
         // Modelo oficial: só o admin registra envios, pagamentos e correções.
         // O painel antigo de concessão direta foi removido porque alterava
         // seller_stock sem baixar o estoque central nem gerar dívida.
-        els.view.innerHTML = '<div id="sellersPanel"></div>';
+        // Duas partes na mesma aba: os cards de cada vendedor (auth.js) e, no
+        // fim, as permissões (salesCart.js). As permissões ficaram sem tela
+        // quando a aba "Aprovações" saiu da navegação — e com elas sumiram os
+        // únicos botões que liberam "acerto de estoque" e "alinhamento de
+        // saldo" para o vendedor, além do consignado e do link público.
+        // Ficam recolhidas num <details> para não competir com o dia a dia.
+        els.view.innerHTML = `
+          <div id="sellersPanel"></div>
+          <details class="seller-create-disclosure seller-permissions-disclosure">
+            <summary>Permissões e liberações dos vendedores</summary>
+            <div id="sellerSettingsPanel"></div>
+          </details>`;
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
+        }
+        if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
+          window.C360.salesCart.mountSettings(document.getElementById('sellerSettingsPanel'));
         }
         break;
       case 'precos':
@@ -790,6 +824,13 @@
           } else if (!isAdminUser && typeof window.C360.goals.mountSeller === 'function') {
             window.C360.goals.mountSeller(panel);
           }
+        }
+        break;
+      case 'novidades':
+        els.view.innerHTML = '<div id="changelogPanel"></div>';
+        if (window.C360.changelog && typeof window.C360.changelog.mount === 'function') {
+          window.C360.changelog.mount(document.getElementById('changelogPanel'));
+          syncChangelogBadge();
         }
         break;
       case 'ajuda':
@@ -2713,6 +2754,7 @@
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
+    if (els.btnChangelog) els.btnChangelog.addEventListener('click', () => setTab('novidades'));
     els.btnReset.addEventListener('click', () => {
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
@@ -2889,6 +2931,7 @@
       eventsBound = true;
     }
     applyRoleVisibility();
+    syncChangelogBadge();
     if (S.isAdmin() && window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
       window.C360.calculator.mountFloating();
     }

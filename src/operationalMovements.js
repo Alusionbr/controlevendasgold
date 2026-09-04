@@ -28,6 +28,12 @@
   };
   const SIMPLE_STATUS_LABELS = { pending: 'Pendente', confirmed: 'Confirmado', cancelled: 'Cancelado' };
 
+  // options.onDone() (= renderAll em src/app.js) remonta este painel do zero,
+  // com um closure novo — a mensagem de "Movimentação conferida" (ou o motivo
+  // do erro) sumia no mesmo instante em que aparecia. Guardar fora do mount()
+  // faz a mensagem chegar ao primeiro paint do painel remontado.
+  let carriedFeedback = null;
+
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
   function user() { return S().getCurrentUser(); }
@@ -349,7 +355,8 @@
 
   function mountAdmin(container, options = {}) {
     if (!container) return;
-    let feedback = null;
+    let feedback = carriedFeedback;
+    carriedFeedback = null;
 
     function paint() {
       container.innerHTML = renderAdminQueue(feedback);
@@ -384,7 +391,7 @@
           feedback = { message: error.message, type: 'danger' };
         }
         paint();
-        if (typeof options.onDone === 'function') options.onDone();
+        if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
         return;
       }
       const form = event.target.closest('[data-om-confirm-form]');
@@ -405,7 +412,7 @@
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
     });
 
     container.addEventListener('click', async (event) => {
@@ -421,7 +428,7 @@
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
     });
 
     paint();

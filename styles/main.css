@@ -1338,6 +1338,11 @@ pre {
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
+/* O padrão destes cabeçalhos é <div><strong>Título</strong><small>explicação
+   </small></div>. Sem isto o <small> é inline e cola no título ("Informar
+   pagamentoO saldo muda somente..."), o que aparecia em quase todos os cards
+   da tela do vendedor. A regra existia só dentro de .seller-order-account. */
+.approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
 .approval-items { display: grid; gap: 0.55rem; margin: 0.8rem 0; }
 .approval-line {
   display: grid;
@@ -2300,3 +2305,25 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .metric-card-action { text-align:left; color:var(--ink); cursor:pointer; box-shadow:var(--shadow-sm); }
 .metric-card-action small { color:var(--muted); font-weight:500; }
 .metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }
+
+/* Histórico de atualizações (aba Novidades) + selo de versão no cabeçalho */
+.version-chip { font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+/* No celular os botões do cabeçalho crescem (flex:1 1 160px) e cada um ocupa
+   meia linha; o selo de versão é curto e não precisa disso — assim ele divide
+   a linha com o botão vizinho em vez de criar mais uma. */
+.header-actions .version-chip { flex:0 0 auto; }
+.version-chip.has-update { position:relative; border-color:var(--accent); color:var(--accent-deep); font-weight:800; }
+.version-chip.has-update::after { content:""; position:absolute; top:4px; right:4px; width:8px; height:8px; border-radius:50%; background:var(--danger); }
+.changelog-metrics { margin-bottom:1rem; }
+.changelog-list { display:grid; gap:.9rem; }
+.changelog-release { margin:0; }
+.changelog-release-head { display:flex; gap:.8rem; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.changelog-release-head h3 { margin:0 0 .2rem; }
+.changelog-release-meta { display:flex; gap:.35rem; flex-wrap:wrap; }
+.changelog-change-list { list-style:none; margin:.8rem 0 0; padding:0; display:grid; gap:.5rem; }
+.changelog-change { display:grid; grid-template-columns:auto 1fr; gap:.6rem; align-items:baseline; padding:.5rem .6rem; border-radius:var(--radius-sm); background:var(--surface-soft); }
+.changelog-kind { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:.15rem .45rem; border-radius:999px; white-space:nowrap; background:var(--brand-soft); color:var(--brand-deep); }
+.changelog-change.is-novo .changelog-kind { background:var(--success-soft); color:var(--success); }
+.changelog-change.is-correcao .changelog-kind { background:var(--danger-soft); color:var(--danger-deep); }
+.changelog-change.is-melhoria .changelog-kind { background:var(--accent-soft); color:var(--accent-deep); }
+@media (max-width:600px) { .changelog-change { grid-template-columns:1fr; gap:.25rem; } .changelog-kind { justify-self:start; } }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-Kt3TcVbt3u4WGu08ugZI0JYs6CrKsVxm+ZqIAXsIW9I=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-0lxa9o9XZk/Cw+GZ7Yeu7tPAyfGLNknVKDIpHt1puC8=' 'sha256-i//QVMoAeY45IULJlguqtTZo0ZyAK5Kj+Byr9kR1nUE='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-cD13dPpnvItEdyVIitU8+ysVV1E2lsmknBtcU0GWu0E=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-K7gKCdTrEgkZnblEzcycGvsPk+9jSM7h7HEjJlqbKMQ=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-c4BQafwhqqWLlcP2YL3CfZ/CNaBbjIZh7RmzPRHyezw=' 'sha256-emLU34HJo2Uj8sZLzXVZSsyEmDC1CFaz83fXjxsQQt0=' 'sha256-0pS0pyVk8RxL/4iibqH82ilJI+F8lRzJeNiFB65E0Gs=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-WRr2P4hFznDfCKNCOpqiRYntnfIxvZSBi/DQKd72RpE=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-kgqCc/24oMCU3DBeHGIF+jauleiYDC9DQa5uXXb4HGQ=' 'sha256-U8zP6lSYpQ4BM6AA2yZSZV9SeP7zsaJD9ndfJU1h2co='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -1346,6 +1346,11 @@ pre {
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
+/* O padrão destes cabeçalhos é <div><strong>Título</strong><small>explicação
+   </small></div>. Sem isto o <small> é inline e cola no título ("Informar
+   pagamentoO saldo muda somente..."), o que aparecia em quase todos os cards
+   da tela do vendedor. A regra existia só dentro de .seller-order-account. */
+.approval-card-head small { display: block; color: var(--muted); margin-top: 0.15rem; }
 .approval-items { display: grid; gap: 0.55rem; margin: 0.8rem 0; }
 .approval-line {
   display: grid;
@@ -2309,6 +2314,28 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 .metric-card-action small { color:var(--muted); font-weight:500; }
 .metric-card-action.needs-attention { border-color:var(--danger-soft); background:var(--danger-soft); }
 
+/* Histórico de atualizações (aba Novidades) + selo de versão no cabeçalho */
+.version-chip { font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+/* No celular os botões do cabeçalho crescem (flex:1 1 160px) e cada um ocupa
+   meia linha; o selo de versão é curto e não precisa disso — assim ele divide
+   a linha com o botão vizinho em vez de criar mais uma. */
+.header-actions .version-chip { flex:0 0 auto; }
+.version-chip.has-update { position:relative; border-color:var(--accent); color:var(--accent-deep); font-weight:800; }
+.version-chip.has-update::after { content:""; position:absolute; top:4px; right:4px; width:8px; height:8px; border-radius:50%; background:var(--danger); }
+.changelog-metrics { margin-bottom:1rem; }
+.changelog-list { display:grid; gap:.9rem; }
+.changelog-release { margin:0; }
+.changelog-release-head { display:flex; gap:.8rem; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+.changelog-release-head h3 { margin:0 0 .2rem; }
+.changelog-release-meta { display:flex; gap:.35rem; flex-wrap:wrap; }
+.changelog-change-list { list-style:none; margin:.8rem 0 0; padding:0; display:grid; gap:.5rem; }
+.changelog-change { display:grid; grid-template-columns:auto 1fr; gap:.6rem; align-items:baseline; padding:.5rem .6rem; border-radius:var(--radius-sm); background:var(--surface-soft); }
+.changelog-kind { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:.15rem .45rem; border-radius:999px; white-space:nowrap; background:var(--brand-soft); color:var(--brand-deep); }
+.changelog-change.is-novo .changelog-kind { background:var(--success-soft); color:var(--success); }
+.changelog-change.is-correcao .changelog-kind { background:var(--danger-soft); color:var(--danger-deep); }
+.changelog-change.is-melhoria .changelog-kind { background:var(--accent-soft); color:var(--accent-deep); }
+@media (max-width:600px) { .changelog-change { grid-template-columns:1fr; gap:.25rem; } .changelog-kind { justify-self:start; } }
+
   </style>
 </head>
 <body>
@@ -2322,6 +2349,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       <button id="btnExport" class="secondary">Baixar Excel</button>
       <button id="btnDataTab" class="ghost">Backup</button>
       <button id="btnHelp" class="ghost">Ajuda</button>
+      <button id="btnChangelog" class="ghost version-chip" title="Ver o histórico de atualizações do sistema">Novidades</button>
       <button id="btnLogout" class="ghost">Sair</button>
     </div>
   </header>
@@ -3013,11 +3041,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  // Sempre devolve array: src/state.js faz `.map()` no resultado e uma
+  // resposta vazia/inesperada do RPC derrubava o refresh() INTEIRO — a tela
+  // abria zerada, como se o negócio não tivesse dado nenhum.
   async function listSellerOrderAccounts(sellerId = null) {
-    return restRequest('/rest/v1/rpc/list_seller_order_accounts', {
+    const rows = await restRequest('/rest/v1/rpc/list_seller_order_accounts', {
       method: 'POST',
       body: { p_seller_id: sellerId || null },
     });
+    return Array.isArray(rows) ? rows : [];
   }
 
   async function registerSellerOrderPayment({ orderGroupId, amount, method, notes }) {
@@ -3961,6 +3993,18 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  // Pagamento de consignação de CLIENTE. Consignação de vendedor também gera
+  // `consignment_events` do tipo 'pagamento' (o RPC de despacho grava o valor
+  // pago na entrada do pedido de revenda), mas esse dinheiro já é contado pelo
+  // lado do vendedor — `sellerOrderAccounts.initialPaid` em dailyReceipts e em
+  // recognizedRevenue. Sem este filtro a mesma entrada aparecia duas vezes e
+  // inflava a receita recebida. Evento cuja consignação não está mais no cache
+  // continua contando: é histórico de cliente, não dá para descartar.
+  function isClientConsignmentEvent(state, event) {
+    const consignment = (state.consignments || []).find((item) => String(item.id) === String(event.consignmentId));
+    return !consignment || !consignment.sellerId;
+  }
+
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
   // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
   //
@@ -3991,7 +4035,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const sellerInitialRows = (state.sellerOrderAccounts || [])
       .filter((row) => String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
     const clientRows = (state.consignmentEvents || [])
-      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
+      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day
+        && isClientConsignmentEvent(state, row));
     const saleRows = (state.sales || [])
       .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
         && row.origin !== 'consignado' && !row.sellerId);
@@ -4025,7 +4070,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const directSales = (state.sales || []).filter((sale) => sameBusiness(sale)
       && inPeriod(sale.date) && sale.origin !== 'consignado' && !sale.sellerId);
     const clientPayments = (state.consignmentEvents || []).filter((event) => sameBusiness(event)
-      && event.type === 'pagamento' && inPeriod(event.date));
+      && event.type === 'pagamento' && inPeriod(event.date) && isClientConsignmentEvent(state, event));
     const sellerPayments = (state.sellerPayments || []).filter((payment) => sameBusiness(payment)
       && inPeriod(payment.paymentDate));
 
@@ -7756,6 +7801,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Estado local da esteira: qual grupo esta com o form de edicao aberto.
   const boardState = { editGroupId: '' };
 
+  // Mensagem que precisa sobreviver a um remount. options.onDone() (= renderAll
+  // em src/app.js) recria o container inteiro e chama mount() de novo, com um
+  // closure novo — o `feedback` que acabou de ser definido morria junto, e
+  // "Venda registrada", "Pedido aprovado" ou o motivo de um erro piscavam e
+  // sumiam no mesmo instante. Guardar no escopo do modulo (como o rascunho e o
+  // boardState) faz a mensagem aparecer ja no primeiro paint do novo mount.
+  const carriedFeedback = { builder: null, board: null };
+
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -8496,8 +8549,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       draft.targetSellerId = '';
       draft.clientId = '';
     }
-    let feedback = null;
-    let boardFeedback = null;
+    let feedback = carriedFeedback.builder;
+    let boardFeedback = carriedFeedback.board;
+    carriedFeedback.builder = null;
+    carriedFeedback.board = null;
 
     function paint() {
       container.innerHTML = [
@@ -8543,7 +8598,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           await advanceOrderGroup(boardMove.dataset.groupId, boardMove.value);
           boardFeedback = { message: 'Status atualizado.', type: 'success' };
           paint();
-          if (typeof options.onDone === 'function') options.onDone();
+          if (typeof options.onDone === 'function') { carriedFeedback.board = boardFeedback; options.onDone(); }
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
           paint();
@@ -8618,7 +8673,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           else if (action === 'save-edit-group') { await saveGroupEdit(container, groupId); boardState.editGroupId = ''; boardFeedback = { message: 'Pedido atualizado.', type: 'success' }; }
           else if (action === 'cancel-group') { if (!confirm('Cancelar (excluir) este pedido?')) return; await cancelGroup(groupId); boardFeedback = { message: 'Pedido cancelado.', type: 'success' }; }
           paint();
-          if (needsRefresh && typeof options.onDone === 'function') options.onDone();
+          if (needsRefresh && typeof options.onDone === 'function') { carriedFeedback.board = boardFeedback; options.onDone(); }
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
           paint();
@@ -8629,6 +8684,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       const button = event.target.closest('[data-cart-action]');
       if (!button) return;
       const action = button.dataset.cartAction;
+      const changedDataActions = ['launch', 'share-cart', 'convert-public-cart', 'reject-public-cart'];
+      let changedData = changedDataActions.includes(action);
       try {
         readConfig();
         if (action === 'set-mode') {
@@ -8677,9 +8734,16 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
+        changedData = false;
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      // Acoes que so mexem no rascunho (adicionar/remover item, trocar modo)
+      // nao precisam remontar o app inteiro; remontar a cada clique de "+"
+      // ainda apagava a tela e custava caro. So o que gravou de fato avisa.
+      if (changedData && typeof options.onDone === 'function') {
+        carriedFeedback.builder = feedback;
+        options.onDone();
+      }
     });
 
     paint();
@@ -8914,6 +8978,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     devolvido: 'Devolvido', devolvido_parcialmente: 'Devolvido parcialmente', recusado: 'Recusado',
   };
   const SIMPLE_STATUS_LABELS = { pending: 'Pendente', confirmed: 'Confirmado', cancelled: 'Cancelado' };
+
+  // options.onDone() (= renderAll em src/app.js) remonta este painel do zero,
+  // com um closure novo — a mensagem de "Movimentação conferida" (ou o motivo
+  // do erro) sumia no mesmo instante em que aparecia. Guardar fora do mount()
+  // faz a mensagem chegar ao primeiro paint do painel remontado.
+  let carriedFeedback = null;
 
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -9236,7 +9306,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   function mountAdmin(container, options = {}) {
     if (!container) return;
-    let feedback = null;
+    let feedback = carriedFeedback;
+    carriedFeedback = null;
 
     function paint() {
       container.innerHTML = renderAdminQueue(feedback);
@@ -9271,7 +9342,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           feedback = { message: error.message, type: 'danger' };
         }
         paint();
-        if (typeof options.onDone === 'function') options.onDone();
+        if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
         return;
       }
       const form = event.target.closest('[data-om-confirm-form]');
@@ -9292,7 +9363,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
     });
 
     container.addEventListener('click', async (event) => {
@@ -9308,7 +9379,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         feedback = { message: error.message, type: 'danger' };
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      if (typeof options.onDone === 'function') { carriedFeedback = feedback; options.onDone(); }
     });
 
     paint();
@@ -9367,8 +9438,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }, '');
     const days = daysSince(lastPaymentDate);
     if (days === null) return { tone: 'danger', headline: 'Sem pagamento registrado', message: 'Registre seu primeiro pagamento para acompanhar este prazo.', lastPaymentDate: null, days: null };
-    if (days <= 7) return { tone: 'ok', headline: 'Em dia', message: 'Otimo ritmo. Continue acompanhando sua conta.', lastPaymentDate, days };
-    if (days <= 30) return { tone: 'warning', headline: 'Atencao ao prazo', message: 'Organize seu proximo pagamento para manter a conta em dia.', lastPaymentDate, days };
+    if (days <= 7) return { tone: 'ok', headline: 'Em dia', message: 'Ótimo ritmo. Continue acompanhando sua conta.', lastPaymentDate, days };
+    if (days <= 30) return { tone: 'warning', headline: 'Atenção ao prazo', message: 'Organize seu próximo pagamento para manter a conta em dia.', lastPaymentDate, days };
     return { tone: 'danger', headline: 'Pagamento em atraso', message: 'Informe seu pagamento para regularizar sua conta.', lastPaymentDate, days };
   }
   function accountsForSeller(sellerId) {
@@ -9648,12 +9719,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return `
       <section class="panel-card seller-payment-pulse is-${pulse.tone}">
         <div class="approval-card-head">
-          <div><strong>Acompanhamento de pagamento</strong><small>O prazo e contado desde o ultimo pagamento confirmado.</small></div>
+          <div><strong>Acompanhamento de pagamento</strong><small>O prazo é contado desde o último pagamento confirmado.</small></div>
           <span class="payment-pulse-status">${U.escapeHtml(pulse.headline)}</span>
         </div>
         <div class="payment-pulse-main">
           <strong>${elapsed}</strong>
-          <div><span>desde o ultimo pagamento</span><small>${date ? `Ultimo pagamento em ${date}.` : 'Nenhum pagamento confirmado ainda.'}</small></div>
+          <div><span>desde o último pagamento</span><small>${date ? `Último pagamento em ${date}.` : 'Nenhum pagamento confirmado ainda.'}</small></div>
         </div>
         <p class="hint-inline">${U.escapeHtml(pulse.message)}</p>
       </section>`;
@@ -10675,6 +10746,263 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 (function () {
   'use strict';
 
+  window.C360 = window.C360 || {};
+  const U = window.C360.utils;
+  const UI = window.C360.ui;
+
+  // ==========================================================================
+  // Histórico de atualizações do sistema.
+  //
+  // Fonte única de verdade da tela "Novidades" e do selo de versão no
+  // cabeçalho. É só DADO — nenhuma regra de negócio aqui.
+  //
+  // COMO MANTER (importante para quem continuar o projeto):
+  //  1. Ao terminar uma alteração que o usuário perceba, adicione um item no
+  //     RELEASE do topo (ou crie um novo release com a data de hoje).
+  //  2. `date` é sempre AAAA-MM-DD; a lista deve ficar em ordem decrescente
+  //     (mais recente primeiro) — a tela não reordena nada.
+  //  3. `kind` aceita: 'novo' (funcionalidade nova), 'correcao' (bug),
+  //     'melhoria' (ajuste de uso/desempenho) e 'tecnico' (mudança interna,
+  //     sem efeito direto na tela).
+  //  4. `version` é a data no formato AAAA.MM.DD — é o que aparece no
+  //     cabeçalho. Mantenha igual à `date` do release mais recente.
+  //  5. O mesmo conteúdo, em texto, fica em docs/historico-atualizacoes.md.
+  // ==========================================================================
+
+  const SEEN_KEY = 'controle360_changelog_visto_v1';
+
+  const KIND_LABELS = {
+    novo: 'Novo',
+    correcao: 'Correção',
+    melhoria: 'Melhoria',
+    tecnico: 'Interno',
+  };
+
+  const RELEASES = [
+    {
+      date: '2026-09-04',
+      title: 'Histórico de atualizações e revisão geral',
+      summary: 'Agora dá para ver, dentro do sistema, o que mudou e quando. Junto, uma rodada de correções encontradas na revisão.',
+      changes: [
+        { kind: 'novo', text: 'Tela "Novidades": lista das atualizações do sistema com data, tipo (novo, correção, melhoria) e resumo do que mudou.' },
+        { kind: 'novo', text: 'Selo de versão no cabeçalho, com aviso quando existe atualização que você ainda não leu.' },
+        { kind: 'correcao', text: 'Receita recebida contava duas vezes a entrada de um pedido de revenda pago à vista/parcial (uma vez como pagamento do vendedor, outra como pagamento de consignado). Agora conta uma só vez.' },
+        { kind: 'correcao', text: 'Mensagens de sucesso e de erro do painel de Vendas (lançar venda, aprovar/rejeitar pedido, gerar link) sumiam da tela no mesmo instante em que apareciam. Agora ficam visíveis.' },
+        { kind: 'correcao', text: 'O mesmo acontecia na conferência de devoluções, desperdícios e brindes: confirmar ou recusar não mostrava nem confirmação nem o motivo do erro.' },
+        { kind: 'correcao', text: 'Permissões do vendedor (pode pedir consignado, pode gerar link público, desconto máximo, liberação de acerto de estoque e de alinhamento de saldo) tinham ficado sem tela: voltaram para dentro da aba Vendedores.' },
+        { kind: 'correcao', text: 'Uma falha ao carregar as contas por pedido derrubava o carregamento inteiro e a tela abria zerada, sem explicação.' },
+        { kind: 'melhoria', text: 'Backup em Excel passou a incluir piso de preço e preço padrão do produto, além do valor pago na entrada do carrinho.' },
+        { kind: 'correcao', text: 'Na tela do vendedor, o título e a explicação de cada quadro apareciam grudados ("Informar pagamentoO saldo muda somente..."). Agora ficam em linhas separadas.' },
+        { kind: 'melhoria', text: 'Textos do acompanhamento de pagamento do vendedor corrigidos (acentuação).' },
+      ],
+    },
+    {
+      date: '2026-08-10',
+      title: 'Conta do vendedor mais direta',
+      summary: 'A tela do vendedor passou a abrir pelo acompanhamento de pagamento e o administrador ganhou o lançamento de débito avulso.',
+      changes: [
+        { kind: 'novo', text: 'Acompanhamento de pagamento no topo da tela do vendedor: há quantos dias foi o último pagamento confirmado.' },
+        { kind: 'novo', text: 'Aba Vendedores: "Incluir dívida sem carrinho", para acertar um débito que não nasceu de venda, pedido ou envio de estoque.' },
+        { kind: 'melhoria', text: 'Saldo do vendedor simplificado: "Total pendente" quando há dívida e "Em dia" quando não há.' },
+        { kind: 'correcao', text: 'Sequência de logins diários do vendedor exibia o número errado.' },
+        { kind: 'correcao', text: 'Conta do vendedor podia abrir sem carregar os lançamentos.' },
+      ],
+    },
+    {
+      date: '2026-07-30',
+      title: 'Pagamentos com comprovante e senha do vendedor',
+      summary: 'O vendedor informa o pagamento com comprovante e o administrador confere antes de o valor entrar na receita.',
+      changes: [
+        { kind: 'novo', text: 'Vendedor informa pagamento com foto ou PDF do comprovante; enquanto não é conferido, nada muda no saldo.' },
+        { kind: 'novo', text: 'Fila de conferência de pagamentos na aba Vendedores, com ajuste de valor, data e forma antes de lançar.' },
+        { kind: 'novo', text: 'Vendedor pode trocar a própria senha; o administrador pode redefinir usuário e senha de qualquer vendedor.' },
+        { kind: 'novo', text: 'Tarefa de entrar 15 dias seguidos, com brindes acumulados.' },
+        { kind: 'correcao', text: 'Envio de comprovante pelo vendedor falhava em alguns casos.' },
+      ],
+    },
+    {
+      date: '2026-07-29',
+      title: 'Conta por pedido, login por usuário e receita só quando paga',
+      summary: 'Cada envio para o vendedor virou uma conta separada, com seus itens, pagamentos e saldo.',
+      changes: [
+        { kind: 'novo', text: 'Contas por pedido: cada envio mantém itens, pagamentos e saldo próprios, em vez de um saldo único e opaco.' },
+        { kind: 'novo', text: 'Login do vendedor por nome de usuário (sem precisar de e-mail).' },
+        { kind: 'melhoria', text: 'Consignado só vira receita quando o pagamento é registrado — informar a venda não conta como dinheiro entrando.' },
+        { kind: 'melhoria', text: 'Cadastro de produto reduzido ao essencial, com o resto em "Mais opções".' },
+        { kind: 'novo', text: 'Histórico de alterações por registro (quem mudou o quê e quando) em produtos e clientes.' },
+      ],
+    },
+    {
+      date: '2026-07-28',
+      title: 'Backup completo',
+      summary: 'O Excel exportado passou a levar tudo que o sistema guarda.',
+      changes: [
+        { kind: 'correcao', text: 'O backup em Excel deixava de fora a dívida dos vendedores, pagamentos, estoque em mãos, devoluções, preços por vendedor e metas.' },
+      ],
+    },
+    {
+      date: '2026-07-27',
+      title: 'Recebimentos do dia, custos e correções de gravação',
+      summary: 'Rodada grande de correções: telas que não salvavam, números que não atualizavam e estoque valendo R$ 0.',
+      changes: [
+        { kind: 'novo', text: '"Recebimentos do dia" na tela Hoje, separando pagamentos de vendedores, de clientes e vendas à vista.' },
+        { kind: 'correcao', text: 'Editar produto, editar cliente e baixar lançamento financeiro não salvavam nada — sem erro na tela.' },
+        { kind: 'correcao', text: 'Estoque cadastrado sem custo ficava valendo R$ 0 para sempre; agora o ajuste pede o custo e existe correção em massa.' },
+        { kind: 'correcao', text: 'Os números do painel do topo ficavam parados depois de um pagamento, envio ou devolução.' },
+        { kind: 'correcao', text: 'Consignado enviado ao vendedor não aparecia na aba Consignado e parecia não ter sido registrado.' },
+        { kind: 'melhoria', text: 'Relatórios com gráficos e filtros por produto, canal e período.' },
+        { kind: 'melhoria', text: 'Interface do computador mais compacta, com mais informação sem rolar a tela.' },
+      ],
+    },
+    {
+      date: '2026-07-25',
+      title: 'Despacho de pedido à prova de falha',
+      summary: 'O despacho passou a acontecer inteiro ou não acontecer — nunca pela metade.',
+      changes: [
+        { kind: 'correcao', text: 'Despacho de pedido podia gravar estoque e consignação e falhar no meio, deixando o pedido travado e permitindo duplicar na segunda tentativa.' },
+        { kind: 'melhoria', text: 'Dívida da revenda passa a nascer na aprovação do pedido, não só no despacho.' },
+      ],
+    },
+    {
+      date: '2026-07-24',
+      title: 'Painel do vendedor somente leitura',
+      summary: 'Toda movimentação de estoque e dinheiro passou a ser do administrador.',
+      changes: [
+        { kind: 'melhoria', text: 'O vendedor passou a ter uma única tela, de consulta: saldo, pedidos e pagamentos. Quem movimenta estoque e dinheiro é o administrador.' },
+      ],
+    },
+    {
+      date: '2026-07-14',
+      title: 'Financeiro, compras com vários itens e visão 360',
+      summary: 'Contas a pagar e a receber, compras agrupadas e telas de detalhe de cliente e produto.',
+      changes: [
+        { kind: 'novo', text: 'Aba Financeiro com contas a pagar e a receber, vencimento, baixa parcial e envelhecimento.' },
+        { kind: 'novo', text: 'Compra com vários itens no mesmo lançamento, atualizando estoque, custo médio e conta a pagar de uma vez.' },
+        { kind: 'novo', text: 'Visão 360 do cliente e do produto, com histórico e edição.' },
+        { kind: 'novo', text: 'Relatórios operacionais com filtro por período.' },
+      ],
+    },
+    {
+      date: '2026-07-08',
+      title: 'Conta corrente do vendedor, devoluções e relatórios',
+      summary: 'Pacote que organizou a relação com o vendedor de ponta a ponta.',
+      changes: [
+        { kind: 'novo', text: 'Conta corrente do vendedor: o saldo é sempre a soma dos lançamentos, nunca um número sobrescrito.' },
+        { kind: 'novo', text: 'Devolução com status, desperdício e brinde — só a conferência do administrador altera estoque e dívida.' },
+        { kind: 'novo', text: 'Reposição em carrinhos, com pagamento parcial de valor real.' },
+        { kind: 'novo', text: 'Navegação por celular com barra inferior, menu "Mais" e tela "Hoje".' },
+        { kind: 'novo', text: 'Relatórios de saldo por vendedor, pedidos em aberto, devoluções pendentes, desperdício, brindes e estoque em trânsito.' },
+      ],
+    },
+    {
+      date: '2026-07-07',
+      title: 'Carrinho de vendas, aprovações e links públicos',
+      summary: 'Venda e pedido passaram a nascer de um carrinho, com aprovação do administrador.',
+      changes: [
+        { kind: 'novo', text: 'Carrinho de produtos em Vendas e Pedidos, com aprovação do administrador antes de o estoque sair.' },
+        { kind: 'novo', text: 'Link público de carrinho para o cliente montar o próprio pedido.' },
+        { kind: 'correcao', text: 'Pedidos, vendas, compras e tarefas falhavam ao salvar quando um campo opcional ficava em branco.' },
+        { kind: 'correcao', text: 'E-mail do vendedor não aparecia na tela de gestão — causa do "senha inválida" ao tentar entrar.' },
+      ],
+    },
+  ];
+
+  const VERSION = String(RELEASES[0].date).replace(/-/g, '.');
+
+  function latest() {
+    return RELEASES[0];
+  }
+
+  function lastSeenDate() {
+    try {
+      return localStorage.getItem(SEEN_KEY) || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function markSeen() {
+    try {
+      localStorage.setItem(SEEN_KEY, latest().date);
+    } catch (error) {
+      // Navegador sem armazenamento local: o aviso só aparece de novo, sem quebrar nada.
+    }
+  }
+
+  function hasUnseen() {
+    return lastSeenDate() !== latest().date;
+  }
+
+  function formatDate(isoDate) {
+    const [year, month, day] = String(isoDate || '').split('-');
+    if (!year || !month || !day) return String(isoDate || '');
+    return `${day}/${month}/${year}`;
+  }
+
+  function changeItem(change) {
+    const kind = KIND_LABELS[change.kind] ? change.kind : 'melhoria';
+    return `
+      <li class="changelog-change is-${U.escapeHtml(kind)}">
+        <span class="changelog-kind">${U.escapeHtml(KIND_LABELS[kind])}</span>
+        <span>${U.escapeHtml(change.text)}</span>
+      </li>`;
+  }
+
+  function releaseCard(release, index) {
+    return `
+      <article class="panel-card changelog-release">
+        <div class="changelog-release-head">
+          <div>
+            <h3>${U.escapeHtml(release.title)}</h3>
+            <p class="hint-inline">${U.escapeHtml(release.summary || '')}</p>
+          </div>
+          <div class="changelog-release-meta">
+            ${UI.badge(formatDate(release.date), index === 0 ? 'ok' : '')}
+            ${index === 0 ? UI.badge('Última atualização', 'warn') : ''}
+          </div>
+        </div>
+        <ul class="changelog-change-list">${release.changes.map(changeItem).join('')}</ul>
+      </article>`;
+  }
+
+  function render() {
+    const current = latest();
+    return UI.section(
+      'Novidades do sistema',
+      'O que mudou em cada atualização, da mais recente para a mais antiga.',
+      `
+        <div class="dashboard changelog-metrics">
+          ${UI.metric('Versão atual', U.escapeHtml(VERSION), null)}
+          ${UI.metric('Última atualização', formatDate(current.date), null)}
+          ${UI.metric('Alterações nesta versão', String(current.changes.length), null)}
+        </div>
+        <div class="changelog-list">${RELEASES.map(releaseCard).join('')}</div>
+        <p class="hint-inline">Precisa do histórico em texto (para enviar a alguém ou continuar o projeto)? Ele fica em <strong>docs/historico-atualizacoes.md</strong>, no código do sistema.</p>
+      `
+    );
+  }
+
+  function mount(container) {
+    if (!container) return;
+    container.innerHTML = render();
+    markSeen();
+  }
+
+  window.C360.changelog = {
+    VERSION,
+    RELEASES,
+    latest,
+    render,
+    mount,
+    hasUnseen,
+    markSeen,
+  };
+})();
+</script>
+  <script>
+(function () {
+  'use strict';
+
   // Motor .xlsx mínimo, em JavaScript puro, sem dependências externas.
   // Escrita: monta um ZIP "stored" (sem compressão), aceito pelo Excel e Google Sheets.
   // Leitura: lê o ZIP, descomprime com a API nativa do navegador quando necessário.
@@ -11089,6 +11417,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
     periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
     targetAmount: 'Meta', rewardDescription: 'Premiação',
+    defaultPrice: 'Preço padrão', priceFloor: 'Piso de preço',
+    paidInitialAmount: 'Valor pago na entrada',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -11100,6 +11430,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
     'paidAmount', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue',
     'price', 'floor', 'targetAmount', 'reportedAmount', 'reviewedAmount',
+    'defaultPrice', 'priceFloor', 'paidInitialAmount',
   ]);
 
   const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
@@ -11108,7 +11439,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
     { key: 'businesses', sheet: 'Negócios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'defaultPrice', 'priceFloor', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'clients', sheet: 'Clientes', fields: ['id', 'businessId', 'name', 'phone', 'type', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'suppliers', sheet: 'Fornecedores', fields: ['id', 'businessId', 'name', 'phone', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'purchaseGroupId', 'date', 'dueDate', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'paymentMode', 'paidAmount', 'notes', 'createdAt', 'updatedAt'] },
@@ -11123,7 +11454,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sellerSettings', sheet: 'Permissoes vendedores', fields: ['id', 'businessId', 'sellerId', 'allowAdminStockSales', 'allowConsignment', 'allowPublicCartLinks', 'maxDiscountPercent', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'paidInitialAmount', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'saleCartItems', sheet: 'Itens carrinho', fields: ['id', 'cartId', 'businessId', 'productId', 'quantity', 'unitPrice', 'approvedQuantity', 'rejectionReason', 'createdAt', 'updatedAt'] },
     // Fases 3 e 4 (ledger do vendedor, estoque em mãos, devoluções) e metas.
     // Sem estas abas o arquivo de backup saía sem NENHUMA dívida de vendedor,
@@ -11470,7 +11801,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
-    'ajuda', 'dados',
+    'ajuda', 'novidades', 'dados',
   ];
 
   const TAB_LABELS = {
@@ -11501,6 +11832,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     calculadora: 'Calculadora',
     metas: 'Metas',
     ajuda: 'Ajuda',
+    novidades: 'Novidades',
     dados: 'Dados',
   };
 
@@ -11538,6 +11870,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     calculadora: ['admin'],
     metas: ['admin'],
     ajuda: ['admin'],
+    // Histórico de atualizações: leitura pura, sem dado operacional — os dois
+    // papéis podem abrir (o vendedor chega por "Mais" na barra inferior).
+    novidades: ['admin', 'vendedor'],
     dados: ['admin'],
   };
 
@@ -11557,7 +11892,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { id: 'cadastros', label: 'Cadastros',
       tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
     { id: 'ferramentas', label: 'Ferramentas',
-      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'dados'] },
+      tabs: ['relatorios', 'calculadora', 'tarefas', 'ajuda', 'novidades', 'dados'] },
   ];
 
   // Bottom-nav mobile: 4 destinos principais por perfil + botão "Mais"
@@ -11639,6 +11974,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     btnExport: document.getElementById('btnExport'),
     btnDataTab: document.getElementById('btnDataTab'),
     btnHelp: document.getElementById('btnHelp'),
+    btnChangelog: document.getElementById('btnChangelog'),
     btnReset: document.getElementById('btnReset'),
     btnLogout: document.getElementById('btnLogout'),
     toastHost: document.getElementById('toastHost'),
@@ -12105,6 +12441,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     `;
   }
 
+  // Selo de versão no cabeçalho: mostra a versão atual e destaca quando há
+  // atualização que este navegador ainda não abriu (src/changelog.js guarda o
+  // "visto" em localStorage). Só um indicador — nenhum dado de negócio.
+  function syncChangelogBadge() {
+    const button = els.btnChangelog;
+    const changelog = window.C360.changelog;
+    if (!button || !changelog) return;
+    const unseen = changelog.hasUnseen();
+    button.textContent = unseen ? `Novidades · v${changelog.VERSION}` : `v${changelog.VERSION}`;
+    button.classList.toggle('has-update', unseen);
+    button.title = unseen
+      ? 'Há atualizações que você ainda não leu. Toque para ver o que mudou.'
+      : `Versão ${changelog.VERSION}. Toque para ver o histórico de atualizações.`;
+  }
+
   function setTab(tab) {
     // Guarda contra destino desconhecido: sem isto, uma aba inexistente (ex.:
     // um botão apontando para uma aba já removida) cairia no `default` do
@@ -12187,9 +12538,23 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         // Modelo oficial: só o admin registra envios, pagamentos e correções.
         // O painel antigo de concessão direta foi removido porque alterava
         // seller_stock sem baixar o estoque central nem gerar dívida.
-        els.view.innerHTML = '<div id="sellersPanel"></div>';
+        // Duas partes na mesma aba: os cards de cada vendedor (auth.js) e, no
+        // fim, as permissões (salesCart.js). As permissões ficaram sem tela
+        // quando a aba "Aprovações" saiu da navegação — e com elas sumiram os
+        // únicos botões que liberam "acerto de estoque" e "alinhamento de
+        // saldo" para o vendedor, além do consignado e do link público.
+        // Ficam recolhidas num <details> para não competir com o dia a dia.
+        els.view.innerHTML = `
+          <div id="sellersPanel"></div>
+          <details class="seller-create-disclosure seller-permissions-disclosure">
+            <summary>Permissões e liberações dos vendedores</summary>
+            <div id="sellerSettingsPanel"></div>
+          </details>`;
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
+        }
+        if (window.C360.salesCart && typeof window.C360.salesCart.mountSettings === 'function') {
+          window.C360.salesCart.mountSettings(document.getElementById('sellerSettingsPanel'));
         }
         break;
       case 'precos':
@@ -12239,6 +12604,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           } else if (!isAdminUser && typeof window.C360.goals.mountSeller === 'function') {
             window.C360.goals.mountSeller(panel);
           }
+        }
+        break;
+      case 'novidades':
+        els.view.innerHTML = '<div id="changelogPanel"></div>';
+        if (window.C360.changelog && typeof window.C360.changelog.mount === 'function') {
+          window.C360.changelog.mount(document.getElementById('changelogPanel'));
+          syncChangelogBadge();
         }
         break;
       case 'ajuda':
@@ -14162,6 +14534,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     els.btnExport.addEventListener('click', () => window.C360.io.exportXlsx());
     els.btnDataTab.addEventListener('click', () => setTab('dados'));
     if (els.btnHelp) els.btnHelp.addEventListener('click', () => setTab('ajuda'));
+    if (els.btnChangelog) els.btnChangelog.addEventListener('click', () => setTab('novidades'));
     els.btnReset.addEventListener('click', () => {
       if (confirm('Zerar todos os dados locais deste navegador? Faça um backup antes.')) {
         S.reset();
@@ -14338,6 +14711,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       eventsBound = true;
     }
     applyRoleVisibility();
+    syncChangelogBadge();
     if (S.isAdmin() && window.C360.calculator && typeof window.C360.calculator.mountFloating === 'function') {
       window.C360.calculator.mountFloating();
     }

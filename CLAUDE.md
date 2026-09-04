@@ -104,6 +104,7 @@ controle-estoque-cmv-consignado/
 │   ├── calculator.js      # calculadora padrão + margem/markup/desconto/preço-alvo
 │   ├── goals.js           # metas de vendas semanais/mensais com premiação
 │   ├── sellerHelp.js      # central de ajuda/onboarding do vendedor
+│   ├── changelog.js       # histórico de atualizações (tela "Novidades" + selo de versão)
 │   └── app.js             # telas, eventos, portão de autenticação e fluxos de negócio
 ├── styles/
 │   └── main.css
@@ -111,6 +112,8 @@ controle-estoque-cmv-consignado/
 │   ├── regras-negocio.md
 │   ├── modelo-dados.md
 │   ├── fluxos-operacionais.md
+│   ├── historico-atualizacoes.md   # espelho em texto da tela "Novidades"
+│   ├── plano-melhorias.md          # revisão + pendências + prioridades
 │   └── roadmap.md
 └── tests/
     └── checklist-manual.md
@@ -1028,3 +1031,75 @@ Ou seja: exportar funciona (e agora é completo), **restaurar não**. Consertar
 exige upsert das ~23 coleções respeitando ordem de FK e RLS — é trabalho de
 backend, com decisão de produto no meio (substituir tudo? mesclar? o que fazer
 com id que já existe?), por isso não foi feito junto.
+
+
+---
+
+## Atualização: histórico de atualizações (tela "Novidades") e revisão geral
+
+Pedido do usuário: "incluir um histórico das últimas atualizações pra saber
+qual foi a última alteração feita no sistema com data" + revisão em busca de
+bugs. A revisão completa, com o que ficou pendente e a ordem sugerida de
+evolução, está em `docs/plano-melhorias.md`.
+
+### Novo arquivo
+
+```txt
+src/changelog.js   # RELEASES (data, título, resumo, lista de mudanças) + render/mount
+```
+
+Regras:
+
+- `src/changelog.js` é **só dado + apresentação**, nenhuma regra de negócio.
+- A lista `RELEASES` fica em ordem decrescente por data (`AAAA-MM-DD`); a tela
+  não reordena nada.
+- `kind` de cada mudança: `novo`, `correcao`, `melhoria` ou `tecnico`.
+- A versão exibida no cabeçalho (`VERSION`) é derivada da data do release do
+  topo — não existe número de versão para manter à mão.
+- O mesmo conteúdo, em texto, fica em `docs/historico-atualizacoes.md`.
+  **Toda alteração perceptível pelo usuário entra nos dois lugares.**
+- A aba `novidades` é liberada para admin e vendedor (`TAB_ROLES`): é leitura
+  pura, não quebra o modelo de "uma tela só" do vendedor — ele chega por
+  "Mais" na barra inferior.
+- `localStorage` (`controle360_changelog_visto_v1`) guarda a última data lida
+  para o selo do cabeçalho mostrar "Novidades ·" quando há algo não lido.
+
+### Bugs corrigidos na mesma rodada
+
+1. **Receita contada duas vezes** (`src/calculations.js`): o despacho de um
+   pedido de revenda (`advance_order_group`) grava um `consignment_events`
+   tipo `pagamento` com o valor pago na entrada, e a mesma entrada já era
+   contada por `sellerOrderAccounts.initialPaid`. `dailyReceipts` e
+   `recognizedRevenue` somavam as duas. Agora `isClientConsignmentEvent()`
+   ignora evento de consignação que pertence a vendedor — consignação de
+   vendedor se acerta pelo ledger, nunca por `consignment_events`.
+2. **Mensagem apagada pelo próprio refresh** (`src/salesCart.js`,
+   `src/operationalMovements.js`): `options.onDone()` é `renderAll`, que
+   remonta o módulo com um closure novo — o `feedback` recém-definido morria
+   junto e a tela parecia não responder. Agora a mensagem vive no escopo do
+   módulo (`carriedFeedback`), como o rascunho do carrinho já vivia. Em
+   `salesCart`, `onDone()` também deixou de ser chamado em ação que só mexe
+   no rascunho (adicionar/remover item, trocar modo).
+   **Padrão para módulo novo**: se o módulo recebe `onDone` e mostra
+   mensagem, a mensagem precisa sobreviver ao remount.
+3. **Permissões do vendedor sem tela** (`src/app.js`): `salesCart.mountSettings`
+   ficou sem chamador quando a aba "Aprovações" saiu da navegação — e com ela
+   sumiram os únicos botões que liberam "acerto de estoque" e "alinhamento de
+   saldo", que a tela do vendedor lê de `sellerSettings`. Voltou dentro da aba
+   Vendedores, num `<details>`.
+4. **Um RPC vazio derrubava o app inteiro** (`src/api.js`):
+   `listSellerOrderAccounts` era usado com `.map()` em `src/state.js`; resposta
+   fora do formato de lista quebrava o `refresh()` completo e a tela abria
+   zerada. Agora a função sempre devolve array. Vale a regra: **toda função de
+   `api.js` cujo retorno é percorrido com `.map()` precisa garantir o array.**
+5. **Backup incompleto** (`src/exportImport.js`): faltavam `priceFloor` e
+   `defaultPrice` em produtos e `paidInitialAmount` em carrinhos.
+
+### Driver de teste
+
+`.claude/skills/run-controlevendasgold/driver.mjs` estava desatualizado: ainda
+preenchia `input[type="email"]` na tela de login (o campo virou "usuário ou
+e-mail", `name="identifier"`), então `login admin` falhava por timeout.
+Corrigido, mais os RPCs `list_seller_order_accounts`,
+`register_seller_daily_login` e `register_manual_seller_debit` implementados
+no mock.
