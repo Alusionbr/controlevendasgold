@@ -25,6 +25,7 @@ O documento tem três partes:
 | 6 | `src/exportImport.js` | Backup em Excel não levava `priceFloor`/`defaultPrice` (produtos) nem `paidInitialAmount` (carrinhos). | Campos incluídos em `fields`, `LABELS` e `NUMERIC_KEYS`. |
 | 7 | `src/sellerLedger.js` | Textos do acompanhamento de pagamento sem acentuação ("Otimo", "Atencao", "ultimo"). | Corrigidos. |
 | 7b | `styles/main.css` | Em quase todo quadro da tela do vendedor, o título e a explicação apareciam grudados ("Informar pagamentoO saldo muda somente..."): o `<small>` de `.approval-card-head` era inline, e a regra que o separava existia só dentro de `.seller-order-account`. | Regra generalizada para todo `.approval-card-head small`. |
+| 7c | `src/pricing.js` | Salvar preço padrão/piso escrevia direto por `C360.api.update`, sem passar pelo cache. O servidor ficava com o valor novo e a tela (que lê o cache) continuava mostrando o antigo — parecia que o salvar não funcionou, e a validação de piso na venda seguia usando o valor velho. Confirmado ao vivo: servidor R$ 77,00 / tela R$ 15,00. | Passou a gravar por `C360.state.update`, que atualiza o cache na mesma operação. |
 | 8 | `.claude/skills/run-controlevendasgold/driver.mjs` | O driver de teste ainda procurava `input[type=email]` na tela de login (o campo virou "usuário ou e-mail") e não implementava `list_seller_order_accounts`, `register_seller_daily_login` nem `register_manual_seller_debit`. | Seletor corrigido e os três RPCs implementados no mock. |
 
 Novidade entregue junto (pedido do dono do sistema): **tela "Novidades"** com

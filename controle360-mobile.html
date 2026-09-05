@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-cD13dPpnvItEdyVIitU8+ysVV1E2lsmknBtcU0GWu0E=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-K7gKCdTrEgkZnblEzcycGvsPk+9jSM7h7HEjJlqbKMQ=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-c4BQafwhqqWLlcP2YL3CfZ/CNaBbjIZh7RmzPRHyezw=' 'sha256-emLU34HJo2Uj8sZLzXVZSsyEmDC1CFaz83fXjxsQQt0=' 'sha256-0pS0pyVk8RxL/4iibqH82ilJI+F8lRzJeNiFB65E0Gs=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-WRr2P4hFznDfCKNCOpqiRYntnfIxvZSBi/DQKd72RpE=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-kgqCc/24oMCU3DBeHGIF+jauleiYDC9DQa5uXXb4HGQ=' 'sha256-m9og/vq2z/BWA4JEQcIjdOjJyvqtKrLAybtomOekStM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-cD13dPpnvItEdyVIitU8+ysVV1E2lsmknBtcU0GWu0E=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-K7gKCdTrEgkZnblEzcycGvsPk+9jSM7h7HEjJlqbKMQ=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-y1JV1jU6yTbWiyfC+/TY7yziGDbHIi5SpaWWV+UGl0Q=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-c4BQafwhqqWLlcP2YL3CfZ/CNaBbjIZh7RmzPRHyezw=' 'sha256-emLU34HJo2Uj8sZLzXVZSsyEmDC1CFaz83fXjxsQQt0=' 'sha256-0pS0pyVk8RxL/4iibqH82ilJI+F8lRzJeNiFB65E0Gs=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-XyuC7vKoOeo289pb949qfEe+Jj2x428j8uMZUxeGDbo=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-kgqCc/24oMCU3DBeHGIF+jauleiYDC9DQa5uXXb4HGQ=' 'sha256-m9og/vq2z/BWA4JEQcIjdOjJyvqtKrLAybtomOekStM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -5620,6 +5620,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     }
   }
 
+  function stateApi() {
+    return window.C360.state || null;
+  }
+
   function currentUser() {
     try {
       if (window.C360.state && typeof window.C360.state.getCurrentUser === 'function') {
@@ -5842,12 +5846,21 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           const data = U.formData(productForm);
           const productId = editingProductId || data.productId;
           if (!productId) throw new Error('Selecione um produto.');
+          // Gravar por C360.state.update (e não por C360.api.update) é o que
+          // mantém o cache em dia: esta tela relê os produtos do cache
+          // (readProductsFromState), e o resto do app resolve preço e piso a
+          // partir dele. Escrevendo direto na API, o servidor ficava com o
+          // valor novo e a tela continuava mostrando o antigo — parecia que o
+          // salvar não tinha funcionado. Chaves em camelCase: C360.state faz a
+          // conversão para as colunas snake_case.
           const patch = {
-            default_price: data.defaultPrice === '' ? 0 : U.number(data.defaultPrice),
-            price_floor: data.priceFloor === '' ? null : U.number(data.priceFloor),
+            defaultPrice: data.defaultPrice === '' ? 0 : U.number(data.defaultPrice),
+            priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
           };
-          if (hasApi('update')) {
-            await api().update('products', productId, patch);
+          if (stateApi() && typeof stateApi().update === 'function') {
+            await stateApi().update('products', productId, patch);
+          } else if (hasApi('update')) {
+            await api().update('products', productId, { default_price: patch.defaultPrice, price_floor: patch.priceFloor });
           } else {
             alert('Modo demonstração: conecte C360.api.update para salvar preços reais.');
           }
@@ -10791,6 +10804,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         { kind: 'correcao', text: 'O mesmo acontecia na conferência de devoluções, desperdícios e brindes: confirmar ou recusar não mostrava nem confirmação nem o motivo do erro.' },
         { kind: 'correcao', text: 'Permissões do vendedor (pode pedir consignado, pode gerar link público, desconto máximo, liberação de acerto de estoque e de alinhamento de saldo) tinham ficado sem tela: voltaram para dentro da aba Vendedores.' },
         { kind: 'correcao', text: 'Uma falha ao carregar as contas por pedido derrubava o carregamento inteiro e a tela abria zerada, sem explicação.' },
+        { kind: 'correcao', text: 'Na aba Preços, salvar preço padrão ou piso gravava no servidor mas a tela continuava mostrando o valor antigo — parecia que não tinha salvado, e a validação de preço mínimo na venda seguia usando o valor velho.' },
         { kind: 'melhoria', text: 'Backup em Excel passou a incluir piso de preço e preço padrão do produto, além do valor pago na entrada do carrinho.' },
         { kind: 'correcao', text: 'Na tela do vendedor, o título e a explicação de cada quadro apareciam grudados ("Informar pagamentoO saldo muda somente..."). Agora ficam em linhas separadas.' },
         { kind: 'melhoria', text: 'Textos do acompanhamento de pagamento do vendedor corrigidos (acentuação).' },

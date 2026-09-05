@@ -114,6 +114,7 @@ controle-estoque-cmv-consignado/
 │   ├── fluxos-operacionais.md
 │   ├── historico-atualizacoes.md   # espelho em texto da tela "Novidades"
 │   ├── plano-melhorias.md          # revisão + pendências + prioridades
+│   ├── analise-sistema.md          # análise estrutural (atomicidade, carga, testes)
 │   └── roadmap.md
 └── tests/
     └── checklist-manual.md

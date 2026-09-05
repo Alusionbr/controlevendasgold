@@ -32,6 +32,8 @@ Versão em texto do que a tela **Novidades** mostra dentro do sistema.
   aba "Aprovações" saiu da navegação; voltaram para a aba Vendedores.
 - **Correção**: falha ao carregar as contas por pedido derrubava o
   carregamento inteiro e a tela abria zerada.
+- **Correção**: na aba Preços, salvar preço padrão/piso gravava no servidor mas
+  a tela seguia mostrando o valor antigo.
 - **Melhoria**: backup em Excel passou a incluir piso de preço, preço padrão e
   valor pago na entrada do carrinho.
 - **Correção**: na tela do vendedor, título e explicação de cada quadro

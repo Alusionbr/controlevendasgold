@@ -46,6 +46,7 @@
         { kind: 'correcao', text: 'O mesmo acontecia na conferência de devoluções, desperdícios e brindes: confirmar ou recusar não mostrava nem confirmação nem o motivo do erro.' },
         { kind: 'correcao', text: 'Permissões do vendedor (pode pedir consignado, pode gerar link público, desconto máximo, liberação de acerto de estoque e de alinhamento de saldo) tinham ficado sem tela: voltaram para dentro da aba Vendedores.' },
         { kind: 'correcao', text: 'Uma falha ao carregar as contas por pedido derrubava o carregamento inteiro e a tela abria zerada, sem explicação.' },
+        { kind: 'correcao', text: 'Na aba Preços, salvar preço padrão ou piso gravava no servidor mas a tela continuava mostrando o valor antigo — parecia que não tinha salvado, e a validação de preço mínimo na venda seguia usando o valor velho.' },
         { kind: 'melhoria', text: 'Backup em Excel passou a incluir piso de preço e preço padrão do produto, além do valor pago na entrada do carrinho.' },
         { kind: 'correcao', text: 'Na tela do vendedor, o título e a explicação de cada quadro apareciam grudados ("Informar pagamentoO saldo muda somente..."). Agora ficam em linhas separadas.' },
         { kind: 'melhoria', text: 'Textos do acompanhamento de pagamento do vendedor corrigidos (acentuação).' },

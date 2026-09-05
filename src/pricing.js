@@ -49,6 +49,10 @@
     }
   }
 
+  function stateApi() {
+    return window.C360.state || null;
+  }
+
   function currentUser() {
     try {
       if (window.C360.state && typeof window.C360.state.getCurrentUser === 'function') {
@@ -271,12 +275,21 @@
           const data = U.formData(productForm);
           const productId = editingProductId || data.productId;
           if (!productId) throw new Error('Selecione um produto.');
+          // Gravar por C360.state.update (e não por C360.api.update) é o que
+          // mantém o cache em dia: esta tela relê os produtos do cache
+          // (readProductsFromState), e o resto do app resolve preço e piso a
+          // partir dele. Escrevendo direto na API, o servidor ficava com o
+          // valor novo e a tela continuava mostrando o antigo — parecia que o
+          // salvar não tinha funcionado. Chaves em camelCase: C360.state faz a
+          // conversão para as colunas snake_case.
           const patch = {
-            default_price: data.defaultPrice === '' ? 0 : U.number(data.defaultPrice),
-            price_floor: data.priceFloor === '' ? null : U.number(data.priceFloor),
+            defaultPrice: data.defaultPrice === '' ? 0 : U.number(data.defaultPrice),
+            priceFloor: data.priceFloor === '' ? null : U.number(data.priceFloor),
           };
-          if (hasApi('update')) {
-            await api().update('products', productId, patch);
+          if (stateApi() && typeof stateApi().update === 'function') {
+            await stateApi().update('products', productId, patch);
+          } else if (hasApi('update')) {
+            await api().update('products', productId, { default_price: patch.defaultPrice, price_floor: patch.priceFloor });
           } else {
             alert('Modo demonstração: conecte C360.api.update para salvar preços reais.');
           }
