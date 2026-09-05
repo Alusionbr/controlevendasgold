@@ -1058,9 +1058,10 @@ Regras:
   topo — não existe número de versão para manter à mão.
 - O mesmo conteúdo, em texto, fica em `docs/historico-atualizacoes.md`.
   **Toda alteração perceptível pelo usuário entra nos dois lugares.**
-- A aba `novidades` é liberada para admin e vendedor (`TAB_ROLES`): é leitura
-  pura, não quebra o modelo de "uma tela só" do vendedor — ele chega por
-  "Mais" na barra inferior.
+- A aba `novidades` é **admin-only** (`TAB_ROLES`), assim como o selo de versão
+  no cabeçalho. O conteúdo inclui correção de falha interna — informação do
+  dono do negócio, não do revendedor —, e `tests/seller-read-only.test.js`
+  falha se qualquer aba além de `meusaldo` for liberada para o papel vendedor.
 - `localStorage` (`controle360_changelog_visto_v1`) guarda a última data lida
   para o selo do cabeçalho mostrar "Novidades ·" quando há algo não lido.
 

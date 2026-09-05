@@ -90,9 +90,12 @@
     calculadora: ['admin'],
     metas: ['admin'],
     ajuda: ['admin'],
-    // Histórico de atualizações: leitura pura, sem dado operacional — os dois
-    // papéis podem abrir (o vendedor chega por "Mais" na barra inferior).
-    novidades: ['admin', 'vendedor'],
+    // Histórico de atualizações: admin apenas. É leitura pura, mas o conteúdo
+    // inclui correções internas do sistema — informação do dono do negócio,
+    // não do revendedor. Manter aqui também preserva a regra "o vendedor tem
+    // uma única tela" (tests/seller-read-only.test.js falha se outra aba for
+    // liberada para o papel vendedor).
+    novidades: ['admin'],
     dados: ['admin'],
   };
 
@@ -263,7 +266,7 @@
       group.hidden = !anyVisible;
     });
     if (els.businessBar) els.businessBar.hidden = role !== 'admin';
-    [els.btnExport, els.btnDataTab, els.btnHelp].forEach((button) => {
+    [els.btnExport, els.btnDataTab, els.btnHelp, els.btnChangelog].forEach((button) => {
       if (button) button.hidden = role !== 'admin';
     });
     if (els.bottomNav) {

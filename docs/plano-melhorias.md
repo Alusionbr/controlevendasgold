@@ -101,11 +101,13 @@ rótulos explicitamente diferentes.
 
 1. **Restaurar backup de verdade** (item 2.1). Sem isso o backup é só metade
    do seguro.
-2. **Testes automáticos dos cálculos.** `src/calculations.js` é JavaScript
-   puro, sem DOM: dá para rodar em Node sem instalar nada. Cobrir custo médio
-   ponderado, ficha técnica, `saleMath`, `sellerBalance`, `recognizedRevenue`
-   e `dailyReceipts` evitaria justamente o tipo de erro do item 1 da tabela
-   acima (dinheiro contado duas vezes), que nenhuma tela denuncia.
+2. **Ampliar a suíte de testes que já existe.** O projeto tem 43 testes
+   (`tests/*.test.js`, rodados pelo CI em `.github/workflows/ci.yml`), mas a
+   maioria é guarda de regra (lê o código-fonte e confere que uma decisão não
+   foi desfeita); só `cash-revenue.test.js` exercita cálculo de verdade.
+   Falta cobrir custo médio ponderado, ficha técnica, `saleMath`,
+   `sellerBalance` e `businessMetrics` — foi um teste desse tipo, adicionado
+   nesta rodada, que travou a correção da receita duplicada.
 3. **Conferência de caixa por período**: uma tela que some recebimentos,
    pagamentos e saldo dos vendedores e mostre a diferença em relação ao
    esperado. Hoje cada número vive numa aba.
