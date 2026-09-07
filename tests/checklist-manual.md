@@ -110,3 +110,12 @@ Use este checklist antes de considerar uma alteração aprovada.
 - [ ] Recusar preserva o histórico e não cria pagamento.
 - [ ] Vendedor e administrador não conseguem acessar comprovantes de outro negócio.
 - [ ] Backup Excel contém a aba **Pagamentos informados**.
+## Carrinho melhorado
+
+- [ ] Buscar produto além dos primeiros 18; pesquisar nome com e sem acento.
+- [ ] Adicionar itens, editar quantidade/preço e confirmar o total.
+- [ ] Recarregar a mesma aba e conferir itens, cliente e observações; trocar conta/negócio e conferir isolamento.
+- [ ] Cancelar a confirmação de Limpar e de troca do tipo mantém os itens.
+- [ ] Preço zero, quantidade vazia e pagamento parcial acima do total exibem erro.
+- [ ] Clique duplo no envio gera apenas uma operação pela interface; os controles voltam após sucesso ou erro.
+- [ ] Em celular, carrinho longo não ocupa a tela inteira como painel fixo.

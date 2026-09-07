@@ -221,3 +221,11 @@ direto na aba Vendas.
 4. Na aba **Vendedores**, o administrador abre o vendedor, consulta o comprovante e confere os dados.
 5. Se necessário, corrige valor, data, forma e deixa uma nota; depois clica em **Conferir e lançar pagamento**.
 6. O banco valida o saldo e lança tudo atomicamente. O administrador também pode recusar, informando o motivo.
+## Carrinho: busca, rascunho e envio
+
+- A busca por nome ignora acentos e maiúsculas e inclui o catálogo completo. O catálogo tem rolagem própria; o estoque aparece apenas quando a conta já tem acesso ao saldo.
+- Itens, cliente, vendedor, pagamento, canal e observações do rascunho sobrevivem ao recarregamento na mesma aba. O rascunho fica no `sessionStorage`, separado por conta e negócio; não é um pedido salvo no servidor e não sincroniza entre dispositivos. Se o armazenamento estiver indisponível, funciona apenas em memória.
+- Limpar um carrinho com itens ou trocar seu tipo exige confirmação. Quantidade vazia/inválida não remove um item; use Remover.
+- Antes do envio, o sistema valida produtos disponíveis, quantidade, preço e valor inicial do pagamento parcial. Links públicos vazios são bloqueados.
+- Durante o envio, os controles ficam bloqueados contra cliques repetidos. Erros mantêm o rascunho e ficam visíveis; sucesso limpa os itens e mantém a confirmação.
+- A baixa de estoque continua ocorrendo no despacho, conforme o fluxo existente. O bloqueio de duplo clique é da interface; a criação existente em múltiplas chamadas ainda não oferece transação única nem idempotência de rede. Se houver falha após gravação parcial, confira a esteira antes de reenviar.
