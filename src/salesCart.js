@@ -34,6 +34,7 @@
   // ---------------------------------------------------------------------
   const persistentDraft = {
     mode: '',
+    search: '',
     paymentMode: 'avista',
     targetSellerId: '',
     clientId: '',
@@ -45,6 +46,32 @@
     items: [],
     lastLink: '',
   };
+
+  const emptyDraft = JSON.stringify(persistentDraft);
+  let draftScope = '';
+  let cartBusy = false;
+
+  function restoreDraft() {
+    const scope = `${user()?.id || ''}:${state().activeBusinessId || ''}`;
+    if (scope === draftScope) return;
+    draftScope = scope;
+    Object.assign(persistentDraft, JSON.parse(emptyDraft));
+    boardState.editGroupId = '';
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(`c360:cart:${scope}`));
+      if (saved && Array.isArray(saved.items)) {
+        Object.keys(JSON.parse(emptyDraft)).forEach((key) => {
+          if (key === 'items') persistentDraft.items = saved.items.filter((item) => item && typeof item.productId === 'string').map((item) => ({ productId: item.productId, quantity: U.number(item.quantity), unitPrice: U.number(item.unitPrice) }));
+          else if (typeof saved[key] === 'string') persistentDraft[key] = saved[key];
+        });
+      }
+    } catch (_) { /* Armazenamento indisponível: mantém o rascunho em memória. */ }
+  }
+
+  function persistDraft() {
+    try { window.sessionStorage.setItem(`c360:cart:${draftScope}`, JSON.stringify(persistentDraft)); }
+    catch (_) { /* A venda continua funcionando sem armazenamento local. */ }
+  }
 
   // Estado local da esteira: qual grupo esta com o form de edicao aberto.
   const boardState = { editGroupId: '' };
@@ -116,7 +143,7 @@
 
   function validateDraftPrice(productId, unitPrice) {
     const price = U.number(unitPrice);
-    if (price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
+    if (!Number.isFinite(U.number(unitPrice, NaN)) || price <= 0) throw new Error('Preço unitário precisa ser maior que zero.');
     if (isAdmin() || !Calc || typeof Calc.resolveSellerPrice !== 'function' || typeof Calc.validatePriceFloor !== 'function') return;
     const product = productById(productId);
     if (!product) throw new Error('Produto não encontrado.');
@@ -126,7 +153,22 @@
   }
 
   function validateDraftItems(draft) {
-    draft.items.forEach((item) => validateDraftPrice(item.productId, item.unitPrice));
+    if (!draft.items.length) throw new Error('Adicione pelo menos um produto.');
+    const available = new Set(productsForDraft(draft).map((product) => String(product.id)));
+    const quantities = new Map();
+    draft.items.forEach((item) => {
+      if (!available.has(String(item.productId))) throw new Error('Um produto não está mais disponível. Remova-o do carrinho.');
+      if (U.number(item.quantity) <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+      validateDraftPrice(item.productId, item.unitPrice);
+      quantities.set(item.productId, (quantities.get(item.productId) || 0) + U.number(item.quantity));
+    });
+    if (draftUsesOwnStock(draft)) quantities.forEach((quantity, productId) => {
+      if (quantity > U.number(ownStockForProduct(productId)?.quantity)) throw new Error(`Estoque insuficiente de ${productById(productId).name}.`);
+    });
+    if (draft.mode === 'revenda' && draft.paymentMode === 'parcial') {
+      const paid = U.number(draft.paidInitialAmount, NaN);
+      if (!Number.isFinite(paid) || paid < 0 || paid > cartTotal(draft.items)) throw new Error('O valor pago deve ficar entre zero e o total do carrinho.');
+    }
   }
 
   // Modo escolhido pelo papel -> filtra a lista de produtos disponivel.
@@ -153,9 +195,10 @@
   function addDraftItem(draft, { productId, quantity = 1, unitPrice }) {
     const product = productById(productId);
     if (!product) return;
-    const qty = U.number(quantity || 1);
-    const price = U.number(unitPrice || resolvedUnitPrice(product));
-    if (qty <= 0) return;
+    const qty = U.number(quantity);
+    const price = U.number(unitPrice ?? resolvedUnitPrice(product));
+    if (qty <= 0) throw new Error('Quantidade precisa ser maior que zero.');
+    validateDraftPrice(productId, price);
     const existing = draft.items.find((item) => String(item.productId) === String(productId) && U.number(item.unitPrice) === price);
     if (existing) existing.quantity = U.number(existing.quantity) + qty;
     else draft.items.push({ productId, quantity: qty, unitPrice: price });
@@ -201,6 +244,7 @@
   async function createCart(draft, status) {
     const currentUser = user();
     if (!currentUser) throw new Error('Entre na sua conta antes de criar carrinho.');
+    validateDraftItems(draft);
     const expiresAt = new Date(Date.now() + U.number(draft.expiresHours, 48) * 60 * 60 * 1000).toISOString();
     const finalStatus = status || 'draft';
     const cart = await S().add('saleCarts', {
@@ -525,6 +569,24 @@
     return rows.join('');
   }
 
+  function renderProductCards(draft, search = '') {
+    const normalize = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    const products = productsForDraft(draft).filter((product) => normalize(product.name).includes(normalize(search.trim())));
+    return products.map((product) => {
+      const ownStock = ownStockForProduct(product.id);
+      const stockHint = draftUsesOwnStock(draft)
+        ? `<small>${U.qty(ownStock?.quantity || 0, product.unit)} no seu estoque</small>`
+        : (product.stockHidden ? '<small>Disponibilidade protegida</small>' : `<small>${product.type === 'servico' ? 'Serviço • sem estoque' : U.escapeHtml(U.qty(product.currentStock, product.unit)) + ' em estoque'}</small>`);
+      return `
+        <button type="button" class="cart-product-pick ${draft.items.some((item) => String(item.productId) === String(product.id)) ? 'active' : ''}" data-cart-action="quick-add-product" data-product-id="${U.escapeHtml(product.id)}">
+          <strong>${U.escapeHtml(product.name)}</strong>
+          <span>${U.money(resolvedUnitPrice(product))}</span>
+          ${stockHint}
+        </button>`;
+    }).join('');
+
+  }
+
   function renderBuilder(draft, feedback) {
     const products = productsForDraft(draft);
     const revenda = isRevendaMode(draft.mode);
@@ -535,18 +597,7 @@
       request: 'Pedido de reposição ao admin. Assim que o admin aprovar, a dívida (se for consignado/parcial) já entra no seu saldo — antes mesmo de ser montado. O estoque só sai quando for despachado.',
     }[draft.mode] || '';
 
-    const productCards = products.slice(0, 18).map((product) => {
-      const ownStock = ownStockForProduct(product.id);
-      const stockHint = draftUsesOwnStock(draft)
-        ? `<small>${U.qty(ownStock?.quantity || 0, product.unit)} no seu estoque</small>`
-        : (product.stockHidden ? '<small>Disponibilidade protegida</small>' : '');
-      return `
-        <button type="button" class="cart-product-pick ${draft.items.some((item) => String(item.productId) === String(product.id)) ? 'active' : ''}" data-cart-action="quick-add-product" data-product-id="${U.escapeHtml(product.id)}">
-          <strong>${U.escapeHtml(product.name)}</strong>
-          <span>${U.money(resolvedUnitPrice(product))}</span>
-          ${stockHint}
-        </button>`;
-    }).join('');
+    const productCards = renderProductCards(draft, draft.search || '');
 
     const itemCards = draft.items.map((item, index) => {
       const product = productById(item.productId);
@@ -580,7 +631,7 @@
     return `
       ${feedback ? UI.formNotice(feedback.message, feedback.type) : ''}
       ${linkHint}
-      <div class="sales-cart-layout sales-cart-layout-modern">
+      <div class="sales-cart-layout sales-cart-layout-modern" aria-busy="${cartBusy}">
         <article class="panel-card sales-cart-builder">
           <div class="cart-panel-head">
             <div>
@@ -593,14 +644,17 @@
             ${configFields(draft)}
           </form>
 
-          <div class="cart-product-grid">
+          <label class="cart-search">Buscar produto
+            <input type="search" data-cart-search value="${U.escapeHtml(draft.search || '')}" placeholder="Digite o nome do produto" autocomplete="off">
+          </label>
+          <div class="cart-product-grid" data-cart-products>
             ${productCards || '<div class="empty-state"><strong>Nenhum produto disponivel.</strong><span>Cadastre produtos ou peca reposicao.</span></div>'}
           </div>
 
           <form data-cart-add-item class="cart-manual-add">
-            <select name="productId" required>${productOptions(products)}</select>
-            <input name="quantity" type="number" step="0.001" min="0.001" placeholder="Qtd." required>
-            <input name="unitPrice" type="number" step="0.01" min="0.01" placeholder="Preco">
+            <select name="productId" aria-label="Produto" required>${productOptions(products)}</select>
+            <input name="quantity" type="number" step="0.001" min="0.001" placeholder="Qtd." aria-label="Quantidade a adicionar" value="1" required>
+            <input name="unitPrice" type="number" step="0.01" min="0.01" placeholder="Preço" aria-label="Preço unitário a adicionar">
             <button type="submit">Adicionar</button>
           </form>
 
@@ -614,7 +668,7 @@
                 <input name="notes" data-extra-notes value="${U.escapeHtml(draft.notes || '')}" placeholder="Entrega, combinado, apelido...">
               </label>
             </div>
-            ${canShareLink ? '<button type="button" class="secondary" data-cart-action="share-cart">Gerar link publico</button>' : ''}
+            ${canShareLink ? `<button type="button" class="secondary" data-cart-action="share-cart" ${!draft.items.length || cartBusy ? 'disabled' : ''}>Gerar link público</button>` : ''}
           </details>
         </article>
 
@@ -629,7 +683,7 @@
           <div class="cart-draft-list">${itemCards || '<div class="empty-state"><strong>Carrinho vazio.</strong><span>Toque em um produto para adicionar.</span></div>'}</div>
           ${parcialHint}
           <div class="actions cart-primary-actions">
-            <button type="button" data-cart-action="launch" ${draft.items.length ? '' : 'disabled'}>${primaryLabel(draft.mode)}</button>
+            <button type="button" data-cart-action="launch" ${draft.items.length && !cartBusy ? '' : 'disabled'}>${cartBusy ? 'Enviando…' : primaryLabel(draft.mode)}</button>
             <button type="button" class="ghost" data-cart-action="clear-draft">Limpar</button>
           </div>
         </article>
@@ -777,9 +831,10 @@
   // =====================================================================
 
   function mount(container, options = {}) {
+    restoreDraft();
     const draft = persistentDraft;
-    // O rascunho sobrevive entre remounts e ate entre trocas de conta (admin
-    // <-> vendedor). Se o modo salvo nao existe para o papel atual (ex.:
+    // O rascunho é isolado por conta e negócio. Se o modo salvo
+    // não existe mais para o papel atual (ex.:
     // 'revenda' e so do admin), volta ao padrao do papel — senao nenhum botao
     // do seletor fica ativo e os campos errados aparecem.
     const allowedModes = modeOptionsFor(isAdmin() ? 'admin' : 'vendedor').map((opt) => opt.v);
@@ -793,6 +848,7 @@
     let boardFeedback = null;
 
     function paint() {
+      persistDraft();
       container.innerHTML = [
         renderBuilder(draft, feedback),
         renderSubmittedPublicCarts(),
@@ -805,6 +861,7 @@
         if (config.paymentMode) config.paymentMode.value = draft.paymentMode || 'avista';
         if (config.paidInitialAmount) config.paidInitialAmount.value = draft.paidInitialAmount || '0';
       }
+      if (cartBusy) container.querySelectorAll('button, input, select, textarea').forEach((control) => { control.disabled = true; });
       if (UI && typeof UI.markKanbanOverflow === 'function') UI.markKanbanOverflow(container);
     }
 
@@ -822,7 +879,20 @@
       if (notesEl) draft.notes = notesEl.value || '';
     }
 
+    container.addEventListener('input', (event) => {
+      if (cartBusy) return;
+      const search = event.target.closest('[data-cart-search]');
+      if (search) {
+        draft.search = search.value;
+        container.querySelector('[data-cart-products]').innerHTML = renderProductCards(draft, search.value) || '<p class="hint-inline" role="status">Nenhum produto encontrado.</p>';
+        return;
+      }
+      readConfig();
+      persistDraft();
+    });
+
     container.addEventListener('change', async (event) => {
+      if (cartBusy) return;
       if (event.target.closest('[data-cart-config]')) { readConfig(); paint(); return; }
       const boardMove = event.target.closest('[data-board-move]');
       if (boardMove) {
@@ -861,8 +931,10 @@
       const qtyInput = event.target.closest('[data-draft-qty]');
       if (qtyInput) {
         const item = draft.items[Number(qtyInput.dataset.draftQty)];
-        if (item) item.quantity = U.number(qtyInput.value);
-        draft.items = draft.items.filter((entry) => U.number(entry.quantity) > 0);
+        if (item && U.number(qtyInput.value) > 0) {
+          item.quantity = U.number(qtyInput.value);
+          feedback = null;
+        } else feedback = { message: 'Informe uma quantidade maior que zero. Para excluir o item, use Remover.', type: 'danger' };
         paint();
         return;
       }
@@ -870,7 +942,7 @@
       if (productSelect) {
         const product = productById(productSelect.value);
         const form = productSelect.closest('[data-cart-add-item]');
-        if (form && product && form.elements.unitPrice && !form.elements.unitPrice.dataset.touched) {
+        if (form && product && form.elements.unitPrice) {
           form.elements.unitPrice.value = resolvedUnitPrice(product);
         }
       }
@@ -881,17 +953,20 @@
       const form = event.target.closest('[data-cart-add-item]');
       if (!form) return;
       event.preventDefault();
+      if (cartBusy) return;
       readConfig();
       const data = U.formData(form);
       const product = productById(data.productId);
       if (!product) return;
-      addDraftItem(draft, { productId: data.productId, quantity: U.number(data.quantity), unitPrice: U.number(data.unitPrice || resolvedUnitPrice(product)) });
-      form.reset();
-      feedback = null;
+      try {
+        addDraftItem(draft, { productId: data.productId, quantity: U.number(data.quantity), unitPrice: U.number(data.unitPrice === '' ? resolvedUnitPrice(product) : data.unitPrice) });
+        feedback = null;
+      } catch (error) { feedback = { message: error.message, type: 'danger' }; }
       paint();
     });
 
     container.addEventListener('click', async (event) => {
+      if (cartBusy) return;
       const boardButton = event.target.closest('[data-board-action]');
       if (boardButton) {
         const action = boardButton.dataset.boardAction;
@@ -922,9 +997,14 @@
       const button = event.target.closest('[data-cart-action]');
       if (!button) return;
       const action = button.dataset.cartAction;
+      const saves = ['launch', 'share-cart', 'convert-public-cart', 'reject-public-cart'].includes(action);
       try {
         readConfig();
+        if (saves) { cartBusy = true; paint(); }
+        feedback = null;
         if (action === 'set-mode') {
+          if (draft.mode !== button.dataset.mode && draft.items.length && !confirm('Trocar o tipo de venda e limpar os itens do carrinho?')) return;
+          if (draft.mode !== button.dataset.mode) resetDraft(draft);
           draft.mode = button.dataset.mode;
           if (draft.mode === 'request' && draft.paymentMode === 'parcial') draft.paymentMode = 'avista';
         } else if (action === 'remove-draft-item') {
@@ -939,6 +1019,7 @@
         } else if (action === 'quick-add-product') {
           addDraftItem(draft, { productId: button.dataset.productId, quantity: 1 });
         } else if (action === 'clear-draft') {
+          if (draft.items.length && !confirm('Limpar todos os itens do carrinho?')) return;
           resetDraft(draft);
         } else if (action === 'launch') {
           if (draft.mode === 'own') {
@@ -971,8 +1052,9 @@
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
       }
+      finally { if (saves) cartBusy = false; }
+      // refresh() já atualiza o dashboard. Remontar aqui apagava erros e sucessos.
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
     });
 
     paint();
