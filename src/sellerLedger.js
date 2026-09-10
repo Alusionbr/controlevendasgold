@@ -47,8 +47,8 @@
     }, '');
     const days = daysSince(lastPaymentDate);
     if (days === null) return { tone: 'danger', headline: 'Sem pagamento registrado', message: 'Registre seu primeiro pagamento para acompanhar este prazo.', lastPaymentDate: null, days: null };
-    if (days <= 7) return { tone: 'ok', headline: 'Em dia', message: 'Otimo ritmo. Continue acompanhando sua conta.', lastPaymentDate, days };
-    if (days <= 30) return { tone: 'warning', headline: 'Atencao ao prazo', message: 'Organize seu proximo pagamento para manter a conta em dia.', lastPaymentDate, days };
+    if (days <= 7) return { tone: 'ok', headline: 'Em dia', message: 'Ótimo ritmo. Continue acompanhando sua conta.', lastPaymentDate, days };
+    if (days <= 30) return { tone: 'warning', headline: 'Atenção ao prazo', message: 'Organize seu próximo pagamento para manter a conta em dia.', lastPaymentDate, days };
     return { tone: 'danger', headline: 'Pagamento em atraso', message: 'Informe seu pagamento para regularizar sua conta.', lastPaymentDate, days };
   }
   function accountsForSeller(sellerId) {
@@ -328,12 +328,12 @@
     return `
       <section class="panel-card seller-payment-pulse is-${pulse.tone}">
         <div class="approval-card-head">
-          <div><strong>Acompanhamento de pagamento</strong><small>O prazo e contado desde o ultimo pagamento confirmado.</small></div>
+          <div><strong>Acompanhamento de pagamento</strong><small>O prazo é contado desde o último pagamento confirmado.</small></div>
           <span class="payment-pulse-status">${U.escapeHtml(pulse.headline)}</span>
         </div>
         <div class="payment-pulse-main">
           <strong>${elapsed}</strong>
-          <div><span>desde o ultimo pagamento</span><small>${date ? `Ultimo pagamento em ${date}.` : 'Nenhum pagamento confirmado ainda.'}</small></div>
+          <div><span>desde o último pagamento</span><small>${date ? `Último pagamento em ${date}.` : 'Nenhum pagamento confirmado ainda.'}</small></div>
         </div>
         <p class="hint-inline">${U.escapeHtml(pulse.message)}</p>
       </section>`;

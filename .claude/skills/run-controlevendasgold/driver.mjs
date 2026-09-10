@@ -361,6 +361,83 @@ async function installMocks(pg) {
         return json(route, paymentId);
       }
 
+      // migration 20260729205823: list_seller_order_accounts(p_seller_id) —
+      // agrega os pedidos de revenda aprovados por grupo. É LEITURA, então o
+      // que importa é devolver a mesma forma do SQL (lista de contas), senão
+      // o refresh do app quebra ao fazer .map() na resposta.
+      if (fn === 'list_seller_order_accounts') {
+        const target = body.p_seller_id || null;
+        const orders = rowsOf('orders').filter((o) => o.sale_type === 'revenda'
+          && o.approval_status === 'aprovado' && (!target || String(o.seller_id) === String(target)));
+        const groups = new Map();
+        orders.forEach((o) => {
+          const key = String(o.order_group_id || o.id);
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(o);
+        });
+        const accounts = [...groups.entries()].map(([groupId, rows]) => {
+          const orderTotal = rows.reduce((sum, o) => sum + Number(o.quantity) * Number(o.unit_price || 0), 0);
+          const initialPaid = rows.reduce((sum, o) => sum + Number(o.paid_amount || 0), 0);
+          const ids = new Set(rows.map((o) => String(o.id)));
+          const debt = rowsOf('seller_account_entries')
+            .filter((e) => ids.has(String(e.source_id)) && ['order', 'order_edit', 'order_cancel'].includes(e.source_type))
+            .reduce((sum, e) => sum + (e.direction === 'credit' ? -Number(e.amount) : Number(e.amount)), 0);
+          const allocations = rowsOf('seller_payment_allocations').filter((a) => String(a.order_group_id) === groupId);
+          const paid = allocations.reduce((sum, a) => sum + Number(a.amount || 0), 0);
+          const accountAmount = Math.max(debt, 0);
+          return {
+            order_group_id: groupId,
+            seller_id: rows[0].seller_id,
+            created_at: rows[0].created_at,
+            order_status: rows[0].status,
+            order_total: orderTotal,
+            initial_paid: initialPaid,
+            account_amount: accountAmount,
+            paid_amount: paid,
+            open_amount: Math.max(accountAmount - paid, 0),
+            account_status: Math.max(accountAmount - paid, 0) < 0.005 ? 'quitado' : (paid + initialPaid > 0 ? 'parcial' : 'aberto'),
+            items: rows.map((o) => {
+              const product = rowsOf('products').find((pr) => String(pr.id) === String(o.product_id)) || {};
+              return { productName: product.name, unit: product.unit, quantity: o.quantity, unitPrice: o.unit_price, remainingQuantity: 0 };
+            }),
+            payments: [],
+          };
+        });
+        return json(route, accounts);
+      }
+
+      // migration 20260730125828 / 20260810111907: register_seller_daily_login()
+      if (fn === 'register_seller_daily_login') {
+        const today = new Date().toISOString().slice(0, 10);
+        const row = rowsOf('seller_login_rewards').find((r) => String(r.seller_id) === String(currentFixture.uid))
+          || (rowsOf('seller_login_rewards').push({
+            id: nextId('seller_login_rewards'), business_id: BUSINESS_ID, seller_id: currentFixture.uid,
+            current_streak: 0, best_streak: 0, last_login_date: null, gift_credits: 0, total_gifts_earned: 0,
+          }), rowsOf('seller_login_rewards').at(-1));
+        if (row.last_login_date !== today) {
+          row.current_streak = Number(row.current_streak) + 1;
+          row.best_streak = Math.max(Number(row.best_streak), row.current_streak);
+          row.last_login_date = today;
+          if (row.current_streak % 15 === 0) {
+            row.gift_credits = Number(row.gift_credits) + 1;
+            row.total_gifts_earned = Number(row.total_gifts_earned) + 1;
+          }
+        }
+        return json(route, [row]);
+      }
+
+      // migration 20260806203450: register_manual_seller_debit(...)
+      if (fn === 'register_manual_seller_debit') {
+        const entryId = nextId('seller_account_entries');
+        rowsOf('seller_account_entries').push({
+          id: entryId, business_id: BUSINESS_ID, seller_id: body.p_seller_id,
+          type: 'manual_adjustment', direction: 'debit', amount: Number(body.p_amount),
+          source_type: 'manual', source_id: body.p_request_id, notes: body.p_reason || '',
+          created_at: new Date().toISOString(),
+        });
+        return json(route, entryId);
+      }
+
       // migration 20260725142236: advance_order_group(p_group_id, p_new_status)
       // — move a esteira e, ao chegar em "despachado", materializa o grupo
       // inteiro numa transação: baixa estoque, grava stock_movements, cria
@@ -559,7 +636,9 @@ const COMMANDS = {
   async login(role) {
     if (!page) return console.log('ERROR: launch first');
     if (role) await COMMANDS.mock(role);
-    await page.fill('#authRoot form input[type="email"]', currentFixture.email);
+    // O campo de login virou "usuário ou e-mail" (input[type=text]
+    // name="identifier"); o seletor antigo (input[type=email]) não existe mais.
+    await page.fill('#authRoot form input[name="identifier"], #authRoot form input[type="email"]', currentFixture.email);
     await page.fill('#authRoot form input[type="password"]', 'anything123');
     await page.click('#authRoot form button[type="submit"]');
     try {

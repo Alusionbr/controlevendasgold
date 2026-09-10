@@ -49,6 +49,14 @@
   // Estado local da esteira: qual grupo esta com o form de edicao aberto.
   const boardState = { editGroupId: '' };
 
+  // Mensagem que precisa sobreviver a um remount. options.onDone() (= renderAll
+  // em src/app.js) recria o container inteiro e chama mount() de novo, com um
+  // closure novo — o `feedback` que acabou de ser definido morria junto, e
+  // "Venda registrada", "Pedido aprovado" ou o motivo de um erro piscavam e
+  // sumiam no mesmo instante. Guardar no escopo do modulo (como o rascunho e o
+  // boardState) faz a mensagem aparecer ja no primeiro paint do novo mount.
+  const carriedFeedback = { builder: null, board: null };
+
   function api() { return window.C360.api; }
   function S() { return window.C360.state; }
   function state() { return S().getState(); }
@@ -789,8 +797,10 @@
       draft.targetSellerId = '';
       draft.clientId = '';
     }
-    let feedback = null;
-    let boardFeedback = null;
+    let feedback = carriedFeedback.builder;
+    let boardFeedback = carriedFeedback.board;
+    carriedFeedback.builder = null;
+    carriedFeedback.board = null;
 
     function paint() {
       container.innerHTML = [
@@ -836,7 +846,7 @@
           await advanceOrderGroup(boardMove.dataset.groupId, boardMove.value);
           boardFeedback = { message: 'Status atualizado.', type: 'success' };
           paint();
-          if (typeof options.onDone === 'function') options.onDone();
+          if (typeof options.onDone === 'function') { carriedFeedback.board = boardFeedback; options.onDone(); }
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
           paint();
@@ -911,7 +921,7 @@
           else if (action === 'save-edit-group') { await saveGroupEdit(container, groupId); boardState.editGroupId = ''; boardFeedback = { message: 'Pedido atualizado.', type: 'success' }; }
           else if (action === 'cancel-group') { if (!confirm('Cancelar (excluir) este pedido?')) return; await cancelGroup(groupId); boardFeedback = { message: 'Pedido cancelado.', type: 'success' }; }
           paint();
-          if (needsRefresh && typeof options.onDone === 'function') options.onDone();
+          if (needsRefresh && typeof options.onDone === 'function') { carriedFeedback.board = boardFeedback; options.onDone(); }
         } catch (error) {
           boardFeedback = { message: error.message, type: 'danger' };
           paint();
@@ -922,6 +932,8 @@
       const button = event.target.closest('[data-cart-action]');
       if (!button) return;
       const action = button.dataset.cartAction;
+      const changedDataActions = ['launch', 'share-cart', 'convert-public-cart', 'reject-public-cart'];
+      let changedData = changedDataActions.includes(action);
       try {
         readConfig();
         if (action === 'set-mode') {
@@ -970,9 +982,16 @@
         }
       } catch (error) {
         feedback = { message: error.message, type: 'danger' };
+        changedData = false;
       }
       paint();
-      if (typeof options.onDone === 'function') options.onDone();
+      // Acoes que so mexem no rascunho (adicionar/remover item, trocar modo)
+      // nao precisam remontar o app inteiro; remontar a cada clique de "+"
+      // ainda apagava a tela e custava caro. So o que gravou de fato avisa.
+      if (changedData && typeof options.onDone === 'function') {
+        carriedFeedback.builder = feedback;
+        options.onDone();
+      }
     });
 
     paint();

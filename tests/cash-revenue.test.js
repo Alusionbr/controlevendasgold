@@ -74,3 +74,41 @@ test('interface separa receita recebida do que saiu a prazo', () => {
   assert.match(app, /Saídas a prazo para vendedores/);
   assert.match(app, /sale\.origin !== 'consignado' && !sale\.sellerId/);
 });
+// Regressão: o RPC de despacho (advance_order_group) grava um
+// consignment_events tipo 'pagamento' com o valor pago na entrada do pedido de
+// revenda — e o MESMO valor já é contado pelo lado do vendedor
+// (sellerOrderAccounts.initialPaid). Sem excluir o evento da consignação de
+// vendedor, a entrada era somada duas vezes na receita recebida.
+test('entrada de pedido de revenda não é contada duas vezes', () => {
+  const calc = loadCalculations();
+  const state = {
+    activeBusinessId: 'b1',
+    sales: [],
+    consignments: [
+      { id: 'cli1', businessId: 'b1', unitPrice: 10, costAtSend: 6 },
+      { id: 'vend1', businessId: 'b1', sellerId: 's1', unitPrice: 20, costAtSend: 12 },
+    ],
+    consignmentEvents: [
+      // cliente pagando consignação: entra na receita
+      { id: 'ce1', businessId: 'b1', consignmentId: 'cli1', type: 'pagamento', date: '2026-08-01', amount: 40 },
+      // entrada do pedido de revenda, gravada pelo despacho: NÃO entra aqui
+      { id: 'ce2', businessId: 'b1', consignmentId: 'vend1', type: 'pagamento', date: '2026-08-01', amount: 300 },
+    ],
+    sellerPayments: [],
+    sellerPaymentAllocations: [],
+    orders: [],
+    sellerOrderAccounts: [
+      { orderGroupId: 'g1', sellerId: 's1', createdAt: '2026-08-01T10:00:00Z', initialPaid: 300, openAmount: 0 },
+    ],
+  };
+
+  const revenue = calc.recognizedRevenue(state);
+  assert.equal(revenue.clients.total, 40, 'só o pagamento do cliente entra como consignado de cliente');
+  assert.equal(revenue.sellers.total, 300, 'a entrada do pedido entra uma vez, pelo lado do vendedor');
+  assert.equal(revenue.total, 340, 'total sem duplicar a entrada de R$ 300');
+
+  const receipts = calc.dailyReceipts(state, '2026-08-01');
+  assert.equal(receipts.clients.total, 40);
+  assert.equal(receipts.sellers.total, 300);
+  assert.equal(receipts.total, 340, 'recebimentos do dia também não duplicam');
+});

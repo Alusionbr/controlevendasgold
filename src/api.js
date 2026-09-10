@@ -533,11 +533,15 @@
     });
   }
 
+  // Sempre devolve array: src/state.js faz `.map()` no resultado e uma
+  // resposta vazia/inesperada do RPC derrubava o refresh() INTEIRO — a tela
+  // abria zerada, como se o negócio não tivesse dado nenhum.
   async function listSellerOrderAccounts(sellerId = null) {
-    return restRequest('/rest/v1/rpc/list_seller_order_accounts', {
+    const rows = await restRequest('/rest/v1/rpc/list_seller_order_accounts', {
       method: 'POST',
       body: { p_seller_id: sellerId || null },
     });
+    return Array.isArray(rows) ? rows : [];
   }
 
   async function registerSellerOrderPayment({ orderGroupId, amount, method, notes }) {

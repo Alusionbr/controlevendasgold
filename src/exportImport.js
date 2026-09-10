@@ -46,6 +46,8 @@
     parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
     periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
     targetAmount: 'Meta', rewardDescription: 'Premiação',
+    defaultPrice: 'Preço padrão', priceFloor: 'Piso de preço',
+    paidInitialAmount: 'Valor pago na entrada',
   };
 
   const NUMERIC_KEYS = new Set([
@@ -57,6 +59,7 @@
     'amountPaid', 'costAtSend', 'amount', 'approvedQuantity', 'maxDiscountPercent',
     'paidAmount', 'quantityDeclared', 'quantityReceived', 'unitValue', 'totalValue',
     'price', 'floor', 'targetAmount', 'reportedAmount', 'reviewedAmount',
+    'defaultPrice', 'priceFloor', 'paidInitialAmount',
   ]);
 
   const DATE_KEYS = new Set(['date', 'issueDate', 'dueDate', 'settledAt', 'publicExpiresAt',
@@ -65,7 +68,7 @@
   // Coleção -> nome da aba + ordem de colunas.
   const COLLECTIONS = [
     { key: 'businesses', sheet: 'Negócios', fields: ['id', 'name', 'segment', 'defaultTargetMargin', 'defaultFeePercent', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'products', sheet: 'Produtos', fields: ['id', 'businessId', 'name', 'type', 'unit', 'currentStock', 'avgCost', 'salePrice', 'defaultPrice', 'priceFloor', 'minStock', 'laborCostPerUnit', 'overheadCostPerUnit', 'lossPercent', 'targetMarginPercent', 'taxFeePercent', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'clients', sheet: 'Clientes', fields: ['id', 'businessId', 'name', 'phone', 'type', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'suppliers', sheet: 'Fornecedores', fields: ['id', 'businessId', 'name', 'phone', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'purchases', sheet: 'Compras', fields: ['id', 'businessId', 'purchaseGroupId', 'date', 'dueDate', 'supplierId', 'productId', 'quantity', 'totalCost', 'unitCost', 'paymentMode', 'paidAmount', 'notes', 'createdAt', 'updatedAt'] },
@@ -80,7 +83,7 @@
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'sellerSettings', sheet: 'Permissoes vendedores', fields: ['id', 'businessId', 'sellerId', 'allowAdminStockSales', 'allowConsignment', 'allowPublicCartLinks', 'maxDiscountPercent', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'notes', 'createdAt', 'updatedAt'] },
+    { key: 'saleCarts', sheet: 'Carrinhos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'source', 'paymentMode', 'status', 'channel', 'customerName', 'customerPhone', 'customerNotes', 'publicToken', 'publicExpiresAt', 'submittedAt', 'approvedAt', 'approvedBy', 'paymentProofPath', 'paidInitialAmount', 'notes', 'createdAt', 'updatedAt'] },
     { key: 'saleCartItems', sheet: 'Itens carrinho', fields: ['id', 'cartId', 'businessId', 'productId', 'quantity', 'unitPrice', 'approvedQuantity', 'rejectionReason', 'createdAt', 'updatedAt'] },
     // Fases 3 e 4 (ledger do vendedor, estoque em mãos, devoluções) e metas.
     // Sem estas abas o arquivo de backup saía sem NENHUMA dívida de vendedor,
