@@ -18,7 +18,7 @@
   // A RLS aplica a mesma regra no banco; isto é apenas a camada de interface.
   const TAB_ORDER = [
     'hoje', 'negocios', 'produtos', 'clientes', 'fornecedores', 'compras',
-    'fichas', 'producao', 'vendas', 'consignado', 'financeiro', 'estoque',
+    'fichas', 'producao', 'vendas', 'consignado', 'rastreio', 'financeiro', 'estoque',
     'tarefas', 'relatorios', 'vendedores', 'precos',
     'meusaldo', 'devolucoes', 'minhasdevolucoes', 'calculadora', 'metas',
     'ajuda', 'dados',
@@ -35,6 +35,7 @@
     producao: 'Produção',
     vendas: 'Vendas',
     consignado: 'Consignado (clientes)',
+    rastreio: 'Rastreio 360',
     financeiro: 'Financeiro',
     estoque: 'Meu estoque',
     tarefas: 'Tarefas',
@@ -77,6 +78,7 @@
     producao: ['admin'],
     vendas: ['admin'],
     consignado: ['admin'],
+    rastreio: ['admin', 'vendedor'],
     financeiro: ['admin'],
     estoque: SEM_PAPEL,          // "Meu estoque" do vendedor
     tarefas: ['admin'],
@@ -104,7 +106,7 @@
     { id: 'diaadia', label: 'Dia a dia',
       tabs: ['hoje', 'vendas', 'vendedores', 'produtos', 'estoque', 'financeiro', 'meusaldo', 'metas'] },
     { id: 'mercadoria', label: 'Mercadoria e produção',
-      tabs: ['consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
+      tabs: ['rastreio', 'consignado', 'devolucoes', 'minhasdevolucoes', 'compras', 'producao', 'fichas'] },
     { id: 'cadastros', label: 'Cadastros',
       tabs: ['clientes', 'fornecedores', 'precos', 'negocios'] },
     { id: 'ferramentas', label: 'Ferramentas',
@@ -741,6 +743,12 @@
         els.view.innerHTML = '<div id="sellersPanel"></div>';
         if (window.C360.auth && typeof window.C360.auth.mountSellers === 'function') {
           window.C360.auth.mountSellers(document.getElementById('sellersPanel'));
+        }
+        break;
+      case 'rastreio':
+        els.view.innerHTML = '<div id="trackingPanel"></div>';
+        if (window.C360.tracking && typeof window.C360.tracking.mount === 'function') {
+          window.C360.tracking.mount(document.getElementById('trackingPanel'));
         }
         break;
       case 'precos':

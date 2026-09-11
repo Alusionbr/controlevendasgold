@@ -8,12 +8,12 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('vendedor possui somente a tela Minha conta', () => {
+test('vendedor possui Minha conta e rastreio somente leitura', () => {
   const app = read('src/app.js');
   const roles = app.match(/const TAB_ROLES = \{([\s\S]*?)\n  \};/);
   assert.ok(roles, 'TAB_ROLES não encontrado');
   const sellerTabs = [...roles[1].matchAll(/^\s*(\w+):\s*\[[^\]]*'vendedor'[^\]]*\]/gm)].map((match) => match[1]);
-  assert.deepEqual(sellerTabs, ['meusaldo']);
+  assert.deepEqual(sellerTabs, ['rastreio', 'meusaldo']);
   assert.match(app, /vendedor:\s*\['meusaldo'\]/);
   assert.doesNotMatch(app, /mountGrantStock\(document\.getElementById\('grantStockPanel'\)\)/);
 });
@@ -37,6 +37,8 @@ test('carregamento do vendedor busca somente dados próprios e registra o login 
     'api.registerSellerDailyLogin', "api.list('seller_account_entries'",
     "api.list('seller_payments'", "api.list('seller_payment_allocations'",
     'api.listSellerOrderAccounts',
+    "api.listAll('tracking_shipments'", "api.listAll('tracking_shipment_items'",
+    "api.listAll('tracking_shipment_events'", "api.listAll('tracking_shipment_payments'",
   ]) assert.ok(sellerRefresh.includes(required), `consulta obrigatória ausente: ${required}`);
   assert.match(sellerRefresh, /api\.registerSellerDailyLogin\(\)\.catch\(\(\) => null\)/);
 });

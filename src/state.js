@@ -85,6 +85,10 @@
       orders: [],
       consignments: [],
       consignmentEvents: [],
+      trackingShipments: [],
+      trackingShipmentItems: [],
+      trackingShipmentEvents: [],
+      trackingShipmentPayments: [],
       tasks: [],
       // Novo (multi-usuário):
       sellerPrices: [],
@@ -255,6 +259,10 @@
     orders: 'orders',
     consignments: 'consignments',
     consignmentEvents: 'consignment_events',
+    trackingShipments: 'tracking_shipments',
+    trackingShipmentItems: 'tracking_shipment_items',
+    trackingShipmentEvents: 'tracking_shipment_events',
+    trackingShipmentPayments: 'tracking_shipment_payments',
     tasks: 'tasks',
     sellerPrices: 'seller_prices',
     sellerStock: 'seller_stock',
@@ -380,6 +388,7 @@
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
       sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
+      trackingShipments, trackingShipmentItems, trackingShipmentEvents, trackingShipmentPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -409,6 +418,10 @@
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
+      api.listAll('tracking_shipments', { business_id: businessId, _order: 'created_at.desc' }),
+      api.listAll('tracking_shipment_items', { business_id: businessId }),
+      api.listAll('tracking_shipment_events', { business_id: businessId, _order: 'event_at.desc' }),
+      api.listAll('tracking_shipment_payments', { business_id: businessId, _order: 'payment_date.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -440,6 +453,10 @@
     state.financialEntries = financialEntries.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
+    state.trackingShipments = trackingShipments.map(toCamelCaseRow);
+    state.trackingShipmentItems = trackingShipmentItems.map(toCamelCaseRow);
+    state.trackingShipmentEvents = trackingShipmentEvents.map(toCamelCaseRow);
+    state.trackingShipmentPayments = trackingShipmentPayments.map(toCamelCaseRow);
 
     const [salesGoals, goalsProgress] = await Promise.all([
       api.listSalesGoals(),
@@ -456,6 +473,7 @@
     // Menos chamadas também reduz a chance de um painel vazio por falha parcial.
     const [
       businesses, sellerProducts, sellerStock, sellerSettings, loginReward, sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts,
+      trackingShipments, trackingShipmentItems, trackingShipmentEvents, trackingShipmentPayments,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.listSellerProducts(businessId),
@@ -467,6 +485,10 @@
       api.list('seller_payment_allocations', { seller_id: userId }),
       api.list('seller_payment_reports', { seller_id: userId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(userId),
+      api.listAll('tracking_shipments', { seller_id: userId, _order: 'created_at.desc' }),
+      api.listAll('tracking_shipment_items', {}),
+      api.listAll('tracking_shipment_events', { _order: 'event_at.desc' }),
+      api.listAll('tracking_shipment_payments', { _order: 'payment_date.desc' }),
     ]);
 
     state.businesses = businesses.map(toCamelCaseRow);
@@ -479,6 +501,10 @@
     state.sellerPaymentAllocations = sellerPaymentAllocations.map(toCamelCaseRow);
     state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
     state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
+    state.trackingShipments = trackingShipments.map(toCamelCaseRow);
+    state.trackingShipmentItems = trackingShipmentItems.map(toCamelCaseRow);
+    state.trackingShipmentEvents = trackingShipmentEvents.map(toCamelCaseRow);
+    state.trackingShipmentPayments = trackingShipmentPayments.map(toCamelCaseRow);
 
     // Todo o restante é admin-only no modelo operacional oficial.
     state.clients = [];
