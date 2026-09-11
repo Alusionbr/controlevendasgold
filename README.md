@@ -17,6 +17,8 @@ pedidos, tarefas e consignados. Backend em Supabase (Auth + Postgres + Row-Level
 2. Entre com e-mail e senha (ver `docs/backend.md` para como o primeiro admin é provisionado).
 3. Admin: cadastre produtos, clientes, fornecedores e crie contas de vendedor em **Vendedores**.
 4. Vendedor: cadastre seus clientes e lance vendas, pedidos e consignados.
+5. Use **Rastreio 360** para registrar remessas, confirmar entregas, informar vendas, devoluções e
+   acertos, mantendo a origem e o destino de cada produto.
 
 ## Para que serve
 
@@ -60,6 +62,7 @@ src/state.js           persistência e estado local
 src/calculations.js    cálculos críticos
 src/ui.js              componentes HTML simples
 src/app.js             telas e fluxos
+src/tracking.js        remessas, rastreio e acertos de consignação
 ```
 
 ## Persistência

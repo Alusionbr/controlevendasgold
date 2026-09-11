@@ -118,6 +118,22 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function listAll(table, query = {}, pageSize = 500) {
+    const qs = buildQueryString(query);
+    const rows = [];
+    for (let from = 0; ; from += pageSize) {
+      // PostgREST limita respostas grandes. Paginar aqui impede que históricos
+      // e indicadores parem silenciosamente nos primeiros 1.000 registros.
+      // eslint-disable-next-line no-await-in-loop
+      const pagination = `limit=${pageSize}&offset=${from}`;
+      const page = await restRequest(`/rest/v1/${table}?${qs ? `${qs}&` : ''}${pagination}`, { method: 'GET' });
+      const batch = Array.isArray(page) ? page : [];
+      rows.push(...batch);
+      if (batch.length < pageSize) break;
+    }
+    return rows;
+  }
+
   async function insert(table, payload) {
     const result = await restRequest(`/rest/v1/${table}`, {
       method: 'POST',
@@ -552,6 +568,76 @@
     });
   }
 
+  async function createTrackingShipment({
+    direction, partnerType, partnerId, departedAt, deliveredAt,
+    settlementMode, settlementDay, notes, items, requestId,
+  }) {
+    return restRequest('/rest/v1/rpc/create_tracking_shipment', {
+      method: 'POST',
+      body: {
+        p_direction: direction,
+        p_partner_type: partnerType,
+        p_partner_id: partnerId,
+        p_departed_at: departedAt,
+        p_delivered_at: deliveredAt || null,
+        p_settlement_mode: settlementMode || 'upon_sale',
+        p_settlement_day: settlementDay ? Number(settlementDay) : null,
+        p_notes: notes || '',
+        p_items: items,
+        p_request_id: requestId,
+      },
+    });
+  }
+
+  async function confirmTrackingShipmentDelivery({ shipmentId, deliveredAt, requestId }) {
+    return restRequest('/rest/v1/rpc/confirm_tracking_shipment_delivery', {
+      method: 'POST',
+      body: { p_shipment_id: shipmentId, p_delivered_at: deliveredAt, p_request_id: requestId },
+    });
+  }
+
+  async function registerTrackingShipmentSale({ itemId, quantity, soldAt, clientId, unitPrice, notes, requestId }) {
+    return restRequest('/rest/v1/rpc/register_tracking_shipment_sale', {
+      method: 'POST',
+      body: {
+        p_item_id: itemId,
+        p_quantity: Number(quantity),
+        p_sold_at: soldAt || new Date().toISOString(),
+        p_client_id: clientId || null,
+        p_unit_price: unitPrice === '' || unitPrice === undefined ? null : Number(unitPrice),
+        p_notes: notes || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
+  async function registerTrackingShipmentReturn({ itemId, quantity, returnedAt, notes, requestId }) {
+    return restRequest('/rest/v1/rpc/register_tracking_shipment_return', {
+      method: 'POST',
+      body: {
+        p_item_id: itemId,
+        p_quantity: Number(quantity),
+        p_returned_at: returnedAt,
+        p_notes: notes || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
+  async function registerTrackingShipmentPayment({ shipmentId, amount, paymentDate, method, notes, requestId }) {
+    return restRequest('/rest/v1/rpc/register_tracking_shipment_payment', {
+      method: 'POST',
+      body: {
+        p_shipment_id: shipmentId,
+        p_amount: Number(amount),
+        p_payment_date: paymentDate,
+        p_method: method || null,
+        p_notes: notes || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
   async function registerSaleReturn({ saleId, quantity, notes }) {
     return restRequest('/rest/v1/rpc/register_sale_return', {
       method: 'POST',
@@ -730,6 +816,7 @@
 
   window.C360.api = {
     list,
+    listAll,
     insert,
     update,
     remove,
@@ -760,6 +847,11 @@
     registerManualSellerDebit,
     listSellerOrderAccounts,
     registerSellerOrderPayment,
+    createTrackingShipment,
+    confirmTrackingShipmentDelivery,
+    registerTrackingShipmentSale,
+    registerTrackingShipmentReturn,
+    registerTrackingShipmentPayment,
     registerSaleReturn,
     registerSaleWaste,
     convertPublicCartToOrders,
