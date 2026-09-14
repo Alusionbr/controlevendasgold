@@ -536,6 +536,22 @@
     });
   }
 
+  async function registerFinancialEntryPayment({
+    financialEntryId, amount, paymentDate, paymentMethod, notes, requestId,
+  }) {
+    return restRequest('/rest/v1/rpc/register_financial_entry_payment', {
+      method: 'POST',
+      body: {
+        p_financial_entry_id: financialEntryId,
+        p_amount: Number(amount),
+        p_payment_date: paymentDate,
+        p_payment_method: paymentMethod,
+        p_notes: notes || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
   async function registerSellerPayment({ sellerId, amount, method, notes }) {
     return restRequest('/rest/v1/rpc/register_seller_payment', {
       method: 'POST',
@@ -784,6 +800,7 @@
     createSellerPaymentProofUrl,
     registerPurchaseGroup,
     registerDirectSale,
+    registerFinancialEntryPayment,
     registerSellerPayment,
     registerManualSellerDebit,
     listSellerOrderAccounts,

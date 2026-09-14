@@ -295,7 +295,12 @@
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
   function currentFinancialEntries() { return businessScoped('financialEntries'); }
+  function currentFinancialEntryPayments() { return businessScoped('financialEntryPayments'); }
   function currentTasks() { return businessScoped('tasks'); }
+
+  function signedFinancialPaymentAmount(payment) {
+    return U.number(payment.amount) * (payment.eventType === 'reversal' ? -1 : 1);
+  }
 
   function productById(id) { return state().products.find((product) => product.id === id) || null; }
   function clientById(id) { return state().clients.find((client) => client.id === id) || null; }
@@ -1163,9 +1168,15 @@
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const receivedAtSale = currentSales().filter((sale) => sale.origin !== 'consignado' && !sale.sellerId);
-    const receivedBySale = new Map(currentFinancialEntries()
+    const saleIdByFinancialEntry = new Map(currentFinancialEntries()
       .filter((entry) => entry.direction === 'receivable' && entry.sourceType === 'sale' && entry.status !== 'cancelled')
-      .map((entry) => [String(entry.sourceId), U.number(entry.paidAmount)]));
+      .map((entry) => [String(entry.id), String(entry.sourceId)]));
+    const receivedBySale = new Map();
+    currentFinancialEntryPayments().forEach((payment) => {
+      const saleId = saleIdByFinancialEntry.get(String(payment.financialEntryId));
+      if (!saleId) return;
+      receivedBySale.set(saleId, U.number(receivedBySale.get(saleId)) + signedFinancialPaymentAmount(payment));
+    });
     const rows = U.sortByDateDesc(receivedAtSale).map((sale) => {
       const product = productById(sale.productId);
       const client = clientById(sale.clientId);
@@ -1351,7 +1362,13 @@
     const overdueEntries = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today());
     const overdue = overdueEntries.reduce((sum, entry) => sum + remaining(entry), 0);
     const monthKey = U.today().slice(0, 7);
-    const receivedThisMonth = active.filter((entry) => entry.direction === 'receivable' && String(entry.settledAt || '').slice(0, 7) === monthKey).reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const activeById = new Map(active.map((entry) => [String(entry.id), entry]));
+    const receivedThisMonth = currentFinancialEntryPayments()
+      .filter((payment) => {
+        const entry = activeById.get(String(payment.financialEntryId));
+        return entry?.direction === 'receivable' && String(payment.paymentDate || '').slice(0, 7) === monthKey;
+      })
+      .reduce((sum, payment) => sum + signedFinancialPaymentAmount(payment), 0);
     const visibleEntries = entries.filter((entry) => entry.direction === financeDirection);
     const statusBadge = (entry) => {
       const label = financialDisplayStatus(entry);
@@ -1397,10 +1414,8 @@
           <label>Emissão<input name="issueDate" type="date" required value="${U.today()}"></label>
           <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
           <label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label>
-          <label>Valor já pago<input name="paidAmount" type="number" min="0" step="0.01" value="0"></label>
           <label>Cliente<select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select></label>
           <label>Fornecedor<select name="supplierId">${UI.optionList(currentSuppliers(), '', 'Opcional')}</select></label>
-          <label>Forma de pagamento<input name="paymentMethod"></label>
           <label class="wide">Observações<input name="notes"></label>
           <button type="submit">Lançar</button>
         </form>
@@ -1466,7 +1481,13 @@
     const periodSales = immediatePeriodSales.filter((sale) => (!reportProductId || String(sale.productId) === String(reportProductId))
       && (!reportChannel || String(sale.channel || '') === reportChannel));
     const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
-    const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
+    const financialById = new Map(currentFinancialEntries()
+      .filter((entry) => entry.status !== 'cancelled')
+      .map((entry) => [String(entry.id), entry]));
+    const periodPayables = [...financialById.values()]
+      .filter((entry) => entry.direction === 'payable' && inPeriod(entry.issueDate));
+    const periodFinancialPayments = currentFinancialEntryPayments()
+      .filter((payment) => inPeriod(payment.paymentDate) && financialById.has(String(payment.financialEntryId)));
     const recognized = Calc.recognizedRevenue(state(), { dateFrom: dashboardStart, dateTo: dashboardEnd });
     const creditPosition = Calc.creditSalesPosition(state());
     const salesTotal = recognized.total;
@@ -1477,8 +1498,13 @@
       { label: 'Pagamentos de clientes', value: recognized.clients.total },
       { label: 'Pagamentos de vendedores', value: recognized.sellers.total },
     ].filter((row) => row.value > 0);
-    const financialReceived = periodFinancial.filter((entry) => entry.direction === 'receivable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
-    const financialPaid = periodFinancial.filter((entry) => entry.direction === 'payable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const financialReceived = periodFinancialPayments
+      .filter((payment) => financialById.get(String(payment.financialEntryId))?.direction === 'receivable')
+      .reduce((sum, payment) => sum + signedFinancialPaymentAmount(payment), 0);
+    // O razão append-only é obrigatório nesta etapa para recebimentos. O fluxo
+    // de compras ainda nasce com paid_amount na própria RPC; preserve-o até a
+    // migração equivalente de contas a pagar para não esconder caixa histórico.
+    const financialPaid = periodPayables.reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
     const byProduct = new Map();
     periodSales.forEach((sale) => {
       const key = String(sale.productId);
@@ -1868,7 +1894,9 @@
         <input type="hidden" name="id" value="${U.escapeHtml(entry.id)}">
         <div class="notice">Saldo atual: <strong>${U.money(remaining)}</strong></div>
         <label>Valor desta baixa<input name="amount" type="number" min="0.01" max="${remaining}" step="0.01" required value="${remaining}"></label>
-        <label>Forma de pagamento<input name="paymentMethod" value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <label>Data da baixa<input name="paymentDate" type="date" required value="${U.today()}"></label>
+        <label>Forma de pagamento<input name="paymentMethod" required value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <label>Observações<textarea name="notes" placeholder="Referência, comprovante ou contexto da baixa"></textarea></label>
         <footer><button type="button" class="ghost" data-action="close-financial-payment">Cancelar</button><button type="submit">Confirmar baixa</button></footer>
       </form>`;
     dialog.addEventListener('close', () => dialog.remove());
@@ -1879,8 +1907,6 @@
   async function addFinancialEntry(data) {
     U.assertPositive(data.amount, 'Valor');
     const amount = U.number(data.amount);
-    const paidAmount = U.number(data.paidAmount);
-    if (paidAmount < 0 || paidAmount > amount) throw new Error('Valor pago precisa ficar entre zero e o valor total.');
     await S.add('financialEntries', {
       direction: data.direction,
       category: data.category || 'other',
@@ -1888,10 +1914,10 @@
       issueDate: data.issueDate || U.today(),
       dueDate: data.dueDate || null,
       amount,
-      paidAmount,
+      paidAmount: 0,
       clientId: data.clientId || null,
       supplierId: data.supplierId || null,
-      paymentMethod: data.paymentMethod || null,
+      paymentMethod: null,
       notes: data.notes || '',
     });
   }
@@ -1902,7 +1928,20 @@
     U.assertPositive(data.amount, 'Valor da baixa');
     const nextPaid = U.number(entry.paidAmount) + U.number(data.amount);
     if (nextPaid > U.number(entry.amount) + 0.001) throw new Error('A baixa não pode superar o saldo do lançamento.');
-    await S.update('financialEntries', entry.id, { paidAmount: nextPaid, paymentMethod: data.paymentMethod || entry.paymentMethod || null });
+    if (!data.paymentDate) throw new Error('Informe a data da baixa.');
+    if (!String(data.paymentMethod || '').trim()) throw new Error('Informe a forma de pagamento.');
+    const requestId = pendingFinancialPaymentRequestIds.get(entry.id) || crypto.randomUUID();
+    pendingFinancialPaymentRequestIds.set(entry.id, requestId);
+    await window.C360.api.registerFinancialEntryPayment({
+      financialEntryId: entry.id,
+      amount: U.number(data.amount),
+      paymentDate: data.paymentDate,
+      paymentMethod: String(data.paymentMethod).trim(),
+      notes: data.notes || '',
+      requestId,
+    });
+    await S.refresh();
+    pendingFinancialPaymentRequestIds.delete(entry.id);
   }
 
   async function updateProduct(data) {
@@ -2220,6 +2259,7 @@
   }
 
   let pendingManualSaleRequestId = null;
+  const pendingFinancialPaymentRequestIds = new Map();
 
   // Apenas o formulário administrativo de venda manual usa esta RPC. Pedidos,
   // consignações e vendas do estoque do vendedor conservam seus fluxos atuais.

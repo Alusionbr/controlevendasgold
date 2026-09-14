@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-qi6+b8qTXhObEn/7SGepiG+cxGK0Z3+NMjqHdhWVVK0=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-PwMZwHbT5LW9PypF5pNCRRepY1MuTV1npyiOh4OolTc=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TqCfz1Q4g7Zaalls3rQSSjddkUk3H5C0N4lLFR4tgjM=' 'sha256-OpTPw9iu849ZRdR2AXP2k6UfLMXdwULlE8eTs0xF/WA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-dYm2H7js9Ye4K6XH4Ch2tP6BWjeahOenle4qN5HUY7Y=' 'sha256-2smG3bOK86QqGSnO1nOz0pfxHA9rs3/lCiamHE08BNw=' 'sha256-QNhZq0YMBieeNwhZRUiaKMeHHCtAViedqYir2UGpa1Y=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-K98+NLrIwZE+V9J6lvvqqm5GcD6Xgr7JvTJ41uKsLYg=' 'sha256-Hf4bA7a4X3fSa1Sg+tfJtiyCASp7gTM9Bi3IPSmO2bU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -3016,6 +3016,22 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function registerFinancialEntryPayment({
+    financialEntryId, amount, paymentDate, paymentMethod, notes, requestId,
+  }) {
+    return restRequest('/rest/v1/rpc/register_financial_entry_payment', {
+      method: 'POST',
+      body: {
+        p_financial_entry_id: financialEntryId,
+        p_amount: Number(amount),
+        p_payment_date: paymentDate,
+        p_payment_method: paymentMethod,
+        p_notes: notes || '',
+        p_request_id: requestId,
+      },
+    });
+  }
+
   async function registerSellerPayment({ sellerId, amount, method, notes }) {
     return restRequest('/rest/v1/rpc/register_seller_payment', {
       method: 'POST',
@@ -3264,6 +3280,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     createSellerPaymentProofUrl,
     registerPurchaseGroup,
     registerDirectSale,
+    registerFinancialEntryPayment,
     registerSellerPayment,
     registerManualSellerDebit,
     listSellerOrderAccounts,
@@ -3395,6 +3412,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       sellerPaymentReports: [],
       sellerOrderAccounts: [],
       financialEntries: [],
+      financialEntryPayments: [],
       recordAuditLog: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
@@ -3559,6 +3577,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     sellerPaymentAllocations: 'seller_payment_allocations',
     sellerPaymentReports: 'seller_payment_reports',
     financialEntries: 'financial_entries',
+    financialEntryPayments: 'financial_entry_payments',
     recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
     profiles: 'profiles',
@@ -3671,7 +3690,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
+      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, financialEntryPayments, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -3699,6 +3718,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       api.list('seller_payment_reports', { business_id: businessId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
+      api.list('financial_entry_payments', { business_id: businessId, _order: 'payment_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
@@ -3730,6 +3750,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
     state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
+    state.financialEntryPayments = financialEntryPayments.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
@@ -3782,6 +3803,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];
+    state.financialEntryPayments = [];
     state.operationalMovements = [];
     state.suppliers = [];
     state.purchases = [];
@@ -3993,34 +4015,26 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const salesById = new Map((state.sales || [])
       .filter((sale) => sale.businessId === businessId && sale.origin !== 'consignado' && !sale.sellerId)
       .map((sale) => [String(sale.id), sale]));
-    const rows = [];
-
-    (state.financialEntries || [])
+    const entriesById = new Map((state.financialEntries || [])
       .filter((entry) => entry.businessId === businessId
         && entry.direction === 'receivable'
         && entry.sourceType === 'sale'
         && entry.status !== 'cancelled')
-      .forEach((entry) => {
-        const sale = salesById.get(String(entry.sourceId));
-        if (!sale) return;
-        const settledTotal = Math.min(
-          Math.max(number(entry.paidAmount), 0),
-          Math.max(number(entry.amount || sale.netRevenue), 0)
-        );
-        const initialPaid = Math.min(Math.max(number(sale.paidAmount), 0), settledTotal);
-        if (initialPaid > 0) {
-          rows.push({ sale, amount: initialPaid, date: sale.date || entry.issueDate });
-        }
-        const laterPaid = Math.max(settledTotal - initialPaid, 0);
-        if (laterPaid > 0) {
-          rows.push({
-            sale,
-            amount: laterPaid,
-            date: entry.settledAt || entry.updatedAt || entry.issueDate || sale.date,
-          });
-        }
-      });
-    return rows;
+      .map((entry) => [String(entry.id), entry]));
+
+    return (state.financialEntryPayments || []).flatMap((payment) => {
+      if (payment.businessId !== businessId) return [];
+      const entry = entriesById.get(String(payment.financialEntryId));
+      const sale = entry && salesById.get(String(entry.sourceId));
+      if (!sale) return [];
+      const amount = number(payment.amount) * (payment.eventType === 'reversal' ? -1 : 1);
+      return [{
+        sale,
+        amount,
+        date: payment.paymentDate,
+        eventType: payment.eventType || 'payment',
+      }];
+    });
   }
 
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
@@ -4082,11 +4096,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     };
   }
 
-  // Receita reconhecida pelo caixa: a venda direta entra pelo paid_amount do
-  // lançamento financeiro, nunca pelo valor nominal da venda. O valor pago no
-  // ato usa a data da venda; liquidações posteriores usam a data de liquidação
-  // (ou a última atualização disponível). Consignado informado como vendido
-  // continua fora até o pagamento.
+  // Receita reconhecida pelo caixa: cada baixa de venda direta entra pela sua
+  // data real no razão financeiro. O saldo acumulado do título nunca é usado
+  // para reconstruir o histórico. Consignado informado como vendido continua
+  // fora até o pagamento.
   function recognizedRevenue(state, { dateFrom = '', dateTo = '' } = {}) {
     const businessId = state.activeBusinessId;
     const inPeriod = (date) => {
@@ -4113,7 +4126,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         * (number(settlement.sale.netRevenue) > 0
           ? number(settlement.sale.grossProfit) / number(settlement.sale.netRevenue)
           : 0),
-      count: result.count + 1,
+      count: result.count + (settlement.eventType === 'reversal' ? 0 : 1),
     }), { total: 0, profit: 0, count: 0 });
 
     const clients = clientPayments.reduce((result, event) => {
@@ -11200,6 +11213,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'sellerId', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
+    { key: 'financialEntryPayments', sheet: 'Baixas financeiras', fields: ['id', 'businessId', 'financialEntryId', 'eventType', 'amount', 'paymentDate', 'paymentMethod', 'notes', 'requestId', 'reversalOfId', 'createdBy', 'createdAt'] },
     { key: 'recordAuditLog', sheet: 'Histórico de alterações', fields: ['id', 'businessId', 'entity', 'entityId', 'field', 'oldValue', 'newValue', 'changedBy', 'changedAt', 'source'] },
     { key: 'consignmentEvents', sheet: 'Eventos consignado', fields: ['id', 'businessId', 'consignmentId', 'type', 'date', 'quantity', 'amount', 'createdAt', 'updatedAt'] },
     { key: 'tasks', sheet: 'Tarefas', fields: ['id', 'businessId', 'title', 'dueDate', 'status', 'notes', 'createdAt', 'updatedAt'] },
@@ -11771,7 +11785,12 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function currentOrders() { return businessScoped('orders'); }
   function currentConsignments() { return businessScoped('consignments'); }
   function currentFinancialEntries() { return businessScoped('financialEntries'); }
+  function currentFinancialEntryPayments() { return businessScoped('financialEntryPayments'); }
   function currentTasks() { return businessScoped('tasks'); }
+
+  function signedFinancialPaymentAmount(payment) {
+    return U.number(payment.amount) * (payment.eventType === 'reversal' ? -1 : 1);
+  }
 
   function productById(id) { return state().products.find((product) => product.id === id) || null; }
   function clientById(id) { return state().clients.find((client) => client.id === id) || null; }
@@ -12639,9 +12658,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
     const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const receivedAtSale = currentSales().filter((sale) => sale.origin !== 'consignado' && !sale.sellerId);
-    const receivedBySale = new Map(currentFinancialEntries()
+    const saleIdByFinancialEntry = new Map(currentFinancialEntries()
       .filter((entry) => entry.direction === 'receivable' && entry.sourceType === 'sale' && entry.status !== 'cancelled')
-      .map((entry) => [String(entry.sourceId), U.number(entry.paidAmount)]));
+      .map((entry) => [String(entry.id), String(entry.sourceId)]));
+    const receivedBySale = new Map();
+    currentFinancialEntryPayments().forEach((payment) => {
+      const saleId = saleIdByFinancialEntry.get(String(payment.financialEntryId));
+      if (!saleId) return;
+      receivedBySale.set(saleId, U.number(receivedBySale.get(saleId)) + signedFinancialPaymentAmount(payment));
+    });
     const rows = U.sortByDateDesc(receivedAtSale).map((sale) => {
       const product = productById(sale.productId);
       const client = clientById(sale.clientId);
@@ -12827,7 +12852,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const overdueEntries = active.filter((entry) => entry.status !== 'paid' && entry.dueDate && entry.dueDate < U.today());
     const overdue = overdueEntries.reduce((sum, entry) => sum + remaining(entry), 0);
     const monthKey = U.today().slice(0, 7);
-    const receivedThisMonth = active.filter((entry) => entry.direction === 'receivable' && String(entry.settledAt || '').slice(0, 7) === monthKey).reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const activeById = new Map(active.map((entry) => [String(entry.id), entry]));
+    const receivedThisMonth = currentFinancialEntryPayments()
+      .filter((payment) => {
+        const entry = activeById.get(String(payment.financialEntryId));
+        return entry?.direction === 'receivable' && String(payment.paymentDate || '').slice(0, 7) === monthKey;
+      })
+      .reduce((sum, payment) => sum + signedFinancialPaymentAmount(payment), 0);
     const visibleEntries = entries.filter((entry) => entry.direction === financeDirection);
     const statusBadge = (entry) => {
       const label = financialDisplayStatus(entry);
@@ -12873,10 +12904,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <label>Emissão<input name="issueDate" type="date" required value="${U.today()}"></label>
           <label>Vencimento<input name="dueDate" type="date" value="${U.today()}"></label>
           <label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label>
-          <label>Valor já pago<input name="paidAmount" type="number" min="0" step="0.01" value="0"></label>
           <label>Cliente<select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select></label>
           <label>Fornecedor<select name="supplierId">${UI.optionList(currentSuppliers(), '', 'Opcional')}</select></label>
-          <label>Forma de pagamento<input name="paymentMethod"></label>
           <label class="wide">Observações<input name="notes"></label>
           <button type="submit">Lançar</button>
         </form>
@@ -12942,7 +12971,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const periodSales = immediatePeriodSales.filter((sale) => (!reportProductId || String(sale.productId) === String(reportProductId))
       && (!reportChannel || String(sale.channel || '') === reportChannel));
     const periodMovements = currentMovements().filter((movement) => inPeriod(movement.date || movement.createdAt?.slice(0, 10)));
-    const periodFinancial = currentFinancialEntries().filter((entry) => inPeriod(entry.issueDate));
+    const financialById = new Map(currentFinancialEntries()
+      .filter((entry) => entry.status !== 'cancelled')
+      .map((entry) => [String(entry.id), entry]));
+    const periodPayables = [...financialById.values()]
+      .filter((entry) => entry.direction === 'payable' && inPeriod(entry.issueDate));
+    const periodFinancialPayments = currentFinancialEntryPayments()
+      .filter((payment) => inPeriod(payment.paymentDate) && financialById.has(String(payment.financialEntryId)));
     const recognized = Calc.recognizedRevenue(state(), { dateFrom: dashboardStart, dateTo: dashboardEnd });
     const creditPosition = Calc.creditSalesPosition(state());
     const salesTotal = recognized.total;
@@ -12953,8 +12988,13 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       { label: 'Pagamentos de clientes', value: recognized.clients.total },
       { label: 'Pagamentos de vendedores', value: recognized.sellers.total },
     ].filter((row) => row.value > 0);
-    const financialReceived = periodFinancial.filter((entry) => entry.direction === 'receivable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
-    const financialPaid = periodFinancial.filter((entry) => entry.direction === 'payable' && entry.status !== 'cancelled').reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
+    const financialReceived = periodFinancialPayments
+      .filter((payment) => financialById.get(String(payment.financialEntryId))?.direction === 'receivable')
+      .reduce((sum, payment) => sum + signedFinancialPaymentAmount(payment), 0);
+    // O razão append-only é obrigatório nesta etapa para recebimentos. O fluxo
+    // de compras ainda nasce com paid_amount na própria RPC; preserve-o até a
+    // migração equivalente de contas a pagar para não esconder caixa histórico.
+    const financialPaid = periodPayables.reduce((sum, entry) => sum + U.number(entry.paidAmount), 0);
     const byProduct = new Map();
     periodSales.forEach((sale) => {
       const key = String(sale.productId);
@@ -13344,7 +13384,9 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         <input type="hidden" name="id" value="${U.escapeHtml(entry.id)}">
         <div class="notice">Saldo atual: <strong>${U.money(remaining)}</strong></div>
         <label>Valor desta baixa<input name="amount" type="number" min="0.01" max="${remaining}" step="0.01" required value="${remaining}"></label>
-        <label>Forma de pagamento<input name="paymentMethod" value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <label>Data da baixa<input name="paymentDate" type="date" required value="${U.today()}"></label>
+        <label>Forma de pagamento<input name="paymentMethod" required value="${U.escapeHtml(entry.paymentMethod || '')}" placeholder="Pix, dinheiro, cartão..."></label>
+        <label>Observações<textarea name="notes" placeholder="Referência, comprovante ou contexto da baixa"></textarea></label>
         <footer><button type="button" class="ghost" data-action="close-financial-payment">Cancelar</button><button type="submit">Confirmar baixa</button></footer>
       </form>`;
     dialog.addEventListener('close', () => dialog.remove());
@@ -13355,8 +13397,6 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   async function addFinancialEntry(data) {
     U.assertPositive(data.amount, 'Valor');
     const amount = U.number(data.amount);
-    const paidAmount = U.number(data.paidAmount);
-    if (paidAmount < 0 || paidAmount > amount) throw new Error('Valor pago precisa ficar entre zero e o valor total.');
     await S.add('financialEntries', {
       direction: data.direction,
       category: data.category || 'other',
@@ -13364,10 +13404,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       issueDate: data.issueDate || U.today(),
       dueDate: data.dueDate || null,
       amount,
-      paidAmount,
+      paidAmount: 0,
       clientId: data.clientId || null,
       supplierId: data.supplierId || null,
-      paymentMethod: data.paymentMethod || null,
+      paymentMethod: null,
       notes: data.notes || '',
     });
   }
@@ -13378,7 +13418,20 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     U.assertPositive(data.amount, 'Valor da baixa');
     const nextPaid = U.number(entry.paidAmount) + U.number(data.amount);
     if (nextPaid > U.number(entry.amount) + 0.001) throw new Error('A baixa não pode superar o saldo do lançamento.');
-    await S.update('financialEntries', entry.id, { paidAmount: nextPaid, paymentMethod: data.paymentMethod || entry.paymentMethod || null });
+    if (!data.paymentDate) throw new Error('Informe a data da baixa.');
+    if (!String(data.paymentMethod || '').trim()) throw new Error('Informe a forma de pagamento.');
+    const requestId = pendingFinancialPaymentRequestIds.get(entry.id) || crypto.randomUUID();
+    pendingFinancialPaymentRequestIds.set(entry.id, requestId);
+    await window.C360.api.registerFinancialEntryPayment({
+      financialEntryId: entry.id,
+      amount: U.number(data.amount),
+      paymentDate: data.paymentDate,
+      paymentMethod: String(data.paymentMethod).trim(),
+      notes: data.notes || '',
+      requestId,
+    });
+    await S.refresh();
+    pendingFinancialPaymentRequestIds.delete(entry.id);
   }
 
   async function updateProduct(data) {
@@ -13696,6 +13749,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   }
 
   let pendingManualSaleRequestId = null;
+  const pendingFinancialPaymentRequestIds = new Map();
 
   // Apenas o formulário administrativo de venda manual usa esta RPC. Pedidos,
   // consignações e vendas do estoque do vendedor conservam seus fluxos atuais.

@@ -119,34 +119,26 @@
     const salesById = new Map((state.sales || [])
       .filter((sale) => sale.businessId === businessId && sale.origin !== 'consignado' && !sale.sellerId)
       .map((sale) => [String(sale.id), sale]));
-    const rows = [];
-
-    (state.financialEntries || [])
+    const entriesById = new Map((state.financialEntries || [])
       .filter((entry) => entry.businessId === businessId
         && entry.direction === 'receivable'
         && entry.sourceType === 'sale'
         && entry.status !== 'cancelled')
-      .forEach((entry) => {
-        const sale = salesById.get(String(entry.sourceId));
-        if (!sale) return;
-        const settledTotal = Math.min(
-          Math.max(number(entry.paidAmount), 0),
-          Math.max(number(entry.amount || sale.netRevenue), 0)
-        );
-        const initialPaid = Math.min(Math.max(number(sale.paidAmount), 0), settledTotal);
-        if (initialPaid > 0) {
-          rows.push({ sale, amount: initialPaid, date: sale.date || entry.issueDate });
-        }
-        const laterPaid = Math.max(settledTotal - initialPaid, 0);
-        if (laterPaid > 0) {
-          rows.push({
-            sale,
-            amount: laterPaid,
-            date: entry.settledAt || entry.updatedAt || entry.issueDate || sale.date,
-          });
-        }
-      });
-    return rows;
+      .map((entry) => [String(entry.id), entry]));
+
+    return (state.financialEntryPayments || []).flatMap((payment) => {
+      if (payment.businessId !== businessId) return [];
+      const entry = entriesById.get(String(payment.financialEntryId));
+      const sale = entry && salesById.get(String(entry.sourceId));
+      if (!sale) return [];
+      const amount = number(payment.amount) * (payment.eventType === 'reversal' ? -1 : 1);
+      return [{
+        sale,
+        amount,
+        date: payment.paymentDate,
+        eventType: payment.eventType || 'payment',
+      }];
+    });
   }
 
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
@@ -208,11 +200,10 @@
     };
   }
 
-  // Receita reconhecida pelo caixa: a venda direta entra pelo paid_amount do
-  // lançamento financeiro, nunca pelo valor nominal da venda. O valor pago no
-  // ato usa a data da venda; liquidações posteriores usam a data de liquidação
-  // (ou a última atualização disponível). Consignado informado como vendido
-  // continua fora até o pagamento.
+  // Receita reconhecida pelo caixa: cada baixa de venda direta entra pela sua
+  // data real no razão financeiro. O saldo acumulado do título nunca é usado
+  // para reconstruir o histórico. Consignado informado como vendido continua
+  // fora até o pagamento.
   function recognizedRevenue(state, { dateFrom = '', dateTo = '' } = {}) {
     const businessId = state.activeBusinessId;
     const inPeriod = (date) => {
@@ -239,7 +230,7 @@
         * (number(settlement.sale.netRevenue) > 0
           ? number(settlement.sale.grossProfit) / number(settlement.sale.netRevenue)
           : 0),
-      count: result.count + 1,
+      count: result.count + (settlement.eventType === 'reversal' ? 0 : 1),
     }), { total: 0, profit: 0, count: 0 });
 
     const clients = clientPayments.reduce((result, event) => {

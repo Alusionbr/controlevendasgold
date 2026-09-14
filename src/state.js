@@ -103,6 +103,7 @@
       sellerPaymentReports: [],
       sellerOrderAccounts: [],
       financialEntries: [],
+      financialEntryPayments: [],
       recordAuditLog: [],
       // Fase 4 (devolução com status, desperdício, brinde):
       operationalMovements: [],
@@ -267,6 +268,7 @@
     sellerPaymentAllocations: 'seller_payment_allocations',
     sellerPaymentReports: 'seller_payment_reports',
     financialEntries: 'financial_entries',
+    financialEntryPayments: 'financial_entry_payments',
     recordAuditLog: 'record_audit_log',
     operationalMovements: 'operational_movements',
     profiles: 'profiles',
@@ -379,7 +381,7 @@
       businesses, products, clients, suppliers, purchases, stockMovements,
       recipes, productions, sales, orders, consignments, consignmentEvents, tasks,
       profiles, sellerPrices, sellerStock, sellerSettings, sellerLoginRewards, saleCarts, saleCartItems,
-      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, recordAuditLog, operationalMovements,
+      sellerAccountEntries, sellerPayments, sellerPaymentAllocations, sellerPaymentReports, sellerOrderAccounts, financialEntries, financialEntryPayments, recordAuditLog, operationalMovements,
     ] = await Promise.all([
       api.list('businesses', { id: businessId }),
       api.list('products', { business_id: businessId, _order: 'name.asc' }),
@@ -407,6 +409,7 @@
       api.list('seller_payment_reports', { business_id: businessId, _order: 'created_at.desc' }),
       api.listSellerOrderAccounts(),
       api.list('financial_entries', { business_id: businessId, _order: 'due_date.asc' }),
+      api.list('financial_entry_payments', { business_id: businessId, _order: 'payment_date.asc' }),
       api.list('record_audit_log', { business_id: businessId, _order: 'changed_at.desc' }),
       api.list('operational_movements', { business_id: businessId, _order: 'created_at.desc' }),
     ]);
@@ -438,6 +441,7 @@
     state.sellerPaymentReports = sellerPaymentReports.map(toCamelCaseRow);
     state.sellerOrderAccounts = sellerOrderAccounts.map(toCamelCaseRow);
     state.financialEntries = financialEntries.map(toCamelCaseRow);
+    state.financialEntryPayments = financialEntryPayments.map(toCamelCaseRow);
     state.recordAuditLog = recordAuditLog.map(toCamelCaseRow);
     state.operationalMovements = operationalMovements.map(toCamelCaseRow);
 
@@ -490,6 +494,7 @@
     state.saleCarts = [];
     state.saleCartItems = [];
     state.financialEntries = [];
+    state.financialEntryPayments = [];
     state.operationalMovements = [];
     state.suppliers = [];
     state.purchases = [];
