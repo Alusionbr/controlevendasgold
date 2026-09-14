@@ -689,3 +689,11 @@ Ver `docs/replication-v1/05-fase4-devolucoes-desperdicio-brinde.md`.
 - Bucket privado `seller-payment-proofs`: upload autenticado no caminho `<seller_id>/<report_id>/arquivo`, limite de 10 MB e MIME restrito a imagens e PDF.
 - `review_seller_payment_report(report_id, action, amount, payment_date, method, notes)`: RPC `security invoker` exclusiva do admin; bloqueia o informe e a conta, impede duplicidade/excesso e grava pagamento, alocação e crédito na mesma transação.
 - O frontend gera URL assinada por 5 minutos somente depois da política de leitura autorizar o usuário.
+
+### Razão de baixas financeiras — migração `20260914143000`
+
+- `financial_entry_payments`: razão append-only de baixas e estornos, isolado por `business_id`. A RLS permite somente ao administrador do próprio negócio consultar e inserir; `UPDATE` e `DELETE` não são concedidos e um trigger também recusa mutações.
+- `register_financial_entry_payment(financial_entry_id, amount, payment_date, payment_method, notes, request_id)`: RPC `security invoker`, com `search_path` vazio, chave idempotente, bloqueio transacional da requisição e `FOR UPDATE` do título. Ela recusa lançamento cancelado, outro negócio e pagamento excedente.
+- O trigger de inserção valida o vínculo do evento e atualiza `financial_entries.paid_amount` na mesma transação. `payment_date` é a fonte para caixa diário, receita reconhecida e “Recebido no mês”.
+- `register_direct_sale` cria o evento do valor recebido no ato antes de concluir. Se título, evento ou projeção não coincidirem, toda a venda é revertida.
+- Não há backfill: datas históricas desconhecidas, inclusive o caso de R$ 700 usado na revisão, não são inventadas.

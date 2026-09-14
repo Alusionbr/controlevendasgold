@@ -259,11 +259,11 @@ pedido só ocupa a esteira; `concluido` apenas confirma a entrega.
 
 ## Formatos de backup
 
-- **Excel (.xlsx)**: cada coleção vira uma aba com cabeçalhos em português. A aba `Backup_NAO_EDITAR` guarda `settings`, `meta` e `activeBusinessId` em JSON, para restauração fiel. As abas de dados são a fonte de verdade dos registros na reimportação.
+- **Excel (.xlsx)**: cada coleção vira uma aba com cabeçalhos em português. A aba `Backup_NAO_EDITAR` guarda `settings`, `meta` e `activeBusinessId` em JSON para uma futura restauração segura.
 - **JSON**: serialização direta de todo o estado (`controle360_multi_v2`).
 - **CSV**: por módulo, do negócio ativo.
 
-Regras na importação de Excel: colunas são mapeadas pelo rótulo (ou pela chave técnica) de volta ao campo original; campos numéricos voltam como número; datas digitadas como data no Excel são convertidas para `YYYY-MM-DD`; registros sem `id` recebem um novo id.
+A restauração por Excel ou JSON está temporariamente desabilitada: a rotina antiga trocava somente o cache local e não persistia no Supabase.
 
 ## sellerPaymentAllocations
 
@@ -285,7 +285,7 @@ Liga um recebimento de `sellerPayments` a um grupo de pedido. Um pagamento pode 
 
 Não há uma tabela duplicada de receita. `recognizedRevenue` deriva o valor recebido de:
 
-- `sales`, apenas vendas diretas que não sejam consignadas nem recebidas por vendedor;
+- `financialEntryPayments`, para cada recebimento real de venda direta, usando `paymentDate` e nunca reconstruindo parcelas a partir do saldo acumulado;
 - `consignmentEvents` do tipo `pagamento`, para consignados com clientes;
 - `sellerPayments`, com `sellerPaymentAllocations` para vincular o recebimento ao pedido.
 
@@ -301,3 +301,9 @@ Não há uma tabela duplicada de receita. `recognizedRevenue` deriva o valor rec
 `sellerPaymentReports` mantém `sellerId`, `orderGroupId`, data/hora e valor informados, forma, caminho privado do comprovante, observação, status, valor/data revisados, administrador responsável e `paymentId`. O status é `pending`, `approved` ou `rejected`. Somente um registro aprovado gera linhas em `sellerPayments`, `sellerPaymentAllocations` e `sellerAccountEntries`.
 
 Os arquivos ficam no bucket privado `seller-payment-proofs`, limitados a 10 MB e aos tipos JPG, PNG, WebP e PDF. O vendedor acessa somente seus arquivos; o administrador acessa somente comprovantes do próprio negócio.
+
+## financialEntryPayments
+
+Cada baixa financeira é um evento imutável com `businessId`, `financialEntryId`, `amount`, `paymentDate`, `paymentMethod`, `notes`, `requestId`, `createdBy` e `createdAt`. O campo `eventType` aceita `payment` e `reversal`; um estorno referencia o pagamento original em `reversalOfId` e não apaga nem altera o evento anterior.
+
+`financialEntries.paidAmount` é apenas a projeção acumulada do saldo. O histórico e os indicadores por dia ou mês leem os eventos. Não existe backfill automático: lançamentos antigos sem data comprovável permanecem sem eventos até revisão humana.

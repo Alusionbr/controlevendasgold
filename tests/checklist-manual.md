@@ -61,16 +61,16 @@ Use este checklist antes de considerar uma alteração aprovada.
 ## Backup
 
 - [ ] Exportar backup gera JSON.
-- [ ] Importar backup restaura dados.
+- [ ] Importar Excel e JSON aparece desabilitado com explicação de que a restauração no servidor ainda não existe.
 
 ## Backup e exportação
 
 1. Com pelo menos um negócio e alguns produtos, abra a aba **Dados**.
 2. Clique em **Baixar Excel completo**. Confirme que o arquivo abre no Excel/Google Sheets com uma aba por módulo e os valores corretos.
-3. Edite um valor numérico numa aba de dados, salve, e use **Importar Excel**. Confirme o aviso de substituição e veja o valor atualizado no sistema.
-4. Clique em **Baixar JSON** e depois **Importar JSON** do mesmo arquivo: os dados devem permanecer iguais.
+3. Confirme que **Importar Excel** está desabilitado e explica que a rotina antiga alterava só o cache local.
+4. Clique em **Baixar JSON** e confirme que **Importar JSON** também está desabilitado pela mesma razão.
 5. Exporte um **CSV** de Produtos e confira acentuação e separador no Excel.
-6. Importe um Excel sem a aba `Backup_NAO_EDITAR`: os dados devem entrar e as configurações locais atuais devem ser mantidas.
+6. Recarregue a página e confirme que nenhum dado do servidor foi alterado por tentativa de importação.
 
 ## Conta do vendedor por pedido
 

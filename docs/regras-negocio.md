@@ -215,3 +215,13 @@ Servem para organizar compras, cobrança, produção, despachos e revisão.
 - O administrador abre o comprovante privado, pode corrigir valor, data e forma e então usa **Conferir e lançar pagamento**.
 - A aprovação grava pagamento, alocação por pedido, crédito no ledger e auditoria em uma única transação. O mesmo informe não pode ser lançado duas vezes.
 - Valor acima do saldo aberto é rejeitado pelo banco. Uma recusa mantém o informe e o comprovante para auditoria, sem impacto financeiro.
+
+## 11.6. Baixas financeiras por evento
+
+- Toda baixa nova de uma conta a receber ou pagar usa `register_financial_entry_payment`; a tela não atualiza `paid_amount` diretamente.
+- A RPC é exclusiva do administrador do negócio, idempotente por `request_id`, bloqueia o título e recusa valor acima do saldo.
+- Inserir o evento e atualizar o saldo acumulado acontecem na mesma transação. Qualquer falha desfaz ambos.
+- Eventos não podem ser editados ou excluídos. Uma correção futura entra como `reversal`, referenciando integralmente o pagamento original.
+- A data do caixa é `payment_date`. Parcelas pagas em dias ou meses diferentes permanecem em seus períodos reais.
+- O recebimento inicial de uma venda direta é gravado como evento na mesma transação da venda, estoque, movimentação e título.
+- Nenhuma data é inferida para o histórico anterior; em especial, a migração não altera o lançamento histórico de R$ 700.

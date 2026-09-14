@@ -19,8 +19,14 @@ test('consignado só vira receita quando o pagamento é registrado', () => {
   const state = {
     activeBusinessId: 'b1',
     sales: [
-      { id: 'vista', businessId: 'b1', date: '2026-07-10', netRevenue: 100, grossProfit: 40 },
+      { id: 'vista', businessId: 'b1', date: '2026-07-10', netRevenue: 100, grossProfit: 40, paidAmount: 100 },
       { id: 'prazo', businessId: 'b1', date: '2026-07-10', origin: 'consignado', netRevenue: 200, grossProfit: 80 },
+    ],
+    financialEntries: [
+      { id: 'fe1', businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'vista', amount: 100, paidAmount: 100, status: 'paid', issueDate: '2026-07-10' },
+    ],
+    financialEntryPayments: [
+      { id: 'fp1', businessId: 'b1', financialEntryId: 'fe1', eventType: 'payment', amount: 100, paymentDate: '2026-07-10' },
     ],
     consignments: [
       { id: 'c1', businessId: 'b1', quantitySent: 10, quantitySold: 5, quantityReturned: 0, unitPrice: 10, costAtSend: 6, amountPaid: 50 },

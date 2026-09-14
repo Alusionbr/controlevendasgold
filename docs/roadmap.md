@@ -69,12 +69,14 @@ Multiusuário com Supabase Auth + Postgres + RLS (papéis admin/vendedor);
 ## Concluído nesta versão
 
 1. Exportação completa para Excel (.xlsx), uma aba por módulo.
-2. Importação de Excel (.xlsx), inclusive planilha editada à mão.
+2. Validação da exportação de Excel (.xlsx) em Excel e Google Sheets.
 3. Exportação CSV por módulo.
-4. Backup/restauração JSON com configurações.
+4. Backup JSON com configurações.
 5. Interface revisada (cabeçalho fixo, abas roláveis, cartões, avisos/toasts).
 
 Itens ainda abertos do roadmap original seguem válidos (edição de registros com auditoria, ajuste manual de estoque, multi-item, contas a pagar/receber, IndexedDB).
+
+A restauração persistente de Excel/JSON voltou ao roadmap: precisa gravar no Supabase em ordem de dependências, respeitar RLS e definir claramente se mescla ou substitui os registros.
 
 ## Atualizacao carrinho de vendas
 
