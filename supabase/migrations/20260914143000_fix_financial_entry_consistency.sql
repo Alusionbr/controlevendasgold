@@ -1,8 +1,24 @@
--- Align the financial ledger with the business rules already used by the UI:
--- direct admin sales are cash sales, while purchases create payables according
--- to their recorded payment mode and paid amount.
+-- Support cash, partial and credit terms for manual direct sales without
+-- guessing the settlement state of historical sales.
 
 begin;
+
+alter table public.sales
+  add column if not exists payment_mode text,
+  add column if not exists paid_amount numeric(14,2) not null default 0,
+  add column if not exists due_date date,
+  add column if not exists payment_method text;
+
+alter table public.sales
+  drop constraint if exists sales_payment_mode_valid,
+  add constraint sales_payment_mode_valid
+    check (payment_mode is null or payment_mode in ('avista', 'parcial', 'a_prazo')),
+  drop constraint if exists sales_paid_amount_valid,
+  add constraint sales_paid_amount_valid
+    check (
+      paid_amount >= 0
+      and paid_amount <= greatest(coalesce(net_revenue, 0), 0)
+    );
 
 create or replace function public.create_sale_receivable()
 returns trigger
@@ -28,9 +44,23 @@ begin
     amount, paid_amount, client_id, source_type, source_id, payment_method,
     notes, created_by
   ) values (
-    new.business_id, 'receivable', 'sale', coalesce(v_description, 'Venda'),
-    new.date, new.date, new.net_revenue, new.net_revenue, new.client_id,
-    'sale', new.id, 'a_vista', coalesce(new.notes, ''), auth.uid()
+    new.business_id,
+    'receivable',
+    'sale',
+    coalesce(v_description, 'Venda'),
+    new.date,
+    case
+      when new.payment_mode = 'avista' then new.date
+      else coalesce(new.due_date, new.date)
+    end,
+    new.net_revenue,
+    least(coalesce(new.paid_amount, 0), new.net_revenue),
+    new.client_id,
+    'sale',
+    new.id,
+    nullif(btrim(coalesce(new.payment_method, '')), ''),
+    coalesce(new.notes, ''),
+    auth.uid()
   )
   on conflict (business_id, source_type, source_id)
     where source_id is not null do nothing;
@@ -41,23 +71,12 @@ $sale_receivable$;
 
 revoke all on function public.create_sale_receivable() from public, anon;
 
--- Repair direct-sale entries created by the previous trigger. This update
--- activates trg_financial_entries_status, which derives status='paid' and
--- settled_at from paid_amount.
-update public.financial_entries fe
-   set paid_amount = fe.amount,
-       payment_method = coalesce(nullif(fe.payment_method, ''), 'a_vista')
-  from public.sales s
- where fe.source_type = 'sale'
-   and fe.source_id = s.id
-   and fe.business_id = s.business_id
-   and s.seller_id is null
-   and coalesce(s.origin, '') <> 'consignado'
-   and coalesce(s.net_revenue, 0) > 0
-   and (fe.paid_amount <> fe.amount or fe.status <> 'paid');
+-- Historical direct sales keep their current financial status because the old
+-- records do not say whether they were cash, partial or credit sales. They must
+-- be reviewed by a person instead of being marked paid automatically.
 
--- Backfill purchase payables that predate the trigger or were missed by an
--- interrupted legacy flow. The partial unique index makes this idempotent.
+-- Backfill purchase payables from explicit purchase fields only. The partial
+-- unique index makes the statement safe to run again.
 insert into public.financial_entries (
   business_id, direction, category, description, issue_date, due_date,
   amount, paid_amount, supplier_id, source_type, source_id, payment_method,
