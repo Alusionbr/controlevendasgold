@@ -509,6 +509,33 @@
     });
   }
 
+  async function registerDirectSale({
+    requestId, date, channel, clientId, productId, quantity, unitPrice,
+    discount, fixedFees, feePercent, paymentMode, paidAmount, dueDate,
+    paymentMethod, notes,
+  }) {
+    return restRequest('/rest/v1/rpc/register_direct_sale', {
+      method: 'POST',
+      body: {
+        p_request_id: requestId,
+        p_date: date,
+        p_channel: channel || 'Direto',
+        p_client_id: clientId || null,
+        p_product_id: productId,
+        p_quantity: Number(quantity),
+        p_unit_price: Number(unitPrice),
+        p_discount: Number(discount || 0),
+        p_fixed_fees: Number(fixedFees || 0),
+        p_fee_percent: Number(feePercent || 0),
+        p_payment_mode: paymentMode,
+        p_paid_amount: Number(paidAmount || 0),
+        p_due_date: dueDate || null,
+        p_payment_method: paymentMethod || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
   async function registerSellerPayment({ sellerId, amount, method, notes }) {
     return restRequest('/rest/v1/rpc/register_seller_payment', {
       method: 'POST',
@@ -756,6 +783,7 @@
     reviewSellerPaymentReport,
     createSellerPaymentProofUrl,
     registerPurchaseGroup,
+    registerDirectSale,
     registerSellerPayment,
     registerManualSellerDebit,
     listSellerOrderAccounts,

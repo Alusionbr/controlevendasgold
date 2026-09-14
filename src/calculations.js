@@ -115,6 +115,40 @@
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  function directSaleSettlementRows(state, businessId) {
+    const salesById = new Map((state.sales || [])
+      .filter((sale) => sale.businessId === businessId && sale.origin !== 'consignado' && !sale.sellerId)
+      .map((sale) => [String(sale.id), sale]));
+    const rows = [];
+
+    (state.financialEntries || [])
+      .filter((entry) => entry.businessId === businessId
+        && entry.direction === 'receivable'
+        && entry.sourceType === 'sale'
+        && entry.status !== 'cancelled')
+      .forEach((entry) => {
+        const sale = salesById.get(String(entry.sourceId));
+        if (!sale) return;
+        const settledTotal = Math.min(
+          Math.max(number(entry.paidAmount), 0),
+          Math.max(number(entry.amount || sale.netRevenue), 0)
+        );
+        const initialPaid = Math.min(Math.max(number(sale.paidAmount), 0), settledTotal);
+        if (initialPaid > 0) {
+          rows.push({ sale, amount: initialPaid, date: sale.date || entry.issueDate });
+        }
+        const laterPaid = Math.max(settledTotal - initialPaid, 0);
+        if (laterPaid > 0) {
+          rows.push({
+            sale,
+            amount: laterPaid,
+            date: entry.settledAt || entry.updatedAt || entry.issueDate || sale.date,
+          });
+        }
+      });
+    return rows;
+  }
+
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
   // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
   //
@@ -143,19 +177,27 @@
     const sellerRows = (state.sellerPayments || [])
       .filter((row) => sameBusiness(row) && String(row.paymentDate || '').slice(0, 10) === day);
     const sellerInitialRows = (state.sellerOrderAccounts || [])
-      .filter((row) => String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
+      .filter((row) => (!row.businessId || sameBusiness(row))
+        && String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
+    const consignmentsById = new Map((state.consignments || [])
+      .filter((row) => sameBusiness(row))
+      .map((row) => [String(row.id), row]));
     const clientRows = (state.consignmentEvents || [])
-      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
-    const saleRows = (state.sales || [])
-      .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
-        && row.origin !== 'consignado' && !row.sellerId);
+      .filter((row) => {
+        const consignment = consignmentsById.get(String(row.consignmentId));
+        return sameBusiness(row) && row.type === 'pagamento'
+          && String(row.date || '').slice(0, 10) === day
+          && consignment && !consignment.sellerId;
+      });
+    const saleRows = directSaleSettlementRows(state, businessId)
+      .filter((row) => String(row.date || '').slice(0, 10) === day);
 
     const sellers = {
       total: sum(sellerRows, 'amount') + sum(sellerInitialRows, 'initialPaid'),
       count: sellerRows.length + sellerInitialRows.length,
     };
     const clients = { total: sum(clientRows, 'amount'), count: clientRows.length };
-    const sales = { total: sum(saleRows, 'netRevenue'), count: saleRows.length };
+    const sales = { total: sum(saleRows, 'amount'), count: saleRows.length };
 
     return {
       sellers,
@@ -166,9 +208,11 @@
     };
   }
 
-  // Receita reconhecida pelo caixa: consignado informado como vendido continua
-  // fora até o pagamento. Vendas à vista entram na data da venda; consignados
-  // com clientes e vendedores entram na data do recebimento.
+  // Receita reconhecida pelo caixa: a venda direta entra pelo paid_amount do
+  // lançamento financeiro, nunca pelo valor nominal da venda. O valor pago no
+  // ato usa a data da venda; liquidações posteriores usam a data de liquidação
+  // (ou a última atualização disponível). Consignado informado como vendido
+  // continua fora até o pagamento.
   function recognizedRevenue(state, { dateFrom = '', dateTo = '' } = {}) {
     const businessId = state.activeBusinessId;
     const inPeriod = (date) => {
@@ -176,21 +220,30 @@
       return (!dateFrom || day >= dateFrom) && (!dateTo || day <= dateTo);
     };
     const sameBusiness = (row) => row.businessId === businessId;
-    const directSales = (state.sales || []).filter((sale) => sameBusiness(sale)
-      && inPeriod(sale.date) && sale.origin !== 'consignado' && !sale.sellerId);
-    const clientPayments = (state.consignmentEvents || []).filter((event) => sameBusiness(event)
-      && event.type === 'pagamento' && inPeriod(event.date));
+    const directSettlements = directSaleSettlementRows(state, businessId)
+      .filter((row) => inPeriod(row.date));
+    const consignmentsById = new Map((state.consignments || [])
+      .filter((item) => sameBusiness(item))
+      .map((item) => [String(item.id), item]));
+    const clientPayments = (state.consignmentEvents || []).filter((event) => {
+      const consignment = consignmentsById.get(String(event.consignmentId));
+      return sameBusiness(event) && event.type === 'pagamento' && inPeriod(event.date)
+        && consignment && !consignment.sellerId;
+    });
     const sellerPayments = (state.sellerPayments || []).filter((payment) => sameBusiness(payment)
       && inPeriod(payment.paymentDate));
 
-    const direct = directSales.reduce((result, sale) => ({
-      total: result.total + number(sale.netRevenue),
-      profit: result.profit + number(sale.grossProfit),
+    const direct = directSettlements.reduce((result, settlement) => ({
+      total: result.total + number(settlement.amount),
+      profit: result.profit + number(settlement.amount)
+        * (number(settlement.sale.netRevenue) > 0
+          ? number(settlement.sale.grossProfit) / number(settlement.sale.netRevenue)
+          : 0),
       count: result.count + 1,
     }), { total: 0, profit: 0, count: 0 });
 
     const clients = clientPayments.reduce((result, event) => {
-      const consignment = (state.consignments || []).find((item) => String(item.id) === String(event.consignmentId));
+      const consignment = consignmentsById.get(String(event.consignmentId));
       const unitPrice = number(consignment?.unitPrice);
       const unitCost = number(consignment?.costAtSend);
       const margin = unitPrice > 0 ? (unitPrice - unitCost) / unitPrice : 0;

@@ -43,7 +43,7 @@
     receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
-    parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
+    parentSaleId: 'ID da venda de origem', requestId: 'ID idempotente da operação', price: 'Preço', floor: 'Preço mínimo',
     periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
     targetAmount: 'Meta', rewardDescription: 'Premiação',
   };
@@ -72,7 +72,7 @@
     { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'sellerId', 'parentSaleId', 'createdAt', 'updatedAt'] },
+    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'paymentMode', 'paidAmount', 'dueDate', 'paymentMethod', 'requestId', 'notes', 'origin', 'originId', 'sellerId', 'parentSaleId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'sellerId', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
@@ -180,8 +180,8 @@
       summary.push([collection.sheet, (state[collection.key] || []).length]);
     });
     summary.push(['']);
-    summary.push(['Como reimportar: use "Importar Excel" na aba Dados.']);
-    summary.push(['Pode editar as abas de dados. Não apague a aba ' + BACKUP_SHEET + '.']);
+    summary.push(['Restauração indisponível: este arquivo é somente para backup e consulta.']);
+    summary.push(['A importação segura no servidor ainda não foi implementada.']);
     sheets.push({ name: 'Resumo', rows: summary });
 
     COLLECTIONS.forEach((collection) => {
@@ -267,53 +267,10 @@
     return result;
   }
 
-  async function importXlsx(file) {
-    try {
-      const buffer = await file.arrayBuffer();
-      const sheets = await XLSX.parseXlsx(buffer);
-      const sheetMap = {};
-      sheets.forEach((sheet) => { sheetMap[deburr(sheet.name)] = sheet; });
-
-      const collections = collectionsFromSheets(sheetMap);
-
-      const current = S.getState();
-      const next = {
-        meta: current.meta,
-        settings: current.settings,
-        activeBusinessId: current.activeBusinessId,
-        ...collections,
-      };
-
-      const backupSheet = sheetMap[deburr(BACKUP_SHEET)];
-      if (backupSheet) {
-        const configCell = backupSheet.rows.find((row) => row[0] === BACKUP_MARKER);
-        if (configCell && configCell[1]) {
-          try {
-            const config = JSON.parse(configCell[1]);
-            if (config.settings) next.settings = config.settings;
-            if (config.meta) next.meta = config.meta;
-            if (config.activeBusinessId) next.activeBusinessId = config.activeBusinessId;
-          } catch (error) {
-            /* configuração ilegível: mantém a atual */
-          }
-        }
-      }
-
-      const validBusiness = next.businesses.some((b) => b.id === next.activeBusinessId);
-      if (!validBusiness) next.activeBusinessId = next.businesses[0]?.id || null;
-
-      const total = COLLECTIONS.reduce((sum, c) => sum + (next[c.key] || []).length, 0);
-      if (!window.confirm(`Importar esta planilha vai substituir os dados locais atuais por ${total} registro(s). Continuar?`)) {
-        return;
-      }
-
-      S.replaceState(next);
-      refresh();
-      notify('Planilha importada com sucesso.', 'success');
-    } catch (error) {
-      notify('Não foi possível importar: ' + error.message, 'error');
-      window.alert('Não foi possível importar: ' + error.message);
-    }
+  async function importXlsx() {
+    const message = 'Restauração indisponível: importar Excel alterava apenas o cache deste navegador e não gravava no servidor. Continue usando a exportação como backup até a restauração segura ser implementada.';
+    notify(message, 'warning');
+    window.alert(message);
   }
 
   // ---------- CSV por módulo ----------
@@ -376,21 +333,10 @@
     notify('Backup JSON exportado.', 'success');
   }
 
-  function importJson(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result);
-        if (!window.confirm('Importar este backup JSON vai substituir os dados locais atuais. Continuar?')) return;
-        S.replaceState(parsed);
-        refresh();
-        notify('Backup JSON importado.', 'success');
-      } catch (error) {
-        notify('Backup inválido: ' + error.message, 'error');
-        window.alert('Backup inválido: ' + error.message);
-      }
-    };
-    reader.readAsText(file);
+  function importJson() {
+    const message = 'Restauração indisponível: importar JSON alterava apenas o cache deste navegador e não gravava no servidor. Continue usando a exportação como backup até a restauração segura ser implementada.';
+    notify(message, 'warning');
+    window.alert(message);
   }
 
   window.C360.io = {
