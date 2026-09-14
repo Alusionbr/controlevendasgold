@@ -150,11 +150,17 @@ test('receita direta usa liquidação real e reconhece só o valor parcial receb
       { id: 'foreign', businessId: 'b2', date: '2026-09-10', netRevenue: 999, grossProfit: 999, paidAmount: 999 },
     ],
     financialEntries: [
-      { businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'cash', amount: 100, paidAmount: 100, status: 'paid' },
-      { businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'partial', amount: 200, paidAmount: 80, status: 'partial', updatedAt: '2026-09-12T12:00:00Z' },
-      { businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'credit', amount: 300, paidAmount: 0, status: 'open' },
-      { businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'historical', amount: 700, paidAmount: 0, status: 'open' },
-      { businessId: 'b2', direction: 'receivable', sourceType: 'sale', sourceId: 'foreign', amount: 999, paidAmount: 999, status: 'paid' },
+      { id: 'fe-cash', businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'cash', amount: 100, paidAmount: 100, status: 'paid' },
+      { id: 'fe-partial', businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'partial', amount: 200, paidAmount: 80, status: 'partial', updatedAt: '2026-09-12T12:00:00Z' },
+      { id: 'fe-credit', businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'credit', amount: 300, paidAmount: 0, status: 'open' },
+      { id: 'fe-historical', businessId: 'b1', direction: 'receivable', sourceType: 'sale', sourceId: 'historical', amount: 700, paidAmount: 0, status: 'open' },
+      { id: 'fe-foreign', businessId: 'b2', direction: 'receivable', sourceType: 'sale', sourceId: 'foreign', amount: 999, paidAmount: 999, status: 'paid' },
+    ],
+    financialEntryPayments: [
+      { businessId: 'b1', financialEntryId: 'fe-cash', eventType: 'payment', amount: 100, paymentDate: '2026-09-10' },
+      { businessId: 'b1', financialEntryId: 'fe-partial', eventType: 'payment', amount: 50, paymentDate: '2026-09-10' },
+      { businessId: 'b1', financialEntryId: 'fe-partial', eventType: 'payment', amount: 30, paymentDate: '2026-09-12' },
+      { businessId: 'b2', financialEntryId: 'fe-foreign', eventType: 'payment', amount: 999, paymentDate: '2026-09-10' },
     ],
     consignments: [], consignmentEvents: [], sellerPayments: [], sellerOrderAccounts: [],
   };
@@ -181,7 +187,7 @@ test('migration não classifica nem liquida vendas históricas ambíguas', () =>
 test('pagamento inicial de vendedor não é contado também como cliente', () => {
   const calc = loadCalculations();
   const state = {
-    activeBusinessId: 'b1', sales: [], financialEntries: [],
+    activeBusinessId: 'b1', sales: [], financialEntries: [], financialEntryPayments: [],
     consignments: [
       { id: 'client-c', businessId: 'b1', unitPrice: 10, costAtSend: 6 },
       { id: 'seller-c', businessId: 'b1', sellerId: 'seller-1', unitPrice: 20, costAtSend: 12 },

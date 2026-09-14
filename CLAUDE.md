@@ -935,7 +935,7 @@ Soma três origens, mostradas separadas para não virar um número opaco:
 |---|---|
 | Pagamentos de vendedores | `seller_payments.payment_date` |
 | Pagamentos de consignado (clientes) | `consignment_events` tipo `pagamento` |
-| Vendas à vista | `sales` do dia |
+| Vendas diretas recebidas | `financial_entry_payments.payment_date` vinculado à venda |
 
 Duas exclusões deliberadas em `dailyReceipts`, ambas para não contar dinheiro
 que não entrou: venda com `origin = 'consignado'` (informar que o cliente
@@ -1008,7 +1008,7 @@ Fases 3-4: `sellerAccountEntries` (a dívida de cada vendedor),
 `sellerId` em `consignments` — sem esse campo, nem as consignações que
 saíam no arquivo diziam de quem eram.
 
-Corrigido: 23 abas. Regra do CLAUDE.md continua valendo — coleção nova entra
+Corrigido: 24 abas. Regra do CLAUDE.md continua valendo — coleção nova entra
 em `COLLECTIONS`, e cada chave nova em `LABELS` + `NUMERIC_KEYS`/`DATE_KEYS`
 conforme o tipo.
 
