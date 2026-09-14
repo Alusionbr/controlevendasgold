@@ -343,32 +343,7 @@ grant execute on function public.register_direct_sale(
 -- records do not say whether they were cash, partial or credit sales. They must
 -- be reviewed by a person instead of being marked paid automatically.
 
--- Backfill purchase payables from explicit purchase fields only. The partial
--- unique index makes the statement safe to run again.
-insert into public.financial_entries (
-  business_id, direction, category, description, issue_date, due_date,
-  amount, paid_amount, supplier_id, source_type, source_id, payment_method,
-  notes, created_by
-)
-select
-  p.business_id,
-  'payable',
-  'purchase',
-  'Compra - ' || coalesce(pr.name, 'Produto'),
-  p.date,
-  coalesce(p.due_date, p.date),
-  p.total_cost,
-  p.paid_amount,
-  p.supplier_id,
-  'purchase',
-  p.id,
-  coalesce(nullif(p.payment_mode, ''), 'a_prazo'),
-  coalesce(p.notes, ''),
-  null
-from public.purchases p
-left join public.products pr on pr.id = p.product_id
-where p.total_cost > 0
-on conflict (business_id, source_type, source_id)
-  where source_id is not null do nothing;
+-- This migration intentionally performs no data backfill. Historical sales
+-- and purchases remain unchanged until a person classifies them explicitly.
 
 commit;

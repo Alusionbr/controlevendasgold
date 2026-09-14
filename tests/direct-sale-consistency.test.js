@@ -171,10 +171,11 @@ test('migration não classifica nem liquida vendas históricas ambíguas', () =>
   const sql = read(migration);
   const historical = sql.slice(
     sql.indexOf('-- Historical direct sales'),
-    sql.indexOf('-- Backfill purchase payables')
+    sql.indexOf('commit;')
   );
   assert.match(historical, /must[\s\S]*be reviewed by a person/);
   assert.doesNotMatch(historical, /update public\.sales|update public\.financial_entries|insert into public\.financial_entries/);
+  assert.match(historical, /intentionally performs no data backfill/);
 });
 
 test('pagamento inicial de vendedor não é contado também como cliente', () => {
