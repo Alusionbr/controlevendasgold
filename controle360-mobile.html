@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-Kt3TcVbt3u4WGu08ugZI0JYs6CrKsVxm+ZqIAXsIW9I=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-5r+E9pHL6/cYL8i00fRRT08DsBuBo/1tm4MwRx7tsNU=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-0lxa9o9XZk/Cw+GZ7Yeu7tPAyfGLNknVKDIpHt1puC8=' 'sha256-i//QVMoAeY45IULJlguqtTZo0ZyAK5Kj+Byr9kR1nUE='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-qi6+b8qTXhObEn/7SGepiG+cxGK0Z3+NMjqHdhWVVK0=' 'sha256-pXmK5uNy3DMoKg9Ir6v/27LeXVPF7fE58gp5+sIZdvc=' 'sha256-PwMZwHbT5LW9PypF5pNCRRepY1MuTV1npyiOh4OolTc=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-SY1p6FzadFrrNR3f+DpwK6/q0L2Sf9YEJ/6Pc1lMQTc=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-TqCfz1Q4g7Zaalls3rQSSjddkUk3H5C0N4lLFR4tgjM=' 'sha256-OpTPw9iu849ZRdR2AXP2k6UfLMXdwULlE8eTs0xF/WA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -2989,6 +2989,33 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
   }
 
+  async function registerDirectSale({
+    requestId, date, channel, clientId, productId, quantity, unitPrice,
+    discount, fixedFees, feePercent, paymentMode, paidAmount, dueDate,
+    paymentMethod, notes,
+  }) {
+    return restRequest('/rest/v1/rpc/register_direct_sale', {
+      method: 'POST',
+      body: {
+        p_request_id: requestId,
+        p_date: date,
+        p_channel: channel || 'Direto',
+        p_client_id: clientId || null,
+        p_product_id: productId,
+        p_quantity: Number(quantity),
+        p_unit_price: Number(unitPrice),
+        p_discount: Number(discount || 0),
+        p_fixed_fees: Number(fixedFees || 0),
+        p_fee_percent: Number(feePercent || 0),
+        p_payment_mode: paymentMode,
+        p_paid_amount: Number(paidAmount || 0),
+        p_due_date: dueDate || null,
+        p_payment_method: paymentMethod || null,
+        p_notes: notes || '',
+      },
+    });
+  }
+
   async function registerSellerPayment({ sellerId, amount, method, notes }) {
     return restRequest('/rest/v1/rpc/register_seller_payment', {
       method: 'POST',
@@ -3236,6 +3263,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     reviewSellerPaymentReport,
     createSellerPaymentProofUrl,
     registerPurchaseGroup,
+    registerDirectSale,
     registerSellerPayment,
     registerManualSellerDebit,
     listSellerOrderAccounts,
@@ -3961,6 +3989,40 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return consignmentDeliveredAmount(consignment) + consignmentOpenAmount(consignment);
   }
 
+  function directSaleSettlementRows(state, businessId) {
+    const salesById = new Map((state.sales || [])
+      .filter((sale) => sale.businessId === businessId && sale.origin !== 'consignado' && !sale.sellerId)
+      .map((sale) => [String(sale.id), sale]));
+    const rows = [];
+
+    (state.financialEntries || [])
+      .filter((entry) => entry.businessId === businessId
+        && entry.direction === 'receivable'
+        && entry.sourceType === 'sale'
+        && entry.status !== 'cancelled')
+      .forEach((entry) => {
+        const sale = salesById.get(String(entry.sourceId));
+        if (!sale) return;
+        const settledTotal = Math.min(
+          Math.max(number(entry.paidAmount), 0),
+          Math.max(number(entry.amount || sale.netRevenue), 0)
+        );
+        const initialPaid = Math.min(Math.max(number(sale.paidAmount), 0), settledTotal);
+        if (initialPaid > 0) {
+          rows.push({ sale, amount: initialPaid, date: sale.date || entry.issueDate });
+        }
+        const laterPaid = Math.max(settledTotal - initialPaid, 0);
+        if (laterPaid > 0) {
+          rows.push({
+            sale,
+            amount: laterPaid,
+            date: entry.settledAt || entry.updatedAt || entry.issueDate || sale.date,
+          });
+        }
+      });
+    return rows;
+  }
+
   // Dinheiro que entrou num dia específico. Três origens distintas, somadas
   // mas nunca fundidas na tela — cada uma responde uma pergunta diferente:
   //
@@ -3989,19 +4051,27 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     const sellerRows = (state.sellerPayments || [])
       .filter((row) => sameBusiness(row) && String(row.paymentDate || '').slice(0, 10) === day);
     const sellerInitialRows = (state.sellerOrderAccounts || [])
-      .filter((row) => String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
+      .filter((row) => (!row.businessId || sameBusiness(row))
+        && String(row.createdAt || '').slice(0, 10) === day && number(row.initialPaid) > 0);
+    const consignmentsById = new Map((state.consignments || [])
+      .filter((row) => sameBusiness(row))
+      .map((row) => [String(row.id), row]));
     const clientRows = (state.consignmentEvents || [])
-      .filter((row) => sameBusiness(row) && row.type === 'pagamento' && String(row.date || '').slice(0, 10) === day);
-    const saleRows = (state.sales || [])
-      .filter((row) => sameBusiness(row) && String(row.date || '').slice(0, 10) === day
-        && row.origin !== 'consignado' && !row.sellerId);
+      .filter((row) => {
+        const consignment = consignmentsById.get(String(row.consignmentId));
+        return sameBusiness(row) && row.type === 'pagamento'
+          && String(row.date || '').slice(0, 10) === day
+          && consignment && !consignment.sellerId;
+      });
+    const saleRows = directSaleSettlementRows(state, businessId)
+      .filter((row) => String(row.date || '').slice(0, 10) === day);
 
     const sellers = {
       total: sum(sellerRows, 'amount') + sum(sellerInitialRows, 'initialPaid'),
       count: sellerRows.length + sellerInitialRows.length,
     };
     const clients = { total: sum(clientRows, 'amount'), count: clientRows.length };
-    const sales = { total: sum(saleRows, 'netRevenue'), count: saleRows.length };
+    const sales = { total: sum(saleRows, 'amount'), count: saleRows.length };
 
     return {
       sellers,
@@ -4012,9 +4082,11 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     };
   }
 
-  // Receita reconhecida pelo caixa: consignado informado como vendido continua
-  // fora até o pagamento. Vendas à vista entram na data da venda; consignados
-  // com clientes e vendedores entram na data do recebimento.
+  // Receita reconhecida pelo caixa: a venda direta entra pelo paid_amount do
+  // lançamento financeiro, nunca pelo valor nominal da venda. O valor pago no
+  // ato usa a data da venda; liquidações posteriores usam a data de liquidação
+  // (ou a última atualização disponível). Consignado informado como vendido
+  // continua fora até o pagamento.
   function recognizedRevenue(state, { dateFrom = '', dateTo = '' } = {}) {
     const businessId = state.activeBusinessId;
     const inPeriod = (date) => {
@@ -4022,21 +4094,30 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       return (!dateFrom || day >= dateFrom) && (!dateTo || day <= dateTo);
     };
     const sameBusiness = (row) => row.businessId === businessId;
-    const directSales = (state.sales || []).filter((sale) => sameBusiness(sale)
-      && inPeriod(sale.date) && sale.origin !== 'consignado' && !sale.sellerId);
-    const clientPayments = (state.consignmentEvents || []).filter((event) => sameBusiness(event)
-      && event.type === 'pagamento' && inPeriod(event.date));
+    const directSettlements = directSaleSettlementRows(state, businessId)
+      .filter((row) => inPeriod(row.date));
+    const consignmentsById = new Map((state.consignments || [])
+      .filter((item) => sameBusiness(item))
+      .map((item) => [String(item.id), item]));
+    const clientPayments = (state.consignmentEvents || []).filter((event) => {
+      const consignment = consignmentsById.get(String(event.consignmentId));
+      return sameBusiness(event) && event.type === 'pagamento' && inPeriod(event.date)
+        && consignment && !consignment.sellerId;
+    });
     const sellerPayments = (state.sellerPayments || []).filter((payment) => sameBusiness(payment)
       && inPeriod(payment.paymentDate));
 
-    const direct = directSales.reduce((result, sale) => ({
-      total: result.total + number(sale.netRevenue),
-      profit: result.profit + number(sale.grossProfit),
+    const direct = directSettlements.reduce((result, settlement) => ({
+      total: result.total + number(settlement.amount),
+      profit: result.profit + number(settlement.amount)
+        * (number(settlement.sale.netRevenue) > 0
+          ? number(settlement.sale.grossProfit) / number(settlement.sale.netRevenue)
+          : 0),
       count: result.count + 1,
     }), { total: 0, profit: 0, count: 0 });
 
     const clients = clientPayments.reduce((result, event) => {
-      const consignment = (state.consignments || []).find((item) => String(item.id) === String(event.consignmentId));
+      const consignment = consignmentsById.get(String(event.consignmentId));
       const unitPrice = number(consignment?.unitPrice);
       const unitCost = number(consignment?.costAtSend);
       const margin = unitPrice > 0 ? (unitPrice - unitCost) / unitPrice : 0;
@@ -11086,7 +11167,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     receivedBy: 'Recebido por', paymentId: 'ID do pagamento', orderGroupId: 'ID do grupo do pedido', createdBy: 'Criado por', quantityDeclared: 'Qtd. declarada',
     quantityReceived: 'Qtd. conferida', unitValue: 'Valor unitário', totalValue: 'Valor total',
     affectsFinance: 'Abate da dívida', reason: 'Motivo', confirmedAt: 'Conferido em',
-    parentSaleId: 'ID da venda de origem', price: 'Preço', floor: 'Preço mínimo',
+    parentSaleId: 'ID da venda de origem', requestId: 'ID idempotente da operação', price: 'Preço', floor: 'Preço mínimo',
     periodType: 'Tipo de período', periodStart: 'Início', periodEnd: 'Fim',
     targetAmount: 'Meta', rewardDescription: 'Premiação',
   };
@@ -11115,7 +11196,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     { key: 'stockMovements', sheet: 'Movimentações', fields: ['id', 'businessId', 'date', 'type', 'productId', 'quantity', 'unitCost', 'totalCost', 'notes', 'createdAt'] },
     { key: 'recipes', sheet: 'Fichas técnicas', fields: ['id', 'businessId', 'finalProductId', 'inputProductId', 'quantityPerUnit', 'createdAt', 'updatedAt'] },
     { key: 'productions', sheet: 'Produção', fields: ['id', 'businessId', 'date', 'finalProductId', 'quantity', 'totalCost', 'unitCost', 'notes', 'createdAt', 'updatedAt'] },
-    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'notes', 'origin', 'originId', 'sellerId', 'parentSaleId', 'createdAt', 'updatedAt'] },
+    { key: 'sales', sheet: 'Vendas', fields: ['id', 'businessId', 'date', 'channel', 'clientId', 'productId', 'quantity', 'unitPrice', 'discount', 'fixedFees', 'feePercent', 'unitCost', 'grossRevenue', 'percentFees', 'netRevenue', 'cogs', 'grossProfit', 'margin', 'paymentMode', 'paidAmount', 'dueDate', 'paymentMethod', 'requestId', 'notes', 'origin', 'originId', 'sellerId', 'parentSaleId', 'createdAt', 'updatedAt'] },
     { key: 'orders', sheet: 'Pedidos', fields: ['id', 'businessId', 'sellerId', 'clientId', 'productId', 'quantity', 'unitPrice', 'dueDate', 'status', 'approvalStatus', 'saleType', 'paymentMode', 'paidAmount', 'orderGroupId', 'notes', 'convertedSaleId', 'convertedConsignmentId', 'createdAt', 'updatedAt'] },
     { key: 'consignments', sheet: 'Consignado', fields: ['id', 'businessId', 'date', 'clientId', 'productId', 'quantitySent', 'quantitySold', 'quantityReturned', 'amountPaid', 'unitPrice', 'costAtSend', 'sellerId', 'notes', 'status', 'createdAt', 'updatedAt'] },
     { key: 'financialEntries', sheet: 'Financeiro', fields: ['id', 'businessId', 'direction', 'category', 'description', 'issueDate', 'dueDate', 'amount', 'paidAmount', 'status', 'clientId', 'supplierId', 'sellerId', 'sourceType', 'sourceId', 'paymentMethod', 'notes', 'settledAt', 'createdAt', 'updatedAt'] },
@@ -11223,8 +11304,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       summary.push([collection.sheet, (state[collection.key] || []).length]);
     });
     summary.push(['']);
-    summary.push(['Como reimportar: use "Importar Excel" na aba Dados.']);
-    summary.push(['Pode editar as abas de dados. Não apague a aba ' + BACKUP_SHEET + '.']);
+    summary.push(['Restauração indisponível: este arquivo é somente para backup e consulta.']);
+    summary.push(['A importação segura no servidor ainda não foi implementada.']);
     sheets.push({ name: 'Resumo', rows: summary });
 
     COLLECTIONS.forEach((collection) => {
@@ -11310,53 +11391,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return result;
   }
 
-  async function importXlsx(file) {
-    try {
-      const buffer = await file.arrayBuffer();
-      const sheets = await XLSX.parseXlsx(buffer);
-      const sheetMap = {};
-      sheets.forEach((sheet) => { sheetMap[deburr(sheet.name)] = sheet; });
-
-      const collections = collectionsFromSheets(sheetMap);
-
-      const current = S.getState();
-      const next = {
-        meta: current.meta,
-        settings: current.settings,
-        activeBusinessId: current.activeBusinessId,
-        ...collections,
-      };
-
-      const backupSheet = sheetMap[deburr(BACKUP_SHEET)];
-      if (backupSheet) {
-        const configCell = backupSheet.rows.find((row) => row[0] === BACKUP_MARKER);
-        if (configCell && configCell[1]) {
-          try {
-            const config = JSON.parse(configCell[1]);
-            if (config.settings) next.settings = config.settings;
-            if (config.meta) next.meta = config.meta;
-            if (config.activeBusinessId) next.activeBusinessId = config.activeBusinessId;
-          } catch (error) {
-            /* configuração ilegível: mantém a atual */
-          }
-        }
-      }
-
-      const validBusiness = next.businesses.some((b) => b.id === next.activeBusinessId);
-      if (!validBusiness) next.activeBusinessId = next.businesses[0]?.id || null;
-
-      const total = COLLECTIONS.reduce((sum, c) => sum + (next[c.key] || []).length, 0);
-      if (!window.confirm(`Importar esta planilha vai substituir os dados locais atuais por ${total} registro(s). Continuar?`)) {
-        return;
-      }
-
-      S.replaceState(next);
-      refresh();
-      notify('Planilha importada com sucesso.', 'success');
-    } catch (error) {
-      notify('Não foi possível importar: ' + error.message, 'error');
-      window.alert('Não foi possível importar: ' + error.message);
-    }
+  async function importXlsx() {
+    const message = 'Restauração indisponível: importar Excel alterava apenas o cache deste navegador e não gravava no servidor. Continue usando a exportação como backup até a restauração segura ser implementada.';
+    notify(message, 'warning');
+    window.alert(message);
   }
 
   // ---------- CSV por módulo ----------
@@ -11419,21 +11457,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     notify('Backup JSON exportado.', 'success');
   }
 
-  function importJson(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result);
-        if (!window.confirm('Importar este backup JSON vai substituir os dados locais atuais. Continuar?')) return;
-        S.replaceState(parsed);
-        refresh();
-        notify('Backup JSON importado.', 'success');
-      } catch (error) {
-        notify('Backup inválido: ' + error.message, 'error');
-        window.alert('Backup inválido: ' + error.message);
-      }
-    };
-    reader.readAsText(file);
+  function importJson() {
+    const message = 'Restauração indisponível: importar JSON alterava apenas o cache deste navegador e não gravava no servidor. Continue usando a exportação como backup até a restauração segura ser implementada.';
+    notify(message, 'warning');
+    window.alert(message);
   }
 
   window.C360.io = {
@@ -12257,6 +12284,8 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   // na tabela de vendas (ver handleClick, case 'toggle-returns').
   function mountSalesExtras() {
     mountSalesCartPanel('salesCartPanel');
+    const manualSaleForm = document.getElementById('saleForm');
+    if (manualSaleForm) syncManualSalePaymentFields(manualSaleForm);
     const container = document.getElementById('returnsPanel');
     if (!container) return;
     if (!openReturnsSaleId) {
@@ -12608,26 +12637,91 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
   function renderSales() {
     if (!state().activeBusinessId) return activeBusinessRequiredHtml();
+    const products = currentProducts().filter((product) => !['materia_prima', 'embalagem'].includes(product.type));
     const receivedAtSale = currentSales().filter((sale) => sale.origin !== 'consignado' && !sale.sellerId);
+    const receivedBySale = new Map(currentFinancialEntries()
+      .filter((entry) => entry.direction === 'receivable' && entry.sourceType === 'sale' && entry.status !== 'cancelled')
+      .map((entry) => [String(entry.sourceId), U.number(entry.paidAmount)]));
     const rows = U.sortByDateDesc(receivedAtSale).map((sale) => {
       const product = productById(sale.productId);
       const client = clientById(sale.clientId);
       const isReturnOrScrap = sale.quantity < 0 || !!sale.parentSaleId;
       return [
         U.escapeHtml(sale.date), U.escapeHtml(sale.channel || '—'), U.escapeHtml(client?.name || '—'),
-        UI.productName(product), U.qty(sale.quantity, product?.unit), UI.moneyCell(sale.netRevenue),
+        UI.productName(product), U.qty(sale.quantity, product?.unit), UI.moneyCell(receivedBySale.get(String(sale.id)) || 0),
         UI.moneyCell(sale.cogs), UI.moneyCell(sale.grossProfit), `${(U.number(sale.margin) * 100).toFixed(2)}%`,
         isReturnOrScrap ? '—' : `<div class="actions">${UI.actionButton('toggle-returns', sale.id, openReturnsSaleId === sale.id ? 'Fechar' : 'Devolução/Desperdício')}</div>`,
       ];
     });
     const desc = S.isAdmin()
-      ? 'Monte o carrinho e lance. Esta lista mostra somente vendas à vista. Consignados e pedidos de vendedores ficam separados e só viram receita quando pagos.'
+      ? 'Use a esteira para pedidos ou registre abaixo uma venda manual direta. A receita mostra apenas o valor realmente recebido.'
       : 'Venda o que já está no seu estoque ou peça reposição ao admin. Acompanhe seus pedidos na esteira abaixo.';
+    const manualSaleForm = S.isAdmin() ? `
+      <details class="panel-card sale-more-options manual-direct-sale">
+        <summary>Registrar venda manual direta</summary>
+        <p class="hint-inline">Operação atômica: venda, estoque, movimentação e financeiro são gravados juntos.</p>
+        <form id="saleForm" class="grid-form">
+          <label>Produto
+            <select name="productId" required>${UI.optionList(products, '', 'Produto')}</select>
+          </label>
+          <label>Quantidade
+            <input name="quantity" type="number" min="0.001" step="0.001" required>
+          </label>
+          <label>Preço unitário
+            <input name="unitPrice" type="number" min="0.01" step="0.01" required>
+          </label>
+          <label>Cliente
+            <select name="clientId">${UI.optionList(currentClients(), '', 'Opcional')}</select>
+          </label>
+          <label>Modalidade
+            <select name="paymentMode" required>
+              <option value="avista">À vista</option>
+              <option value="parcial">Parcial</option>
+              <option value="a_prazo">A prazo</option>
+            </select>
+          </label>
+          <label>Valor pago
+            <input name="paidAmount" type="number" min="0" step="0.01" value="0" required>
+          </label>
+          <label>Vencimento do saldo
+            <input name="dueDate" type="date">
+          </label>
+          <label>Método do pagamento
+            <input name="paymentMethod" placeholder="Pix, dinheiro, cartão...">
+          </label>
+          <div id="salePaymentHint" class="full"></div>
+          <details class="full sale-more-options">
+            <summary>Mais opções (data, canal, desconto, taxas, observações)</summary>
+            <div class="grid-form">
+              <label>Data
+                <input name="date" type="date" required value="${U.today()}">
+              </label>
+              <label>${UI.fieldLabel('Canal', 'canal')}
+                <select name="channel">${UI.optionList(state().settings.channels, 'Direto', '')}</select>
+              </label>
+              <label>${UI.fieldLabel('Desconto total', 'descontoTotal')}
+                <input name="discount" type="number" min="0" step="0.01" value="0">
+              </label>
+              <label>${UI.fieldLabel('Taxa fixa total', 'taxaFixaTotal')}
+                <input name="fixedFees" type="number" min="0" step="0.01" value="0">
+              </label>
+              <label>${UI.fieldLabel('Taxa percentual (%)', 'taxaPercentual')}
+                <input name="feePercent" type="number" min="0" max="100" step="0.01" value="0">
+              </label>
+              <label class="wide">Observações
+                <input name="notes" placeholder="Pedido, entrega, plataforma...">
+              </label>
+            </div>
+          </details>
+          <button type="submit" class="full">Registrar venda direta</button>
+        </form>
+      </details>` : '';
     return UI.section('Vendas', desc, `
       <div id="salesCartPanel"></div>
-      <div class="notice info"><strong>Regime de caixa:</strong> o que saiu a prazo aparece em Consignado ou Vendedores e não entra nesta receita até o pagamento.</div>
-      <h3>Histórico de vendas à vista</h3>
-      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita recebida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows, 'Nenhuma venda à vista registrada.')}
+      ${manualSaleForm}
+      <div class="notice info"><strong>Regime de caixa:</strong> vendas diretas entram somente pelo valor recebido; o saldo parcial ou a prazo fica aberto no Financeiro. Consignados e valores com vendedores entram apenas quando pagos.</div>
+      <h3>Histórico de vendas diretas</h3>
+      ${UI.table(['Data', 'Canal', 'Cliente', 'Produto', 'Qtd.', 'Receita recebida', 'CMV', 'Lucro', 'Margem', 'Ações'], rows, 'Nenhuma venda direta registrada.')}
       <div id="returnsPanel"></div>
     `, 'cmv');
   }
@@ -13085,17 +13179,14 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       return `<button type="button" class="small secondary" data-io="export-csv" data-collection="${collection.key}">${U.escapeHtml(collection.sheet)} <span class="hint-inline">${scope}</span></button>`;
     }).join('');
 
-    return UI.section('Backup e exportação', 'Salve, leve para outro computador ou abra seus dados no Excel. Os dados ficam apenas neste navegador — exporte com frequência.', `
+    return UI.section('Backup e exportação', 'Baixe uma cópia para consulta, análise ou guarda fora do sistema.', `
       <div class="export-grid">
         <article class="export-card highlight">
           <div class="export-card-head"><span class="export-tag">Recomendado</span><h3>Excel (.xlsx)</h3></div>
-          <p>Backup completo com uma aba por módulo. Abre no Excel ou Google Sheets, pode ser editado e reimportado.</p>
+          <p>Backup completo com uma aba por módulo. Abre no Excel ou Google Sheets para consulta e análise.</p>
           <div class="export-actions">
             <button type="button" data-io="export-xlsx">Baixar Excel completo</button>
-            <label class="file-button">
-              Importar Excel
-              <input type="file" accept=".xlsx" data-io-import="xlsx">
-            </label>
+            <button type="button" class="secondary" disabled title="A restauração segura no servidor ainda não foi implementada.">Importar Excel indisponível</button>
           </div>
         </article>
 
@@ -13104,10 +13195,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
           <p>Cópia técnica fiel de tudo, incluindo configurações. Ideal como backup de segurança.</p>
           <div class="export-actions">
             <button type="button" class="secondary" data-io="export-json">Baixar JSON</button>
-            <label class="file-button">
-              Importar JSON
-              <input type="file" accept="application/json,.json" data-io-import="json">
-            </label>
+            <button type="button" class="secondary" disabled title="A restauração segura no servidor ainda não foi implementada.">Importar JSON indisponível</button>
           </div>
         </article>
 
@@ -13118,7 +13206,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
         </article>
       </div>
 
-      <div class="notice info">Importar substitui os dados atuais deste navegador. Faça um backup antes se tiver dúvida.</div>
+      <div class="notice warning"><strong>Restauração temporariamente indisponível.</strong> A importação antiga mudava apenas o cache deste navegador e não gravava no servidor; por isso foi desativada para não prometer uma restauração que não acontece. As exportações continuam funcionando normalmente.</div>
 
       <div class="panel-card">
         <h3>O que está salvo agora</h3>
@@ -13607,13 +13695,64 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     return sale;
   }
 
-  // Wrapper usado pelo #saleForm (lançamento manual de venda): valida o piso
-  // de preço do vendedor antes de chamar addSale. Fluxos internos (conversão
-  // de pedido, baixa de consignado) chamam addSale diretamente, sem esta
-  // validação extra, porque o preço já vem combinado/aprovado antes.
+  let pendingManualSaleRequestId = null;
+
+  // Apenas o formulário administrativo de venda manual usa esta RPC. Pedidos,
+  // consignações e vendas do estoque do vendedor conservam seus fluxos atuais.
   async function submitSale(data) {
-    validateSaleFloor(data);
-    return addSale(data);
+    if (!S.isAdmin()) throw new Error('Somente o administrador pode registrar venda direta.');
+    U.assertPositive(data.quantity, 'Quantidade');
+    U.assertPositive(data.unitPrice, 'Preço unitário');
+    const product = productById(data.productId);
+    if (!product) throw new Error('Produto não encontrado.');
+    const math = Calc.saleMath({
+      quantity: data.quantity,
+      unitPrice: data.unitPrice,
+      discount: data.discount,
+      fixedFees: data.fixedFees,
+      feePercent: data.feePercent,
+      unitCost: product.avgCost,
+    });
+    const netRevenue = Math.round(U.number(math.netRevenue) * 100) / 100;
+    const paidAmount = Math.round(U.number(data.paidAmount) * 100) / 100;
+    if (netRevenue <= 0) throw new Error('Receita líquida precisa ser maior que zero.');
+    if (data.paymentMode === 'avista' && paidAmount !== netRevenue) {
+      throw new Error('Venda à vista exige valor pago igual à receita líquida.');
+    }
+    if (data.paymentMode === 'parcial' && (paidAmount <= 0 || paidAmount >= netRevenue)) {
+      throw new Error('Venda parcial exige valor pago maior que zero e menor que a receita líquida.');
+    }
+    if (data.paymentMode === 'a_prazo' && paidAmount !== 0) {
+      throw new Error('Venda a prazo exige valor pago igual a zero.');
+    }
+    if (data.paymentMode !== 'avista' && !data.dueDate) {
+      throw new Error('Informe o vencimento do saldo.');
+    }
+    if (paidAmount > 0 && !String(data.paymentMethod || '').trim()) {
+      throw new Error('Informe o método do pagamento recebido.');
+    }
+
+    pendingManualSaleRequestId = pendingManualSaleRequestId || crypto.randomUUID();
+    const saleId = await window.C360.api.registerDirectSale({
+      requestId: pendingManualSaleRequestId,
+      date: data.date,
+      channel: data.channel,
+      clientId: data.clientId,
+      productId: data.productId,
+      quantity: U.number(data.quantity),
+      unitPrice: U.number(data.unitPrice),
+      discount: U.number(data.discount),
+      fixedFees: U.number(data.fixedFees),
+      feePercent: U.number(data.feePercent),
+      paymentMode: data.paymentMode,
+      paidAmount,
+      dueDate: data.dueDate,
+      paymentMethod: String(data.paymentMethod || '').trim(),
+      notes: data.notes,
+    });
+    await S.refresh();
+    pendingManualSaleRequestId = null;
+    return saleId;
   }
 
   async function addOrder(data) {
@@ -14130,6 +14269,43 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     if (!form) return;
     if (event.target.name === 'productId') updateSalePriceHint(form);
     if (event.target.name === 'unitPrice') event.target.dataset.touched = '1';
+    if (event.target.name === 'paymentMode' && event.target.value === 'parcial') {
+      form.elements.paidAmount.value = '';
+    }
+    syncManualSalePaymentFields(form);
+  }
+
+  function syncManualSalePaymentFields(form) {
+    const mode = form.elements.paymentMode?.value || 'avista';
+    const paidInput = form.elements.paidAmount;
+    const dueInput = form.elements.dueDate;
+    const methodInput = form.elements.paymentMethod;
+    const hint = form.querySelector('#salePaymentHint');
+    const math = Calc.saleMath({
+      quantity: form.elements.quantity?.value,
+      unitPrice: form.elements.unitPrice?.value,
+      discount: form.elements.discount?.value,
+      fixedFees: form.elements.fixedFees?.value,
+      feePercent: form.elements.feePercent?.value,
+      unitCost: 0,
+    });
+    const netRevenue = Math.max(Math.round(U.number(math.netRevenue) * 100) / 100, 0);
+    if (paidInput && mode === 'avista') paidInput.value = netRevenue.toFixed(2);
+    if (paidInput && mode === 'a_prazo') paidInput.value = '0.00';
+    if (dueInput) {
+      dueInput.disabled = mode === 'avista';
+      dueInput.required = mode !== 'avista';
+      dueInput.min = form.elements.date?.value || '';
+    }
+    if (methodInput) methodInput.required = mode !== 'a_prazo';
+    if (hint) {
+      const message = mode === 'avista'
+        ? `Receita líquida estimada: ${U.money(netRevenue)}. O valor pago deve ser igual.`
+        : mode === 'parcial'
+          ? `Receita líquida estimada: ${U.money(netRevenue)}. Informe quanto entrou e o vencimento do saldo.`
+          : `Receita líquida estimada: ${U.money(netRevenue)}. O valor pago deve ser zero e o vencimento é obrigatório.`;
+      hint.innerHTML = UI.formNotice(message, 'info');
+    }
   }
 
   // A marcação de overflow do kanban (UI.markKanbanOverflow, ver item da
@@ -14187,6 +14363,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     document.addEventListener('click', handleDataActions);
     document.addEventListener('change', handleFileInputs);
     document.addEventListener('change', handleSalePriceHint);
+    document.addEventListener('input', handleSalePriceHint);
     document.addEventListener('change', handleDashboardPeriod);
     document.addEventListener('submit', handleCostPreview, true);
     document.addEventListener('dragstart', handleKanbanDragStart);
