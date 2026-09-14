@@ -160,6 +160,22 @@ test('modal envia data, método, notas e chave idempotente pela RPC', async () =
   assert.doesNotMatch(apply, /S\.update\(['"]financialEntries/);
 });
 
+test('Recebido no mês e caixa do relatório usam a data de cada evento', () => {
+  const app = read('src/app.js');
+  const financialStart = app.indexOf('function renderFinancial');
+  const financialEnd = app.indexOf('function renderTasks', financialStart);
+  const financial = app.slice(financialStart, financialEnd);
+  const reportsStart = app.indexOf('function renderReports');
+  const reportsEnd = app.indexOf('function renderHelp', reportsStart);
+  const reports = app.slice(reportsStart, reportsEnd);
+
+  assert.match(financial, /currentFinancialEntryPayments\(\)/);
+  assert.match(financial, /payment\.paymentDate/);
+  assert.doesNotMatch(financial, /settledAt/);
+  assert.match(reports, /periodFinancialPayments[\s\S]*inPeriod\(payment\.paymentDate\)/);
+  assert.match(reports, /financialReceived = periodFinancialPayments/);
+});
+
 test('não há backfill de datas ou do histórico ambíguo de R$ 700', () => {
   const sql = read(migration);
   const historical = sql.slice(sql.indexOf('-- Historical direct sales'), sql.indexOf('commit;'));
