@@ -56,6 +56,250 @@ create unique index if not exists idx_sales_direct_request_unique
   on public.sales (business_id, request_id)
   where request_id is not null;
 
+-- Every receipt/payment has its own immutable business date. paid_amount on
+-- financial_entries remains a fast balance projection, never the history.
+create table if not exists public.financial_entry_payments (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete restrict,
+  financial_entry_id uuid not null references public.financial_entries(id) on delete restrict,
+  event_type text not null default 'payment'
+    check (event_type in ('payment', 'reversal')),
+  amount numeric(14,2) not null check (amount > 0),
+  payment_date date not null,
+  payment_method text not null check (nullif(btrim(payment_method), '') is not null),
+  notes text not null default '',
+  request_id uuid not null,
+  reversal_of_id uuid references public.financial_entry_payments(id) on delete restrict,
+  created_by uuid not null default auth.uid(),
+  created_at timestamptz not null default now(),
+  constraint financial_entry_payments_reversal_shape check (
+    (event_type = 'payment' and reversal_of_id is null)
+    or (event_type = 'reversal' and reversal_of_id is not null)
+  ),
+  unique (business_id, request_id)
+);
+
+create unique index if not exists idx_financial_entry_payments_one_reversal
+  on public.financial_entry_payments (reversal_of_id)
+  where reversal_of_id is not null;
+create index if not exists idx_financial_entry_payments_business_date
+  on public.financial_entry_payments (business_id, payment_date, created_at);
+create index if not exists idx_financial_entry_payments_entry_date
+  on public.financial_entry_payments (financial_entry_id, payment_date, created_at);
+
+alter table public.financial_entry_payments enable row level security;
+
+drop policy if exists financial_entry_payments_select_admin on public.financial_entry_payments;
+create policy financial_entry_payments_select_admin
+  on public.financial_entry_payments
+  for select
+  to authenticated
+  using (
+    (select public.is_admin())
+    and business_id = (select public.my_business_id())
+  );
+
+drop policy if exists financial_entry_payments_insert_admin on public.financial_entry_payments;
+create policy financial_entry_payments_insert_admin
+  on public.financial_entry_payments
+  for insert
+  to authenticated
+  with check (
+    (select public.is_admin())
+    and business_id = (select public.my_business_id())
+    and created_by = (select auth.uid())
+  );
+
+revoke all on public.financial_entry_payments from public, anon, authenticated;
+grant select, insert on public.financial_entry_payments to authenticated;
+grant select, insert on public.financial_entry_payments to service_role;
+
+create or replace function public.reject_financial_entry_payment_mutation()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $reject_financial_entry_payment_mutation$
+begin
+  raise exception 'Eventos financeiros são imutáveis; registre um estorno';
+end;
+$reject_financial_entry_payment_mutation$;
+
+drop trigger if exists trg_financial_entry_payments_immutable on public.financial_entry_payments;
+create trigger trg_financial_entry_payments_immutable
+  before update or delete on public.financial_entry_payments
+  for each row execute function public.reject_financial_entry_payment_mutation();
+
+create or replace function public.sync_financial_entry_payment_balance()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $sync_financial_entry_payment_balance$
+declare
+  v_entry public.financial_entries%rowtype;
+  v_original public.financial_entry_payments%rowtype;
+  v_delta numeric(14,2);
+begin
+  select f.*
+    into v_entry
+    from public.financial_entries f
+   where f.id = new.financial_entry_id
+     and f.business_id = new.business_id
+   for update;
+
+  if not found then
+    raise exception 'Lançamento financeiro não encontrado no negócio';
+  end if;
+  if v_entry.status = 'cancelled' then
+    raise exception 'Lançamento cancelado não pode receber baixa';
+  end if;
+
+  if new.event_type = 'reversal' then
+    select p.*
+      into v_original
+      from public.financial_entry_payments p
+     where p.id = new.reversal_of_id
+       and p.business_id = new.business_id
+       and p.financial_entry_id = new.financial_entry_id
+       and p.event_type = 'payment';
+    if not found or new.amount <> v_original.amount then
+      raise exception 'Estorno deve corresponder integralmente a um pagamento do lançamento';
+    end if;
+    v_delta := -new.amount;
+  else
+    v_delta := new.amount;
+  end if;
+
+  if round(v_entry.paid_amount + v_delta, 2) < 0
+     or round(v_entry.paid_amount + v_delta, 2) > round(v_entry.amount, 2) then
+    raise exception 'A baixa não pode superar o saldo do lançamento';
+  end if;
+
+  update public.financial_entries
+     set paid_amount = round(v_entry.paid_amount + v_delta, 2),
+         payment_method = case
+           when new.event_type = 'payment' then new.payment_method
+           else payment_method
+         end
+   where id = v_entry.id
+     and business_id = v_entry.business_id;
+
+  return new;
+end;
+$sync_financial_entry_payment_balance$;
+
+drop trigger if exists trg_financial_entry_payments_sync_balance on public.financial_entry_payments;
+create trigger trg_financial_entry_payments_sync_balance
+  before insert on public.financial_entry_payments
+  for each row execute function public.sync_financial_entry_payment_balance();
+
+revoke all on function public.reject_financial_entry_payment_mutation() from public, anon;
+revoke all on function public.sync_financial_entry_payment_balance() from public, anon;
+
+create or replace function public.register_financial_entry_payment(
+  p_financial_entry_id uuid,
+  p_amount numeric,
+  p_payment_date date,
+  p_payment_method text,
+  p_notes text,
+  p_request_id uuid
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $register_financial_entry_payment$
+declare
+  v_business_id uuid;
+  v_entry public.financial_entries%rowtype;
+  v_existing public.financial_entry_payments%rowtype;
+  v_amount numeric(14,2) := round(coalesce(p_amount, 0), 2);
+  v_payment_method text := nullif(btrim(coalesce(p_payment_method, '')), '');
+  v_notes text := btrim(coalesce(p_notes, ''));
+  v_payment_id uuid;
+begin
+  if (select auth.uid()) is null or not (select public.is_admin()) then
+    raise exception 'Somente o administrador pode registrar baixa financeira';
+  end if;
+  v_business_id := (select public.my_business_id());
+  if v_business_id is null then
+    raise exception 'Negócio não encontrado';
+  end if;
+  if p_request_id is null then
+    raise exception 'Identificador da operação é obrigatório';
+  end if;
+  if p_financial_entry_id is null then
+    raise exception 'Lançamento financeiro é obrigatório';
+  end if;
+  if v_amount <= 0 then
+    raise exception 'Valor da baixa precisa ser maior que zero';
+  end if;
+  if p_payment_date is null then
+    raise exception 'Data da baixa é obrigatória';
+  end if;
+  if v_payment_method is null then
+    raise exception 'Informe o método do pagamento';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(p_request_id::text, 0)
+  );
+
+  select p.*
+    into v_existing
+    from public.financial_entry_payments p
+   where p.business_id = v_business_id
+     and p.request_id = p_request_id;
+
+  if found then
+    if v_existing.financial_entry_id is distinct from p_financial_entry_id
+       or v_existing.event_type is distinct from 'payment'
+       or v_existing.amount is distinct from v_amount
+       or v_existing.payment_date is distinct from p_payment_date
+       or v_existing.payment_method is distinct from v_payment_method
+       or v_existing.notes is distinct from v_notes then
+      raise exception 'Identificador da operação já usado com dados diferentes';
+    end if;
+    return v_existing.id;
+  end if;
+
+  select f.*
+    into v_entry
+    from public.financial_entries f
+   where f.id = p_financial_entry_id
+     and f.business_id = v_business_id
+   for update;
+
+  if not found then
+    raise exception 'Lançamento financeiro não encontrado no negócio';
+  end if;
+  if v_entry.status = 'cancelled' then
+    raise exception 'Lançamento cancelado não pode receber baixa';
+  end if;
+  if round(v_entry.paid_amount + v_amount, 2) > round(v_entry.amount, 2) then
+    raise exception 'A baixa não pode superar o saldo do lançamento';
+  end if;
+
+  insert into public.financial_entry_payments (
+    business_id, financial_entry_id, event_type, amount, payment_date,
+    payment_method, notes, request_id, created_by
+  ) values (
+    v_business_id, v_entry.id, 'payment', v_amount, p_payment_date,
+    v_payment_method, v_notes, p_request_id, (select auth.uid())
+  ) returning id into v_payment_id;
+
+  return v_payment_id;
+end;
+$register_financial_entry_payment$;
+
+revoke all on function public.register_financial_entry_payment(
+  uuid, numeric, date, text, text, uuid
+) from public, anon;
+grant execute on function public.register_financial_entry_payment(
+  uuid, numeric, date, text, text, uuid
+) to authenticated, service_role;
+
 create or replace function public.create_sale_receivable()
 returns trigger
 language plpgsql
@@ -91,7 +335,7 @@ begin
       else coalesce(new.due_date, new.date)
     end,
     round(new.net_revenue, 2),
-    least(round(coalesce(new.paid_amount, 0), 2), round(new.net_revenue, 2)),
+    0,
     new.client_id,
     'sale',
     new.id,
@@ -153,6 +397,7 @@ declare
   v_channel text := coalesce(nullif(btrim(coalesce(p_channel, '')), ''), 'Direto');
   v_notes text := btrim(coalesce(p_notes, ''));
   v_sale_id uuid;
+  v_financial_entry_id uuid;
 begin
   if (select auth.uid()) is null or not (select public.is_admin()) then
     raise exception 'Somente o administrador pode registrar venda direta';
@@ -316,14 +561,44 @@ begin
 
   -- O trigger acima é parte da mesma transação. Se ele for removido ou não
   -- conseguir criar a conta, abortamos tudo para não deixar venda órfã.
+  select f.id
+    into v_financial_entry_id
+    from public.financial_entries f
+   where f.business_id = v_business_id
+     and f.source_type = 'sale'
+     and f.source_id = v_sale_id
+   for update;
+
+  if not found then
+    raise exception 'Não foi possível criar o lançamento financeiro da venda';
+  end if;
+
+  if v_paid_amount > 0 then
+    insert into public.financial_entry_payments (
+      business_id, financial_entry_id, event_type, amount, payment_date,
+      payment_method, notes, request_id, created_by
+    ) values (
+      v_business_id, v_financial_entry_id, 'payment', v_paid_amount, p_date,
+      v_payment_method, v_notes, p_request_id, (select auth.uid())
+    );
+  end if;
+
   if not exists (
     select 1
       from public.financial_entries f
-     where f.business_id = v_business_id
-       and f.source_type = 'sale'
-       and f.source_id = v_sale_id
+     where f.id = v_financial_entry_id
+       and f.business_id = v_business_id
+       and f.paid_amount = v_paid_amount
+  ) or (
+    v_paid_amount > 0 and not exists (
+      select 1
+        from public.financial_entry_payments p
+       where p.business_id = v_business_id
+         and p.financial_entry_id = v_financial_entry_id
+         and p.request_id = p_request_id
+    )
   ) then
-    raise exception 'Não foi possível criar o lançamento financeiro da venda';
+    raise exception 'Não foi possível registrar o recebimento inicial da venda';
   end if;
 
   return v_sale_id;
