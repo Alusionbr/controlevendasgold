@@ -304,21 +304,21 @@ Inclui:
 
 ```txt
 src/xlsx-lite.js     # motor .xlsx em JS puro (escreve ZIP "stored", lê com a API nativa de descompressão)
-src/exportImport.js  # camada de domínio: Excel completo, CSV por módulo e JSON (exportar/importar)
+src/exportImport.js  # camada de domínio: Excel completo, CSV por módulo e JSON (exportação; restauração bloqueada)
 ```
 
 ### Regras
 
 - `src/xlsx-lite.js` é genérico e sem regra de negócio: só converte `[{name, rows}]` em `.xlsx` e de volta. Não colocar lógica de negócio aqui.
 - `src/exportImport.js` define o mapa `COLLECTIONS` (coleção → aba → ordem de colunas) e os rótulos em português. Ao adicionar um campo novo a uma coleção, inclua a chave em `fields` e, se for número, em `NUMERIC_KEYS`; se for data, em `DATE_KEYS`.
-- Excel é backup **completo e reversível**: a aba `Backup_NAO_EDITAR` carrega `settings`, `meta` e `activeBusinessId`. As abas de dados são a fonte de verdade dos registros.
-- Importação (Excel ou JSON) passa por `state.replaceState`, que normaliza o estado. Sempre pedir confirmação antes de substituir.
+- Excel é backup **completo para consulta e futura restauração**: a aba `Backup_NAO_EDITAR` carrega `settings`, `meta` e `activeBusinessId`.
+- A restauração por Excel ou JSON fica bloqueada até existir uma operação segura que grave no Supabase respeitando FKs, RLS e a estratégia de mesclagem/substituição. Não usar `state.replaceState` como restauração.
 - Não adicionar biblioteca externa para Excel: o motor próprio mantém o projeto offline e revisável.
 
 ### Interface
 
 - Cabeçalho e barra de abas fixos; abas roláveis no celular; toasts para sucesso/erro (`window.C360.app.toast`).
-- `window.C360.app = { refresh, toast }` é o ponto de reentrada usado por `exportImport.js` após importar.
+- `window.C360.app = { refresh, toast }` expõe a reentrada e as mensagens usadas pelos módulos.
 
 ---
 
@@ -1012,19 +1012,14 @@ Corrigido: 23 abas. Regra do CLAUDE.md continua valendo — coleção nova entra
 em `COLLECTIONS`, e cada chave nova em `LABELS` + `NUMERIC_KEYS`/`DATE_KEYS`
 conforme o tipo.
 
-### Pendente (decisão do usuário): restaurar backup não grava no servidor
+### Restauração desabilitada: cache local não é servidor
 
-`importXlsx`/`importJson` chamam `S.replaceState(...)`, que só troca o cache
-em memória e o espelho em localStorage — **nenhuma escrita no Supabase**. Em
-seguida chamam `refresh()`, que aqui é `C360.app.refresh` (só redesenha).
-Resultado: a tela mostra os dados importados e o primeiro
-`C360.state.refresh()` (qualquer gravação de módulo, ou recarregar a página)
-traz tudo do servidor de volta por cima.
+A rotina antiga de `importXlsx`/`importJson` chamava `S.replaceState(...)`, que
+só trocava o cache em memória e o espelho em localStorage — **nenhuma escrita
+no Supabase**. O primeiro `C360.state.refresh()` trazia os dados do servidor de
+volta e desfazia a suposta restauração.
 
-Reproduzido: `replaceState` com um produto renomeado → tela mostra o nome
-novo → `await state.refresh()` → volta ao nome do servidor.
-
-Ou seja: exportar funciona (e agora é completo), **restaurar não**. Consertar
-exige upsert das ~23 coleções respeitando ordem de FK e RLS — é trabalho de
-backend, com decisão de produto no meio (substituir tudo? mesclar? o que fazer
-com id que já existe?), por isso não foi feito junto.
+Por isso os controles de importação e as duas funções estão desabilitados com
+mensagem explícita. Exportar continua funcionando. Uma restauração futura
+exige upsert das coleções respeitando ordem de FK/RLS e uma decisão de produto
+sobre substituir, mesclar e tratar ids já existentes.

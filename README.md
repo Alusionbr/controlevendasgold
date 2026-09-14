@@ -80,14 +80,14 @@ Use **Exportar backup** com frequência mesmo assim.
 
 Essas limitações estão documentadas no roadmap.
 
-## Backup, exportação e importação
+## Backup e exportação
 
 A aba **Dados** (ou o botão "Baixar Excel" no topo) concentra três formatos:
 
-- **Excel (.xlsx)** — backup completo com uma aba por módulo (Produtos, Vendas, Compras, Consignado, etc.), em português. Pode ser aberto e editado no Excel ou Google Sheets e reimportado. A aba `Backup_NAO_EDITAR` guarda as configurações para restaurar tudo; não a apague.
+- **Excel (.xlsx)** — backup completo com uma aba por módulo (Produtos, Vendas, Compras, Consignado, etc.), em português. Pode ser aberto no Excel ou Google Sheets para consulta e análise.
 - **JSON** — cópia técnica fiel de todo o estado, incluindo configurações. Use como backup de segurança.
 - **CSV por módulo** — uma tabela por vez, do negócio ativo (ou todos, no caso de Negócios).
 
-Importar (Excel ou JSON) **substitui** os dados locais atuais. Faça um backup antes.
+A restauração por Excel ou JSON está temporariamente desabilitada. A implementação anterior alterava apenas o cache do navegador e era desfeita na próxima sincronização com o servidor; os arquivos exportados continuam válidos como cópia de segurança.
 
-O motor de Excel é escrito em JavaScript puro (`src/xlsx-lite.js`), sem bibliotecas externas, e funciona offline. A importação de planilhas compactadas usa a API nativa do navegador; navegadores muito antigos podem não suportá-la — nesse caso, use o backup JSON.
+O motor de Excel é escrito em JavaScript puro (`src/xlsx-lite.js`), sem bibliotecas externas.

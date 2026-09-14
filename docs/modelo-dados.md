@@ -259,11 +259,11 @@ pedido só ocupa a esteira; `concluido` apenas confirma a entrega.
 
 ## Formatos de backup
 
-- **Excel (.xlsx)**: cada coleção vira uma aba com cabeçalhos em português. A aba `Backup_NAO_EDITAR` guarda `settings`, `meta` e `activeBusinessId` em JSON, para restauração fiel. As abas de dados são a fonte de verdade dos registros na reimportação.
+- **Excel (.xlsx)**: cada coleção vira uma aba com cabeçalhos em português. A aba `Backup_NAO_EDITAR` guarda `settings`, `meta` e `activeBusinessId` em JSON para uma futura restauração segura.
 - **JSON**: serialização direta de todo o estado (`controle360_multi_v2`).
 - **CSV**: por módulo, do negócio ativo.
 
-Regras na importação de Excel: colunas são mapeadas pelo rótulo (ou pela chave técnica) de volta ao campo original; campos numéricos voltam como número; datas digitadas como data no Excel são convertidas para `YYYY-MM-DD`; registros sem `id` recebem um novo id.
+A restauração por Excel ou JSON está temporariamente desabilitada: a rotina antiga trocava somente o cache local e não persistia no Supabase.
 
 ## sellerPaymentAllocations
 
