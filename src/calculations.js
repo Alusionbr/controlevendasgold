@@ -309,6 +309,118 @@
     return { clients, sellers, total: clients.total + sellers.total };
   }
 
+  // Modelo puro do cockpit administrativo. A ordenação é deliberadamente
+  // estável e usa somente coleções que já estão no cache: nenhum card nasce
+  // de texto genérico ou de dado presumido. Quando há menos de três sinais,
+  // slots explícitos de "em ordem" mantêm a composição sem inventar trabalho.
+  function dashboardCockpit(state, { today = '', dateFrom = '', dateTo = '' } = {}) {
+    const businessId = state.activeBusinessId;
+    const day = String(today || '').slice(0, 10);
+    const sameBusiness = (row) => row && row.businessId === businessId;
+    const activeEntries = (state.financialEntries || []).filter((entry) => sameBusiness(entry)
+      && entry.status !== 'paid' && entry.status !== 'cancelled');
+    const remaining = (entry) => Math.max(0, number(entry.amount) - number(entry.paidAmount));
+    // O status remoto deve acompanhar a baixa, mas o saldo é a defesa final:
+    // um título ativo já integralmente pago não pode reaparecer como alerta.
+    const receivables = activeEntries.filter((entry) => entry.direction === 'receivable' && remaining(entry) > 0.005);
+    const payables = activeEntries.filter((entry) => entry.direction === 'payable' && remaining(entry) > 0.005);
+    const overdueReceivables = receivables.filter((entry) => entry.dueDate && entry.dueDate < day);
+    const overduePayables = payables.filter((entry) => entry.dueDate && entry.dueDate < day);
+    const products = (state.products || []).filter(sameBusiness);
+    const lowStock = products.filter((product) => number(product.minStock) > 0
+      && number(product.currentStock) <= number(product.minStock));
+    const missingCost = products.filter((product) => product.type !== 'servico'
+      && number(product.currentStock) > 0 && number(product.avgCost) <= 0);
+    const pendingSellerPayments = (state.sellerPaymentReports || []).filter((row) => sameBusiness(row)
+      && row.status === 'pending');
+    const pendingApprovals = (state.orders || []).filter((row) => sameBusiness(row)
+      && row.approvalStatus === 'pendente_aprovacao'
+      && !['despachado', 'concluido'].includes(row.status));
+    const pendingOperations = (state.operationalMovements || []).filter((row) => sameBusiness(row)
+      && ['a_devolver', 'pending'].includes(row.status));
+    const openTasks = (state.tasks || []).filter((task) => sameBusiness(task) && task.status !== 'feito');
+    const overdueTasks = openTasks.filter((task) => task.dueDate && task.dueDate < day);
+    const todayTasks = openTasks.filter((task) => task.dueDate === day);
+    const laterTasks = openTasks.filter((task) => !task.dueDate || task.dueDate > day);
+    const candidates = [];
+    const add = (candidate) => candidates.push(candidate);
+
+    if (overdueReceivables.length) add({
+      id: 'overdue-receivables', score: 100, urgency: 'Agora', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'receivable',
+      count: overdueReceivables.length, amount: overdueReceivables.reduce((sum, entry) => sum + remaining(entry), 0),
+      date: overdueReceivables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
+    });
+    if (missingCost.length) add({
+      id: 'missing-cost', score: 96, urgency: 'Alta', kind: 'divergence', tab: 'produtos', focus: 'missing-cost',
+      count: missingCost.length, names: missingCost.slice(0, 2).map((product) => product.name), estimate: '10–15 min',
+    });
+    if (pendingSellerPayments.length) add({
+      id: 'pending-seller-payments', score: 93, urgency: 'Alta', kind: 'pending', tab: 'vendedores', focus: 'seller-payments',
+      count: pendingSellerPayments.length, estimate: '5–15 min',
+    });
+    if (overdueTasks.length) add({
+      id: 'overdue-tasks', score: 90, urgency: 'Alta', kind: 'task', tab: 'tarefas',
+      count: overdueTasks.length, date: overdueTasks.map((task) => task.dueDate).sort()[0],
+      names: overdueTasks.slice(0, 2).map((task) => task.title), estimate: '10–20 min',
+    });
+    if (overduePayables.length) add({
+      id: 'overdue-payables', score: 88, urgency: 'Alta', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'payable',
+      count: overduePayables.length, amount: overduePayables.reduce((sum, entry) => sum + remaining(entry), 0),
+      date: overduePayables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
+    });
+    if (lowStock.length) add({
+      id: 'low-stock', score: 85, urgency: 'Hoje', kind: 'stock', tab: 'produtos',
+      count: lowStock.length, names: lowStock.slice(0, 2).map((product) => product.name), estimate: '10–20 min',
+    });
+    if (pendingApprovals.length) add({
+      id: 'pending-approvals', score: 82, urgency: 'Hoje', kind: 'pending', tab: 'vendas',
+      count: pendingApprovals.length, estimate: '5–15 min',
+    });
+    if (pendingOperations.length) add({
+      id: 'pending-operations', score: 80, urgency: 'Hoje', kind: 'pending', tab: 'devolucoes',
+      count: pendingOperations.length, estimate: '10–20 min',
+    });
+    if (todayTasks.length) add({
+      id: 'tasks-today', score: 75, urgency: 'Hoje', kind: 'task', tab: 'tarefas',
+      count: todayTasks.length, date: day, names: todayTasks.slice(0, 2).map((task) => task.title), estimate: '10–20 min',
+    });
+    if (laterTasks.length) add({
+      id: 'active-tasks', score: 45, urgency: 'Pode esperar', kind: 'task', tab: 'tarefas',
+      count: laterTasks.length, date: laterTasks.map((task) => task.dueDate).filter(Boolean).sort()[0] || null,
+      names: laterTasks.slice(0, 2).map((task) => task.title), estimate: '10–20 min',
+    });
+
+    candidates.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    const urgentCandidates = candidates.filter((candidate) => candidate.score >= 70);
+    const priorities = urgentCandidates.slice(0, 3);
+    while (priorities.length < 3) priorities.push({
+      id: `clear-${priorities.length + 1}`, score: 0, urgency: 'Em ordem', kind: 'clear', tab: null,
+      count: 0, estimate: '0 min',
+    });
+
+    const revenue = recognizedRevenue(state, { dateFrom, dateTo });
+    const tasks = openTasks.slice().sort((a, b) => {
+      const dueA = a.dueDate || '9999-12-31';
+      const dueB = b.dueDate || '9999-12-31';
+      return dueA.localeCompare(dueB) || String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+    });
+
+    return {
+      priorities,
+      otherAlerts: urgentCandidates.slice(3),
+      canWait: candidates.filter((candidate) => candidate.score < 70),
+      tasks,
+      financial: {
+        availableBalance: null,
+        receivable: receivables.reduce((sum, entry) => sum + remaining(entry), 0),
+        payable: payables.reduce((sum, entry) => sum + remaining(entry), 0),
+        recognizedProfit: revenue.grossProfit,
+      },
+    };
+  }
+
   function businessMetrics(state) {
     const businessId = state.activeBusinessId;
     if (!businessId) {
@@ -424,6 +536,7 @@
     dailyReceipts,
     recognizedRevenue,
     creditSalesPosition,
+    dashboardCockpit,
     businessMetrics,
     resolveSellerPrice,
     validatePriceFloor,

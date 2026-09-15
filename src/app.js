@@ -206,6 +206,8 @@
   const todayDate = new Date();
   let dashboardStart = todayDate.getFullYear() + '-' + String(todayDate.getMonth() + 1).padStart(2, '0') + '-01';
   let dashboardEnd = U.today();
+  let dashboardFocusMode = false;
+  let dashboardLoadError = '';
   // Filtros extras da aba Relatórios (vazio = todos).
   // Dia mostrado em "Recebimentos do dia" (tela Hoje) — separado do período
   // do painel de propósito: ali é faixa de datas, aqui é um dia só.
@@ -562,8 +564,196 @@
     </section>`;
   }
 
+  function cockpitDate(value, includeTime = false) {
+    const raw = String(value || '');
+    if (!raw) return 'não informado';
+    // Datas de prazo são civis e não podem mudar de dia. Já timestamps vindos
+    // do banco carregam offset e devem respeitar o fuso da operação.
+    const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+    const timestamp = includeTime && raw.includes('T') && hasOffset ? new Date(raw) : null;
+    if (timestamp && !Number.isNaN(timestamp.getTime())) {
+      const date = timestamp.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const time = timestamp.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+      return `${date} ${time}`;
+    }
+    const date = raw.slice(0, 10);
+    const parts = date.split('-');
+    const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : date;
+    return includeTime && raw.includes('T') ? `${formatted} ${raw.slice(11, 16)}` : formatted;
+  }
+
+  function cockpitPriorityCopy(item) {
+    const names = (item.names || []).filter(Boolean).join(', ');
+    const copies = {
+      'overdue-receivables': {
+        title: `${item.count} ${item.count === 1 ? 'recebível vencido' : 'recebíveis vencidos'}`,
+        context: `${U.money(item.amount)} em aberto · mais antigo em ${cockpitDate(item.date)}`,
+        reason: 'Recebimento vencido reduz previsibilidade de caixa.', action: 'Abrir Financeiro',
+      },
+      'missing-cost': {
+        title: `${item.count} produto${item.count === 1 ? '' : 's'} sem custo`,
+        context: names || 'Produtos com estoque e custo zerado.',
+        reason: 'Custo ausente distorce estoque, CMV e lucro.', action: 'Corrigir custos',
+      },
+      'pending-seller-payments': {
+        title: `${item.count} pagamento${item.count === 1 ? '' : 's'} para conferir`,
+        context: 'Informado por vendedor e ainda sem impacto financeiro.',
+        reason: 'A conferência pendente mantém o caixa e o saldo sem atualização.', action: 'Conferir pagamentos',
+      },
+      'overdue-tasks': {
+        title: `${item.count} tarefa${item.count === 1 ? '' : 's'} atrasada${item.count === 1 ? '' : 's'}`,
+        context: `${names || 'Tarefas operacionais'} · prazo mais antigo ${cockpitDate(item.date)}`,
+        reason: 'O prazo registrado já passou e a tarefa continua aberta.', action: 'Abrir Tarefas',
+      },
+      'overdue-payables': {
+        title: `${item.count} conta${item.count === 1 ? '' : 's'} a pagar vencida${item.count === 1 ? '' : 's'}`,
+        context: `${U.money(item.amount)} em aberto · mais antiga em ${cockpitDate(item.date)}`,
+        reason: 'O vencimento registrado já passou.', action: 'Abrir Financeiro',
+      },
+      'low-stock': {
+        title: `${item.count} produto${item.count === 1 ? '' : 's'} com estoque baixo`,
+        context: names || 'Produtos no mínimo ou abaixo dele.',
+        reason: 'O saldo atingiu o mínimo configurado para reposição.', action: 'Revisar Produtos',
+      },
+      'pending-approvals': {
+        title: `${item.count} pedido${item.count === 1 ? '' : 's'} aguardando aprovação`,
+        context: 'Pedidos ainda sem decisão administrativa.',
+        reason: 'A operação não avança enquanto a aprovação estiver pendente.', action: 'Abrir esteira',
+      },
+      'pending-operations': {
+        title: `${item.count} operação${item.count === 1 ? '' : 'ões'} para conferir`,
+        context: 'Devolução, desperdício ou brinde ainda sem conclusão.',
+        reason: 'O movimento registrado ainda não teve seu efeito confirmado.', action: 'Abrir Operações',
+      },
+      'tasks-today': {
+        title: `${item.count} tarefa${item.count === 1 ? '' : 's'} com prazo hoje`,
+        context: names || 'Tarefas operacionais do dia.',
+        reason: 'O prazo registrado termina hoje.', action: 'Abrir Tarefas',
+      },
+      'active-tasks': {
+        title: `${item.count} tarefa${item.count === 1 ? '' : 's'} em acompanhamento`,
+        context: `${names || 'Tarefas abertas'}${item.date ? ` · próximo prazo ${cockpitDate(item.date)}` : ''}`,
+        reason: 'Há trabalho registrado, mas sem urgência maior detectada.', action: 'Ver Tarefas',
+      },
+    };
+    return copies[item.id] || {
+      title: 'Nenhuma prioridade adicional detectada',
+      context: 'Os dados carregados não mostram outra pendência agora.',
+      reason: 'Este espaço fica livre em vez de sugerir trabalho que não existe.', action: '',
+    };
+  }
+
+  function renderCockpitPriority(item, compact = false) {
+    const copy = cockpitPriorityCopy(item);
+    return `<article class="cockpit-priority ${item.kind === 'clear' ? 'is-clear' : ''} ${compact ? 'is-compact' : ''}">
+      <div class="cockpit-priority-top"><span class="cockpit-urgency">${U.escapeHtml(item.urgency)}</span><small>Estimativa: ${U.escapeHtml(item.estimate)}</small></div>
+      <h3>${U.escapeHtml(copy.title)}</h3>
+      <p>${U.escapeHtml(copy.context)}</p>
+      <small class="cockpit-reason">Por quê: ${U.escapeHtml(copy.reason)}</small>
+      ${item.tab ? `<button type="button" class="ghost small quick-action" data-tab="${U.escapeHtml(item.tab)}" data-focus="${U.escapeHtml(item.focus || '')}" data-finance-filter="${U.escapeHtml(item.financeDirection || '')}">${U.escapeHtml(copy.action)}</button>` : ''}
+    </article>`;
+  }
+
+  function renderCockpitTasks(tasks) {
+    const statusLabels = new Map((state().settings.taskStatuses || []).map((status) => [status.value, status.label]));
+    if (!tasks.length) return '<div class="empty-state"><strong>Nenhuma tarefa aberta.</strong><span>Quando uma tarefa for criada, a data real, o prazo e o status aparecerão aqui.</span></div>';
+    return `<ol class="cockpit-task-list">${tasks.slice(0, 6).map((task) => `
+      <li>
+        <div><strong>${U.escapeHtml(task.title)}</strong><small>Criação: ${U.escapeHtml(cockpitDate(task.createdAt, true))} · Prazo: ${U.escapeHtml(cockpitDate(task.dueDate))}</small></div>
+        <span>${U.escapeHtml(statusLabels.get(task.status) || task.status || 'não informado')}</span>
+        ${task.priority ? `<small>Prioridade: ${U.escapeHtml(task.priority)}</small>` : ''}
+      </li>`).join('')}</ol>`;
+  }
+
+  function cockpitActivityRows() {
+    const businessId = state().activeBusinessId;
+    const auditRows = (state().recordAuditLog || []).filter((row) => row.businessId === businessId).map((row) => ({
+      id: `audit-${row.id}`, when: row.changedAt, actorId: row.changedBy,
+      actor: row.source === 'system' ? 'Sistema' : null,
+      type: `${row.entity || 'registro'} · ${row.field || 'alteração'}`,
+      before: row.oldValue == null ? 'vazio' : row.oldValue,
+      after: row.newValue == null ? 'vazio' : row.newValue,
+      reason: null, hasBeforeAfter: true,
+    }));
+    const stockRows = currentMovements().map((row) => ({
+      id: `stock-${row.id}`, when: row.createdAt || row.date, actorId: null, actor: null,
+      type: `Estoque · ${String(row.type || 'não informado').replaceAll('_', ' ')}`,
+      before: null, after: null, reason: row.notes || null, hasBeforeAfter: false,
+    }));
+    const paymentRows = currentFinancialEntryPayments().map((row) => ({
+      id: `payment-${row.id}`, when: row.createdAt || row.paymentDate, actorId: row.createdBy, actor: null,
+      type: `${row.eventType === 'reversal' ? 'Estorno' : 'Baixa financeira'} · ${U.money(signedFinancialPaymentAmount(row))}`,
+      before: null, after: null, reason: row.notes || null, hasBeforeAfter: false,
+    }));
+    return [...auditRows, ...stockRows, ...paymentRows]
+      .sort((a, b) => String(b.when || '').localeCompare(String(a.when || '')))
+      .slice(0, 8);
+  }
+
+  function renderCockpitActivity() {
+    const rows = cockpitActivityRows();
+    if (!rows.length) return '<div class="empty-state"><strong>Nenhuma movimentação registrada.</strong><span>A rastreabilidade aparecerá aqui quando eventos reais forem carregados.</span></div>';
+    const profileName = (id) => state().profiles.find((profile) => String(profile.id) === String(id))?.name || 'não informado';
+    return `<ol class="cockpit-activity-list">${rows.map((row) => `<li>
+      <div class="cockpit-activity-head"><strong>${U.escapeHtml(row.type)}</strong><time>${U.escapeHtml(cockpitDate(row.when, true))}</time></div>
+      <dl><div><dt>Quem</dt><dd>${U.escapeHtml(row.actor || (row.actorId ? profileName(row.actorId) : 'não informado'))}</dd></div>
+      <div><dt>Antes</dt><dd>${U.escapeHtml(row.hasBeforeAfter ? row.before : 'não informado')}</dd></div>
+      <div><dt>Depois</dt><dd>${U.escapeHtml(row.hasBeforeAfter ? row.after : 'não informado')}</dd></div>
+      <div><dt>Motivo</dt><dd>${U.escapeHtml(row.reason || 'não informado')}</dd></div></dl>
+    </li>`).join('')}</ol>`;
+  }
+
+  function renderAdminCockpit() {
+    if (!state().activeBusinessId) return `<div class="today-screen admin-cockpit"><section class="cockpit-state is-empty"><h2>O que precisa acontecer hoje?</h2><p>Selecione um negócio para carregar prioridades e indicadores reais.</p></section></div>`;
+    const model = Calc.dashboardCockpit(state(), {
+      today: U.today(), dateFrom: dashboardStart, dateTo: dashboardEnd,
+    });
+    const periodLabel = `${dashboardStart ? cockpitDate(dashboardStart) : 'Início'} até ${dashboardEnd ? cockpitDate(dashboardEnd) : 'Hoje'}`;
+    const shortcuts = [
+      { tab: 'financeiro', label: 'Financeiro' }, { tab: 'produtos', label: 'Produtos' },
+      { tab: 'clientes', label: 'Clientes' }, { tab: 'devolucoes', label: 'Operações' },
+      { tab: 'tarefas', label: 'Tarefas' },
+    ];
+    return `<div class="today-screen admin-cockpit ${dashboardFocusMode ? 'is-focus-mode' : ''}">
+      ${dashboardLoadError ? `<section class="cockpit-state is-error" role="alert"><strong>Não foi possível carregar todos os dados.</strong><p>${U.escapeHtml(dashboardLoadError)}</p></section>` : ''}
+      <header class="cockpit-hero">
+        <div><span class="eyebrow">Controle do dia</span><h2>O que precisa acontecer hoje?</h2><p>Três sinais objetivos para decidir o próximo passo sem abrir todas as telas.</p></div>
+        <button type="button" class="ghost cockpit-focus-toggle" data-dashboard-focus-toggle aria-pressed="${dashboardFocusMode}">${dashboardFocusMode ? 'Sair do modo foco' : 'Ativar modo foco'}</button>
+      </header>
+
+      <section class="cockpit-priorities" aria-labelledby="cockpitPrioritiesTitle">
+        <div class="cockpit-section-head"><div><span>Agora</span><h3 id="cockpitPrioritiesTitle">3 prioridades recomendadas</h3></div><small>Ordenadas por vencimento, divergência e pendência detectável.</small></div>
+        <div class="cockpit-priority-grid">${model.priorities.map((item) => renderCockpitPriority(item)).join('')}</div>
+      </section>
+
+      <section class="cockpit-financial" aria-labelledby="cockpitFinancialTitle">
+        <div class="cockpit-section-head"><div><span>Visão financeira</span><h3 id="cockpitFinancialTitle">Resumo do período</h3></div><small>${U.escapeHtml(periodLabel)}</small></div>
+        <div class="cockpit-period" aria-label="Período financeiro"><label>De<input type="date" data-dashboard-date="start" value="${U.escapeHtml(dashboardStart)}"></label><label>Até<input type="date" data-dashboard-date="end" value="${U.escapeHtml(dashboardEnd)}"></label></div>
+        <div class="cockpit-financial-grid">
+          <article><span>Saldo disponível</span><strong class="is-text">Não informado</strong><small>Não há conta caixa/banco cadastrada.</small></article>
+          <article><span>A receber</span><strong>${U.money(model.financial.receivable)}</strong><small>Saldo aberto dos títulos ativos.</small></article>
+          <article><span>A pagar</span><strong>${U.money(model.financial.payable)}</strong><small>Saldo aberto dos títulos ativos.</small></article>
+          <article><span>Lucro reconhecido</span><strong>${U.money(model.financial.recognizedProfit)}</strong><small>Regime de caixa no período selecionado.</small></article>
+        </div>
+      </section>
+
+      <section class="cockpit-secondary cockpit-shortcuts" aria-labelledby="cockpitShortcutsTitle"><div class="cockpit-section-head"><div><span>Ir direto</span><h3 id="cockpitShortcutsTitle">Atalhos</h3></div></div><div>${shortcuts.map((item) => `<button type="button" class="ghost quick-action" data-tab="${item.tab}">${item.label}</button>`).join('')}</div></section>
+
+      <section class="cockpit-secondary cockpit-tasks" aria-labelledby="cockpitTasksTitle"><div class="cockpit-section-head"><div><span>Compromissos reais</span><h3 id="cockpitTasksTitle">Tarefas abertas</h3></div><button type="button" class="ghost small quick-action" data-tab="tarefas">Abrir quadro</button></div>${renderCockpitTasks(model.tasks)}</section>
+
+      ${model.otherAlerts.length ? `<section class="cockpit-secondary cockpit-other-alerts" aria-labelledby="cockpitOtherAlertsTitle"><div class="cockpit-section-head"><div><span>Ainda requer atenção</span><h3 id="cockpitOtherAlertsTitle">Outros alertas</h3></div></div><div class="cockpit-wait-list">${model.otherAlerts.slice(0, 5).map((item) => renderCockpitPriority(item, true)).join('')}</div></section>` : ''}
+
+      <section class="cockpit-secondary cockpit-can-wait" aria-labelledby="cockpitCanWaitTitle"><div class="cockpit-section-head"><div><span>Depois</span><h3 id="cockpitCanWaitTitle">Pode esperar</h3></div></div>${model.canWait.length ? `<div class="cockpit-wait-list">${model.canWait.slice(0, 5).map((item) => renderCockpitPriority(item, true)).join('')}</div>` : '<div class="empty-state"><strong>Nada adicional na fila.</strong><span>Os dados carregados não mostram outro item para acompanhar.</span></div>'}</section>
+
+      <section class="cockpit-secondary cockpit-activity" aria-labelledby="cockpitActivityTitle"><div class="cockpit-section-head"><div><span>Rastreabilidade</span><h3 id="cockpitActivityTitle">Movimentações recentes</h3></div></div>${renderCockpitActivity()}</section>
+
+      <details class="cockpit-secondary cockpit-more"><summary>Painéis complementares</summary><div class="cockpit-more-content">${renderDailyReceipts()}${renderCreditSalesPosition()}${renderTodayGoals(true)}${renderOperationsSnapshot(state())}${renderAdvancedDashboard()}</div></details>
+    </div>`;
+  }
+
   function renderToday() {
     const isAdminUser = S.isAdmin();
+    if (isAdminUser) return renderAdminCockpit();
     const todayStr = U.today();
     const sales = currentSales();
     const todaySales = sales.filter((sale) => sale.date === todayStr);
@@ -675,6 +865,7 @@
   function handleQuickAction(event) {
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
+    if (trigger.dataset.financeFilter) financeDirection = trigger.dataset.financeFilter;
     if (trigger.dataset.focus === 'seller-payments' && window.C360.auth && typeof window.C360.auth.focusPendingPayments === 'function') {
       window.C360.auth.focusPendingPayments();
     }
@@ -685,6 +876,9 @@
         input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         input?.focus({ preventScroll: true });
       });
+    }
+    if (trigger.dataset.focus === 'missing-cost') {
+      requestAnimationFrame(() => document.getElementById('missingCostForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     }
   }
 
@@ -2420,6 +2614,14 @@
   }
 
   async function handleClick(event) {
+    const focusToggle = event.target.closest('[data-dashboard-focus-toggle]');
+    if (focusToggle) {
+      const restoreFocus = document.activeElement === focusToggle;
+      dashboardFocusMode = !dashboardFocusMode;
+      renderTab();
+      if (restoreFocus) requestAnimationFrame(() => document.querySelector('[data-dashboard-focus-toggle]')?.focus());
+      return;
+    }
     const reportPeriodButton = event.target.closest('[data-report-period-button]');
     if (reportPeriodButton) { applyPeriodPreset(reportPeriodButton.dataset.reportPeriodButton); return; }
     const financeButton = event.target.closest('[data-finance-direction]');
@@ -2964,7 +3166,7 @@
     // O mesmo par de datas filtra o painel fixo E a aba Relatórios. Sem este
     // renderTab, mudar o período com Relatórios aberto atualizava só os KPIs
     // do topo e a tela inteira abaixo continuava mostrando o período antigo.
-    if (activeTab === 'relatorios') renderTab();
+    if (activeTab === 'relatorios' || activeTab === 'hoje') renderTab();
   }
 
   function applyPeriodPreset(preset) {
@@ -3017,10 +3219,15 @@
     }, 3200);
   }
 
+  function setDashboardError(message) {
+    dashboardLoadError = String(message || 'Recarregue a página para tentar novamente.');
+    if (activeTab === 'hoje' && !els.appShell?.hidden) renderTab();
+  }
+
   // addSale é exposto para src/salesCart.js materializar a venda "propria"
   // quando o admin move um pedido da esteira para "Despachado" (mesma baixa de
   // estoque central, movimento saida_venda, CMV e lucro do lançamento manual).
-  window.C360.app = { refresh: renderAll, toast, setTab, addSale };
+  window.C360.app = { refresh: renderAll, toast, setTab, addSale, setDashboardError };
 
   // O painel fixo do topo (#dashboard) é desenhado só por renderAll(), mas
   // quem grava pagamento de vendedor, envio de consignado, conferência de
@@ -3038,7 +3245,9 @@
   if (S && typeof S.onRefresh === 'function') {
     S.onRefresh(() => {
       if (!els.appShell || els.appShell.hidden || !els.dashboard) return;
+      dashboardLoadError = '';
       renderDashboard();
+      if (activeTab === 'hoje') renderTab();
     });
   }
 
@@ -3104,6 +3313,7 @@
       return;
     }
 
+    if (els.authRoot) els.authRoot.innerHTML = '<div class="cockpit-state is-loading" role="status">Carregando sua operação...</div>';
     let authenticated = false;
     try {
       if (window.C360.auth && typeof window.C360.auth.restoreSession === 'function') {

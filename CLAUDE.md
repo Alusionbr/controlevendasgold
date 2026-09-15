@@ -1012,6 +1012,22 @@ Corrigido: 24 abas. Regra do CLAUDE.md continua valendo — coleção nova entra
 em `COLLECTIONS`, e cada chave nova em `LABELS` + `NUMERIC_KEYS`/`DATE_KEYS`
 conforme o tipo.
 
+---
+
+## Atualização: dashboard administrativo em cockpit de foco
+
+A tela **Hoje** do administrador agora abre com “O que precisa acontecer hoje?” e três posições de prioridade calculadas por `Calc.dashboardCockpit`. As fontes são exclusivamente dados já carregados: títulos vencidos, produtos no mínimo, custo ausente, pagamentos/ordens/operações pendentes e tarefas abertas.
+
+- exatamente três posições, preenchidas por alertas urgentes reais ou por um estado explícito “nenhuma prioridade adicional detectada”;
+- alertas urgentes excedentes ficam em “Outros alertas”; apenas itens realmente não urgentes entram em “Pode esperar”;
+- tarefas usam `createdAt`, `dueDate` e `status`; não há campo de prioridade no schema atual;
+- “Saldo disponível” fica “Não informado”, pois o modelo não tem conta caixa/banco nem saldo inicial;
+- lucro reconhecido continua vindo do regime de caixa corrigido na Etapa 1;
+- rastreabilidade combina `recordAuditLog`, `stockMovements` e `financialEntryPayments`, com “não informado” nos campos ausentes;
+- modo foco oculta somente blocos secundários e preserva prioridades e resumo financeiro.
+
+Contrato e limitações detalhados em `docs/dashboard-cockpit.md`. Nenhuma migration foi criada nesta etapa.
+
 ### Restauração desabilitada: cache local não é servidor
 
 A rotina antiga de `importXlsx`/`importJson` chamava `S.replaceState(...)`, que
