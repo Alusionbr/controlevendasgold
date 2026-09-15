@@ -115,8 +115,12 @@
   // a checagem defensiva é só para nunca quebrar o fluxo de login por causa
   // do aviso em si.
   function notifyRefreshFailure() {
+    const message = 'Alguns dados podem estar desatualizados. Recarregue a página para tentar novamente.';
     if (window.C360.app && typeof window.C360.app.toast === 'function') {
       window.C360.app.toast('Não foi possível carregar todos os dados agora. Recarregue a página.', 'error');
+    }
+    if (window.C360.app && typeof window.C360.app.setDashboardError === 'function') {
+      window.C360.app.setDashboardError(message);
     }
   }
 
