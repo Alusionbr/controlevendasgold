@@ -347,6 +347,7 @@
 
     if (overdueReceivables.length) add({
       id: 'overdue-receivables', score: 100, urgency: 'Agora', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'receivable',
       count: overdueReceivables.length, amount: overdueReceivables.reduce((sum, entry) => sum + remaining(entry), 0),
       date: overdueReceivables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
     });
@@ -365,6 +366,7 @@
     });
     if (overduePayables.length) add({
       id: 'overdue-payables', score: 88, urgency: 'Alta', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'payable',
       count: overduePayables.length, amount: overduePayables.reduce((sum, entry) => sum + remaining(entry), 0),
       date: overduePayables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
     });

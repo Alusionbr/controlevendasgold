@@ -567,6 +567,15 @@
   function cockpitDate(value, includeTime = false) {
     const raw = String(value || '');
     if (!raw) return 'não informado';
+    // Datas de prazo são civis e não podem mudar de dia. Já timestamps vindos
+    // do banco carregam offset e devem respeitar o fuso da operação.
+    const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+    const timestamp = includeTime && raw.includes('T') && hasOffset ? new Date(raw) : null;
+    if (timestamp && !Number.isNaN(timestamp.getTime())) {
+      const date = timestamp.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const time = timestamp.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+      return `${date} ${time}`;
+    }
     const date = raw.slice(0, 10);
     const parts = date.split('-');
     const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : date;
@@ -641,7 +650,7 @@
       <h3>${U.escapeHtml(copy.title)}</h3>
       <p>${U.escapeHtml(copy.context)}</p>
       <small class="cockpit-reason">Por quê: ${U.escapeHtml(copy.reason)}</small>
-      ${item.tab ? `<button type="button" class="ghost small quick-action" data-tab="${U.escapeHtml(item.tab)}" data-focus="${U.escapeHtml(item.focus || '')}">${U.escapeHtml(copy.action)}</button>` : ''}
+      ${item.tab ? `<button type="button" class="ghost small quick-action" data-tab="${U.escapeHtml(item.tab)}" data-focus="${U.escapeHtml(item.focus || '')}" data-finance-filter="${U.escapeHtml(item.financeDirection || '')}">${U.escapeHtml(copy.action)}</button>` : ''}
     </article>`;
   }
 
@@ -856,6 +865,7 @@
   function handleQuickAction(event) {
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
+    if (trigger.dataset.financeFilter) financeDirection = trigger.dataset.financeFilter;
     if (trigger.dataset.focus === 'seller-payments' && window.C360.auth && typeof window.C360.auth.focusPendingPayments === 'function') {
       window.C360.auth.focusPendingPayments();
     }
@@ -2606,8 +2616,10 @@
   async function handleClick(event) {
     const focusToggle = event.target.closest('[data-dashboard-focus-toggle]');
     if (focusToggle) {
+      const restoreFocus = document.activeElement === focusToggle;
       dashboardFocusMode = !dashboardFocusMode;
       renderTab();
+      if (restoreFocus) requestAnimationFrame(() => document.querySelector('[data-dashboard-focus-toggle]')?.focus());
       return;
     }
     const reportPeriodButton = event.target.closest('[data-report-period-button]');

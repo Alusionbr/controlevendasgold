@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-dYm2H7js9Ye4K6XH4Ch2tP6BWjeahOenle4qN5HUY7Y=' 'sha256-2smG3bOK86QqGSnO1nOz0pfxHA9rs3/lCiamHE08BNw=' 'sha256-A1vXs84XOehSKYId+FII0vpyenjQxzDqsn8pvLlXSVg=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-iP+oINVKINbWVio9KrJia3EeXEHxQTwqTljgGx7rSh4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-K98+NLrIwZE+V9J6lvvqqm5GcD6Xgr7JvTJ41uKsLYg=' 'sha256-ilrUXcrL9Zjy6HVvWnmu1pR45MY9JdidahjbCjhTeRM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-0UIui8s1jd13IesWhlB9yhbPnRFofEqzBICKfOcPG88=' 'sha256-dYm2H7js9Ye4K6XH4Ch2tP6BWjeahOenle4qN5HUY7Y=' 'sha256-2smG3bOK86QqGSnO1nOz0pfxHA9rs3/lCiamHE08BNw=' 'sha256-01OquoQXoIk+xJ91B3jmxEEHLUNc/ewqwrfZmd1uMtI=' 'sha256-HHRFhd91UQkC16800lcMHQK76BZrESFpr1lRLA9GCRk=' 'sha256-iP+oINVKINbWVio9KrJia3EeXEHxQTwqTljgGx7rSh4=' 'sha256-I25y+l70u3x6SsCY//TatdFdNSTxwC/rYIUSldYSHx0=' 'sha256-7xePi/h20heliC6wOY4rZPnkGKJlBvTUedr14zOMAQ0=' 'sha256-7aieSzIeRT1xhIvasous0J7XvANhnbo7Z7GEmgGZDFQ=' 'sha256-yaFQRRuWG4fbR0WDhKzoOmk7Fho+ZnVTyg663RNsPUg=' 'sha256-UR5aebky3ZIPeQxQSHVZPJuAeuLizClak6oIz+17o0I=' 'sha256-+DdKELbkGJv0OcejNGX5lHc5VMdl5Yfntoqgc0i6oKU=' 'sha256-ZTXnMQDebw8hs1Cr0NAu+LENmrug0OHR6nXRajJL46o=' 'sha256-Imsd5Kn9bCYHfCaBQKb08QtaeYWo6vo0Al3qOIXchVI=' 'sha256-Wl19UXg1TXR7ojO3BXJi5qng8Bvd9fnkETSuTDoH/to=' 'sha256-gLLL1/TPrKQGk5INkZYGgcfpYCl4RHZLmTs9gzu4XT8=' 'sha256-K98+NLrIwZE+V9J6lvvqqm5GcD6Xgr7JvTJ41uKsLYg=' 'sha256-xHEMR8GRD2LDByhi0UQe8W3T/USHn1VmdWyKMGNHlYc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://zcwnfrhtlhjfprsjktlx.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Controle360 Multi — Estoque, CMV, Produção, Vendas e Consignados</title>
   <style>
 /* Controle360 Multi — interface operacional.
@@ -4399,6 +4399,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
 
     if (overdueReceivables.length) add({
       id: 'overdue-receivables', score: 100, urgency: 'Agora', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'receivable',
       count: overdueReceivables.length, amount: overdueReceivables.reduce((sum, entry) => sum + remaining(entry), 0),
       date: overdueReceivables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
     });
@@ -4417,6 +4418,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
     });
     if (overduePayables.length) add({
       id: 'overdue-payables', score: 88, urgency: 'Alta', kind: 'financial', tab: 'financeiro',
+      financeDirection: 'payable',
       count: overduePayables.length, amount: overduePayables.reduce((sum, entry) => sum + remaining(entry), 0),
       date: overduePayables.map((entry) => entry.dueDate).sort()[0], estimate: '10–20 min',
     });
@@ -12328,6 +12330,15 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function cockpitDate(value, includeTime = false) {
     const raw = String(value || '');
     if (!raw) return 'não informado';
+    // Datas de prazo são civis e não podem mudar de dia. Já timestamps vindos
+    // do banco carregam offset e devem respeitar o fuso da operação.
+    const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+    const timestamp = includeTime && raw.includes('T') && hasOffset ? new Date(raw) : null;
+    if (timestamp && !Number.isNaN(timestamp.getTime())) {
+      const date = timestamp.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const time = timestamp.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+      return `${date} ${time}`;
+    }
     const date = raw.slice(0, 10);
     const parts = date.split('-');
     const formatted = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : date;
@@ -12402,7 +12413,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
       <h3>${U.escapeHtml(copy.title)}</h3>
       <p>${U.escapeHtml(copy.context)}</p>
       <small class="cockpit-reason">Por quê: ${U.escapeHtml(copy.reason)}</small>
-      ${item.tab ? `<button type="button" class="ghost small quick-action" data-tab="${U.escapeHtml(item.tab)}" data-focus="${U.escapeHtml(item.focus || '')}">${U.escapeHtml(copy.action)}</button>` : ''}
+      ${item.tab ? `<button type="button" class="ghost small quick-action" data-tab="${U.escapeHtml(item.tab)}" data-focus="${U.escapeHtml(item.focus || '')}" data-finance-filter="${U.escapeHtml(item.financeDirection || '')}">${U.escapeHtml(copy.action)}</button>` : ''}
     </article>`;
   }
 
@@ -12617,6 +12628,7 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   function handleQuickAction(event) {
     const trigger = event.target.closest('.quick-action[data-tab]');
     if (!trigger) return;
+    if (trigger.dataset.financeFilter) financeDirection = trigger.dataset.financeFilter;
     if (trigger.dataset.focus === 'seller-payments' && window.C360.auth && typeof window.C360.auth.focusPendingPayments === 'function') {
       window.C360.auth.focusPendingPayments();
     }
@@ -14367,8 +14379,10 @@ body:has(#moreMenu:not([hidden])) .calc-floating-panel {
   async function handleClick(event) {
     const focusToggle = event.target.closest('[data-dashboard-focus-toggle]');
     if (focusToggle) {
+      const restoreFocus = document.activeElement === focusToggle;
       dashboardFocusMode = !dashboardFocusMode;
       renderTab();
+      if (restoreFocus) requestAnimationFrame(() => document.querySelector('[data-dashboard-focus-toggle]')?.focus());
       return;
     }
     const reportPeriodButton = event.target.closest('[data-report-period-button]');

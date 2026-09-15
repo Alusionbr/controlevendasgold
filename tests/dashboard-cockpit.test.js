@@ -52,6 +52,18 @@ test('KPIs financeiros usam títulos reais e lucro reconhecido pelo ledger', () 
   assert.ok(model.priorities.every((item) => item.id !== 'overdue-receivables'));
 });
 
+test('alertas financeiros carregam a direção correta do Financeiro', () => {
+  const calc = loadCalculations();
+  const model = calc.dashboardCockpit(baseState({ financialEntries: [
+    { id: 'r1', businessId: 'b1', direction: 'receivable', amount: 20, paidAmount: 0, status: 'open', dueDate: '2026-09-01' },
+    { id: 'p1', businessId: 'b1', direction: 'payable', amount: 30, paidAmount: 0, status: 'open', dueDate: '2026-09-02' },
+  ] }), { today: '2026-09-14' });
+  const byId = new Map(model.priorities.concat(model.otherAlerts).map((item) => [item.id, item]));
+  assert.equal(byId.get('overdue-receivables').financeDirection, 'receivable');
+  assert.equal(byId.get('overdue-payables').financeDirection, 'payable');
+  assert.match(read('src/app.js'), /trigger\.dataset\.financeFilter\) financeDirection = trigger\.dataset\.financeFilter/);
+});
+
 test('prioridades são exatamente três e seguem a ordem de urgência documentada', () => {
   const calc = loadCalculations();
   const state = baseState({
@@ -117,6 +129,19 @@ test('ações, modo foco e estados honestos permanecem acessíveis', () => {
   assert.match(app, /Não foi possível carregar todos os dados/);
   assert.match(app, /Selecione um negócio para carregar prioridades/);
   assert.match(app, /Não informado[\s\S]*Não há conta caixa\/banco cadastrada/);
+  assert.match(app, /toLocaleDateString\('pt-BR', \{ timeZone: 'America\/Sao_Paulo' \}\)/);
+  assert.match(app, /requestAnimationFrame\(\(\) => document\.querySelector\('\[data-dashboard-focus-toggle\]'\)\?\.focus\(\)\)/);
+});
+
+test('timestamps com offset são convertidos para São Paulo sem alterar datas civis', () => {
+  const app = read('src/app.js');
+  const start = app.indexOf('function cockpitDate');
+  const end = app.indexOf('function cockpitPriorityCopy', start);
+  const context = { window: {}, Date, Number };
+  vm.createContext(context);
+  vm.runInContext(`${app.slice(start, end)}; globalThis.cockpitDate = cockpitDate;`, context);
+  assert.equal(context.cockpitDate('2026-09-15T01:30:00+00:00', true), '14/09/2026 22:30');
+  assert.equal(context.cockpitDate('2026-09-15', false), '15/09/2026');
 });
 
 test('rastreabilidade usa eventos existentes e marca campos ausentes', () => {
